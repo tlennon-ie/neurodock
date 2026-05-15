@@ -1,0 +1,12 @@
+packages:
+  - "packages/core"
+  - "packages/cli"
+  - "packages/extension-browser"
+  - "plugins/*"
+  - "profiles/*"
+  - "docs"
+  - "examples/*"
+allowBuilds:
+  esbuild: set this to true or false
+onlyBuiltDependencies:
+  - esbuild

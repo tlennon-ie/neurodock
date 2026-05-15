@@ -1,0 +1,79 @@
+[project]
+name = "neurodock-workspace"
+version = "0.0.0"
+description = "NeuroDock — Python workspace root. Individual packages live under packages/."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "NeuroDock contributors" }]
+
+[tool.uv.workspace]
+members = [
+    "packages/mcp-chronometric",
+    "packages/mcp-cognitive-graph",
+    "packages/mcp-task-fractionator",
+    "packages/mcp-translation",
+    "packages/mcp-guardrail",
+    "packages/clinical",
+    "packages/evals",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    ".venv",
+    "node_modules",
+    "dist",
+    "build",
+    ".turbo",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501", # line-too-long (handled by formatter)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = [
+    "\\.venv",
+    "node_modules",
+    "dist",
+    "build",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["packages"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+]

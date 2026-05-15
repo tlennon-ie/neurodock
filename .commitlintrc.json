@@ -1,0 +1,50 @@
+{
+  "extends": ["@commitlint/config-conventional"],
+  "rules": {
+    "type-enum": [
+      2,
+      "always",
+      [
+        "feat",
+        "fix",
+        "docs",
+        "style",
+        "refactor",
+        "perf",
+        "test",
+        "build",
+        "ci",
+        "chore",
+        "revert"
+      ]
+    ],
+    "scope-enum": [
+      1,
+      "always",
+      [
+        "core",
+        "cli",
+        "mcp-chronometric",
+        "mcp-cognitive-graph",
+        "mcp-task-fractionator",
+        "mcp-translation",
+        "mcp-guardrail",
+        "skills",
+        "extension-browser",
+        "clinical",
+        "evals",
+        "plugins",
+        "profiles",
+        "docs",
+        "examples",
+        "scripts",
+        "ci",
+        "bootstrap",
+        "governance",
+        "deps"
+      ]
+    ],
+    "subject-case": [2, "always", "lower-case"],
+    "header-max-length": [2, "always", 100]
+  }
+}
