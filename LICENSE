@@ -1,0 +1,11 @@
+NeuroDock is licensed under the GNU Affero General Public License v3.0 or later.
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+The canonical license text is available at:
+https://www.gnu.org/licenses/agpl-3.0.txt
+
+A local copy can be added by running:
+  curl -o LICENSE-AGPL-3.0 https://www.gnu.org/licenses/agpl-3.0.txt
+
+License intent confirmed by the founding council at first meeting (see GOVERNANCE.md).
