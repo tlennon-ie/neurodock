@@ -187,3 +187,5 @@ tmp/
 # !pnpm-lock.yaml
 # !uv.lock
 # (intentionally not listed above so they're tracked)
+
+docs/decisions
