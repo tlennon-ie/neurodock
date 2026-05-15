@@ -1,0 +1,26 @@
+# NeuroDock Profile — minimal valid example.
+#
+# Only `identity` is required. Every other top-level block is optional
+# and falls back to safe, lived-experience-led defaults applied by the
+# loader (see profile.schema.json for the per-field default).
+#
+# Defaults applied when the rest of this file is omitted:
+#   preferences.output_format        = "answer_first"
+#   preferences.max_chunk_size       = 7
+#   preferences.reading_font_hint    = "atkinson_hyperlegible"
+#   preferences.motion               = "reduced"
+#   chronometric.hyperfocus_break_minutes = 90
+#   chronometric.session_overlap_policy   = "auto_close"
+#   guardrails.rumination_threshold       = 3
+#   guardrails.rumination_window_minutes  = 90
+#   guardrails.sycophancy_check           = "warn"
+#   privacy.embeddings                    = "local"
+#   privacy.telemetry                     = "off"
+#   privacy.os_idle_consent               = false
+
+identity:
+  display_name: "your-name"
+  # Any subset of: adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other
+  # Empty list ([]) is valid and opts out of neurotype-tagged skill activation.
+  neurotypes:
+    - "adhd"
