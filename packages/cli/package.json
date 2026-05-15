@@ -1,0 +1,22 @@
+{
+  "name": "@neurodock/cli",
+  "version": "0.0.0",
+  "private": true,
+  "description": "NeuroDock installer and diagnostic CLI.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "bin": {
+    "neurodock": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "echo 'cli: build stub' && exit 0",
+    "lint": "echo 'cli: lint stub' && exit 0",
+    "test": "echo 'cli: no tests yet' && exit 0",
+    "typecheck": "echo 'cli: typecheck stub' && exit 0",
+    "clean": "rm -rf dist .turbo"
+  },
+  "_futureDependencies": {
+    "comment": "Phase 1 will add 'commander' for argument parsing. Keeping deps empty in Phase 0 so CI passes without external resolution.",
+    "commander": "^12.0.0"
+  }
+}

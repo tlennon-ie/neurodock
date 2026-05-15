@@ -1,0 +1,15 @@
+{
+  "name": "@neurodock/extension-browser",
+  "version": "0.0.0",
+  "private": true,
+  "description": "NeuroDock browser extension (Chrome, Firefox, Edge). MV3, WXT-built.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'extension-browser: build stub' && exit 0",
+    "lint": "echo 'extension-browser: lint stub' && exit 0",
+    "test": "echo 'extension-browser: no tests yet' && exit 0",
+    "typecheck": "echo 'extension-browser: typecheck stub' && exit 0",
+    "clean": "rm -rf .output .wxt .turbo"
+  }
+}
