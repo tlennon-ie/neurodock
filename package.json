@@ -6,7 +6,7 @@
   "homepage": "https://neurodock.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/neurodock/neurodock.git"
+    "url": "https://github.com/tlennon-ie/neurodock.git"
   },
   "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@11.1.2",
