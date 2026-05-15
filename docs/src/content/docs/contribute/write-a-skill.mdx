@@ -1,0 +1,101 @@
+---
+title: Write a skill
+description: From clone to open PR in fifteen minutes. A skill is a markdown bundle, not opaque code.
+---
+
+After this page you will have written a working NeuroDock skill, replayed it under CI test harness, and opened a draft PR.
+
+**Estimated time:** 15 minutes.
+
+**Prerequisites:** comfortable with `git`, comfortable editing YAML frontmatter. No language runtime required to write the skill itself; tests are markdown invocations replayed by the CI harness.
+
+## 1. Clone and install
+
+```bash
+git clone https://github.com/tlennon-ie/neurodock.git
+cd neurodock
+pnpm install
+uv sync
+```
+
+## 2. Copy the template
+
+```bash
+cp -R packages/skills/_template packages/skills/<your-skill-name>
+```
+
+:::note[Template not yet in tree]
+The `packages/skills/_template/` directory is a Phase 1 deliverable owned by `skill-author`. Until it lands, copy an existing skill (e.g. `packages/skills/adhd-daily-planner/`) and rename it. The five launch skills are all currently `status: stub` so you will be inheriting a stub, not a finished implementation — that is fine for scaffolding the shape.
+:::
+
+## 3. Edit `SKILL.md`
+
+The frontmatter:
+
+```yaml
+---
+name: my-skill
+description: One-sentence statement of what the skill does and for whom.
+version: 0.0.1
+neurotypes: ["adhd"]
+status: draft
+triggers:
+  slash_commands:
+    - "/my-skill"
+  semantic_matches:
+    - "phrase a user might say"
+mcp_dependencies:
+  - mcp-cognitive-graph
+profile_dependencies:
+  - preferences.output_format
+  - preferences.max_chunk_size
+---
+```
+
+The body is the instructions the client follows when the skill activates. Keep it short. Name the inputs you read, the MCP tools you call, the output shape you produce.
+
+## 4. Add at least three test invocations
+
+In `tests/`, add markdown files like:
+
+```markdown
+# Test: morning brief on a fresh install
+
+## Input
+/morning-brief
+
+## Expected
+- A statement that the cognitive graph is empty.
+- The current time and energy zone.
+- No fabricated decisions.
+```
+
+CI replays these against a reference MCP client and checks the output shape matches expectations. Three is the floor; more is welcome.
+
+## 5. Accessibility check
+
+Run the ND-readability pass locally:
+
+```bash
+pnpm --filter @neurodock/skills test:a11y -- --skill <your-skill-name>
+```
+
+This catches: max-chunk-size violations, animation references, gradient references, and patronising voice patterns. (Per the [accessibility-auditor agent spec](https://github.com/tlennon-ie/neurodock/blob/main/.claude/agents/accessibility-auditor.md).)
+
+## 6. Open a draft PR
+
+```bash
+git checkout -b feat/skills/<your-skill-name>
+git add packages/skills/<your-skill-name>
+git commit -m "feat: add <your-skill-name> skill"
+git push -u origin feat/skills/<your-skill-name>
+gh pr create --draft --title "feat: add <your-skill-name> skill"
+```
+
+Two reviewers will be auto-requested via CODEOWNERS: one core maintainer plus one with the lived experience tagged in your frontmatter `neurotypes:`.
+
+## What's next
+
+- [Contribute an eval example](/contribute/contribute-eval-example/) (Phase 2).
+- [Governance](/contribute/governance/) for how your PR is reviewed.
+- Read [Concepts: skills](/concepts/skills/) for the bigger picture.

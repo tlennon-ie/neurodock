@@ -1,0 +1,43 @@
+---
+title: 0001 — Chronometric tool design
+description: Why mcp-chronometric is five small tools, not one large one.
+---
+
+> **Source:** `docs/decisions/0001-chronometric-tool-design.md` is the canonical artefact. This page is a short summary for in-site navigation; read the full ADR for the alternatives considered, the design choices that bind future servers, and the open questions.
+
+- **Status:** Proposed
+- **Date:** 2026-05-15
+- **Deciders:** Maintainer council (TBD), `mcp-architect`
+
+## Context
+
+`mcp-chronometric` is the first MCP server NeuroDock ships and the precedent-setting design for every later substrate server. Decisions made here propagate.
+
+## Decision
+
+Adopt the **five-tool decomposition**: `get_time_context`, `mark_session_start`, `mark_session_end`, `request_break_if_needed`, `idle_status`. Each is independently versioned, independently testable, independently mockable. State (`session_id`, `prior_intent`, last-prompt-at) lives in the server, never in the LLM prompt.
+
+The alternative — one large `get_status` tool returning everything in one shot — was rejected because consent gating becomes muddled, side effects mix with reads, and versioning becomes brittle.
+
+## Cross-cutting rules established here
+
+- Time fields are ISO 8601 with explicit timezone. No naive timestamps anywhere.
+- Durations are ISO 8601 strings, not integer-seconds.
+- Session ids are UUIDv4 strings, server-generated, never passed back in.
+- Enums for coarse signals, not floats (`energy_zone`, `suggested_action`, `hyperfocus_signal`).
+- Consent failures are not exceptions. `idle_status` without consent returns `consent_granted: false`, never an error.
+- `null` is a first-class return; callers MUST handle it.
+
+## Open questions
+
+The full ADR carries four open questions; the council will close them before `mcp-server-builder` ships v0.1:
+
+1. How is `energy_zone` computed beyond the static clock-band heuristic?
+2. How is OS-idle consent surfaced — at install time or just-in-time?
+3. Should `mark_session_start` auto-close a prior unterminated session, or error?
+4. Should `request_break_if_needed` resolve its threshold from the profile or always require it from the caller?
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0001-chronometric-tool-design.md).
+- See the reference page for [`mcp-chronometric`](/reference/mcp-servers/chronometric/).

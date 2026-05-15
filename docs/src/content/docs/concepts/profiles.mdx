@@ -1,0 +1,65 @@
+---
+title: Profiles
+description: The consent and preference manifest. One file. Read by every server, respected by every skill.
+---
+
+The profile is the single cross-cutting consent and preference manifest for NeuroDock. Every MCP server reads it. Every skill respects it. The CLI installer writes it. It lives at `~/.neurodock/profile.yaml` by default.
+
+After this page you will know why the profile is local-first, what the five blocks declare, and how forward-compatibility lets you upgrade and downgrade without losing data.
+
+## Why local-first
+
+Three independent consent gates govern whether anything leaves your machine:
+
+- **`privacy.embeddings`** — `local | cloud_voyage | cloud_openai`. Default: `local`.
+- **`privacy.telemetry`** — `off | local_otel_only | full`. Default: `off`.
+- **`privacy.os_idle_consent`** — boolean. Default: `false`.
+
+Each is independently opt-in. The default install does not phone home and does not read your OS idle state. Choosing `cloud_*` for embeddings triggers a visible session-start notice every time you launch a client. This is a manifesto property, not a configuration accident.
+
+## Lived-experience-led defaults
+
+Every default in the profile is chosen because it is the safer ND-friendly value, not because it is industry-neutral:
+
+- `motion: "reduced"` — no animation by default.
+- `output_format: "answer_first"` — the answer comes first; rationale follows.
+- `reading_font_hint: "atkinson_hyperlegible"` — evidence-based readability.
+- `max_chunk_size: 7` (with 5 as the ADHD-tuned preset override) — Miller's number neighbourhood.
+- `sycophancy_check: "warn"` — guard fires but does not refuse.
+
+A user who never touches their profile gets the safer behaviour. Less-safe behaviour is opt-in.
+
+## Forward compatibility
+
+The schema is `additionalProperties: true` at every nesting level. This means:
+
+- A `v0.1` loader reads a `v0.2` profile without crashing.
+- Unknown keys are preserved on round-trip — they are not silently stripped.
+- Known keys are validated strictly — out-of-range integers and bad enum values are still hard errors.
+
+The forward-compat rule is the central correctness property of the schema. See [ADR 0004](/decisions/0004-profile/) for the rationale and the rejection of strict-schema alternatives.
+
+## Presets and `extends:`
+
+A profile MAY declare `extends:` to inherit from a preset bundled with the `profiles/` package:
+
+```yaml
+extends: "presets/adhd-engineer"
+identity:
+  display_name: "T"
+  neurotypes: ["adhd"]
+```
+
+The preset's fields are merged shallowly with the local file winning on every key. `v0.1` supports **single-level extension only**; deep chaining (preset extending preset) is deferred to a future RFC.
+
+This lets curated presets (`profiles/adhd-engineer`, `profiles/audhd-founder`, etc.) ship sensible bundles without forcing users to hand-author every field.
+
+## No PII
+
+The schema cannot accidentally collect email, real name, or date of birth — those fields don't exist. `display_name` is free-form (one letter is fine). `neurotypes` is self-ID. That is by design.
+
+## What's next
+
+- [Profile schema reference](/reference/profile-schema/) — every field, every default, every constraint.
+- [ADR 0004](/decisions/0004-profile/) — the design rationale.
+- [Getting started: profile](/getting-started/profile/) — practical edits and common gotchas.

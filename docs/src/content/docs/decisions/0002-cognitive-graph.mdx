@@ -1,0 +1,46 @@
+---
+title: 0002 — Cognitive graph tool design
+description: Why mcp-cognitive-graph is a typed-edge property graph, not strict RDF or free-text-only.
+---
+
+> **Source:** `docs/decisions/0002-cognitive-graph-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered and the nine binding design decisions.
+
+- **Status:** Proposed
+- **Date:** 2026-05-15
+- **Deciders:** Maintainer council (TBD), `mcp-architect`
+
+## Context
+
+`mcp-cognitive-graph` is the persistence backbone of the substrate. It must be forgiving on input (alias-match the user's wording), strict on output (no free-form blobs), additive-only as the vocabulary grows, and local-first with no implicit remote fetches.
+
+## Decision
+
+Adopt the **typed-edge property graph**: a fact is `{subject, predicate, object, source?, confidence?}` where `predicate` is a controlled-vocabulary enum and `object` is either an entity reference or a literal.
+
+Alternatives rejected:
+
+- **Strict RDF triples** — forces every literal value to become its own entity; IRIs leak ontology into skill authors' code.
+- **Full-text-only** — loses structured queries like "what decisions were made on `neurodock` since 2026-05-01" without round-tripping through an LLM.
+- **One giant `query` tool** — conflates four different responsibilities; harder for the LLM to invoke correctly.
+
+## Cross-cutting rules established here
+
+- Entity types are a closed enum in v0.1.0: `person | project | decision | concept | source`. New types ship in v0.2 via a `type_extensions` mechanism.
+- Eight controlled predicates: `mentioned_in | decided_in | reports_to | depends_on | resolved_by | blocked_by | tagged | belongs_to`. New predicates are a major bump in v0.1.x.
+- `source` is optional free-text, **stored verbatim, never fetched**. The server has no network access.
+- `confidence` is `[0, 1]`, defaults to `1.0`, intended to lower for inferred facts.
+- Vector recall is **not** a separate tool in v0.1.0. It is an internal implementation detail of `recall_entity`.
+- **No LLM call inside the server.** Phase 2 LLM rollups happen on the caller side.
+
+## Open questions
+
+The full ADR carries three open questions; the council will close them before v0.1 tags:
+
+1. Alias-matching thresholds for `recall_entity`.
+2. `record_fact` deduplication strategy (last-write-wins vs append-only with logical-fact ids).
+3. `weekly_rollup.next_actions` heuristic — keep, drop, or make pluggable.
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0002-cognitive-graph-tool-design.md).
+- See the reference page for [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/).

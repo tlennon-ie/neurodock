@@ -1,0 +1,46 @@
+---
+title: 0003 — Task fractionator tool design
+description: Why mcp-task-fractionator is stateless and persists nothing.
+---
+
+> **Source:** `docs/decisions/0003-task-fractionator-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the three alternatives considered and the seven binding design decisions.
+
+- **Status:** Proposed
+- **Date:** 2026-05-15
+- **Deciders:** Maintainer council (TBD), `mcp-architect`
+
+## Context
+
+`mcp-task-fractionator` carves a vague goal into atomic 5–90 minute tasks. The ADHD-friendly acceptance bar is that 80%+ of pilots rate the output "I can start now."
+
+## Decision
+
+Adopt the **stateless server with cognitive-graph persistence**: `decompose` returns a task list as data; `next_one` reads pending tasks from `mcp-cognitive-graph`. The fractionator owns the *decomposition algorithm*; the graph owns the *state*.
+
+Alternatives rejected:
+
+- **Stateful server with built-in persistence** — duplicates `mcp-cognitive-graph` and creates two sources of truth that drift.
+- **One combined `plan` tool** — conflates carving from picking; prevents skills from interposing between the two.
+
+## Cross-cutting rules established here
+
+- Stateless in v0.1.0. Persistence is the caller's job.
+- No LLM call inside the server. The v0.2 `decompose_with_assist` path accepts an LLM-drafted decomposition as input; the server remains the schema and invariants authority.
+- `time_budget` is ISO 8601 duration only. Unparseable input is `TIME_BUDGET_UNPARSEABLE`, not a silent fallback to unbounded.
+- Every task has at least one acceptance criterion. Empty arrays are rejected.
+- Dependency cycles are an error (`DEPENDENCY_CYCLE`), not silently broken.
+- `sequence` is a distinct total order; `next_one` is "sequence = 1 of the unfinished subset".
+- Goal text is **never logged** — not at info, not at debug, not in error payloads.
+
+## Open questions
+
+The full ADR carries three open questions:
+
+1. How does the v0.1.0 heuristic handle genuinely vague goals (e.g. `"do the thing"`)?
+2. Should `next_one` consider chronometric `energy_zone`?
+3. Should `BUDGET_INFEASIBLE` carry partial progress back to the caller?
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0003-task-fractionator-tool-design.md).
+- See the reference page for [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/).

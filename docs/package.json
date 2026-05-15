@@ -1,0 +1,31 @@
+{
+  "name": "@neurodock/docs",
+  "version": "0.0.0",
+  "private": false,
+  "description": "NeuroDock documentation site (Astro Starlight).",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "lint": "echo 'docs: lint stub' && exit 0",
+    "test": "echo 'docs: test stub' && exit 0",
+    "typecheck": "astro check",
+    "clean": "rimraf dist .astro .turbo"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "3.2.1",
+    "@astrojs/starlight": "^0.30.0",
+    "astro": "^4.16.0",
+    "sharp": "^0.33.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  }
+}
