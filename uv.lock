@@ -1027,8 +1027,29 @@ source = { editable = "packages/mcp-guardrail" }
 
 [[package]]
 name = "neurodock-mcp-task-fractionator"
-version = "0.0.0"
+version = "0.0.1"
 source = { editable = "packages/mcp-task-fractionator" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "jsonschema" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=3.3.0" },
+    { name = "jsonschema", marker = "extra == 'test'", specifier = ">=4.21.0" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.24.0" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-translation"
