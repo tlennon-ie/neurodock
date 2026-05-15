@@ -1,22 +1,43 @@
 {
   "name": "@neurodock/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "NeuroDock installer and diagnostic CLI.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "neurodock": "./src/index.ts"
+    "neurodock": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
   "scripts": {
-    "build": "echo 'cli: build stub' && exit 0",
-    "lint": "echo 'cli: lint stub' && exit 0",
-    "test": "echo 'cli: no tests yet' && exit 0",
-    "typecheck": "echo 'cli: typecheck stub' && exit 0",
-    "clean": "rm -rf dist .turbo"
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo 'cli: lint skipped (no eslint config in workspace yet)' && exit 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist .turbo"
   },
-  "_futureDependencies": {
-    "comment": "Phase 1 will add 'commander' for argument parsing. Keeping deps empty in Phase 0 so CI passes without external resolution.",
-    "commander": "^12.0.0"
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

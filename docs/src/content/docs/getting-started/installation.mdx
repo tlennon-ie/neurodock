@@ -1,0 +1,93 @@
+---
+title: Installation
+description: Install NeuroDock locally and wire it into Claude Desktop, Claude Code, or Cursor in under fifteen minutes.
+---
+
+After this page you will have a working NeuroDock install: three MCP servers running locally, a profile on disk, and one MCP-aware client (Claude Desktop, Claude Code, or Cursor) talking to them.
+
+## Prerequisites
+
+- **Node.js 22 or newer.** Check with `node --version`.
+- **Python 3.11 or newer.** Check with `python --version`.
+- **`uv`** for Python workspace management. Install from [astral.sh/uv](https://docs.astral.sh/uv/).
+- **An MCP-aware client.** Claude Desktop, Claude Code, or Cursor. The substrate is vendor-neutral; any client that speaks MCP works.
+
+Optional but recommended for local-first embeddings:
+
+- **Ollama** with the `nomic-embed-text-v1.5` model pulled. The cognitive graph falls back to `fastembed-py` if Ollama is unavailable.
+
+## From a clone (recommended for the developer preview)
+
+```bash
+git clone https://github.com/tlennon-ie/neurodock.git
+cd neurodock
+pnpm install
+uv sync
+```
+
+Both workspaces install in parallel — Node packages via `pnpm`, Python packages via `uv`.
+
+## Run the installer
+
+```bash
+npx neurodock init
+```
+
+The installer:
+
+1. Detects your installed MCP clients.
+2. Writes a default profile to `~/.neurodock/profile.yaml` (you will be prompted for `display_name` and `neurotypes`).
+3. Registers the three substrate MCP servers with each detected client.
+4. Prints a summary of what was changed.
+
+:::note[CLI status]
+The `neurodock` CLI is being built by a parallel agent in `packages/cli/`. If `npx neurodock init` is not yet available when you read this, the intended interface is documented in the [CLI reference](/reference/cli/). Until then, MCP servers can be configured manually per their per-client guides.
+:::
+
+### Preview before writing
+
+```bash
+npx neurodock init --dry-run
+```
+
+`--dry-run` prints every file that *would* be created or modified without touching anything. Useful for review, useful for CI.
+
+## Per-client configuration
+
+### Claude Desktop
+
+Claude Desktop reads `claude_desktop_config.json` (location varies by OS). `neurodock init` writes the three MCP server entries automatically. To verify, look for:
+
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
+    "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] }
+  }
+}
+```
+
+Restart Claude Desktop after install.
+
+### Claude Code
+
+Claude Code reads MCP server configuration from `.claude/settings.json` (project-local) or the global equivalent. `neurodock init` will offer to register the servers globally; you can decline and add per-project later.
+
+### Cursor
+
+Cursor reads MCP configuration through its settings pane. `neurodock init` writes the same three server entries to its config file.
+
+## Verify the install
+
+```bash
+neurodock doctor
+```
+
+`doctor` checks: profile is readable and schema-valid, all three MCP servers start, embedding backend is reachable. Failures are explained with the next action to take.
+
+## What's next
+
+- [Run your first skill](/getting-started/first-skill/) — `/morning-brief` in Claude Desktop, end-to-end.
+- [Edit your profile](/getting-started/profile/) — turn on or off skills, set thresholds, change consent gates.
+- [Read the substrate concept page](/concepts/substrate/) — what those three MCP servers actually do.

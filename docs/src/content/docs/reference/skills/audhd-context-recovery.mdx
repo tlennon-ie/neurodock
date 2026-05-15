@@ -1,0 +1,41 @@
+---
+title: audhd-context-recovery
+description: A /resume command that reconstructs yesterday's mental state from the cognitive graph for AuDHD users returning to work.
+---
+
+> Source: `packages/skills/audhd-context-recovery/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+A skill that reconstructs yesterday's (or last-Friday's) mental state from the cognitive graph: open decisions, blockers, recent facts, the last stated session intent. Designed for AuDHD users returning to work after context loss.
+
+## Frontmatter summary
+
+| Field | Value |
+|---|---|
+| `name` | `audhd-context-recovery` |
+| `version` | `0.0.0` (Phase 1 stub) |
+| `status` | `stub` — implementation in Phase 1 |
+| `neurotypes` | `[]` (to be set to `["audhd", "asd", "adhd"]` when implemented) |
+
+## Triggers
+
+- Slash command: `/resume`.
+- Semantic match against phrases like *"where was I"*, *"pick up from yesterday"*.
+
+## MCP dependencies
+
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — `recall_decisions`, `weekly_rollup`, `recall_entity`.
+- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) — `get_time_context()` for the "how long since you last worked here" anchor.
+
+## Profile dependencies
+
+- `preferences.output_format` — answer-first vs conventional.
+- `preferences.max_chunk_size` — caps the number of open items surfaced.
+
+## Acceptance (from `plan.md` §6)
+
+> `/resume monday` runs in ≤ 5s against a 30-day graph; brief names projects, decisions, one action with confidence > 0.7.
+
+## What's next
+
+- [Run your first skill](/getting-started/first-skill/) for the related morning-brief walkthrough.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) for the persistence model this skill leans on.

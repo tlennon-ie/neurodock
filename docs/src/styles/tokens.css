@@ -1,0 +1,133 @@
+/*
+ * NeuroDock design tokens.
+ *
+ * Sources of truth:
+ *   plan.md §2 — typography, voice, visual language.
+ *   doc-writer + design-system-keeper agent manuals.
+ *
+ * Rules encoded here:
+ *   - Atkinson Hyperlegible (body), Lexend (headings), JetBrains Mono (code).
+ *   - Two colour modes: calm light, dim dark. No gradients.
+ *   - Single neutral accent hue.
+ *   - Line-height >= 1.65 in body copy.
+ *   - prefers-reduced-motion is honoured below.
+ *
+ * Font files are NOT bundled in this repo. See public/fonts/README.md
+ * for the expected files and SIL Open Font License attribution requirements.
+ */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lexend";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/lexend-variable.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-variable.woff2") format("woff2");
+}
+
+:root {
+  /* Type stack */
+  --sl-font:
+    "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --sl-font-system:
+    "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  --sl-font-mono:
+    "JetBrains Mono", ui-monospace, "SFMono-Regular", "Menlo", monospace;
+  --nd-font-heading: "Lexend", "Atkinson Hyperlegible", system-ui, sans-serif;
+
+  /* Type scale — modest contrast, no oversized hero text */
+  --sl-text-base: 1rem;
+  --sl-text-sm: 0.9375rem;
+  --sl-text-lg: 1.125rem;
+  --sl-text-xl: 1.375rem;
+  --sl-text-2xl: 1.75rem;
+  --sl-text-3xl: 2.125rem;
+  --sl-line-height: 1.65;
+  --sl-line-height-headings: 1.25;
+
+  /* Spacing — generous, no decorative flourishes */
+  --sl-content-pad-x: 1.5rem;
+  --sl-nav-height: 3.5rem;
+
+  /* Motion — disabled by default per plan.md §2 */
+  --nd-transition-duration: 0ms;
+}
+
+/* Calm light — the default theme */
+:root[data-theme="light"] {
+  --sl-color-bg: oklch(98% 0.005 95);
+  --sl-color-bg-nav: oklch(97% 0.005 95);
+  --sl-color-bg-sidebar: oklch(97% 0.005 95);
+  --sl-color-bg-inline-code: oklch(94% 0.006 95);
+
+  --sl-color-text: oklch(22% 0.01 250);
+  --sl-color-text-accent: oklch(40% 0.04 250);
+  --sl-color-text-invert: oklch(98% 0.005 95);
+
+  --sl-color-hairline: oklch(88% 0.005 95);
+  --sl-color-hairline-light: oklch(92% 0.005 95);
+  --sl-color-hairline-shade: oklch(80% 0.005 95);
+
+  /* Single neutral accent — desaturated slate-blue */
+  --sl-color-accent: oklch(45% 0.05 250);
+  --sl-color-accent-low: oklch(85% 0.025 250);
+  --sl-color-accent-high: oklch(35% 0.05 250);
+}
+
+/* Dim dark — never pure black */
+:root[data-theme="dark"] {
+  --sl-color-bg: oklch(18% 0.005 250);
+  --sl-color-bg-nav: oklch(20% 0.005 250);
+  --sl-color-bg-sidebar: oklch(20% 0.005 250);
+  --sl-color-bg-inline-code: oklch(24% 0.006 250);
+
+  --sl-color-text: oklch(92% 0.01 95);
+  --sl-color-text-accent: oklch(82% 0.04 250);
+  --sl-color-text-invert: oklch(18% 0.005 250);
+
+  --sl-color-hairline: oklch(28% 0.005 250);
+  --sl-color-hairline-light: oklch(26% 0.005 250);
+  --sl-color-hairline-shade: oklch(32% 0.005 250);
+
+  --sl-color-accent: oklch(72% 0.06 250);
+  --sl-color-accent-low: oklch(28% 0.04 250);
+  --sl-color-accent-high: oklch(85% 0.04 250);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --nd-transition-duration: 120ms;
+  }
+}

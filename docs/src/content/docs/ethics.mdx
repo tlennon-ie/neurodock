@@ -1,0 +1,38 @@
+---
+title: Ethics
+description: How NeuroDock approaches clinical safety, consent, and the limits of what an AI substrate should do.
+---
+
+> Source: `plan.md` §8 ("Ethics framework") is the canonical statement until a free-standing `ETHICS.md` is published at the repository root. That file is a Phase 0 governance deliverable owned by `governance-author`.
+
+NeuroDock's clinical guardrails layer prevents AI from amplifying rumination, hyperfocus, and sycophancy. Those interventions sit on top of five ethics principles that govern the whole project.
+
+## The five principles
+
+1. **We never claim to treat any condition.** NeuroDock is infrastructure. It is not therapy, not medical advice, not a substitute for clinical care.
+2. **We never block a user's action without their pre-configured consent.** Guardrails surface signals and slow things down; they do not refuse. Every detector is overridable.
+3. **Detection heuristics are public and auditable.** Anyone can read the source, the thresholds, and the test fixtures. There is no "AI safety" black box that the user cannot inspect.
+4. **We do not aggregate detection events into population-level data.** Every signal stays on the user's machine.
+5. **False positives are sometimes harmful; we log when surfaced and adjust with the advisory board.** A nudge that fires when it should not be silent costs trust. The clinical advisory board reviews thresholds quarterly.
+
+## Self-identification, never diagnosis
+
+The profile declares `identity.neurotypes` as a self-identified list. Self-ID is sufficient for activating any skill or guardrail. Diagnosis is never asked for and never required. See [ADR 0004](/decisions/0004-profile/) for the schema rationale.
+
+## Clinical advisory model
+
+A five-person rotating advisory board (two-year staggered terms) reviews:
+
+- Detector heuristics and thresholds.
+- Field study findings before guardrails leave beta.
+- The published position paper on ND-safe AI use.
+
+The board **advises**. The maintainer council decides. See [governance](/contribute/governance/).
+
+## What you can expect from this project
+
+- Skills will refuse to validate closed decisions when the OCD finalizer fires. You will see why.
+- Hyperfocus nudges will quote your own prior commitment back to you verbatim. Not a generic warning.
+- The sycophancy guard will sometimes interrupt agreement with a counter-prompt. You can override it; the override is logged locally only.
+
+If any of this stops feeling honest, it is a bug. File it.

@@ -1,0 +1,38 @@
+---
+title: Contribute an eval example
+description: Eval-corpus contributions open in Phase 2 alongside the translation layer.
+---
+
+:::caution[Phase 2 — not yet open]
+Eval corpus contributions open in **Phase 2**, when the translation layer (`mcp-translation` plus the browser extension) ships its public beta. This page documents the intended flow so contributors can prepare.
+:::
+
+The NeuroDock eval corpora are versioned, consented datasets hosted on HuggingFace under the `neurodock` org. They drive the eval suites that gate every prompt change in Phase 2 and beyond.
+
+## What an eval example contains
+
+Each example is anonymised, opt-in, and tagged. The translation eval expects:
+
+- The original message.
+- A literal-meaning tag.
+- An implicit-asks tag, with an ambiguity-confidence score.
+- Tone-axis ratings (directness, warmth, urgency) on a 0–100 scale.
+- The neurotype tag of the contributor (self-identified, optional).
+
+## Contribution rules (planned)
+
+- **Anonymisation is mandatory.** Names, project codes, and identifying technical detail are scrubbed before submission. A pre-submission script (`scripts/eval/anonymise`) handles the obvious cases; reviewers handle the rest.
+- **Opt-in only.** If the message has other authors, you must have their consent before contributing. The submission form makes this an explicit checkbox.
+- **No production secrets.** Even after anonymisation, do not submit messages containing API keys, customer PII, or financial detail.
+
+## When to come back
+
+The eval-curator agent (per `plan.md` §10) is responsible for opening the contribution flow in Phase 2 month 4. Watch:
+
+- The repository [`tlennon-ie/neurodock`](https://github.com/tlennon-ie/neurodock) for the `mcp-translation` Phase 2 ship.
+- The future HuggingFace `neurodock` org dataset README.
+
+## What's next
+
+- [Contributing overview](/contribute/overview/) for what is open today.
+- [Plan §7](https://github.com/tlennon-ie/neurodock/blob/main/plan.md) for the full Area 2 description.

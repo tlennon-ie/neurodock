@@ -1,0 +1,49 @@
+---
+title: Contributing
+description: How to contribute to NeuroDock. Skills, MCP servers, profile presets, eval examples, language packs, documentation.
+---
+
+> Source: A free-standing `CONTRIBUTING.md` at the repository root is a Phase 0 governance deliverable owned by `governance-author`. Until it lands, this page is the canonical contribution guide; `plan.md` §6 and §7 carry the per-area contribution detail.
+
+NeuroDock is built **by** neurodivergent contributors **using** the very system being built. Contribution should take fifteen minutes from "I want to add this" to "PR opened". If it takes longer, the documentation has failed.
+
+## Ways to contribute
+
+| What | Where | Best for |
+|---|---|---|
+| Write a skill | `packages/skills/<name>/` | [Skill authors](/contribute/write-a-skill/) |
+| Add an eval example | (Phase 2) HuggingFace `neurodock` org | [Eval contributors](/contribute/contribute-eval-example/) |
+| Add a profile preset | `profiles/<name>.yaml` | Anyone with a stable set of preferences worth sharing |
+| Write a new MCP server | `plugins/<name>/` | Experienced developers |
+| Translate the docs | `docs/src/content/i18n/<locale>/` (deferred) | Native speakers of the locale |
+| Fix a typo or unclear sentence | `docs/` | Anyone |
+
+## The contribution principles
+
+1. **Lower friction.** Every PR template asks one question that genuinely matters and nothing else.
+2. **Lived experience leads.** Skills targeted at a neurotype are reviewed by at least one contributor with that neurotype. Self-identification is sufficient.
+3. **No solo bus factors.** Every package has at least two CODEOWNERS.
+4. **Latency is normalised.** No contributor owes immediate availability. Reviews reassign automatically when a maintainer declares AFK.
+5. **Direct communication is welcomed.** Requests for explicit clarification are not interpreted as aggression.
+
+## ND-aware code of conduct additions
+
+Beyond the CC4 base, three explicit additions:
+
+- Direct communication is welcomed and not pathologised.
+- Requests for explicit clarification are not interpreted as aggression.
+- Latency in async response is normalised; no contributor owes immediate availability.
+
+## First-time contributor checklist
+
+- [ ] Read the [manifesto](/manifesto/).
+- [ ] Open a `git clone` of `github.com/tlennon-ie/neurodock`.
+- [ ] Run `pnpm install && uv sync`.
+- [ ] Find the right contribution lane above.
+- [ ] Open a draft PR early. Drafts are welcome; perfect first PRs are not the bar.
+
+## What's next
+
+- [Write a skill](/contribute/write-a-skill/) for the most welcoming contribution lane.
+- [Governance](/contribute/governance/) for how decisions are made.
+- [Ethics](/ethics/) for what the project will and will not do.

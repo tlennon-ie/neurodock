@@ -1,0 +1,32 @@
+---
+title: Architecture Decision Records
+description: Non-trivial design choices, with context, alternatives, and consequences.
+sidebar:
+  order: 0
+---
+
+Every non-trivial architectural decision lives here as a numbered ADR. The format is fixed: context, decision drivers, considered options, decision, consequences, open questions. Superseded ADRs are kept; new ADRs explicitly reference what they replace.
+
+Canonical source for each ADR is the markdown file under `docs/decisions/` in the repository. The pages below mirror those for in-site navigation.
+
+## Index
+
+| ID | Title | Status |
+|---|---|---|
+| [0001](/decisions/0001-chronometric/) | Chronometric tool design | Proposed |
+| [0002](/decisions/0002-cognitive-graph/) | Cognitive graph tool design | Proposed |
+| [0003](/decisions/0003-task-fractionator/) | Task fractionator tool design | Proposed |
+| [0004](/decisions/0004-profile/) | Profile schema design | Proposed |
+
+## How to propose a new ADR
+
+1. Open an issue describing the decision needed. Link to the user problem.
+2. Draft the ADR under `docs/decisions/NNNN-<kebab-name>.md` with status `proposed`.
+3. Open a PR. Reviewers: at least one council member plus any agent with overlap (`mcp-architect` for substrate ADRs, `clinical-reviewer` for guardrail ADRs, `governance-author` for governance ADRs).
+4. On merge, status flips to `accepted`. If a future ADR replaces this one, that future ADR names the supersession explicitly.
+
+## Conventions
+
+- Status moves `proposed → accepted → superseded`. Rejected drafts are kept as `rejected` rather than deleted.
+- ADRs are short. Two or three paragraphs of context. Two or three alternatives. A paragraph of decision. A handful of consequences.
+- Code samples in ADRs are extracted and run in CI when they reach `accepted`.

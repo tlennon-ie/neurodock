@@ -1,0 +1,46 @@
+---
+title: adhd-daily-planner
+description: Morning ritual that pulls overnight changes from the cognitive graph and surfaces 1-3 things that matter today.
+---
+
+> Source: `packages/skills/adhd-daily-planner/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+A skill that runs as a morning ritual: pulls overnight changes from the cognitive graph, names them, and surfaces 1–3 things that matter today, plus buffer transitions scheduled between calendar events.
+
+## Frontmatter summary
+
+| Field | Value |
+|---|---|
+| `name` | `adhd-daily-planner` |
+| `version` | `0.0.0` (Phase 1 stub) |
+| `status` | `stub` — implementation in Phase 1 |
+| `neurotypes` | `[]` (to be set to `["adhd"]` when implemented) |
+
+## Triggers
+
+- Slash command: `/morning-brief` (intended; subject to skill-author finalisation).
+- Semantic match against phrases like *"what should I do today"*, *"morning brief"*.
+
+## MCP dependencies
+
+- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) — `get_time_context()` for the time anchor.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — `recall_decisions(project, since)` and `weekly_rollup()` for overnight changes.
+
+Optional:
+
+- [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) — `next_one(project)` for the "one next action" per active project.
+
+## Profile dependencies
+
+- `preferences.output_format` — shapes the brief layout.
+- `preferences.max_chunk_size` — caps the number of "things that matter today".
+- `chronometric.end_of_day_local` — used for buffer-transition scheduling.
+
+## Acceptance (from `plan.md` §6 user stories)
+
+> `/resume monday` runs in ≤ 5s against a 30-day graph; brief names projects, decisions, one action with confidence > 0.7.
+
+## What's next
+
+- [Run your first skill](/getting-started/first-skill/) — walkthrough that uses this skill.
+- [Write a skill](/contribute/write-a-skill/) if you want to author your own.

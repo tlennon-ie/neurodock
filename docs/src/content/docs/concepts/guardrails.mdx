@@ -1,0 +1,69 @@
+---
+title: Guardrails
+description: The clinical safety layer. Most of it ships in Phase 3. Phase 1 has the consent hooks.
+---
+
+NeuroDock's clinical guardrails detect and intervene on three specific failure modes of unmodified LLM interaction for neurodivergent users: **rumination loops** (OCD), **unregulated hyperfocus** (ADHD), and **sycophancy / over-validation**. All interventions are transparent, user-configured, and overridable. None of them block silently.
+
+After this page you will know what ships in Phase 1, what is deferred to Phase 2 and Phase 3, and how the profile already shapes the runtime behaviour.
+
+## What ships in Phase 1
+
+Phase 1 is **detection alpha-zero**: the profile carries the consent and threshold fields, and one skill (`ocd-decision-finalizer`) uses them. The full `mcp-guardrail` server lands in Phase 2 (rumination only) and Phase 3 (all three detectors).
+
+The Phase 1 profile already exposes:
+
+- `guardrails.rumination_threshold` (default 3)
+- `guardrails.rumination_window_minutes` (default 90)
+- `guardrails.sycophancy_check` (`off | warn | refuse`, default `warn`)
+- `chronometric.hyperfocus_break_minutes` (default 90)
+- `chronometric.end_of_day_local` (optional `HH:MM`)
+
+The `ocd-decision-finalizer` skill reads `sycophancy_check` to decide whether to warn or refuse on repeat-validation requests. Other skills will read these fields as Phase 2 and Phase 3 land.
+
+## The three detectors (Phase 2 and Phase 3)
+
+### Rumination (Phase 2 alpha, Phase 3 release)
+
+Rolling window of recent semantic intents using local embeddings. When N semantically-equivalent queries arrive within the configured window, the detector flags the conversation. `check_rumination` returns a structured signal any skill can respect.
+
+Default: 3 queries within 90 minutes. Configurable per profile. Never blocks silently — always surfaces the reason.
+
+### Hyperfocus (Phase 3)
+
+Uses chronometric data; optionally consents to OS idle status. Escalating interventions:
+
+- **60 minutes** — gentle context inject.
+- **90 minutes** — structured nudge quoting the user's previously-stated end-time verbatim.
+- **120 minutes** — hard surface.
+
+Thresholds are pre-set out of session — consent at setup, not under duress.
+
+### Sycophancy / anti-validation (Phase 3)
+
+Detects:
+
+1. Repeated reassurance requests on the same decision.
+2. Responses skewing toward unconditional agreement on subjective questions.
+
+Injects a counter-prompt instructing the model to ground in prior evidence, name trade-offs honestly, or refuse. The user sees a small marker that the guard fired and why.
+
+## The five guardrail ethics principles
+
+These bind every detector and every intervention. They are the same five published in [Ethics](/ethics/):
+
+1. We never claim to treat any condition.
+2. We never block a user's action without their pre-configured consent.
+3. Detection heuristics are public and auditable.
+4. We do not aggregate detection events into population-level data.
+5. False positives are sometimes harmful; we log when surfaced and adjust with the advisory board.
+
+## Field study gates general release
+
+The guardrail detectors do not leave beta until a 30–50 person field study with ND professionals reports back. We measure: helpfulness, perceived condescension, false-positive rate, and qualitative open-text. Results are published before the detectors are tagged stable.
+
+## What's next
+
+- [Ethics](/ethics/) — the principles that bind every guardrail.
+- [Profile schema](/reference/profile-schema/) — the fields that already exist.
+- [Governance](/contribute/governance/) — the clinical advisory model.

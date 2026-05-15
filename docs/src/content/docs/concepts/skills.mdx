@@ -1,0 +1,56 @@
+---
+title: Skills
+description: A skill is a markdown bundle, not opaque code. Five ship in Phase 1.
+---
+
+A skill is a scoped instruction-and-asset bundle that activates on specific triggers within a Claude-style client. It is **markdown plus frontmatter plus tests**, not compiled code. Anyone who can read a markdown file can read a skill.
+
+After this page you will know what a skill contains, how triggers work, and what the five launch skills do.
+
+## Anatomy of a skill
+
+A skill lives at `packages/skills/<name>/` and ships:
+
+- **`SKILL.md`** — frontmatter (name, description, version, neurotypes, triggers, MCP dependencies, profile dependencies) plus the body that the client activates against.
+- **`tests/`** — at least three example invocations replayed in CI to catch regressions.
+- **Assets** (optional) — diagrams, templates, prompt fragments referenced from the body.
+
+That is the whole contract. There is no compilation step; there is no skill runtime. The client reads `SKILL.md` and follows it.
+
+## How triggers work
+
+A skill's `triggers` block in frontmatter declares the conditions under which the client activates it. Examples:
+
+- A slash command like `/morning-brief`.
+- A semantic match against a phrase like *"what should I do next"*.
+- A signal from another MCP server (e.g. the rumination detector firing).
+
+A trigger is a hint, not a contract. The user's client decides whether to surface the skill. If you want predictable activation, prefer explicit slash commands.
+
+## Profile awareness
+
+Every skill respects the profile. The skill SDK (`@neurodock/skill-sdk` for TS, `neurodock-skill` for Python) exposes a profile-aware formatter so authors do not re-derive the logic for `output_format`, `max_chunk_size`, and `motion`. See [ADR 0004](/decisions/0004-profile/) for the rationale.
+
+If a skill is tagged with a neurotype that the user has not self-identified, the skill does **not** activate. Self-ID gates activation, not access — diagnosis is never required.
+
+## The five launch skills (Phase 1)
+
+| Skill | What it does |
+|---|---|
+| [`adhd-daily-planner`](/reference/skills/adhd-daily-planner/) | Morning brief that pulls overnight changes from the cognitive graph and surfaces 1–3 things that matter today. |
+| [`audhd-context-recovery`](/reference/skills/audhd-context-recovery/) | `/resume` command that reconstructs yesterday's mental state from the cognitive graph. |
+| [`ocd-decision-finalizer`](/reference/skills/ocd-decision-finalizer/) | On repeat-validation requests, enforces a decision-finality response grounded in prior evidence. |
+| [`hyperfocus-formatter`](/reference/skills/hyperfocus-formatter/) | "Answer First" output structure that activates during long sessions when distress signals appear. |
+| [`visual-organizer`](/reference/skills/visual-organizer/) | Generates Mermaid diagrams when textual output is overwhelming or when the user asks for visual organisation. |
+
+The sixth originally planned skill, `asd-meeting-translator`, depends on the translation server and ships in Phase 2.
+
+## Skills do not call LLMs themselves
+
+A skill is content the model reads. It composes MCP tool calls (which the client makes) into a workflow. There is no vendor SDK inside a skill. This is the same vendor-neutrality property the substrate servers enforce.
+
+## What's next
+
+- [Write a skill](/contribute/write-a-skill/) — the contributor walkthrough.
+- [Substrate](/concepts/substrate/) — the MCP servers skills compose.
+- [Profiles](/concepts/profiles/) — what skills read from the user's preferences.

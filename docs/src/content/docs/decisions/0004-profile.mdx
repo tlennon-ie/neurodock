@@ -1,0 +1,48 @@
+---
+title: 0004 — Profile schema design
+description: Why the profile is permissive YAML with forward-compat round-trip preservation.
+---
+
+> **Source:** `docs/decisions/0004-profile-schema-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered and the seventeen binding design decisions.
+
+- **Status:** Proposed
+- **Date:** 2026-05-15
+- **Deciders:** Maintainer council (TBD), `mcp-architect`
+
+## Context
+
+The profile at `~/.neurodock/profile.yaml` is read by every MCP server, every skill, the CLI installer, and the preset bundles in `profiles/`. Three properties make it unusually load-bearing: cross-cutting across Python and TypeScript packages, consent-bearing for three independent gates (`embeddings`, `telemetry`, `os_idle_consent`), and forward-evolving as features land each quarter.
+
+## Decision
+
+Adopt **nested YAML with permissive forward-compat** (`additionalProperties: true` at every nesting level). Loaders accept unknown keys, preserve them on round-trip, and validate known keys strictly. A separate `neurodock profile validate` CLI command surfaces typos.
+
+Alternatives rejected:
+
+- **Flat TOML config** — ecosystem precedent is YAML; TOML's strict typing works against forward-compat.
+- **Nested YAML with strict schema** — breaks every quarter when a new field lands; downgrades silently lose data.
+- **Per-skill configs** — fragments consent across N files; defeats the "Claude that knows me" experience.
+
+## Cross-cutting rules established here
+
+- **Forward compatibility is the central correctness property.** A v0.1 loader reading a v0.2 profile must preserve unknown keys on round-trip.
+- **Defaults are loader-applied, not file-written.** `neurodock init` scaffolds a minimal profile; the loader fills defaults at read time.
+- **Lived-experience-led defaults.** `motion: reduced`, `output_format: answer_first`, `embeddings: local`, `telemetry: off`, `os_idle_consent: false` — all chosen because they are the safer ND-friendly value.
+- **No PII surface.** Email, real name, date of birth do not exist in the schema. Contributors who try to add them face an ADR-level conversation.
+- **`identity` is the only required block.** Every other block is optional; defaults apply.
+- **`extends:` for preset composition.** Single-level only in v0.1; deep chaining deferred to a future RFC.
+- **`audhd` is a first-class identity**, not a derived `["adhd", "asd"]`. The lived experience differs.
+
+## Open questions
+
+The full ADR carries three open questions:
+
+1. How does `extends:` resolve when the named preset is unavailable? (Recommended: warn-and-use-defaults.)
+2. How are schema version mismatches surfaced? (Recommended: one-line stderr notice on first load per session.)
+3. Should `display_name` default from `$USER` at `neurodock init` time? (Recommended: yes — friction reduction.)
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0004-profile-schema-design.md).
+- See the [profile schema reference](/reference/profile-schema/).
+- See the [profile concept page](/concepts/profiles/) for the higher-level picture.
