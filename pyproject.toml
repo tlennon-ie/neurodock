@@ -78,4 +78,5 @@ python_files = ["test_*.py", "*_test.py"]
 addopts = [
     "--strict-markers",
     "--strict-config",
+    "--import-mode=importlib",
 ]
