@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-chronometric/v0.1.0/idle_status.schema.json",
+  "title": "idle_status",
+  "description": "Return the OS-reported idle time and a coarse hyperfocus signal that distinguishes 'user is actively at the keyboard but elsewhere' from 'user has stepped away'. CONSENT-GATED: the OS-idle probe runs only if profile.privacy.os_idle_consent is true; otherwise os_idle_seconds is null and consent_granted is false. This tool MUST never silently sample the OS without consent.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "No inputs. Consent is read from the profile, not passed in, so that callers cannot accidentally bypass the gate.",
+      "additionalProperties": false,
+      "properties": {},
+      "required": []
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os_idle_seconds",
+        "hyperfocus_signal",
+        "consent_granted"
+      ],
+      "properties": {
+        "os_idle_seconds": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Seconds since last OS-level input event (keyboard, mouse). null when consent has not been granted, when the platform exposes no reliable idle probe, or when the probe failed. Callers MUST handle null explicitly and not coerce to 0."
+        },
+        "hyperfocus_signal": {
+          "type": "string",
+          "description": "Coarse interpretation of the idle reading combined with recent prompt activity. 'active' = OS shows recent input and prompts are flowing here (likely hyperfocused in this client). 'switched_away' = OS shows recent input but no recent prompts here (likely hyperfocused in another app). 'unknown' = consent not granted, or insufficient signal.",
+          "enum": ["active", "switched_away", "unknown"]
+        },
+        "consent_granted": {
+          "type": "boolean",
+          "description": "True only when the profile has an explicit, current OS-idle consent flag. Callers SHOULD surface this to the user so a 'switched_away' classification is auditable."
+        },
+        "sampled_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp at which the idle reading was taken. Optional; included when a real OS sample was performed."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "CONSENT_NOT_GRANTED": {
+        "description": "Not returned as an error: instead, the tool returns a successful result with os_idle_seconds=null, hyperfocus_signal='unknown', consent_granted=false. Documented here so callers know consent failures are not exceptional control flow."
+      },
+      "OS_PROBE_UNAVAILABLE": {
+        "description": "Platform does not expose an idle probe (e.g. headless Linux without X/Wayland session). Returned as a successful result with os_idle_seconds=null and hyperfocus_signal='unknown'."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "consent not granted",
+      "input": {},
+      "output": {
+        "os_idle_seconds": null,
+        "hyperfocus_signal": "unknown",
+        "consent_granted": false
+      }
+    },
+    {
+      "name": "consent granted, user actively here",
+      "input": {},
+      "output": {
+        "os_idle_seconds": 4,
+        "hyperfocus_signal": "active",
+        "consent_granted": true,
+        "sampled_at": "2026-05-15T15:08:33+01:00"
+      }
+    },
+    {
+      "name": "consent granted, user active on the machine but not in this client",
+      "input": {},
+      "output": {
+        "os_idle_seconds": 7,
+        "hyperfocus_signal": "switched_away",
+        "consent_granted": true,
+        "sampled_at": "2026-05-15T15:42:01+01:00"
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The hyperfocus_signal enum is deliberately coarse; if richer states are needed they SHOULD be added as additional enum values (additive), not by changing the type. Consent semantics MUST NOT be relaxed without a major bump and council review.",
+    "consent_gate": "The OS-idle probe runs only when profile.privacy.os_idle_consent === true. Consent is configured out-of-session via the setup flow, never under duress mid-task. The server MUST treat absent consent and revoked consent identically.",
+    "side_effects": "None on the user's data store. The OS-level idle query is a read against the operating system, not a mutation.",
+    "idempotency": "Trivially idempotent.",
+    "privacy": "OS idle data is highly sensitive — it reveals presence and inattention. This server MUST NOT log raw idle samples to disk beyond an ephemeral in-memory window; MUST NOT transmit idle data off-device; MUST surface consent state in every response so consumers cannot accidentally treat 'unknown' as 'present'."
+  }
+}

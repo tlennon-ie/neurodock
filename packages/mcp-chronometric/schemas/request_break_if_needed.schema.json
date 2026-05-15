@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-chronometric/v0.1.0/request_break_if_needed.schema.json",
+  "title": "request_break_if_needed",
+  "description": "Check whether the current session has run past a threshold and, if so, return the elapsed duration, the user's original stated intent, and a suggested action. Returns null when no break is warranted. Designed to be called repeatedly without producing noise.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["threshold_minutes"],
+      "properties": {
+        "threshold_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 480,
+          "description": "Minutes after which a break should be suggested. Callers SHOULD source this from the user's profile (chronometric.hyperfocus_break_minutes) rather than hardcoding. Range 1-480 prevents accidentally-disabled checks and meaningless 8h+ thresholds.",
+          "examples": [60, 90, 120]
+        }
+      }
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "null",
+          "description": "Returned when there is no open session, or the open session has not yet reached the threshold. Callers MUST handle null."
+        },
+        {
+          "type": "object",
+          "description": "Returned when a break is warranted.",
+          "additionalProperties": false,
+          "required": ["elapsed", "prior_intent", "suggested_action"],
+          "properties": {
+            "elapsed": {
+              "type": "string",
+              "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+              "description": "ISO 8601 duration the current session has been open."
+            },
+            "prior_intent": {
+              "type": "string",
+              "description": "The user's verbatim stated intent from mark_session_start. Surfaced so nudges can quote the user back to themselves rather than scolding them."
+            },
+            "suggested_action": {
+              "type": "string",
+              "description": "A coarse-grained suggested next action. Skills are free to ignore or rephrase; the enum exists to keep suggestions consistent across the substrate.",
+              "enum": [
+                "stand_and_stretch",
+                "hydrate",
+                "walk_outside",
+                "switch_context",
+                "end_session"
+              ]
+            },
+            "threshold_minutes": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Echo of the threshold that triggered this response, for debugging."
+            }
+          }
+        }
+      ]
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "THRESHOLD_OUT_OF_RANGE": {
+        "description": "threshold_minutes was outside the 1-480 allowed range."
+      },
+      "THRESHOLD_REQUIRED": {
+        "description": "threshold_minutes was missing. There is intentionally no default; callers must declare intent."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "session is under threshold",
+      "input": { "threshold_minutes": 90 },
+      "output": null
+    },
+    {
+      "name": "session has exceeded a 90-minute hyperfocus threshold",
+      "input": { "threshold_minutes": 90 },
+      "output": {
+        "elapsed": "PT1H47M12S",
+        "prior_intent": "finish draft RFC reply",
+        "suggested_action": "stand_and_stretch",
+        "threshold_minutes": 90
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The suggested_action enum may grow (additive) but values MUST NOT be renamed or removed without a major bump. Callers MUST treat unknown enum values defensively (treat as 'switch_context').",
+    "side_effects": "None. Pure read. Does not record that the break was suggested — that is a deliberate separation of concerns; skills that surface the suggestion should themselves log it if desired.",
+    "idempotency": "Trivially idempotent.",
+    "privacy": "Reads local session state only. No remote calls."
+  }
+}

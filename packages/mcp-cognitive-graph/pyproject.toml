@@ -1,0 +1,16 @@
+[project]
+name = "neurodock-mcp-cognitive-graph"
+version = "0.0.0"
+description = "NeuroDock cognitive graph MCP server — persistent entity memory and vector recall."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "NeuroDock contributors" }]
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neurodock_mcp_cognitive_graph"]
