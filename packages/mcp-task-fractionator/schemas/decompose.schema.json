@@ -1,0 +1,272 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-task-fractionator/v0.1.0/decompose.schema.json",
+  "title": "decompose",
+  "description": "Break a vague goal into a small ordered list of atomic 5-90 minute tasks with explicit acceptance criteria and dependency edges. Stateless: the server returns the task list but does NOT persist it; the caller is responsible for writing the result to mcp-cognitive-graph if persistence is desired. Returns a tasks array and a one-paragraph rationale.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["goal"],
+      "properties": {
+        "goal": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 500,
+          "description": "Plain-language statement of the goal to decompose. Treated as private user data — never logged, never transmitted. 5 character minimum prevents accidental empty-trigger calls; 500 character maximum keeps the goal scoped to a single intent (longer inputs are themselves a hyperfocus signal and SHOULD be broken up by the caller before invoking this tool).",
+          "examples": [
+            "ship the founding-scope RFC by Friday",
+            "fix the chronometric idle-status consent bug",
+            "set up the monorepo scaffold with green CI from commit one"
+          ]
+        },
+        "time_budget": {
+          "type": "string",
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+          "description": "Optional ISO 8601 duration capping total estimated_minutes across the returned tasks. Examples: 'PT4H' (four hours), 'P3D' (three days, treated as 3 working blocks of profile-declared hours), 'PT30M' (thirty minutes). When absent the server returns the smallest credible set of atomic tasks that fully covers the goal — 'unbounded' does NOT mean 'maximally decomposed'. When present, total estimated_minutes across returned tasks MUST fit within the budget; if the server cannot construct such a list it returns BUDGET_INFEASIBLE rather than silently truncating.",
+          "examples": ["PT4H", "P3D", "PT30M", "PT2H30M"]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tasks", "rationale"],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "description": "Ordered list of atomic tasks. Target count is 3-12 ('goblin-style' per plan.md §6 — each task small enough that an ADHD-prone user can pick it up cold). Hard cap is 20; goals that need more decomposition are signals to split the goal itself.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "title",
+              "description",
+              "estimated_minutes",
+              "acceptance_criteria",
+              "dependencies",
+              "sequence",
+              "tags"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+                "description": "UUIDv4 identifier. Server-generated, unique within this response. Stable identifiers let dependencies reference siblings unambiguously and let the caller persist edges into mcp-cognitive-graph as facts with predicate='depends_on'.",
+                "examples": ["c1e4d2a8-7b3f-4f9a-9c1e-2d3a4b5c6d7e"]
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120,
+                "description": "Short verb-led label for the task. Read in under two seconds. Examples: 'Draft the manifesto section'; 'Open the RFC issue on GitHub'."
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000,
+                "description": "Concrete what-to-do narrative. Names files, commands, or artefacts where possible. Avoids abstract verbs like 'consider' or 'think about' — those are not atomic actions."
+              },
+              "estimated_minutes": {
+                "type": "integer",
+                "minimum": 5,
+                "maximum": 90,
+                "description": "Estimated minutes to complete. Floor of 5 prevents trivial-shred decomposition; ceiling of 90 enforces atomicity — anything longer is a goal, not a task. Server SHOULD round to multiples of 5 for legibility."
+              },
+              "acceptance_criteria": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 240
+                },
+                "description": "Explicit done-conditions, observable from outside the user's head. Required (minimum one) — ADHD-prone users need explicit done-conditions to avoid open-loop drift. Empty arrays are rejected (ACCEPTANCE_CRITERIA_REQUIRED). Each criterion is a single testable statement, not a checklist of sub-tasks."
+              },
+              "dependencies": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+                },
+                "uniqueItems": true,
+                "description": "UUIDv4 references to other tasks in the same response that MUST complete before this one begins. Cross-response dependencies are not modelled here — they belong in mcp-cognitive-graph. Cycles are rejected at server boundary (DEPENDENCY_CYCLE). Empty array is the common case."
+              },
+              "sequence": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "1-indexed total order. Distinct for every task in the response — parallel tasks at the same topological depth still get distinct sequence numbers (server breaks ties; callers MAY re-order client-side). This makes 'the next one' trivially defined as sequence=1 of the unfinished subset."
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 40
+                },
+                "uniqueItems": true,
+                "description": "Free-form short labels for filtering ('writing', 'research', 'low-energy', 'blocked-on-other'). Empty array allowed. Tags are not validated against a vocabulary — that would couple this server to skill-specific concepts and is rejected by the manifesto's composability principle."
+              }
+            }
+          }
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One paragraph the user can read in 5 seconds explaining how the goal was carved. Surfaces assumptions ('I assumed Friday meant end-of-business Friday in your local timezone') so the user can correct them on the next call. NOT a marketing summary."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "description": "Structured error codes this tool may return.",
+    "properties": {
+      "GOAL_REQUIRED": {
+        "description": "The goal argument was missing or shorter than 5 characters after trimming."
+      },
+      "GOAL_TOO_LONG": {
+        "description": "Goal exceeded 500 characters. Encourage the caller to split the goal itself; an over-long goal is a decomposition opportunity at the wrong layer."
+      },
+      "TIME_BUDGET_UNPARSEABLE": {
+        "description": "time_budget did not match the ISO 8601 duration regex. The server does NOT silently fall back to unbounded — that would mask the caller's bug."
+      },
+      "BUDGET_INFEASIBLE": {
+        "description": "The server could not construct any task list with total estimated_minutes <= time_budget that also covers the goal. Caller SHOULD retry with a larger budget or a smaller goal. Error payload MAY include a 'minimum_feasible_minutes' integer to guide the retry."
+      },
+      "DEPENDENCY_CYCLE": {
+        "description": "The candidate decomposition produced a cyclic dependency graph. This is a server bug, surfaced as an error rather than silently broken. Callers SHOULD retry once; persistent cycles SHOULD be reported as an issue."
+      },
+      "ACCEPTANCE_CRITERIA_REQUIRED": {
+        "description": "An internal candidate task had zero acceptance criteria. This is a server-side correctness invariant; callers cannot trigger it directly."
+      },
+      "DECOMPOSITION_UNAVAILABLE": {
+        "description": "The local heuristic engine could not produce a credible decomposition for this goal (typically because the goal is too vague). The error payload SHOULD include a 'clarifying_question' string the caller can surface to the user. See ADR 0003 open questions."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "decomposing the founding-scope RFC with a 4-hour budget",
+      "input": {
+        "goal": "ship the founding-scope RFC by Friday",
+        "time_budget": "PT4H"
+      },
+      "output": {
+        "tasks": [
+          {
+            "id": "c1e4d2a8-7b3f-4f9a-9c1e-2d3a4b5c6d7e",
+            "title": "Draft the manifesto five-principles section",
+            "description": "Write the five-principles block of MANIFESTO.md in the repo root. Use the exact wording from plan.md §1.",
+            "estimated_minutes": 45,
+            "acceptance_criteria": [
+              "MANIFESTO.md exists at repo root",
+              "All five principles are present, each with a single sentence rationale",
+              "The file passes the project's markdown lint config"
+            ],
+            "dependencies": [],
+            "sequence": 1,
+            "tags": ["writing", "governance"]
+          },
+          {
+            "id": "d2f5e3b9-8c4f-4f9b-9d2f-3e4b5c6d7e8f",
+            "title": "Open the founding-scope RFC issue on GitHub",
+            "description": "Create a GitHub issue titled 'RFC: founding scope' that links to MANIFESTO.md and plan.md and tags the founding contributors.",
+            "estimated_minutes": 15,
+            "acceptance_criteria": [
+              "Issue is open and visible on the public repo",
+              "Issue body links to MANIFESTO.md by permalink",
+              "At least one founding contributor is @-mentioned"
+            ],
+            "dependencies": ["c1e4d2a8-7b3f-4f9a-9c1e-2d3a4b5c6d7e"],
+            "sequence": 2,
+            "tags": ["coordination"]
+          },
+          {
+            "id": "e3a6f4ca-9d5a-4f9c-9e3a-4f5c6d7e8f90",
+            "title": "Send personal outreach to four named maintainers",
+            "description": "Email ravila4, nextor2k, assafkip, JackReis individually. Invitation, not announcement. Each email references their specific project.",
+            "estimated_minutes": 60,
+            "acceptance_criteria": [
+              "Four distinct emails sent",
+              "Each email names the recipient's project specifically",
+              "Each email links to the RFC issue"
+            ],
+            "dependencies": ["d2f5e3b9-8c4f-4f9b-9d2f-3e4b5c6d7e8f"],
+            "sequence": 3,
+            "tags": ["coordination", "writing"]
+          }
+        ],
+        "rationale": "Carved into three sequential tasks because the RFC issue depends on a manifesto draft existing, and the outreach depends on having a public artefact to link to. I assumed 'Friday' means end-of-business Friday in your local timezone; total estimate 120 minutes leaves headroom inside the 4-hour budget for revision."
+      }
+    },
+    {
+      "name": "decomposing a small bug fix with no budget",
+      "input": {
+        "goal": "fix the chronometric idle-status consent bug"
+      },
+      "output": {
+        "tasks": [
+          {
+            "id": "11111111-aaaa-4bbb-8ccc-111111111111",
+            "title": "Reproduce the consent bypass with a failing test",
+            "description": "Write a pytest case in packages/mcp-chronometric/tests/ that calls idle_status() with profile.privacy.os_idle_consent unset and asserts consent_granted=false. Run it; confirm it fails on main.",
+            "estimated_minutes": 30,
+            "acceptance_criteria": [
+              "Test file exists and is picked up by pytest",
+              "Test asserts consent_granted=false when profile flag is unset",
+              "Test fails on current main"
+            ],
+            "dependencies": [],
+            "sequence": 1,
+            "tags": ["testing", "tdd"]
+          },
+          {
+            "id": "22222222-aaaa-4bbb-8ccc-222222222222",
+            "title": "Fix the consent gate in idle_status implementation",
+            "description": "In packages/mcp-chronometric/src/, gate the OS-idle probe behind an explicit profile.privacy.os_idle_consent==true check. Default to consent_granted=false. Match the schema in idle_status.schema.json exactly.",
+            "estimated_minutes": 25,
+            "acceptance_criteria": [
+              "Reproduction test from previous task now passes",
+              "No existing tests regress",
+              "The OS probe code path is guarded by an explicit consent check"
+            ],
+            "dependencies": ["11111111-aaaa-4bbb-8ccc-111111111111"],
+            "sequence": 2,
+            "tags": ["bugfix"]
+          },
+          {
+            "id": "33333333-aaaa-4bbb-8ccc-333333333333",
+            "title": "Add a structured log line when consent is missing",
+            "description": "When idle_status is called without consent, emit a single structured log line at info level. Format: {event: 'idle_consent_missing', session_id?: str}. Per ADR 0001 open question 2.",
+            "estimated_minutes": 15,
+            "acceptance_criteria": [
+              "Log line appears once per call with missing consent",
+              "Log payload is valid JSON",
+              "Log level is info, not warn"
+            ],
+            "dependencies": ["22222222-aaaa-4bbb-8ccc-222222222222"],
+            "sequence": 3,
+            "tags": ["bugfix", "observability"]
+          }
+        ],
+        "rationale": "Three tasks in TDD order: failing test first, fix second, observability third. No time_budget given, so I returned the smallest credible set rather than maximally subdividing. The log-line task is separable because ADR 0001 explicitly tracks it as a follow-up, not a blocker."
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional output fields MAY be appended to Task or to the top-level response; existing fields MUST NOT change type, name, or semantics. The 5-90 minute estimated_minutes range, the 1-20 task count range, and the requirement that acceptance_criteria be non-empty are all part of the contract and changing them is a major bump.",
+    "side_effects": "None. This tool is stateless: it returns a task list but does NOT persist it. Callers that want persistence MUST write the tasks to mcp-cognitive-graph (typically as facts with predicate='depends_on' for edges and a project-scoped entity for the goal itself).",
+    "idempotency": "Not strictly idempotent: a v0.1.0 server using local heuristics MAY return slightly different task lists on repeated calls with identical input (e.g. different UUIDs, possibly different rationale phrasing). The shape and count of tasks SHOULD be stable for the same input within a single server process.",
+    "privacy": "Goal text and time_budget are treated as private user data. Server processing is fully local: no remote calls, no LLM calls from inside the server (the user's MCP client is the LLM boundary). Goal text is NEVER logged. See ADR 0003 for the rationale and for the v0.2 'decompose_with_assist' path that would accept an LLM-drafted decomposition as input."
+  }
+}

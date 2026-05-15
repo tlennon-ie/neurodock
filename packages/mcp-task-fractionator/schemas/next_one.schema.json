@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-task-fractionator/v0.1.0/next_one.schema.json",
+  "title": "next_one",
+  "description": "Return exactly one task for the given project — the single thing the user should do next — with a short reasoning paragraph and the server's stated confidence. Reads pending tasks from mcp-cognitive-graph for the named project; errors with NO_TASKS_AVAILABLE when nothing is decomposed under that project key. Designed for ADHD-prone callers who need a single answer, not a menu.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project"],
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Project name. Matches a project entity name in mcp-cognitive-graph if present; otherwise treated as a free-form bucket key. Case-sensitive match — callers SHOULD normalise before invoking (the server does NOT do fuzzy matching, to avoid silently returning the wrong project's tasks).",
+          "examples": [
+            "neurodock",
+            "mcp-chronometric",
+            "founding-scope-rfc"
+          ]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "reasoning", "confidence"],
+      "properties": {
+        "task": {
+          "type": "object",
+          "description": "Exactly one task. Same shape as the items in decompose.schema.json's tasks array, repeated here so this schema is self-contained.",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "title",
+            "description",
+            "estimated_minutes",
+            "acceptance_criteria",
+            "dependencies",
+            "sequence",
+            "tags"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+              "description": "UUIDv4 identifier. Stable across calls (same task returned next time if still incomplete)."
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120,
+              "description": "Short verb-led label."
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "description": "Concrete what-to-do narrative."
+            },
+            "estimated_minutes": {
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 90,
+              "description": "Estimated minutes to complete."
+            },
+            "acceptance_criteria": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 240
+              },
+              "description": "Explicit done-conditions. Always at least one."
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+              },
+              "uniqueItems": true,
+              "description": "Dependency ids. For a 'next' task these are by definition already complete (or this would not be the next one)."
+            },
+            "sequence": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-indexed sequence number from the original decompose call."
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 40
+              },
+              "uniqueItems": true,
+              "description": "Free-form short labels."
+            }
+          }
+        },
+        "reasoning": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600,
+          "description": "One paragraph the user can read in 5 seconds explaining why this task and not another. Names the prior task that unblocked it, or the project state that made it the right pick. NOT marketing copy."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Server's stated confidence that this is the right single next thing. 1.0 means 'unblocked, sequence=1, no ambiguity'. Lower values surface when multiple tasks are equally plausible (parallel branches), when staleness is high, or when the project has no decomposition history to ground the choice. Callers SHOULD surface low-confidence answers to the user rather than acting silently."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "description": "Structured error codes this tool may return.",
+    "properties": {
+      "PROJECT_REQUIRED": {
+        "description": "The project argument was missing or empty after trimming."
+      },
+      "NO_TASKS_AVAILABLE": {
+        "description": "No pending tasks exist for the named project. Either nothing has been decomposed under this project key, or every decomposed task is already marked complete. Callers SHOULD prompt the user to run decompose first, or to acknowledge the project is done."
+      },
+      "ALL_TASKS_BLOCKED": {
+        "description": "Tasks exist but every one of them has unmet dependencies — typically because dependency tasks live in another project, or because a non-task entity is being treated as a task. Error payload SHOULD name one blocked task and its blockers."
+      },
+      "COGNITIVE_GRAPH_UNAVAILABLE": {
+        "description": "mcp-cognitive-graph could not be reached. This tool depends on it for task state; without it there is no truthful answer to give. Returned as an error rather than a silent fallback."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "next task on the founding-scope RFC, fully unblocked",
+      "input": { "project": "founding-scope-rfc" },
+      "output": {
+        "task": {
+          "id": "c1e4d2a8-7b3f-4f9a-9c1e-2d3a4b5c6d7e",
+          "title": "Draft the manifesto five-principles section",
+          "description": "Write the five-principles block of MANIFESTO.md in the repo root. Use the exact wording from plan.md §1.",
+          "estimated_minutes": 45,
+          "acceptance_criteria": [
+            "MANIFESTO.md exists at repo root",
+            "All five principles are present, each with a single sentence rationale",
+            "The file passes the project's markdown lint config"
+          ],
+          "dependencies": [],
+          "sequence": 1,
+          "tags": ["writing", "governance"]
+        },
+        "reasoning": "Sequence 1 with no dependencies and nothing else in the project marked in-progress. This is the unambiguous starting point for the RFC; everything else in the decomposition depends on a manifesto draft existing.",
+        "confidence": 0.95
+      }
+    },
+    {
+      "name": "next task on the chronometric bug fix, mid-flight",
+      "input": { "project": "mcp-chronometric" },
+      "output": {
+        "task": {
+          "id": "22222222-aaaa-4bbb-8ccc-222222222222",
+          "title": "Fix the consent gate in idle_status implementation",
+          "description": "In packages/mcp-chronometric/src/, gate the OS-idle probe behind an explicit profile.privacy.os_idle_consent==true check. Default to consent_granted=false. Match the schema in idle_status.schema.json exactly.",
+          "estimated_minutes": 25,
+          "acceptance_criteria": [
+            "Reproduction test from previous task now passes",
+            "No existing tests regress",
+            "The OS probe code path is guarded by an explicit consent check"
+          ],
+          "dependencies": ["11111111-aaaa-4bbb-8ccc-111111111111"],
+          "sequence": 2,
+          "tags": ["bugfix"]
+        },
+        "reasoning": "The reproduction test (sequence 1) is marked complete in the cognitive graph, which unblocks this task. The observability follow-up at sequence 3 still depends on this one, so this is the unique next step.",
+        "confidence": 0.88
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The contract that EXACTLY ONE task is returned is part of the contract — a future 'next_few' tool would be a new tool, not a parameter on this one (this server explicitly refuses the 'convenience parameter that mixes concepts' failure mode). New optional output fields on task or top-level MAY be appended.",
+    "side_effects": "None directly. Pure read against mcp-cognitive-graph. Does NOT mark the returned task as in-progress — that is the caller's responsibility (typically via record_fact in mcp-cognitive-graph with predicate='started_at'). This separation is deliberate: a user can ask 'what's next?' without committing to start.",
+    "idempotency": "Idempotent for the same graph state. Repeated calls return the same task until the underlying graph changes.",
+    "privacy": "Reads from mcp-cognitive-graph (local SQLite + sqlite-vec). No remote calls. Project name and reasoning are private user data and are never logged."
+  }
+}
