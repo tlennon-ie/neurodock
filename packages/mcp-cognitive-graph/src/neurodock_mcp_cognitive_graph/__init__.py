@@ -1,3 +1,46 @@
-"""NeuroDock cognitive graph MCP server — Phase 0 stub."""
+"""NeuroDock cognitive graph MCP server.
 
-__version__ = "0.0.0"
+Persistent entity memory and recall, exposed as an MCP server. Implements the
+four tools defined in `plan.md` Section 6 and the schemas under
+`packages/mcp-cognitive-graph/schemas/`:
+
+- ``recall_entity`` — alias-resolve a name and return entity + facts + neighbours.
+- ``record_fact``  — persist a typed-edge (subject, predicate, object) fact.
+- ``recall_decisions`` — list decisions for a project, optionally since-filtered.
+- ``weekly_rollup`` — local-template activity summary over the trailing 7 days.
+
+The substrate is local-first: SQLite-backed storage at
+``~/.neurodock/cognitive-graph.sqlite`` by default, overridable via the
+``NEURODOCK_GRAPH_DB_PATH`` environment variable. No network access; embeddings
+and vector recall are deferred to v0.0.2.
+"""
+
+from neurodock_mcp_cognitive_graph.types import (
+    Decision,
+    EntityRecord,
+    EntityRef,
+    Fact,
+    LiteralValue,
+    RecallDecisionsResult,
+    RecallEntityResult,
+    RecordFactResult,
+    WeeklyRollupResult,
+)
+
+# Backwards-compatible re-export name.
+LiteralObject = LiteralValue
+
+__version__ = "0.0.1"
+
+__all__ = [
+    "Decision",
+    "EntityRecord",
+    "EntityRef",
+    "Fact",
+    "LiteralObject",
+    "RecallDecisionsResult",
+    "RecallEntityResult",
+    "RecordFactResult",
+    "WeeklyRollupResult",
+    "__version__",
+]
