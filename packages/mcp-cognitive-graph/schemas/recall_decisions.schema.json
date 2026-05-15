@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-cognitive-graph/v0.1.0/recall_decisions.schema.json",
+  "title": "recall_decisions",
+  "description": "Return decisions recorded against a named project, ordered by date descending, optionally filtered by an ISO 8601 since-date. A decision is any fact whose predicate is decided_in OR whose subject has type=decision. Capped at 200 items; older results are truncated and signalled.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project"],
+      "properties": {
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Project name or alias. Alias-resolved the same way as recall_entity. The project entity is the scope for which decisions are returned.",
+          "examples": ["neurodock", "kipi-system", "Phase 0 RFC"]
+        },
+        "since": {
+          "type": "string",
+          "format": "date",
+          "description": "Optional ISO 8601 calendar date. When present, only decisions on or after this date are returned. Date-only (no time) to keep the semantics local-day rather than instant-of-time.",
+          "examples": ["2026-05-01", "2026-01-01"]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "decisions", "truncated"],
+      "properties": {
+        "project": {
+          "type": ["object", "null"],
+          "description": "The resolved project entity, or null if no project entity matched. When null, decisions is always empty.",
+          "additionalProperties": false,
+          "required": ["id", "name"],
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "description": "Decisions ordered by date descending (newest first). Empty when the project has no decisions or the project itself did not resolve.",
+          "maxItems": 200,
+          "items": { "$ref": "#/$defs/Decision" }
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "True when more than 200 decisions matched and the older tail was dropped. Pagination is reserved for a future minor version.",
+          "default": false
+        },
+        "since": {
+          "type": ["string", "null"],
+          "format": "date",
+          "description": "Echoes the since filter as applied, or null if no filter was provided."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "PROJECT_REQUIRED": {
+        "description": "The project argument was missing or empty."
+      },
+      "SINCE_INVALID": {
+        "description": "since was provided but is not a valid ISO 8601 calendar date (YYYY-MM-DD)."
+      },
+      "GRAPH_UNAVAILABLE": {
+        "description": "The local SQLite store could not be opened or is corrupted."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "all decisions for a project, no since filter",
+      "input": { "project": "neurodock" },
+      "output": {
+        "project": { "id": "ent_01HZPRJNEURODOCK", "name": "neurodock" },
+        "decisions": [
+          {
+            "id": "ent_01HZDEC0002",
+            "name": "Ship rumination detector first; defer hyperfocus and sycophancy to Phase 3",
+            "decided_on": "2026-05-14",
+            "decided_by": [
+              { "type": "person", "id": "ent_01HZPERSPRIYA", "name": "Priya" }
+            ],
+            "source": "https://github.com/neurodock/neurodock/issues/118",
+            "confidence": 1.0,
+            "supersedes": null
+          },
+          {
+            "id": "ent_01HZDEC0001",
+            "name": "Adopt SQLite + sqlite-vec",
+            "decided_on": "2026-04-22",
+            "decided_by": [
+              { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" }
+            ],
+            "source": "msg://slack/C123/p1715683200000100",
+            "confidence": 1.0,
+            "supersedes": null
+          }
+        ],
+        "truncated": false,
+        "since": null
+      }
+    },
+    {
+      "name": "filtered by since=2026-05-01",
+      "input": { "project": "neurodock", "since": "2026-05-01" },
+      "output": {
+        "project": { "id": "ent_01HZPRJNEURODOCK", "name": "neurodock" },
+        "decisions": [
+          {
+            "id": "ent_01HZDEC0002",
+            "name": "Ship rumination detector first; defer hyperfocus and sycophancy to Phase 3",
+            "decided_on": "2026-05-14",
+            "decided_by": [
+              { "type": "person", "id": "ent_01HZPERSPRIYA", "name": "Priya" }
+            ],
+            "source": "https://github.com/neurodock/neurodock/issues/118",
+            "confidence": 1.0,
+            "supersedes": null
+          }
+        ],
+        "truncated": false,
+        "since": "2026-05-01"
+      }
+    },
+    {
+      "name": "project not found",
+      "input": { "project": "Zephyrine Quetzalcoatl Project" },
+      "output": {
+        "project": null,
+        "decisions": [],
+        "truncated": false,
+        "since": null
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional output fields MAY be appended. Pagination tokens are reserved for a future minor version; until then, the 200-item cap and truncated flag are the contract. Renaming or retyping any field requires a new major version with a parallel $id.",
+    "side_effects": "None. Pure read.",
+    "idempotency": "Trivially idempotent.",
+    "privacy": "Reads the local SQLite cognitive graph. No remote calls. Source strings on decisions are returned verbatim and never fetched."
+  },
+  "$defs": {
+    "Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "decided_on", "decided_by", "confidence"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Canonical id for the decision entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable decision title."
+        },
+        "decided_on": {
+          "type": "string",
+          "format": "date",
+          "description": "Local calendar date on which the decision was recorded. Date-only to match the since filter semantics.",
+          "examples": ["2026-04-22", "2026-05-14"]
+        },
+        "decided_by": {
+          "type": "array",
+          "description": "People (or other entities) credited with the decision via decided_in facts. May be empty when the decision was recorded without an attributed subject.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "id", "name"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["person", "project", "decision", "concept", "source"]
+              },
+              "id": { "type": "string" },
+              "name": { "type": "string" }
+            }
+          }
+        },
+        "source": {
+          "type": ["string", "null"],
+          "description": "Free-text origin (URL, message id, transcript citation). Stored verbatim; never fetched."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Declared confidence in the decision at recording time."
+        },
+        "supersedes": {
+          "type": ["string", "null"],
+          "description": "Id of a prior decision this one supersedes, or null. Reserved for a future minor version to support decision-history chains; v0.1.0 always returns null."
+        }
+      }
+    }
+  }
+}

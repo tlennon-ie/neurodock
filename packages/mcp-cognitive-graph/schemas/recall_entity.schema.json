@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-cognitive-graph/v0.1.0/recall_entity.schema.json",
+  "title": "recall_entity",
+  "description": "Look up everything the cognitive graph knows about a named person, project, decision, or concept and return the entity, its facts (most recent first), and its first-degree related entities. Alias-resolves the input via exact, fuzzy, and embedding-similarity matches; ordering and limits are server-side so callers do not have to sort.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name_or_alias"],
+      "properties": {
+        "name_or_alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Display name, canonical id, or any known alias for the entity. Resolved server-side; the caller does not need to know which form is canonical.",
+          "examples": ["Roberto", "kipi-system", "Phase 0 RFC"]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity", "facts", "related_entities"],
+      "properties": {
+        "entity": {
+          "type": ["object", "null"],
+          "description": "The resolved entity record, or null when no match crosses the alias-resolution threshold. Skills MUST handle the null case rather than treating it as an error.",
+          "additionalProperties": false,
+          "required": ["id", "type", "name"],
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Stable canonical id for the entity. Opaque to callers; do not parse.",
+              "examples": ["ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2"]
+            },
+            "type": {
+              "type": "string",
+              "description": "Entity type from the v0.1.0 taxonomy. Extensible via type_extensions in v0.2.",
+              "enum": ["person", "project", "decision", "concept", "source"]
+            },
+            "name": {
+              "type": "string",
+              "description": "Canonical display name as stored.",
+              "examples": ["Roberto", "kipi-system", "Phase 0 RFC"]
+            },
+            "aliases": {
+              "type": "array",
+              "description": "Other names by which this entity is known. Used by alias-resolution on subsequent recalls.",
+              "items": { "type": "string" },
+              "examples": [["R.", "Rob"], ["kipi", "Kipi System"]]
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "ISO 8601 timestamp with timezone offset for when this entity was first recorded."
+            }
+          }
+        },
+        "facts": {
+          "type": "array",
+          "description": "All facts whose subject OR object is this entity, ordered by recency (most recent first). Empty array when the entity exists but has no facts. Hard cap of 500 items per call; truncation is signalled by truncated_facts.",
+          "items": { "$ref": "#/$defs/Fact" }
+        },
+        "related_entities": {
+          "type": "array",
+          "description": "First-degree neighbours connected to this entity by at least one fact, ordered by co-occurrence count descending. Capped at 20 to keep responses scannable.",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "name", "co_occurrence_count"],
+            "properties": {
+              "id": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["person", "project", "decision", "concept", "source"]
+              },
+              "name": { "type": "string" },
+              "co_occurrence_count": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "Number of facts that link this neighbour to the queried entity."
+              }
+            }
+          }
+        },
+        "resolution": {
+          "type": "object",
+          "description": "Diagnostic information about how the input was resolved. Optional for callers but useful for skills that want to surface 'I think you meant X' to the user.",
+          "additionalProperties": false,
+          "required": ["method", "score"],
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["exact", "alias", "fuzzy", "embedding", "none"],
+              "description": "How the entity was matched. 'none' when entity is null."
+            },
+            "score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confidence in the match on a 0..1 scale. 1.0 for exact matches; lower for fuzzy/embedding."
+            }
+          }
+        },
+        "truncated_facts": {
+          "type": "boolean",
+          "description": "True if more than 500 facts existed and the response was truncated. Callers can paginate in a future minor version; v0.1.0 surfaces only the flag.",
+          "default": false
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "NAME_OR_ALIAS_REQUIRED": {
+        "description": "The name_or_alias argument was missing or empty after trimming."
+      },
+      "NAME_OR_ALIAS_TOO_LONG": {
+        "description": "Exceeded 200 characters. Long inputs are almost always a sign of pasted text rather than a name; ask the caller to extract the entity first."
+      },
+      "GRAPH_UNAVAILABLE": {
+        "description": "The local SQLite store could not be opened or is corrupted. Surface this rather than silently returning null; corruption requires user action."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "exact-match recall of a person",
+      "input": { "name_or_alias": "Roberto" },
+      "output": {
+        "entity": {
+          "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2",
+          "type": "person",
+          "name": "Roberto",
+          "aliases": ["R.", "Rob"],
+          "created_at": "2026-03-02T10:11:00+01:00"
+        },
+        "facts": [
+          {
+            "id": "fact_01HZ0AABBCCDDEEFFGGHHJJKKLL",
+            "subject": { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" },
+            "predicate": "decided_in",
+            "object": { "type": "decision", "id": "ent_01HZDEC0001", "name": "Adopt SQLite + sqlite-vec" },
+            "source": "msg://slack/C123/p1715683200000100",
+            "confidence": 1.0,
+            "recorded_at": "2026-05-14T16:42:00+01:00"
+          },
+          {
+            "id": "fact_01HY9ZZYYXXWWVVUUTTSSRRQQPP",
+            "subject": { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" },
+            "predicate": "reports_to",
+            "object": { "type": "person", "id": "ent_01HY0BOSS", "name": "Priya" },
+            "source": null,
+            "confidence": 0.9,
+            "recorded_at": "2026-03-02T10:11:00+01:00"
+          }
+        ],
+        "related_entities": [
+          {
+            "id": "ent_01HZDEC0001",
+            "type": "decision",
+            "name": "Adopt SQLite + sqlite-vec",
+            "co_occurrence_count": 4
+          },
+          {
+            "id": "ent_01HY0BOSS",
+            "type": "person",
+            "name": "Priya",
+            "co_occurrence_count": 2
+          }
+        ],
+        "resolution": { "method": "exact", "score": 1.0 },
+        "truncated_facts": false
+      }
+    },
+    {
+      "name": "fuzzy match on a project alias",
+      "input": { "name_or_alias": "kipi" },
+      "output": {
+        "entity": {
+          "id": "ent_01HZPRJKIPISYSTEM",
+          "type": "project",
+          "name": "kipi-system",
+          "aliases": ["kipi", "Kipi System"],
+          "created_at": "2026-02-18T09:00:00+01:00"
+        },
+        "facts": [
+          {
+            "id": "fact_01HZKIPI001",
+            "subject": { "type": "project", "id": "ent_01HZPRJKIPISYSTEM", "name": "kipi-system" },
+            "predicate": "depends_on",
+            "object": { "type": "concept", "id": "ent_01HZCONCEPTSQLITEVEC", "name": "sqlite-vec" },
+            "source": "https://github.com/assafkip/kipi-system",
+            "confidence": 1.0,
+            "recorded_at": "2026-04-10T12:00:00+01:00"
+          }
+        ],
+        "related_entities": [
+          {
+            "id": "ent_01HZCONCEPTSQLITEVEC",
+            "type": "concept",
+            "name": "sqlite-vec",
+            "co_occurrence_count": 3
+          }
+        ],
+        "resolution": { "method": "alias", "score": 0.97 },
+        "truncated_facts": false
+      }
+    },
+    {
+      "name": "no match",
+      "input": { "name_or_alias": "Zephyrine Quetzalcoatl" },
+      "output": {
+        "entity": null,
+        "facts": [],
+        "related_entities": [],
+        "resolution": { "method": "none", "score": 0.0 },
+        "truncated_facts": false
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional output fields MAY be appended; new entity types and predicates MAY be added under the v0.2 type_extensions mechanism. Renaming or retyping any field, or removing an enum value, requires a new major version with a parallel $id.",
+    "side_effects": "None. Pure read; alias-resolution updates no state.",
+    "idempotency": "Trivially idempotent.",
+    "privacy": "Reads the local SQLite cognitive graph. No remote calls. Stored source URLs are returned verbatim but are never fetched by this server."
+  },
+  "$defs": {
+    "Fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subject", "predicate", "object", "confidence", "recorded_at"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable canonical id for the fact."
+        },
+        "subject": { "$ref": "#/$defs/EntityRef" },
+        "predicate": {
+          "type": "string",
+          "enum": [
+            "mentioned_in",
+            "decided_in",
+            "reports_to",
+            "depends_on",
+            "resolved_by",
+            "blocked_by",
+            "tagged",
+            "belongs_to"
+          ],
+          "description": "Controlled vocabulary of edge types in v0.1.0. Extensible later via type_extensions."
+        },
+        "object": { "$ref": "#/$defs/EntityRefOrLiteral" },
+        "source": {
+          "type": ["string", "null"],
+          "description": "Free-text origin of the fact (URL, message id, transcript reference). Stored verbatim; never fetched."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Declared confidence at recording time."
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp with timezone offset for when the fact was recorded."
+        }
+      }
+    },
+    "EntityRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["person", "project", "decision", "concept", "source"]
+        },
+        "id": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "EntityRefOrLiteral": {
+      "oneOf": [
+        { "$ref": "#/$defs/EntityRef" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["literal"],
+          "properties": {
+            "literal": {
+              "type": "string",
+              "description": "Use when the object of the fact is a value, not another entity (e.g. a tag, a status, a free-text note)."
+            }
+          }
+        }
+      ]
+    }
+  }
+}
