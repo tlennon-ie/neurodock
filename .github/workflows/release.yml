@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  npm:
+    name: Publish TypeScript packages (npm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.1.2
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm turbo run build
+
+      - name: Publish via Changesets
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  pypi:
+    name: Publish Python packages (PyPI)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: latest
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build all Python packages
+        run: |
+          for pkg in packages/mcp-* packages/clinical packages/evals; do
+            if [ -f "$pkg/pyproject.toml" ]; then
+              echo "Building $pkg"
+              (cd "$pkg" && uv build) || echo "Skipping $pkg (build failed or stub)"
+            fi
+          done
+
+      - name: Publish to PyPI
+        run: |
+          for pkg in packages/mcp-* packages/clinical packages/evals; do
+            if [ -d "$pkg/dist" ]; then
+              echo "Publishing $pkg"
+              uv publish --token "$PYPI_TOKEN" "$pkg/dist/"* || echo "Skipping $pkg"
+            fi
+          done
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
