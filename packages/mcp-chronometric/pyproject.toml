@@ -1,12 +1,27 @@
 [project]
 name = "neurodock-mcp-chronometric"
-version = "0.0.0"
+version = "0.0.1"
 description = "NeuroDock chronometric MCP server — time, idle, and break management."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "AGPL-3.0-or-later" }
 authors = [{ name = "NeuroDock contributors" }]
-dependencies = []
+dependencies = [
+    "fastmcp>=3.3.0",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "jsonschema>=4.21.0",
+]
+
+[project.scripts]
+neurodock-mcp-chronometric = "neurodock_mcp_chronometric.server:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -14,3 +29,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/neurodock_mcp_chronometric"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
