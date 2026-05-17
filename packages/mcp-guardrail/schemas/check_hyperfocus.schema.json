@@ -1,0 +1,300 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-guardrail/v0.1.0/check_hyperfocus.schema.json",
+  "title": "check_hyperfocus",
+  "description": "Given a snapshot of the current chronometric session, classify hyperfocus escalation into a coarse level (none|gentle|nudge|hard) and return the user's prior stated intent, the time-since-stated-end, a suggested action, and overrides. Stateless: chronometric state is passed in by the caller; this server does not import or talk to mcp-chronometric. Phase 3 deliverable: in v0.1.0 the schema is locked but the runtime returns DETECTOR_NOT_YET_IMPLEMENTED until the field study endorses the level thresholds.",
+  "version": "0.1.0",
+  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/clinical/ requires sign-off from the clinical-reviewer agent and consultation with the clinical advisory board per ETHICS.md commitment 3 and plan.md §8.",
+  "x-implementation-status": "schema-only-v0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chronometric_snapshot"],
+      "properties": {
+        "chronometric_snapshot": {
+          "type": "object",
+          "description": "A point-in-time snapshot of mcp-chronometric session state provided by the caller. Loose coupling per ADR 0006 (rejected alternative: direct Python import of neurodock-mcp-chronometric). Skills SHOULD construct this from get_time_context + the in-flight session record returned by mark_session_start.",
+          "additionalProperties": false,
+          "required": ["open_session", "now"],
+          "properties": {
+            "open_session": {
+              "type": ["object", "null"],
+              "description": "The currently-open session as recorded by mcp-chronometric. null when no session is open (in which case the level is always 'none').",
+              "additionalProperties": false,
+              "required": ["session_id", "started_at", "intent", "elapsed_seconds"],
+              "properties": {
+                "session_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "UUIDv4 from mark_session_start. The guardrail server does NOT persist this value; it is echoed in the response for the caller's correlation only."
+                },
+                "started_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "ISO 8601 with explicit offset; matches the convention in ADR 0001."
+                },
+                "intent": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "description": "Verbatim user-stated intent from mark_session_start. Surfaced unchanged so the calling skill can quote the user back to themselves rather than improvising scolding text."
+                },
+                "elapsed_seconds": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Seconds the session has been open at the moment of evaluation. Computed by the caller from the chronometric server's session record."
+                }
+              }
+            },
+            "now": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Caller's notion of 'now', with explicit timezone offset. Used to compute time_since_stated_end relative to end_of_day_local."
+            },
+            "idle_signal": {
+              "type": "string",
+              "enum": ["active", "switched_away", "unknown"],
+              "description": "Optional. Matches the hyperfocus_signal enum returned by mcp-chronometric.idle_status. When 'switched_away', the detector MAY downgrade severity since the user is plausibly on a break elsewhere. Absent or 'unknown' is treated as 'no information'."
+            }
+          }
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Optional. Redundant with chronometric_snapshot.open_session.session_id but accepted for caller convenience; when both are present they MUST match or the call is rejected with SESSION_ID_MISMATCH."
+        },
+        "hyperfocus_break_minutes": {
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 480,
+          "default": 90,
+          "description": "First escalation threshold in minutes. Default 90 per plan.md §8. Callers SHOULD source from profile.chronometric.hyperfocus_break_minutes. Lower bound 15 prevents pathological hair-trigger configurations; upper bound 480 prevents accidental disabling."
+        },
+        "end_of_day_local": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+          "description": "User's pre-committed end-of-day in 24-hour HH:MM local time. Optional. When provided, after this clock time the elapsed thresholds are interpreted more strictly (gentle becomes nudge, nudge becomes hard) per plan.md §8 'PM with ADHD' user story. Callers SHOULD source from profile.chronometric.end_of_day_local."
+        },
+        "escalation_thresholds": {
+          "type": "object",
+          "description": "Optional caller-supplied override of the (60, 90, 120) minute defaults from plan.md §8. Values are minutes from session start. All three MUST be strictly ascending. When omitted the server uses (60, 90, 120) scaled proportionally if hyperfocus_break_minutes differs from 90.",
+          "additionalProperties": false,
+          "required": ["gentle", "nudge", "hard"],
+          "properties": {
+            "gentle": { "type": "integer", "minimum": 5, "maximum": 480 },
+            "nudge":  { "type": "integer", "minimum": 5, "maximum": 480 },
+            "hard":   { "type": "integer", "minimum": 5, "maximum": 480 }
+          }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "elapsed_seconds",
+        "confidence",
+        "reason",
+        "heuristic",
+        "override_options",
+        "false_positive_feedback_path"
+      ],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["none", "gentle", "nudge", "hard"],
+          "description": "Coarse escalation level. 'none' = no intervention; 'gentle' = soft context inject (e.g. 'you've been at this 60 minutes'); 'nudge' = structured prompt that quotes prior_intent verbatim; 'hard' = strong surface that explicitly references end_of_day_local. Per plan.md §8. Skills decide rendering."
+        },
+        "elapsed_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Seconds the session has been open, echoed from input.chronometric_snapshot.open_session.elapsed_seconds for caller convenience."
+        },
+        "prior_intent": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Verbatim user-stated intent. Echoed so skills can quote the user back. Absent only when level is 'none' and no session is open."
+        },
+        "time_since_stated_end": {
+          "type": ["string", "null"],
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+          "description": "ISO 8601 duration from end_of_day_local until now, when both are available and now is past the stated end. null when end_of_day_local was not provided or now is still before it. Skills surfacing the hard level SHOULD render this as 'X minutes past your 18:30 commitment'."
+        },
+        "suggested_action": {
+          "type": "string",
+          "enum": [
+            "no_action",
+            "stand_and_stretch",
+            "hydrate",
+            "walk_outside",
+            "switch_context",
+            "end_session",
+            "quote_prior_intent_and_offer_close"
+          ],
+          "description": "Coarse-grained suggested action. Overlaps with the request_break_if_needed.suggested_action vocabulary deliberately so a calling skill can re-use the same renderer. 'quote_prior_intent_and_offer_close' is the canonical action for level=='hard'."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the level classification on a 0..1 scale. Per ETHICS.md commitment 5, low-confidence classifications should never produce hard interventions; skills MAY downgrade level by one step when confidence < 0.6."
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "Plain-language sentence the skill MAY surface verbatim. Per ETHICS.md commitment 2."
+        },
+        "heuristic": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "description": "Identifies the exact rule that fired. Per ETHICS.md commitment 3.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["elapsed_threshold_with_eod"],
+              "description": "v0.1.0 ships a single deterministic threshold rule. Future heuristics that incorporate idle_signal, calendar context, or chronotype data ship under new enum values."
+            },
+            "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+            "description": { "type": "string", "maxLength": 500 }
+          }
+        },
+        "override_options": {
+          "type": "array",
+          "description": "User-actionable overrides. MUST be non-empty when level is not 'none' (enforced via allOf). Per ETHICS.md commitment 2.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "description"],
+            "properties": {
+              "token": {
+                "type": "string",
+                "enum": [
+                  "snooze-15m",
+                  "snooze-once",
+                  "commit-and-close",
+                  "override-once",
+                  "disable-for-session",
+                  "extend-end-of-day"
+                ],
+                "description": "Closed v0.1.0 vocabulary for hyperfocus overrides. 'snooze-15m' is the plan.md §8 'PM with ADHD' canonical second option; 'commit-and-close' is the canonical first option. 'extend-end-of-day' is an explicit override that records the user re-negotiating with themselves."
+              },
+              "description": { "type": "string", "maxLength": 200 }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 10
+        },
+        "false_positive_feedback_path": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "level": { "not": { "const": "none" } } },
+            "required": ["level"]
+          },
+          "then": {
+            "properties": { "override_options": { "minItems": 1 } },
+            "required": ["prior_intent"]
+          }
+        }
+      ]
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "DETECTOR_NOT_YET_IMPLEMENTED": {
+        "description": "Returned by v0.1.0 runtime until the Phase 3 field study endorses the level thresholds. The schema is finalised so callers can integrate; the runtime returns this error consistently with a `phase: \"3\"` metadata field. Callers MUST tolerate this error and fall through to no-intervention behaviour."
+      },
+      "SESSION_ID_MISMATCH": {
+        "description": "Both input.session_id and input.chronometric_snapshot.open_session.session_id were provided but did not match. The server does not pick one; ambiguous input is rejected."
+      },
+      "THRESHOLDS_NOT_ASCENDING": {
+        "description": "escalation_thresholds was provided but gentle >= nudge or nudge >= hard. Rejected rather than re-sorted so callers do not develop a habit of relying on auto-correction."
+      },
+      "INVALID_END_OF_DAY": {
+        "description": "end_of_day_local did not match HH:MM in 24-hour form."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "no session open - level is none",
+      "input": {
+        "chronometric_snapshot": {
+          "open_session": null,
+          "now": "2026-05-16T14:00:00+01:00"
+        }
+      },
+      "output": {
+        "level": "none",
+        "elapsed_seconds": 0,
+        "confidence": 1.0,
+        "reason": "No open session; nothing to evaluate.",
+        "heuristic": {
+          "name": "elapsed_threshold_with_eod",
+          "version": "0.1.0",
+          "description": "Compares elapsed_seconds against (gentle, nudge, hard) thresholds; when now > end_of_day_local, escalates one step."
+        },
+        "override_options": [],
+        "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+      }
+    },
+    {
+      "name": "session running 1h47m past a stated 18:30 end-of-day - level is hard",
+      "input": {
+        "chronometric_snapshot": {
+          "open_session": {
+            "session_id": "550e8400-e29b-41d4-a716-446655440000",
+            "started_at": "2026-05-16T18:20:00+01:00",
+            "intent": "send the RFC reply and stop by 6:30",
+            "elapsed_seconds": 6420
+          },
+          "now": "2026-05-16T20:07:00+01:00"
+        },
+        "hyperfocus_break_minutes": 90,
+        "end_of_day_local": "18:30"
+      },
+      "output": {
+        "level": "hard",
+        "elapsed_seconds": 6420,
+        "prior_intent": "send the RFC reply and stop by 6:30",
+        "time_since_stated_end": "PT1H37M",
+        "suggested_action": "quote_prior_intent_and_offer_close",
+        "confidence": 0.91,
+        "reason": "Session has run 107 minutes, past the user's stated 18:30 end-of-day by 97 minutes.",
+        "heuristic": {
+          "name": "elapsed_threshold_with_eod",
+          "version": "0.1.0",
+          "description": "Compares elapsed_seconds against (gentle, nudge, hard) thresholds; when now > end_of_day_local, escalates one step."
+        },
+        "override_options": [
+          { "token": "commit-and-close", "description": "Close out and stop here." },
+          { "token": "snooze-15m", "description": "Give me 15 more minutes then come back stronger." },
+          { "token": "extend-end-of-day", "description": "Move my end-of-day to a new time; logged locally so the next nudge knows." }
+        ],
+        "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The level enum is closed and ordered (none < gentle < nudge < hard); reordering or removing values requires a major bump and clinical-reviewer sign-off. v0.1.0 runtime returns DETECTOR_NOT_YET_IMPLEMENTED; callers MUST handle this error gracefully. Phase 3 will flip the runtime on once the field study endorses thresholds.",
+    "user_overridable": true,
+    "privacy": "local-only",
+    "side_effects": "None. The server is stateless: chronometric state is passed in by the caller; the guardrail server does not import neurodock-mcp-chronometric and does not subscribe to its events. Loose coupling per ADR 0006.",
+    "telemetry": "None. Per ETHICS.md commitment 4.",
+    "idempotency": "Trivially idempotent.",
+    "consent_gate": "Install-time only. profile.chronometric.hyperfocus_break_minutes and profile.chronometric.end_of_day_local are the configuration surface; both are set out-of-session, never under duress mid-task, per plan.md §8.",
+    "heuristic_source": "packages/clinical/hyperfocus/elapsed_threshold_with_eod.py (path is normative).",
+    "clinical_review_required": true,
+    "field_study_target": "False-positive rate < 5% on the field-study corpus per plan.md §13. Specifically: 'hard' interventions on sessions where the user reports the timing was correct."
+  }
+}

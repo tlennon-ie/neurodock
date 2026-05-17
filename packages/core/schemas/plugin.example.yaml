@@ -1,0 +1,148 @@
+# NeuroDock Plugin — worked example (fictional Hiberno-English language pack).
+#
+# This file is illustrative. It is NOT installed by `npx neurodock init`;
+# it documents the full shape of a plugin.yaml manifest so contributors
+# can copy it as a starting point.
+#
+# Manifest contract: packages/core/schemas/plugin.schema.json
+# Design rationale:  docs/decisions/0007-plugin-protocol.md
+#
+# Discovery: the substrate walks plugins/<name>/plugin.yaml (in-repo) and
+# $XDG_DATA_HOME/neurodock/plugins/<name>/plugin.yaml (per-user) at init.
+# No central registry is required in v0.1.0; the Phase 3 federated registry
+# at plugins.neurodock.org is opt-in and indexes signed manifests.
+#
+# Forward-compatibility: unknown keys at any nesting level are preserved
+# by loaders, not stripped. A v0.1.0 install can round-trip a v0.2.0
+# manifest without data loss.
+
+# Required. Plugin manifest schema version this file targets. Loaders
+# accept any version; they only warn when the file is newer than they
+# understand.
+schema_version: "0.1.0"
+
+# Required. Globally unique within `type`. Kebab-case. Reverse-DNS
+# prefixes (e.g. "org-eobrien-...") are RECOMMENDED for community
+# plugins; not enforced in v0.1.0.
+name: "ie-corporate-translation"
+
+# Required. One of:
+#   skill | mcp-server | profile | translation-pack | language-pack | theme
+#
+# 'language-pack' shadows existing translation prompts for the manifest's
+# `locale`. 'translation-pack' is a domain bundle (engineering review,
+# legal correspondence, etc.) that may target any locale. 'theme'
+# bundles design-system-keeper-approved visual variants.
+type: "language-pack"
+
+# Required. Strict semver. Patch/minor bumps in v0.1.x MUST be additive.
+version: "0.2.1"
+
+# Required. One-sentence human description shown in plugin listings.
+# Must not make clinical claims (per ETHICS commitment 1).
+description: "Hiberno-English to neutral corporate English for ND professionals — direct decoding of indirect Irish workplace register without flattening voice."
+
+# Optional. Plugin authors. At least one maintainer is RECOMMENDED for
+# community plugins so the substrate can surface a contact in trust
+# prompts.
+authors:
+  - name: "Eoin O'Brien"
+    handle: "@eobrien"
+    role: "maintainer"
+  - name: "Síofra Ní Bhriain"
+    handle: "@sionb"
+    role: "reviewer"  # lived-experience reviewer
+
+# Optional. Neurotype targeting. Empty / absent = agnostic (auto-activates
+# for every user). Non-empty intersection with profile.identity.neurotypes
+# = auto-activate. Empty intersection = installed but not auto-activated;
+# the user can enable it manually.
+neurotypes:
+  - "adhd"
+  - "audhd"
+  - "asd"
+
+# REQUIRED for type 'language-pack' and 'translation-pack'. BCP 47 tags.
+# Substrate prefers locale-matched plugins over locale-agnostic ones
+# when both apply.
+locale:
+  - "en-IE"
+  - "en-GB"  # ie-IE register often surfaces in en-GB workplaces too
+
+# Optional. Hard runtime requirements.
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+  skills: []
+  plugins: []
+
+# Required-shape (may be empty array). Assets this plugin exposes to
+# the substrate. Each `path` is sandboxed: it MUST resolve inside the
+# plugin's directory after normalisation.
+provides:
+  - type: "language-prompt-override"
+    id: "translate-incoming-en-ie"
+    path: "./prompts/translate-incoming.md"
+    # Optional per-asset predicate. Defaults to inheriting manifest-level
+    # neurotypes + locale. When present, overrides for this asset only.
+    applies_to:
+      locale: ["en-IE", "en-GB"]
+
+  - type: "language-prompt-override"
+    id: "check-tone-en-ie"
+    path: "./prompts/check-tone.md"
+
+  - type: "language-prompt-override"
+    id: "brief-meeting-en-ie"
+    path: "./prompts/brief-meeting.md"
+
+  - type: "translation-prompt"
+    id: "decode-grand"
+    path: "./prompts/idioms/decode-grand.md"
+    # "Grand" in Hiberno-English ranges from "excellent" to "this is
+    # not fine and we are not going to discuss it further." Worth its
+    # own prompt.
+
+# Required. Trust + provenance.
+#
+# Four-tier ladder (see ADR 0007):
+#   official     — NeuroDock council-published; installs without prompting
+#   verified     — signed by a verified contributor (council keyring);
+#                  installs without prompting
+#   community    — author-signed; provenance recorded but not vouched;
+#                  prompts the user per profile preference
+#   experimental — unsigned; substrate refuses by default
+trust:
+  level: "community"
+  signature: |
+    -----BEGIN PGP SIGNATURE-----
+    (detached signature over sha256(plugin.yaml + provides[].path contents))
+    -----END PGP SIGNATURE-----
+  keyring_fingerprint: "A1B2 C3D4 E5F6 7890 1234 5678 9ABC DEF0 1234 5678"
+  source_url: "https://github.com/eobrien/ie-corporate-translation"
+
+# Required. SPDX identifier. Must be on the v0.1.0 whitelist
+# (AGPL-3.0-or-later-compatible). Non-whitelisted licenses refuse to
+# load with a 'license_not_allowed' error.
+license: "AGPL-3.0-or-later"
+
+# Optional. Discovery surface.
+homepage: "https://hiberno-translate.example.org"
+repository: "https://github.com/eobrien/ie-corporate-translation"
+keywords:
+  - "translation"
+  - "hiberno-english"
+  - "corporate"
+  - "indirect-speech"
+
+# Optional. Lifecycle hooks. v0.1.0 sandbox refuses to run hooks unless
+# trust.level in {'official', 'verified'}. Community plugins MAY declare
+# hooks; they will be ignored until the hook sandbox lands in Phase 3.
+hooks:
+  on_install: "./install.sh"     # idempotent setup; no network, no out-of-dir writes
+  on_uninstall: "./uninstall.sh" # cleanup of any plugin-local state
+
+# Optional. Forward-compat declarations. Reserved.
+compatibility: {}

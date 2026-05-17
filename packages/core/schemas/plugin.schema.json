@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/plugin/v0.1.0/plugin.schema.json",
+  "title": "NeuroDock Plugin Manifest",
+  "description": "Manifest contract for every plugin discovered under plugins/<name>/plugin.yaml or ~/.neurodock/plugins/<name>/plugin.yaml. Declares plugin type, version, neurotype targeting, dependencies, provided assets, trust level, license, and lifecycle hooks. Forward-compatible: unknown keys at every nesting level MUST be preserved by loaders.",
+  "$comment": "Discovery is filesystem-based in v0.1.0: the substrate walks plugins/*/plugin.yaml (in-repo) and $XDG_DATA_HOME/neurodock/plugins/*/plugin.yaml (per-user) at init. The Phase 3 federated registry at plugins.neurodock.org is opt-in and indexes signed manifests; the protocol does NOT depend on a central registry. Loaders MUST preserve unknown top-level and nested keys when round-tripping a manifest so a v0.1.0 install can read and re-emit a v0.2.0 manifest without data loss. Asset paths in `provides[].path` and `hooks.*` are sandboxed: the resolved absolute path MUST remain inside the plugin's directory after normalisation. Symlinks pointing outside the plugin dir MUST be rejected by the loader.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "name", "type", "version", "description", "license", "trust"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Required. Plugin manifest schema version this file targets. Loaders SHOULD warn but never fail when the version is newer than what they understand; they MUST still load known fields and preserve unknown ones. Use the same semver shape as the profile schema.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "examples": ["0.1.0"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Required. Globally unique within the plugin's `type`. Kebab-case, ASCII lowercase, digits, and hyphens. MUST start with a letter. Reverse-DNS prefixes (e.g. 'org-eobrien-') are RECOMMENDED for community plugins to avoid collisions; not enforced in v0.1.0 to keep contribution friction low.",
+      "pattern": "^[a-z][a-z0-9-]{1,62}[a-z0-9]$",
+      "minLength": 3,
+      "maxLength": 64,
+      "examples": ["ie-corporate-translation", "adhd-pomodoro", "mcp-calendar"]
+    },
+    "type": {
+      "type": "string",
+      "description": "Required. Plugin type. Six values in v0.1.0. New types are an ADDITIVE forward-compat change (no major bump); v0.1.0 loaders encountering an unknown type MUST skip the plugin with a structured 'unknown_plugin_type' warning rather than erroring.",
+      "enum": [
+        "skill",
+        "mcp-server",
+        "profile",
+        "translation-pack",
+        "language-pack",
+        "theme"
+      ],
+      "examples": ["language-pack", "skill"]
+    },
+    "version": {
+      "type": "string",
+      "description": "Required. Plugin version. Strict semver (no pre-release qualifiers in v0.1.0). Patch and minor bumps within v0.1.x MUST be additive-only; renames, removals, and required-field additions are major bumps.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "examples": ["0.2.1", "1.0.0"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Required. One-sentence human description shown in plugin listings. Must not make clinical claims (per ETHICS commitment 1).",
+      "minLength": 10,
+      "maxLength": 280,
+      "examples": [
+        "Hiberno-English to neutral corporate English translation prompts for ND professionals."
+      ]
+    },
+    "authors": {
+      "type": "array",
+      "description": "Optional. Plugin authors. At least one entry with role 'maintainer' is RECOMMENDED for community plugins so the substrate can surface a contact in trust prompts. Empty / absent is acceptable for in-repo first-party plugins authored by the council.",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Display name or handle."
+          },
+          "handle": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Optional. GitHub-style '@handle' (or other platform-prefixed handle).",
+            "examples": ["@eobrien"]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Optional. Contact email. Plugins published through the federated registry MAY omit this; in-repo plugins SHOULD omit it (use the GitHub handle instead). Never required."
+          },
+          "role": {
+            "type": "string",
+            "enum": ["maintainer", "contributor", "reviewer"],
+            "default": "contributor",
+            "description": "Role in this plugin's authorship. 'maintainer' = accepts issues, signs releases; 'contributor' = wrote part of it; 'reviewer' = clinical or lived-experience reviewer who signed off."
+          }
+        }
+      }
+    },
+    "neurotypes": {
+      "type": "array",
+      "description": "Subset of the values allowed by profile.identity.neurotypes that this plugin targets. The substrate auto-activates a plugin only when this array intersects the user's profile.identity.neurotypes (non-empty intersection). Empty array (the default when omitted) means the plugin is neurotype-agnostic and auto-activates for every user.",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "adhd",
+          "asd",
+          "audhd",
+          "ocd",
+          "dyslexia",
+          "dyspraxia",
+          "tourette",
+          "other"
+        ]
+      },
+      "default": [],
+      "examples": [["adhd"], ["adhd", "audhd"], []]
+    },
+    "locale": {
+      "type": "array",
+      "description": "BCP 47 locale tags this plugin targets. REQUIRED for type 'language-pack' and 'translation-pack' (loader rejects manifest when empty for those types); ignored for other types. Substrate prefers locale-matched plugins over locale-agnostic ones when both apply.",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})*(-[a-zA-Z0-9]{1,8})*$"
+      },
+      "examples": [["en-IE", "en-GB"], ["ja-JP"], ["de-DE"]]
+    },
+    "requires": {
+      "type": "object",
+      "description": "Optional. Hard runtime requirements. The substrate refuses to activate the plugin when any requirement is unmet; refusal is loud (structured warning + log entry) rather than silent. Circular requirement chains (A requires B requires A) MUST be detected at load time and reported via the 'plugin_requirement_cycle' error.",
+      "additionalProperties": true,
+      "properties": {
+        "substrate_version": {
+          "type": "string",
+          "description": "Required substrate (`@neurodock/core`) version range. Standard semver-range syntax (`>=`, `<`, `~`, `^`, `||`). Defaults to '>=0.1.0' when omitted.",
+          "examples": [">=0.1.0", ">=0.1.0 <0.3.0"]
+        },
+        "mcp_servers": {
+          "type": "array",
+          "description": "MCP servers the plugin's assets call into. Each entry is matched against the substrate's installed-server registry by name; the version range is matched against the server's package version.",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "MCP server name as published, e.g. 'mcp-translation'.",
+                "examples": ["mcp-translation", "mcp-cognitive-graph"]
+              },
+              "version": {
+                "type": "string",
+                "description": "Semver range. Defaults to '>=0.1.0' when omitted.",
+                "examples": [">=0.1.0"]
+              }
+            }
+          }
+        },
+        "skills": {
+          "type": "array",
+          "description": "Other skills this plugin depends on at runtime (by skill name as declared in the depended-on skill's SKILL.md frontmatter or plugin.yaml `name`).",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["name"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "examples": ["adhd-daily-planner"]
+              },
+              "version": {
+                "type": "string",
+                "examples": [">=0.1.0"]
+              }
+            }
+          }
+        },
+        "plugins": {
+          "type": "array",
+          "description": "Other plugins this plugin depends on. By `name` (and optional `type` disambiguator when the name is reused across types). Circular `requires.plugins` chains are rejected at load.",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "skill",
+                  "mcp-server",
+                  "profile",
+                  "translation-pack",
+                  "language-pack",
+                  "theme"
+                ]
+              },
+              "version": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "provides": {
+      "type": "array",
+      "description": "Assets this plugin exposes to the substrate. Every entry has an `id` (unique within the manifest), a sub-`type` describing what kind of asset it is, and a `path` relative to the plugin's directory. Paths are sandboxed: after normalisation the resolved absolute path MUST remain inside the plugin's directory; '..' traversal and absolute paths are rejected by the loader.",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["type", "id", "path"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Asset sub-type. The substrate dispatches discovery on this value: 'skill' → registered with the skill loader; 'mcp-server-binary' → registered with the MCP supervisor; 'translation-prompt' → registered with mcp-translation's prompt library; 'language-prompt-override' → shadows the matching default prompt for the manifest's `locale`; 'profile-preset' → exposed under `profiles/presets/`; 'theme-bundle' → registered with the design system. Unknown values are preserved on round-trip but skipped by the registrar with a structured 'unknown_asset_type' warning.",
+            "enum": [
+              "skill",
+              "mcp-server-binary",
+              "translation-prompt",
+              "language-prompt-override",
+              "profile-preset",
+              "theme-bundle"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "Identifier unique within this manifest's `provides[]`. Kebab-case. The substrate exposes the asset under '<plugin.name>/<provides.id>'.",
+            "pattern": "^[a-z][a-z0-9-]{0,62}[a-z0-9]$",
+            "examples": ["translate-hiberno-direct", "tone-keigo-customer"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Path to the asset, RELATIVE to the plugin directory. MUST start with './' or a non-leading-slash subdirectory. Loader normalises and rejects any path resolving outside the plugin directory or pointing through a symlink that does so.",
+            "pattern": "^(\\./)?[^/\\\\][^\\\\:*?\"<>|]*$",
+            "examples": ["./prompts/translate-hiberno-direct.md", "prompts/tone-warm.md"]
+          },
+          "applies_to": {
+            "type": "object",
+            "description": "Optional. Activation predicate for this specific asset, evaluated against the user's profile. Defaults to inheriting the manifest-level `neurotypes` + `locale`. An asset's predicate, when present, overrides the manifest-level intersection for that asset only.",
+            "additionalProperties": true,
+            "properties": {
+              "neurotypes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "type": "string" }
+              },
+              "locale": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "trust": {
+      "type": "object",
+      "description": "Required. Provenance and trust declaration. Four-tier ladder. 'official' (NeuroDock council-published) and 'verified' (signed by a verified contributor whose key sits in the council-maintained keyring) install without user prompting. 'community' (author-signed; provenance recorded but not vouched) and 'experimental' (unsigned) prompt the user per profile preference. The substrate's default profile setting is 'prompt for community, refuse for experimental'.",
+      "additionalProperties": true,
+      "required": ["level"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["official", "verified", "community", "experimental"],
+          "description": "Trust tier. See trust ladder above."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Optional in v0.1.0; required for 'official' and 'verified' once signature verification ships in Phase 3. ASCII-armored PGP detached signature over sha256(plugin.yaml + concatenation of provides[].path file contents in declaration order). Verification implementation is deferred; v0.1.0 schemas reserve the field and store it on round-trip.",
+          "examples": ["-----BEGIN PGP SIGNATURE----- ..."]
+        },
+        "keyring_fingerprint": {
+          "type": "string",
+          "description": "Optional. PGP fingerprint of the key that produced `signature`. Lets the substrate look the key up in the council keyring (for 'verified') or in a local trust-on-first-use store (for 'community').",
+          "pattern": "^[A-F0-9 ]{40,60}$",
+          "examples": ["A1B2 C3D4 E5F6 7890 1234 5678 9ABC DEF0 1234 5678"]
+        },
+        "source_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Required for 'community' and 'experimental'. URL of the canonical source the user can audit before trusting the plugin (typically the public repository).",
+          "examples": ["https://github.com/eobrien/ie-corporate-translation"]
+        }
+      }
+    },
+    "license": {
+      "type": "string",
+      "description": "Required. SPDX license identifier. v0.1.0 whitelist enforces AGPL-3.0-or-later-compatible licenses ONLY. Plugins with a non-listed license refuse to load and surface a 'license_not_allowed' error. The whitelist is conservative on purpose: the substrate is AGPL-3.0-or-later and plugins are distributed alongside it, so we keep license boundaries clean. The whitelist may be extended in additive minor bumps via ADR.",
+      "enum": [
+        "AGPL-3.0-or-later",
+        "AGPL-3.0-only",
+        "GPL-3.0-or-later",
+        "GPL-3.0-only",
+        "LGPL-3.0-or-later",
+        "MIT",
+        "Apache-2.0",
+        "BSD-3-Clause",
+        "BSD-2-Clause",
+        "ISC",
+        "MPL-2.0",
+        "CC0-1.0"
+      ],
+      "examples": ["AGPL-3.0-or-later", "MIT"]
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional. Public homepage for the plugin (project page, docs site, etc.)."
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional. Source-code repository. RECOMMENDED for any plugin with trust level 'community' or 'experimental' so users can audit the source."
+    },
+    "keywords": {
+      "type": "array",
+      "description": "Optional. Discovery keywords. Federated registry surfaces these in search.",
+      "items": { "type": "string", "maxLength": 32 },
+      "maxItems": 16,
+      "examples": [["translation", "hiberno-english", "corporate"]]
+    },
+    "hooks": {
+      "type": "object",
+      "description": "Optional. Lifecycle hooks. Constrained: hooks may invoke ONLY shell scripts shipped inside the plugin directory, and those scripts run under an allow-list of operations (read-only filesystem access inside the plugin dir; no network; no writes outside the plugin dir; no privilege escalation; no fork/exec of unallowed binaries). The substrate's hook executor enforces the sandbox; manifests that declare hooks but whose scripts violate the allow-list at runtime have their hooks aborted and a structured 'hook_sandbox_violation' error logged. v0.1.0 ships with an executor that simply REFUSES to run hooks unless trust.level in {'official', 'verified'}; community plugins MAY declare hooks but they will be ignored until the sandbox lands in Phase 3.",
+      "additionalProperties": true,
+      "properties": {
+        "on_install": {
+          "type": "string",
+          "description": "Path (relative to plugin directory) to a shell script run once after plugin discovery. Same sandboxing as `provides[].path`. Idempotent: the substrate may re-run on_install if the previous run failed or if the plugin version changed.",
+          "pattern": "^(\\./)?[^/\\\\][^\\\\:*?\"<>|]*$",
+          "examples": ["./install.sh"]
+        },
+        "on_uninstall": {
+          "type": "string",
+          "description": "Path to a shell script run before plugin removal. Same sandboxing as `on_install`. The substrate runs the hook even when the user is uninstalling because a previous install failed.",
+          "pattern": "^(\\./)?[^/\\\\][^\\\\:*?\"<>|]*$"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "description": "Optional. Forward-compatibility declarations. Reserved for future use; v0.1.0 loaders ignore unknown sub-keys but preserve them on round-trip.",
+      "additionalProperties": true
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "0.1.0",
+      "name": "ie-corporate-translation",
+      "type": "language-pack",
+      "version": "0.2.1",
+      "description": "Hiberno-English to neutral corporate English translation prompts for ND professionals.",
+      "authors": [
+        { "name": "Eoin O'Brien", "handle": "@eobrien", "role": "maintainer" }
+      ],
+      "neurotypes": ["adhd", "audhd", "asd"],
+      "locale": ["en-IE", "en-GB"],
+      "requires": {
+        "substrate_version": ">=0.1.0",
+        "mcp_servers": [{ "name": "mcp-translation", "version": ">=0.1.0" }]
+      },
+      "provides": [
+        {
+          "type": "language-prompt-override",
+          "id": "translate-incoming-en-ie",
+          "path": "./prompts/translate-incoming.md"
+        }
+      ],
+      "trust": {
+        "level": "community",
+        "source_url": "https://github.com/eobrien/ie-corporate-translation"
+      },
+      "license": "AGPL-3.0-or-later",
+      "repository": "https://github.com/eobrien/ie-corporate-translation",
+      "keywords": ["translation", "hiberno-english", "corporate"]
+    },
+    {
+      "schema_version": "0.1.0",
+      "name": "minimal-example",
+      "type": "skill",
+      "version": "0.1.0",
+      "description": "Minimal valid plugin manifest example.",
+      "trust": { "level": "official" },
+      "license": "AGPL-3.0-or-later"
+    }
+  ]
+}
