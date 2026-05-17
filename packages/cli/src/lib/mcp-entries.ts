@@ -37,6 +37,7 @@ export function buildMcpServers(ctx: McpEntryContext): Record<string, McpServerE
     if (ctx.repoRoot) {
       const pkgPath = resolve(ctx.repoRoot, "packages", s.pkg);
       if (pathIsDir(pkgPath)) {
+        // Dev-from-clone: invoke through the workspace .venv via uv run.
         out[s.key] = {
           command: "uv",
           args: ["run", s.entrypoint],
@@ -45,11 +46,14 @@ export function buildMcpServers(ctx: McpEntryContext): Record<string, McpServerE
         continue;
       }
     }
-    // Installed-package fallback. Assumes the user installed the Python
-    // distributions globally via `uv tool install` or `pip install`.
+    // Installed-package path: the user ran `pip install` or `uv tool install`,
+    // which puts the entrypoint on PATH as a platform-specific executable
+    // (e.g. <python>/Scripts/<name>.exe on Windows). Invoke it directly —
+    // wrapping in `uv run` here breaks on machines where uv is not on the
+    // MCP-client subprocess PATH, which is common on Windows where GUI apps
+    // inherit a narrower PATH than interactive shells.
     out[s.key] = {
-      command: "uv",
-      args: ["run", s.entrypoint],
+      command: s.entrypoint,
     };
   }
   return out;

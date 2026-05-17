@@ -16,7 +16,7 @@ export interface DetectedClient extends ClientLocation {
 
 export interface McpServerEntry {
   readonly command: string;
-  readonly args: ReadonlyArray<string>;
+  readonly args?: ReadonlyArray<string>;
   readonly cwd?: string;
   readonly env?: Readonly<Record<string, string>>;
 }

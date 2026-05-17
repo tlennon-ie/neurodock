@@ -52,9 +52,11 @@ export function mergeMcpServers(
 function serverEntriesEqual(a: McpServerEntry, b: McpServerEntry): boolean {
   if (a.command !== b.command) return false;
   if (a.cwd !== b.cwd) return false;
-  if (a.args.length !== b.args.length) return false;
-  for (let i = 0; i < a.args.length; i += 1) {
-    if (a.args[i] !== b.args[i]) return false;
+  const aArgs = a.args ?? [];
+  const bArgs = b.args ?? [];
+  if (aArgs.length !== bArgs.length) return false;
+  for (let i = 0; i < aArgs.length; i += 1) {
+    if (aArgs[i] !== bArgs[i]) return false;
   }
   return shallowEnvEqual(a.env, b.env);
 }
