@@ -46,9 +46,11 @@ describe("paths", () => {
   });
 
   it("returns project and user Claude Code paths", () => {
+    // Claude Code reads MCP from ~/.claude.json (user) and <cwd>/.mcp.json
+    // (project). Not ~/.claude/settings.json — that's plugin state.
     const r = claudeCodeConfigPaths(baseEnv);
-    expect(r.project).toBe(p(baseEnv.cwd, ".claude", "settings.json"));
-    expect(r.user).toBe(p(baseEnv.home, ".claude", "settings.json"));
+    expect(r.project).toBe(p(baseEnv.cwd, ".mcp.json"));
+    expect(r.user).toBe(p(baseEnv.home, ".claude.json"));
   });
 
   it("returns project and user Cursor paths", () => {

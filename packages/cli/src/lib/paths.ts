@@ -56,9 +56,13 @@ export interface ClaudeCodePaths {
 }
 
 export function claudeCodeConfigPaths(env: EnvSnapshot = readEnv()): ClaudeCodePaths {
+  // Claude Code reads MCP server config from ~/.claude.json (flat file in
+  // $HOME, dot prefix). The ~/.claude/settings.json file is for plugins +
+  // marketplace state — NOT MCP servers. Project-scoped MCP config lives
+  // in <project>/.mcp.json (different filename from the user-scoped file).
   return {
-    user: join(env.home, ".claude", "settings.json"),
-    project: join(env.cwd, ".claude", "settings.json"),
+    user: join(env.home, ".claude.json"),
+    project: join(env.cwd, ".mcp.json"),
   };
 }
 

@@ -36,7 +36,7 @@ describe("neurodock init", () => {
     // Seed a Claude Code project config so init has somewhere to act.
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    const claudeCfg = join(claudeDir, "settings.json");
+    const claudeCfg = join(sandbox.cwd, ".mcp.json");
     writeFileSync(claudeCfg, JSON.stringify({ mcpServers: {} }, null, 2));
 
     const result = await runInit(
@@ -68,7 +68,7 @@ describe("neurodock init", () => {
   it("creates a profile from the minimal template using $USER as display_name", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({ mcpServers: {} }, null, 2));
+    writeFileSync(join(sandbox.cwd, ".mcp.json"), JSON.stringify({ mcpServers: {} }, null, 2));
 
     const profileFile = join(sandbox.home, "profile.yaml");
     const result = await runInit(
@@ -94,7 +94,7 @@ describe("neurodock init", () => {
   it("preserves existing mcpServers entries when wiring", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    const claudeCfg = join(claudeDir, "settings.json");
+    const claudeCfg = join(sandbox.cwd, ".mcp.json");
     const existing = {
       mcpServers: {
         "third-party": { command: "node", args: ["server.js"] },
@@ -130,7 +130,7 @@ describe("neurodock init", () => {
   it("is idempotent: a second run reports no-change", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({ mcpServers: {} }, null, 2));
+    writeFileSync(join(sandbox.cwd, ".mcp.json"), JSON.stringify({ mcpServers: {} }, null, 2));
 
     const opts = { client: "claude-code" as const, profile: "minimal" as const, dryRun: false, yes: true };
     const deps = {
