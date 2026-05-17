@@ -97,13 +97,35 @@ jobs:
 
       - name: Publish to PyPI
         run: |
-          set -e
           if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
             echo "No artefacts in dist/ — nothing to publish."
             exit 1
           fi
-          echo "Publishing $(ls dist/ | wc -l) files to PyPI (skip-existing)..."
-          # --check-url skips files PyPI already has (per-file, deterministic)
-          uv publish --token "$PYPI_TOKEN" --check-url https://pypi.org/simple/ dist/*
+          echo "Publishing $(ls dist/ | wc -l) files to PyPI one-by-one..."
+          # Per-file loop with continue-on-error so a 429 on a new project
+          # does not block existing-project version bumps later in the glob.
+          # --check-url short-circuits already-published files cleanly.
+          failed=0
+          published=0
+          skipped=0
+          for f in dist/*; do
+            name=$(basename "$f")
+            if uv publish --token "$PYPI_TOKEN" --check-url https://pypi.org/simple/ "$f" 2>&1 | tee /tmp/uvp.log; then
+              if grep -q "already exists, skipping" /tmp/uvp.log; then
+                skipped=$((skipped+1))
+              else
+                published=$((published+1))
+              fi
+            else
+              echo "::warning::Failed to publish $name (likely PyPI rate limit on new project)"
+              failed=$((failed+1))
+            fi
+          done
+          echo ""
+          echo "PyPI summary: $published published, $skipped already-existed, $failed failed"
+          if [ "$failed" -gt 0 ] && [ "$published" -eq 0 ] && [ "$skipped" -eq 0 ]; then
+            echo "::error::No files published or skipped — every upload failed."
+            exit 1
+          fi
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
