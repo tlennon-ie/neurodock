@@ -40,6 +40,34 @@ updates:
       # Commander 12 -> 14 changes option API used by the CLI.
       - dependency-name: "commander"
         update-types: ["version-update:semver-major"]
+      # React 18 -> 19 requires audit of the extension Shadow-DOM mounts.
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      # Vite + jsdom + plugin-react majors are coupled to the test stack;
+      # hold until a coordinated migration.
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jsdom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitejs/plugin-react"
+        update-types: ["version-update:semver-major"]
+      # Tailwind 3 -> 4 reworks the build pipeline; explicit migration.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      # Commitlint 19 -> 21 requires checking conventional-config import.
+      - dependency-name: "@commitlint/cli"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@commitlint/config-conventional"
+        update-types: ["version-update:semver-major"]
+      # @types/node major bumps coordinate with Node engines change.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pip
     directory: "/"
