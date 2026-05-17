@@ -1,0 +1,32 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "types": ["chrome", "node", "vitest/globals"],
+    "paths": {
+      "@/*": ["./*"],
+      "~/*": ["./*"]
+    },
+    "allowImportingTsExtensions": false,
+    "noEmit": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "exactOptionalPropertyTypes": false
+  },
+  "include": [
+    "entrypoints/**/*.ts",
+    "entrypoints/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "wxt.config.ts",
+    "vitest.config.ts",
+    "tailwind.config.ts",
+    "scripts/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".output", ".wxt", "dist"]
+}
