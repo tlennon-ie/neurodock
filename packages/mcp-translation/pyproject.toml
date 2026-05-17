@@ -1,12 +1,25 @@
 [project]
 name = "neurodock-mcp-translation"
-version = "0.0.0"
-description = "NeuroDock translation MCP server — tone and literal-translation prompts shared with the browser extension."
+version = "0.0.1"
+description = "NeuroDock translation MCP server — deterministic baseline analysis plus structured LLM-refinement prompts for incoming/outgoing message decoding and meeting briefing."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "AGPL-3.0-or-later" }
 authors = [{ name = "NeuroDock contributors" }]
-dependencies = []
+dependencies = [
+    "fastmcp>=3.3.0",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=1.3.0",
+    "jsonschema>=4.21.0",
+]
+
+[project.scripts]
+neurodock-mcp-translation = "neurodock_mcp_translation.server:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -14,3 +27,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/neurodock_mcp_translation"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/neurodock_mcp_translation/prompts" = "neurodock_mcp_translation/prompts"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
