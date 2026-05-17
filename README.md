@@ -42,6 +42,7 @@ neurodock/
 │ ├── mcp-guardrail/ Rumination / hyperfocus / sycophancy detectors
 │ ├── skills/ Six SKILL.md bundles activating on phrases
 │ ├── extension-browser/ WXT-built Chrome / Firefox / Edge extension
+│ ├── native-host/ Optional native messaging host (extension <-> profile.yaml)
 │ ├── cli/ `npx neurodock init` and friends
 │ ├── core/ Shared types, profile schema, plugin spec
 │ ├── clinical/ Heuristic library for the guardrail server
