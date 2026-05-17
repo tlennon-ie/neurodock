@@ -1,0 +1,99 @@
+---
+title: Plugin type — mcp-server
+description: Ship a Model Context Protocol server as a plugin. Python via FastMCP or TypeScript via the official SDK.
+---
+
+A `type: mcp-server` plugin ships a Model Context Protocol server through the plugin protocol. Once installed, the server exposes its tools to any MCP-aware client and to any skill that declares it as a dependency. This is the highest-leverage plugin type: an MCP server is a new set of typed tools that compose into every workflow the user already has.
+
+**Prerequisites:** comfortable with the language you choose (Python or TypeScript), comfortable writing JSON Schema for tool inputs and outputs, comfortable with the schema-first workflow described below.
+
+## Language choice
+
+Two supported language ecosystems:
+
+- **Python with FastMCP** — the primary path. Cleanest idiom for MCP servers today. All first-party substrate servers are FastMCP. Use this unless you have a specific reason not to.
+- **TypeScript with `@modelcontextprotocol/sdk`** — the secondary path. Use only when the server needs to run in a browser-service-worker context (browser extension MCP twins are the typical case).
+
+Servers in either language land in the same plugin manifest; the loader does not care which runtime backs the server. What differs is the toolchain you use to write it.
+
+## The schema-first workflow
+
+NeuroDock's substrate enforces a schema-first design discipline. Every tool's inputs and outputs are declared as JSON Schema *before* the implementation. This is the same discipline the four substrate ADRs (`0001`, `0002`, `0003`, `0005`, `0006`) document and bind. For a plugin MCP server, the discipline is the same:
+
+1. **Write the schemas first.** One JSON Schema file per tool, with `$id` versioned (`https://schemas.example.org/<server>/v0.1.0/<tool>.schema.json`).
+2. **Write the conformance tests against the schemas.** Tools must validate their own inputs and outputs against the schemas at runtime; the test suite verifies this.
+3. **Implement the tool.** The schema is the contract; the implementation makes the contract pass.
+
+This sequence — schemas first, tests second, implementation third — is the `mcp-architect` agent's defined responsibility for substrate servers, and it applies to plugin servers too. You are welcome to invoke the `mcp-architect` agent on your own server during design review.
+
+## Asset layout
+
+```
+plugins/<your-server>/
+├── plugin.yaml                # Manifest with type: mcp-server
+├── schemas/                   # JSON Schema per tool, versioned $id
+│   ├── tool_one.input.schema.json
+│   ├── tool_one.output.schema.json
+│   └── ...
+├── src/                       # Implementation
+│   └── <your_server>/
+│       ├── __init__.py        # FastMCP server entry point
+│       └── tools/
+├── tests/
+│   ├── conformance/           # Schema conformance tests
+│   └── integration/           # End-to-end tool invocation tests
+├── pyproject.toml             # Or package.json for TS
+└── README.md
+```
+
+## Design rules inherited from the substrate ADRs
+
+Every plugin MCP server inherits the substrate's design rules. These are not optional; the loader does not enforce them, but lived-experience review and code review will block a plugin that violates them.
+
+- **Small tools, single responsibility.** Each tool does one job. No god-tool.
+- **Server-side state, not LLM-maintained state.** The model never has to remember a `session_id` or a `fact_id`. The server owns identifiers; the model passes them around.
+- **Local-first.** No remote calls in the default install. If your server needs network access, gate it behind a profile field with explicit user consent.
+- **Enums for coarse signals, not floats.** `energy_zone`, `resolution.method`, error codes — all enums. Floats invite over-precision and false comparability.
+- **`null` is a first-class return.** Tools return `null` for "no match"; callers must handle it.
+- **Additive-only within a `v0.1.x` line.** Renames and removals require a new major version with a parallel schema `$id`.
+
+See [ADR 0001](/decisions/0001-chronometric/) for the rationale behind each of these rules; the same rationale applies to plugin MCP servers without modification.
+
+## Declaring tools in the manifest
+
+The plugin manifest's `mcp_server` block lists the tools the server exposes, with a pointer to the schema files:
+
+```yaml
+type: mcp-server
+mcp_server:
+  command: "uvx --from . <your-server>"   # How the substrate launches it
+  tools:
+    - name: tool_one
+      input_schema: schemas/tool_one.input.schema.json
+      output_schema: schemas/tool_one.output.schema.json
+      description: One-sentence statement of what the tool does.
+```
+
+The substrate uses `command` to launch the server process. For Python plugins, `uvx` is the recommended launcher; it provides a reproducible isolated environment without polluting the user's global Python.
+
+## Profile composability
+
+If your server's behaviour depends on profile fields, declare those dependencies in the manifest:
+
+```yaml
+profile_dependencies:
+  - preferences.output_format
+  - privacy.embeddings
+```
+
+The substrate uses these to decide auto-activation. A user whose profile sets `privacy.embeddings: local` will not have a server that requires `cloud_voyage` auto-activated; the substrate surfaces an explicit consent prompt instead.
+
+## Vendor neutrality
+
+A plugin MCP server should not embed a specific LLM vendor's SDK. The user's MCP client is the LLM boundary; the server exposes tools the client calls. If your tool's *implementation* needs a model call (e.g. an embedding-generation tool), expose that call through an adapter interface and let the user's profile decide which adapter to wire — same pattern the substrate uses.
+
+## What's next
+
+- [Concepts: substrate](/concepts/substrate/) for the bigger picture.
+- [ADR 0001 — Chronometric tool design](/decisions/0001-chronometric/) for the schema-first discipline applied to a worked server.
+- [Plugin manifest reference](/reference/plugin-manifest/) for the full `mcp_server` block.

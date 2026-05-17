@@ -1,0 +1,71 @@
+---
+title: Plugin type — skill
+description: Out-of-tree skill plugins. The SKILL.md frontmatter, the trigger model, the three-test rule.
+---
+
+A `type: skill` plugin ships a single skill — a markdown bundle that activates inside an MCP-aware client — through the plugin protocol rather than through the in-tree `packages/skills/` directory. The two paths produce the same artefact and the substrate treats them identically at runtime. The difference is process: in-tree skills go through the project's review cadence and ship with releases; skill plugins ship on their own cadence and discover into the user's machine.
+
+**Prerequisites:** comfortable with YAML frontmatter and markdown. No language runtime required.
+
+## When to ship as a plugin vs. in-tree
+
+Choose **in-tree** (`packages/skills/<name>/`) when the skill has general relevance to the project's audience and you want the fastest review path. Choose **skill plugin** (`plugins/<name>/` with `type: skill`, or a standalone repo) when the skill is domain-specific (legal-correspondence reading, fintech compliance morning brief), employer-specific, or experimental enough that you do not yet want to commit to the project's release cadence.
+
+There is no quality difference between the two paths. The same lived-experience review rules apply. The same skill SDK is available.
+
+## Asset layout
+
+```
+plugins/<your-skill>/
+├── plugin.yaml          # Manifest with type: skill
+├── SKILL.md             # The skill itself (same format as in-tree skills)
+└── tests/
+    ├── 01-<scenario>.md
+    ├── 02-<scenario>.md
+    └── 03-<scenario>.md
+```
+
+`SKILL.md` follows exactly the same frontmatter convention as in-tree skills — see `packages/skills/adhd-daily-planner/SKILL.md` for a worked example. The plugin manifest references the SKILL.md path; everything inside SKILL.md is the canonical skill format, unchanged.
+
+## The trigger model
+
+A skill's `triggers` declare the conditions under which the client activates it: slash commands (`/morning-brief`), semantic phrase matches ("what should I do today"), or signals from another MCP server. Triggers are hints, not contracts; the client decides. For predictable activation, prefer explicit slash commands.
+
+A trigger that overlaps with an in-tree skill's trigger is allowed. The user's profile decides precedence — if both the in-tree skill and your plugin match, the substrate surfaces both to the client and the client picks. Don't write a trigger expecting to win against a first-party skill.
+
+## The three-test-invocations rule
+
+Every skill ships at least three test invocations in `tests/`. The CI harness replays these against a reference MCP client and checks the output shape matches the expected block. Three is the floor; more is welcome.
+
+Each test is a markdown file with three sections:
+
+```markdown
+# Test: <one-sentence scenario>
+
+## Input
+<the slash command or phrase, exactly as a user would type it>
+
+## Expected
+<bulleted list of properties the output must satisfy>
+```
+
+Tests are scenarios, not assertions on exact strings. The harness checks structural properties ("first sentence ≤ 80 chars", "contains the energy zone", "no fabricated project names"), not surface-level equality. This is deliberate — skills produce LLM-mediated output and exact strings would be flake-prone.
+
+## Skill SDK
+
+If your skill needs more than markdown — distress-signal detection, profile-aware formatting, the "Answer First" output shaper — pull in the skill SDK:
+
+- **TypeScript:** `@neurodock/skill-sdk`
+- **Python:** `neurodock-skill`
+
+Both expose the same helpers behind a small, vendor-neutral surface. Skills written against the SDK stay portable across clients.
+
+## Lived-experience review
+
+A skill plugin tagged with a `neurotypes` value in the manifest requires at least one reviewer with that lived experience to graduate from `community` to `reviewed`. Self-identification is sufficient.
+
+## What's next
+
+- [Concepts: skills](/concepts/skills/) for the conceptual background.
+- [Write a skill (in-tree)](/contribute/write-a-skill/) for the in-tree path — the SKILL.md format is the same; only the surrounding process differs.
+- [Plugin manifest reference](/reference/plugin-manifest/) for the full manifest schema.

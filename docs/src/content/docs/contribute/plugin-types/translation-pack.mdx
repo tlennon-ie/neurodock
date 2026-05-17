@@ -1,0 +1,76 @@
+---
+title: Plugin type — translation-pack
+description: Domain-specific and relationship-specific prompt overrides for mcp-translation.
+---
+
+A `type: translation-pack` plugin ships prompt overrides for `mcp-translation`, the communication-layer MCP server. Translation packs let the server speak the dialect of a specific domain (engineering review, legal correspondence, customer success) or a specific relationship (founder-to-board, manager-to-direct-report, contractor-to-client). The base server handles general corporate ambiguity; a translation pack tunes it for a context the base prompts cannot match.
+
+Translation packs are one of the four contribution lanes for the communication layer described in `plan.md` §7. They are deliberately the highest-leverage lane for non-coders: a translation pack is YAML and prose, not code.
+
+**Prerequisites:** comfortable editing YAML, comfortable writing prompt overrides, ideally fluent in the domain you are packing for.
+
+## What a translation pack overrides
+
+A translation pack is a set of three prompt overrides plus an eval corpus binding. The three overrides:
+
+- **Literal-meaning prompt.** Replaces or augments the base prompt that strips a message down to its literal asks.
+- **Subtext prompt.** Replaces or augments the base prompt that surfaces what is implied but not stated.
+- **Tone prompt.** Replaces or augments the base prompt that checks outgoing messages for directness, warmth, and urgency.
+
+You can override one, two, or all three. Overrides are merged at runtime against the base prompts; a pack that ships only a literal-meaning override leaves subtext and tone behaviour at the base.
+
+## Asset layout
+
+```
+plugins/<your-pack>/
+├── plugin.yaml                          # Manifest with type: translation-pack
+├── prompts/
+│   ├── literal_meaning.md               # Optional
+│   ├── subtext.md                       # Optional
+│   └── tone.md                          # Optional
+├── eval/
+│   └── corpus.yaml                      # Pack-specific eval examples
+└── README.md
+```
+
+Each prompt file is markdown with a small frontmatter block declaring the prompt's version and the base prompt version it expects to be merged against:
+
+```yaml
+---
+prompt_id: literal_meaning
+version: 0.1.0
+base_prompt_version: ">=0.1.0,<0.2.0"
+---
+
+<prompt body...>
+```
+
+The `base_prompt_version` range protects against an upstream change to the base prompt that would invalidate your override. If the base prompt moves outside your declared range, the substrate surfaces a clear warning and falls back to the base.
+
+## Eval corpus binding
+
+A translation pack ships with its own eval corpus — a versioned set of consented, anonymised examples for the domain or relationship the pack covers. The eval corpus is mandatory: a translation pack without eval coverage cannot graduate from `community` to `reviewed`.
+
+The corpus is YAML, follows the format documented in `packages/evals/CONTRIBUTING.md`, and lives at `eval/corpus.yaml` in your plugin. CI replays the corpus against the base server plus your pack on every prompt change.
+
+Anonymisation rules are the same as for the main eval corpus: names, projects, employers, and dates are stripped. Author consent is verified. The `eval-curator` agent reviews anonymisation before any pack is accepted into `reviewed`.
+
+## When to ship a translation pack vs. a language pack
+
+Translation packs and [language packs](/contribute/plugin-types/language-pack/) are related but distinct. A **translation pack** covers a domain or relationship within a corporate-culture norm you share with the base prompts (typically US English business idiom). A **language pack** covers a different corporate-culture norm entirely (Hiberno-English understatement, German directness norms, Japanese *keigo* registers).
+
+Rule of thumb: if you are tuning *what* the translation focuses on, ship a translation pack. If you are tuning *how* the translation reads in a different cultural register, ship a language pack. A pack that is both — e.g. "German engineering review" — ships as one plugin that declares both `domain:` and `locale:` in the manifest.
+
+## Privacy
+
+Translation packs do not change the privacy model of `mcp-translation`. The local-default and explicit cloud-consent rules apply unchanged. A pack cannot route messages anywhere the base server would not. If your pack needs domain-specific cloud access (e.g. a legal-correspondence pack that wants a regulated-region model), declare that requirement explicitly in the manifest and the substrate will surface it for user consent.
+
+## Lived-experience review for translation packs
+
+Translation packs that target a neurotype's specific communication needs (e.g. an "autistic-friendly customer success" pack that surfaces implicit asks more aggressively) require lived-experience review with the relevant neurotype before graduating from `community`. Packs that are purely domain-tuning (e.g. a "fintech compliance review" pack) do not require neurotype review, but still go through standard PR review.
+
+## What's next
+
+- [Plugin type — language-pack](/contribute/plugin-types/language-pack/) for the cultural-register counterpart.
+- [Plugin manifest reference](/reference/plugin-manifest/) for the manifest schema.
+- `plan.md` §7 for the broader communication-layer architecture.

@@ -1,0 +1,62 @@
+---
+title: Plugin type — profile
+description: Curated profile presets shipped as plugins. When to ship a preset vs. let users compose ad-hoc.
+---
+
+A `type: profile` plugin ships a curated profile preset — a complete or partial `profile.yaml` that users opt into through the `extends:` field in their own profile. Presets exist for two reasons: to lower the cost of a sensible first install, and to encode collective lived-experience defaults that one person editing their own file would not arrive at alone.
+
+**Prerequisites:** comfortable editing YAML, comfortable with the [profile schema](/reference/profile-schema/).
+
+## When to ship a preset
+
+Ship a preset when **all three** of the following are true:
+
+1. You have a coherent set of profile values that work together (it is not just one or two field changes).
+2. The combination is non-obvious — a new user would not arrive at it by reading the schema reference cold.
+3. The lived experience behind the choices is shareable. Either you have the relevant neurotype and the preset reflects what worked for you, or the preset has been reviewed by someone who does.
+
+If only one or two of these apply, the user should compose the values ad-hoc in their own `profile.yaml`. Presets are for combinations, not single overrides.
+
+## Asset layout
+
+```
+plugins/<your-preset>/
+├── plugin.yaml          # Manifest with type: profile
+└── profile.yaml         # The preset itself
+```
+
+The `profile.yaml` is a standard profile manifest — see the [profile schema reference](/reference/profile-schema/). It can be partial (only the blocks that differ from defaults) or complete. The substrate composes the user's profile by merging in this order: defaults → preset → user's local overrides.
+
+## How users opt in
+
+A user opts into a preset through their own `~/.neurodock/profile.yaml`:
+
+```yaml
+extends: "<your-preset-name>"
+identity:
+  display_name: "T"
+  neurotypes: ["adhd"]
+# ...local overrides win over preset values...
+```
+
+The user's local file always wins. A preset cannot override a user's stated identity, and a preset cannot override a field the user has explicitly set. This is the "user has final say" property; presets are convenience, not control.
+
+`extends:` supports only single-level extension. A preset cannot itself `extends:` another preset. This is deliberate — it keeps the composition graph trivial to reason about and prevents transitive surprise.
+
+## Lived-experience review for presets
+
+A preset that targets a specific neurotype (declared in the manifest's `neurotypes` tag) requires at least one reviewer with that lived experience before it can graduate from `community` to `reviewed`. Self-identification is sufficient. This is the same rule that applies to skills targeting a neurotype, and for the same reason: presets encode defaults that affect the user's experience, and the reviewer with the relevant neurotype is the one positioned to spot a default that is wrong for that neurotype.
+
+A preset *not* tagged to a neurotype (e.g. a "high-contrast" preset, a "quiet-hours" preset) does not require lived-experience review for the neurotype dimension; it still requires standard PR review.
+
+## What presets cannot do
+
+Presets are profile data only. They cannot ship code, cannot ship skills, cannot bundle MCP servers. A preset that wants to also ship a skill ships as two plugins — one `type: profile`, one `type: skill`. The substrate composes them through the user's profile; the user opts into each independently.
+
+A preset cannot disable guardrails. The `guardrails` block can raise thresholds (e.g. `rumination_threshold: 5` instead of the default `3`) and can soften posture (`sycophancy_check: warn` instead of `refuse`), but cannot turn detectors off entirely from a preset. Turning a detector off requires the user to set `sycophancy_check: off` in their own file, with their own consent.
+
+## What's next
+
+- [Profile schema reference](/reference/profile-schema/) for the full set of fields a preset can set.
+- [ADR 0004 — Profile schema design](/decisions/0004-profile/) for the design rationale.
+- [Concepts: profiles](/concepts/profiles/) for the conceptual model.
