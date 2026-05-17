@@ -25,7 +25,10 @@ const liveIo: ProfileIoAdapter = {
 };
 
 export function runHost(io: ProfileIoAdapter = liveIo): void {
-  let buffer = Buffer.alloc(0);
+  // Buffer<ArrayBufferLike> rather than the default Buffer<ArrayBuffer> so
+  // both Buffer.alloc and Buffer.concat assign cleanly under TS 5.7's
+  // stricter Buffer typings.
+  let buffer: Buffer<ArrayBufferLike> = Buffer.alloc(0);
 
   const writeFrame = (value: unknown): void => {
     try {
