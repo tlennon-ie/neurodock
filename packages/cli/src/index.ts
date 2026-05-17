@@ -4,10 +4,13 @@ import chalk from "chalk";
 import { runInit } from "./commands/init.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runProfileValidate, runProfileShow } from "./commands/profile.js";
+import { runValidate, formatViolation } from "./commands/validate.js";
+import { runUpdate } from "./commands/update.js";
+import { runUninstall } from "./commands/uninstall.js";
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.1.0";
+export const CLI_VERSION = "0.2.0";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -79,6 +82,73 @@ export function buildProgram(): Command {
       process.stdout.write(r.yaml);
       process.exit(0);
     });
+
+  program
+    .command("validate")
+    .description("validate a NeuroDock profile against the canonical schema")
+    .option("--file <path>", "path to the profile file (default: resolved profile path)")
+    .option("--strict", "also flag unknown keys (default allows forward-compat extras)", false)
+    .action(async (opts: { file?: string; strict: boolean }) => {
+      const r = await runValidate({
+        ...(opts.file !== undefined ? { file: opts.file } : {}),
+        strict: opts.strict === true,
+      });
+      if (r.missing) {
+        print(`No profile at ${r.resolvedPath}. Run 'neurodock init' to create one.`);
+        process.exit(1);
+      }
+      if (r.parseError) {
+        print(`Parse error in ${r.resolvedPath}: ${r.parseError}`);
+        process.exit(1);
+      }
+      if (r.valid) {
+        print(`Valid: ${r.resolvedPath}`);
+        process.exit(0);
+      }
+      print(`Invalid: ${r.resolvedPath}`);
+      for (const v of r.violations) {
+        print(formatViolation(v, r.resolvedPath));
+      }
+      process.exit(1);
+    });
+
+  program
+    .command("update")
+    .description("re-run install adapters to refresh existing NeuroDock MCP entries")
+    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .option("--dry-run", "print the diff without writing anything", false)
+    .action(async (opts: { client: string; dryRun: boolean }) => {
+      const client = validateClient(opts.client);
+      const r = await runUpdate({ client, dryRun: opts.dryRun === true });
+      for (const m of r.messages) print(m);
+      process.exit(0);
+    });
+
+  program
+    .command("uninstall")
+    .description("remove NeuroDock MCP entries from your clients; optionally purge data")
+    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .option("--dry-run", "print the diff without writing anything", false)
+    .option("--yes", "skip interactive prompts (still preserves data unless --purge)", false)
+    .option("--purge", "also delete ~/.neurodock/profile.yaml and cognitive-graph.sqlite", false)
+    .action(
+      async (opts: {
+        client: string;
+        dryRun: boolean;
+        yes: boolean;
+        purge: boolean;
+      }) => {
+        const client = validateClient(opts.client);
+        const r = await runUninstall({
+          client,
+          dryRun: opts.dryRun === true,
+          yes: opts.yes === true,
+          purge: opts.purge === true,
+        });
+        for (const m of r.messages) print(m);
+        process.exit(0);
+      },
+    );
 
   return program;
 }
