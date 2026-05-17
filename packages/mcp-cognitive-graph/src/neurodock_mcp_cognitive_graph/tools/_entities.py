@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, cast
 
+from neurodock_mcp_cognitive_graph.embedding_indexer import index_entity
 from neurodock_mcp_cognitive_graph.errors import ToolError
 from neurodock_mcp_cognitive_graph.storage.base import Storage
 from neurodock_mcp_cognitive_graph.types import (
@@ -54,6 +55,7 @@ def resolve_subject(
         row, created = storage.upsert_entity(etype, name, now=now)
         if created:
             auto.append(AutoCreatedEntity(id=row.id, type=row.type, name=row.name))
+            index_entity(storage, row, now)
     else:
         raise ToolError(
             "SUBJECT_REQUIRED",
@@ -96,6 +98,7 @@ def resolve_object(
         row, created = storage.upsert_entity(etype, name, now=now)
         if created:
             auto.append(AutoCreatedEntity(id=row.id, type=row.type, name=row.name))
+            index_entity(storage, row, now)
     else:
         raise ToolError(
             "OBJECT_REQUIRED",
