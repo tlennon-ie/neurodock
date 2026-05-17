@@ -1,25 +1,15 @@
-"""Override-token vocabulary for the three guardrail tools.
-
-Per ADR 0006 §2 and ``ETHICS.md`` commitment 2, every fired detection MUST
-carry at least one override option. The vocabulary is **closed** at v0.1.0:
-new tokens require a minor bump and clinical-reviewer sign-off.
-
-This module is the single source of truth for the human-readable description
-of each token. Tool implementations import the dict and assemble their
-``override_options`` arrays from it.
-"""
+"""Override-token vocabulary for the three guardrail tools."""
 
 from __future__ import annotations
 
 from neurodock_mcp_guardrail.types import (
+    HyperfocusOverrideOption,
     HyperfocusOverrideToken,
     OverrideOption,
     RuminationOverrideToken,
+    SycophancyOverrideOption,
     SycophancyOverrideToken,
 )
-
-# ---------------------------------------------------------------------------
-# Rumination overrides
 
 RUMINATION_OVERRIDE_DESCRIPTIONS: dict[RuminationOverrideToken, str] = {
     "fresh-context": (
@@ -31,9 +21,6 @@ RUMINATION_OVERRIDE_DESCRIPTIONS: dict[RuminationOverrideToken, str] = {
     "lower-sensitivity": "Re-run the check with a stricter similarity threshold (0.75).",
 }
 
-# Default override set when rumination fires. ADR 0006 §2 + §9 require at
-# minimum ``override-once`` and ``fresh-context``; the other two tokens are
-# returned by default as well so the calling skill has the full closed set.
 RUMINATION_DEFAULT_OVERRIDES: tuple[RuminationOverrideToken, ...] = (
     "fresh-context",
     "override-once",
@@ -43,16 +30,11 @@ RUMINATION_DEFAULT_OVERRIDES: tuple[RuminationOverrideToken, ...] = (
 
 
 def rumination_default_override_options() -> list[OverrideOption]:
-    """Return the v0.1.0 default override option set for ``check_rumination``."""
     return [
         OverrideOption(token=token, description=RUMINATION_OVERRIDE_DESCRIPTIONS[token])
         for token in RUMINATION_DEFAULT_OVERRIDES
     ]
 
-
-# ---------------------------------------------------------------------------
-# Hyperfocus overrides (reference for the Phase 3 implementation; not used at
-# runtime in v0.0.1 because the tool returns DETECTOR_NOT_YET_IMPLEMENTED).
 
 HYPERFOCUS_OVERRIDE_DESCRIPTIONS: dict[HyperfocusOverrideToken, str] = {
     "snooze-15m": "Give me 15 more minutes then come back stronger.",
@@ -65,9 +47,26 @@ HYPERFOCUS_OVERRIDE_DESCRIPTIONS: dict[HyperfocusOverrideToken, str] = {
     ),
 }
 
+HYPERFOCUS_GENTLE_OVERRIDES: tuple[HyperfocusOverrideToken, ...] = (
+    "disable-for-session",
+)
 
-# ---------------------------------------------------------------------------
-# Sycophancy overrides (reference; runtime is Phase 3).
+HYPERFOCUS_NUDGE_HARD_OVERRIDES: tuple[HyperfocusOverrideToken, ...] = (
+    "snooze-15m",
+    "commit-and-close",
+    "extend-end-of-day",
+    "disable-for-session",
+)
+
+
+def hyperfocus_override_options(
+    tokens: tuple[HyperfocusOverrideToken, ...],
+) -> list[HyperfocusOverrideOption]:
+    return [
+        HyperfocusOverrideOption(token=token, description=HYPERFOCUS_OVERRIDE_DESCRIPTIONS[token])
+        for token in tokens
+    ]
+
 
 SYCOPHANCY_OVERRIDE_DESCRIPTIONS: dict[SycophancyOverrideToken, str] = {
     "fresh-context": "You have new information that changes the question.",
@@ -78,3 +77,18 @@ SYCOPHANCY_OVERRIDE_DESCRIPTIONS: dict[SycophancyOverrideToken, str] = {
     ),
     "explain-the-match": "Show me which prior messages were counted.",
 }
+
+SYCOPHANCY_DETECTION_OVERRIDES: tuple[SycophancyOverrideToken, ...] = (
+    "i-want-validation",
+    "override-once",
+    "fresh-context",
+    "disable-for-session",
+    "explain-the-match",
+)
+
+
+def sycophancy_default_override_options() -> list[SycophancyOverrideOption]:
+    return [
+        SycophancyOverrideOption(token=token, description=SYCOPHANCY_OVERRIDE_DESCRIPTIONS[token])
+        for token in SYCOPHANCY_DETECTION_OVERRIDES
+    ]

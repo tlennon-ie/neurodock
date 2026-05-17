@@ -1,18 +1,10 @@
-"""Pydantic models mirroring the JSON Schemas under ``packages/mcp-guardrail/schemas/``.
-
-The JSON Schemas remain the source of truth (see ADR 0006); these models are
-the in-Python validation/marshalling surface. Field names, bounds, and
-enumerations must round-trip cleanly with the schemas.
-"""
+"""Pydantic models mirroring the JSON Schemas."""
 
 from __future__ import annotations
 
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
-# ---------------------------------------------------------------------------
-# Shared
 
 
 class _Base(BaseModel):
@@ -84,13 +76,9 @@ DEFAULT_FP_FEEDBACK_PATH: str = (
 )
 
 
-# ---------------------------------------------------------------------------
-# check_rumination
-
-
 class RuminationHistoryItem(_Base):
     text: str = Field(min_length=1, max_length=8000)
-    at: str  # ISO 8601 with offset
+    at: str
 
 
 class RuminationInput(_Base):
@@ -131,12 +119,6 @@ class RuminationOutput(_Base):
     false_positive_feedback_path: str = DEFAULT_FP_FEEDBACK_PATH
 
 
-# ---------------------------------------------------------------------------
-# check_hyperfocus (schema-only stub for v0.0.1; runtime returns
-# DETECTOR_NOT_YET_IMPLEMENTED). The input model is enforced even for the stub
-# so callers see schema-shape errors at the boundary.
-
-
 class OpenSessionSnapshot(_Base):
     session_id: str
     started_at: str
@@ -164,8 +146,31 @@ class HyperfocusInput(_Base):
     escalation_thresholds: EscalationThresholds | None = None
 
 
-# ---------------------------------------------------------------------------
-# check_sycophancy (schema-only stub)
+class HyperfocusHeuristicDescriptor(_Base):
+    name: HyperfocusHeuristicName
+    version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    description: str = Field(max_length=500)
+
+
+class HyperfocusOverrideOption(_Base):
+    token: HyperfocusOverrideToken
+    description: str = Field(max_length=200)
+
+
+class HyperfocusOutput(_Base):
+    level: HyperfocusLevel
+    elapsed_seconds: int = Field(ge=0)
+    prior_intent: str | None = Field(default=None, max_length=500)
+    time_since_stated_end: str | None = Field(
+        default=None,
+        pattern=r"^P([0-9]+[YMWD])*(T([0-9]+H)?([0-9]+M)?([0-9]+(\.[0-9]+)?S)?)?$",
+    )
+    suggested_action: HyperfocusSuggestedAction | None = None
+    confidence: float = Field(ge=0.0, le=1.0)
+    reason: str = Field(max_length=280)
+    heuristic: HyperfocusHeuristicDescriptor
+    override_options: list[HyperfocusOverrideOption] = Field(default_factory=list, max_length=10)
+    false_positive_feedback_path: str = DEFAULT_FP_FEEDBACK_PATH
 
 
 class SycophancyRecentMessage(_Base):
@@ -177,3 +182,35 @@ class SycophancyInput(_Base):
     candidate_response: str | None = Field(default=None, min_length=1, max_length=16000)
     recent_user_messages: list[SycophancyRecentMessage] | None = None
     decision_context: str | None = Field(default=None, max_length=500)
+
+
+SycophancySpanSource = Literal["candidate_response", "recent_user_messages"]
+
+
+class SycophancyMatchedSpan(_Base):
+    source: SycophancySpanSource
+    text: str = Field(min_length=1, max_length=1000)
+    at: str | None = None
+
+
+class SycophancyHeuristicDescriptor(_Base):
+    name: SycophancyHeuristicName
+    version: str = Field(pattern=r"^\d+\.\d+\.\d+$")
+    description: str = Field(max_length=500)
+
+
+class SycophancyOverrideOption(_Base):
+    token: SycophancyOverrideToken
+    description: str = Field(max_length=200)
+
+
+class SycophancyOutput(_Base):
+    detected: bool
+    pattern: SycophancyPattern
+    confidence: float = Field(ge=0.0, le=1.0)
+    matched_spans: list[SycophancyMatchedSpan] = Field(default_factory=list, max_length=20)
+    counter_prompt: str | None = Field(default=None, max_length=1000)
+    reason: str = Field(max_length=280)
+    heuristic: SycophancyHeuristicDescriptor
+    override_options: list[SycophancyOverrideOption] = Field(default_factory=list, max_length=10)
+    false_positive_feedback_path: str = DEFAULT_FP_FEEDBACK_PATH
