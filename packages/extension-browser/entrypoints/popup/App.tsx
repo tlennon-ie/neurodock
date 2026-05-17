@@ -12,7 +12,13 @@
  * No diagnosis-gated language.
  */
 import React, { useCallback, useEffect, useState } from "react";
-import { defaultProfile, loadProfile, saveProfile } from "../../src/lib/profile.js";
+import {
+  defaultProfile,
+  loadProfile,
+  saveProfile,
+  getSyncStatus,
+  type ProfileSyncStatus,
+} from "../../src/lib/profile.js";
 import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
 import { listHistory } from "../../src/lib/storage.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
@@ -21,6 +27,7 @@ export function App(): React.ReactElement {
   const [profile, setProfile] = useState<ExtensionProfile>(defaultProfile());
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<ProfileSyncStatus | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -33,6 +40,11 @@ export function App(): React.ReactElement {
         } catch {
           setHistory([]);
         }
+      }
+      try {
+        setSyncStatus(await getSyncStatus());
+      } catch {
+        setSyncStatus(null);
       }
     })();
   }, []);
@@ -75,10 +87,56 @@ export function App(): React.ReactElement {
         />
       </section>
 
+      <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
+        <h2 id="sync-heading" className="font-heading m-0 text-base font-medium">
+          Profile sync
+        </h2>
+        <ProfileSyncLine status={syncStatus} />
+      </section>
+
       {loaded ? null : (
         <p className="text-xs text-neutral-500">Loading your profile…</p>
       )}
     </main>
+  );
+}
+
+interface ProfileSyncLineProps {
+  readonly status: ProfileSyncStatus | null;
+}
+
+function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
+  if (status === null) {
+    return <p className="text-xs text-neutral-500">Checking native host…</p>;
+  }
+  if (status.source === "native-host") {
+    return (
+      <div className="flex flex-col gap-0.5 text-xs text-neutral-600 dark:text-neutral-400">
+        <span>
+          <strong>native host (active).</strong>{" "}
+          Reading and writing{" "}
+          <code className="font-mono">~/.neurodock/profile.yaml</code>.
+        </span>
+        {status.detail ? (
+          <span className="text-neutral-500">{status.detail}</span>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1 border border-neutral-200 bg-neutral-50 p-2 text-xs dark:border-neutral-800 dark:bg-neutral-900">
+      <span className="text-neutral-700 dark:text-neutral-300">
+        <strong>extension-local.</strong> Profile lives only inside this
+        browser.
+      </span>
+      <span className="text-neutral-600 dark:text-neutral-400">
+        Install the native host to keep this extension in sync with{" "}
+        <code className="font-mono">~/.neurodock/profile.yaml</code>:
+      </span>
+      <code className="select-all bg-neutral-100 px-2 py-1 font-mono dark:bg-neutral-800">
+        pnpx @neurodock/native-host install
+      </code>
+    </div>
   );
 }
 

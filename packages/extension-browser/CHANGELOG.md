@@ -1,5 +1,28 @@
 # @neurodock/extension-browser
 
+## Unreleased
+
+### Added
+
+- Native messaging integration with `@neurodock/native-host` v0.1.0.
+  `loadProfile()` now tries the host first and falls back to
+  `chrome.storage.local` when the host is not installed. `saveProfile()`
+  writes through to `~/.neurodock/profile.yaml` (with a confirm-required
+  guard when on-disk fields the extension does not own would be
+  clobbered). New `getSyncStatus()` powers the popup's "Profile sync"
+  line: `native host (active)` when wired, `extension-local` plus an
+  install hint otherwise.
+- `src/lib/native-host-client.ts` — tolerant Chrome Native Messaging
+  client. Times out at 1.5 s, never throws on a missing host, surfaces
+  `CONFIRM_REQUIRED` as a structured flag.
+- Popup "Profile sync" section in `entrypoints/popup/App.tsx`.
+
+### Tests
+
+- `tests/unit/native-host-client.test.ts` — probe, get, set,
+  confirm-required, and confirm-overwrite paths against an in-memory
+  port double.
+
 ## 0.1.0
 
 ### Minor Changes
