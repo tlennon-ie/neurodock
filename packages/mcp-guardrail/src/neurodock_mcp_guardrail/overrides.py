@@ -47,9 +47,7 @@ HYPERFOCUS_OVERRIDE_DESCRIPTIONS: dict[HyperfocusOverrideToken, str] = {
     ),
 }
 
-HYPERFOCUS_GENTLE_OVERRIDES: tuple[HyperfocusOverrideToken, ...] = (
-    "disable-for-session",
-)
+HYPERFOCUS_GENTLE_OVERRIDES: tuple[HyperfocusOverrideToken, ...] = ("disable-for-session",)
 
 HYPERFOCUS_NUDGE_HARD_OVERRIDES: tuple[HyperfocusOverrideToken, ...] = (
     "snooze-15m",

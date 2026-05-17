@@ -10,7 +10,7 @@ UNCONDITIONAL_AGREEMENT_OPENERS: tuple[str, ...] = (
     "yes,",
     "absolutely",
     "exactly right",
-    "you\'re absolutely correct",
+    "you're absolutely correct",
     "great point",
 )
 
@@ -39,11 +39,11 @@ CITATION_MARKERS: tuple[str, ...] = (
 UNSOLICITED_COMPLIMENT_ENDINGS: tuple[str, ...] = (
     "great question",
     "great point",
-    "you\'re amazing",
-    "you\'re brilliant",
+    "you're amazing",
+    "you're brilliant",
     "fantastic work",
     "amazing work",
-    "you\'re crushing it",
+    "you're crushing it",
     "keep it up",
 )
 

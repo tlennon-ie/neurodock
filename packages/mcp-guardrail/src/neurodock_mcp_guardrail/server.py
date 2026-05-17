@@ -46,7 +46,7 @@ def build_server() -> FastMCP[Any]:
     @mcp.tool(
         name="check_rumination",
         description=(
-            "Detect whether the user\'s current prompt is a semantic repeat of recent prompts "
+            "Detect whether the user's current prompt is a semantic repeat of recent prompts "
             "within a rolling window. Stateless; returns a structured advisory signal."
         ),
     )

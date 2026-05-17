@@ -89,7 +89,7 @@ def _reason_for(
         return f"Session has run {elapsed_minutes} minutes; below the gentle threshold."
     if past_end_of_day and end_of_day_local is not None:
         return (
-            f"Session has run {elapsed_minutes} minutes and is past the user\'s stated "
+            f"Session has run {elapsed_minutes} minutes and is past the user's stated "
             f"{end_of_day_local} end-of-day."
         )
     return f"Session has run {elapsed_minutes} minutes."

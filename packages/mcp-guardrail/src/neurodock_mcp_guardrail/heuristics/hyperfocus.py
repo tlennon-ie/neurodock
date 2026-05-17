@@ -57,11 +57,7 @@ def resolve_thresholds(
     explicit_nudge: int | None = None,
     explicit_hard: int | None = None,
 ) -> HyperfocusThresholds:
-    if (
-        explicit_gentle is not None
-        and explicit_nudge is not None
-        and explicit_hard is not None
-    ):
+    if explicit_gentle is not None and explicit_nudge is not None and explicit_hard is not None:
         return HyperfocusThresholds(
             gentle_seconds=explicit_gentle * 60,
             nudge_seconds=explicit_nudge * 60,
@@ -94,9 +90,7 @@ def _now_past_end_of_day(now: datetime, end_of_day_local: str) -> tuple[bool, ti
     return (True, now - eod_moment)
 
 
-def _classify_elapsed(
-    elapsed_seconds: int, thresholds: HyperfocusThresholds
-) -> HyperfocusLevel:
+def _classify_elapsed(elapsed_seconds: int, thresholds: HyperfocusThresholds) -> HyperfocusLevel:
     if elapsed_seconds < thresholds.gentle_seconds:
         return "none"
     if elapsed_seconds < thresholds.nudge_seconds:

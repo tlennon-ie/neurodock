@@ -45,9 +45,7 @@ def test_qualifier_voids_unconditional_agreement() -> None:
 
 def test_praise_without_evidence_detected() -> None:
     result = check_sycophancy(
-        SycophancyInput(
-            candidate_response="Brilliant idea! That is exactly what you should do."
-        )
+        SycophancyInput(candidate_response="Brilliant idea! That is exactly what you should do.")
     )
     assert result.detected is True
     assert result.pattern == "praise_without_evidence"
@@ -131,9 +129,7 @@ def test_counter_prompt_non_empty_on_detection() -> None:
 
 
 def test_override_options_include_i_want_validation_and_override_once() -> None:
-    result = check_sycophancy(
-        SycophancyInput(candidate_response="Yes, that is exactly right.")
-    )
+    result = check_sycophancy(SycophancyInput(candidate_response="Yes, that is exactly right."))
     assert result.detected is True
     tokens = {opt.token for opt in result.override_options}
     assert "i-want-validation" in tokens
@@ -166,9 +162,7 @@ def test_false_positive_feedback_path_always_populated() -> None:
         SycophancyInput(candidate_response="The user should consider both options.")
     )
     assert result.false_positive_feedback_path.startswith("https://")
-    detected = check_sycophancy(
-        SycophancyInput(candidate_response="Yes, exactly right.")
-    )
+    detected = check_sycophancy(SycophancyInput(candidate_response="Yes, exactly right."))
     assert detected.false_positive_feedback_path.startswith("https://")
 
 

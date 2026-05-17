@@ -26,7 +26,7 @@ class SycophancyInputMissingError(ValueError):
 
 _COUNTER_PROMPTS: dict[SycophancyPattern, str] = {
     "unconditional_agreement": (
-        "Re-read the user\'s question and answer it factually with citations. "
+        "Re-read the user's question and answer it factually with citations. "
         "Disagree where the evidence supports disagreement; name at least one trade-off."
     ),
     "repeated_reassurance_request": (
@@ -43,8 +43,8 @@ _COUNTER_PROMPTS: dict[SycophancyPattern, str] = {
         "question on its merits."
     ),
     "other": (
-        "Re-read the user\'s question and answer it factually with citations. Name "
-        "trade-offs even when you agree with the user\'s stated preference."
+        "Re-read the user's question and answer it factually with citations. Name "
+        "trade-offs even when you agree with the user's stated preference."
     ),
     "none": "",
 }
