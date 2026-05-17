@@ -84,7 +84,6 @@ export function buildProgram(): Command {
       process.exit(0);
     });
 
-<<<<<<< HEAD
   program
     .command("validate")
     .description("validate a NeuroDock profile against the canonical schema")
@@ -151,7 +150,7 @@ export function buildProgram(): Command {
         process.exit(0);
       },
     );
-=======
+
   const hostCmd = program
     .command("host")
     .description("manage the optional native messaging host (browser extension <-> ~/.neurodock/profile.yaml)");
@@ -187,7 +186,6 @@ export function buildProgram(): Command {
       }
       process.exit(0);
     });
->>>>>>> 0436401 (feat(cli): add 'neurodock host install' and 'neurodock host uninstall')
 
   return program;
 }
