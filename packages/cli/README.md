@@ -32,6 +32,8 @@ published install this matures into `uv tool install neurodock-mcp-*`.
 | `neurodock doctor` | Diagnose your install — profile validity, client wiring, tool availability. |
 | `neurodock profile validate` | Validate `~/.neurodock/profile.yaml` against the v0.1 schema. |
 | `neurodock profile show` | Print the resolved profile with loader defaults applied. |
+| `neurodock host install` | Register the optional native messaging host so the browser extension can read `~/.neurodock/profile.yaml` directly. |
+| `neurodock host uninstall` | Remove all NeuroDock native-host manifests and registry pointers. |
 
 ### `neurodock init`
 
@@ -65,6 +67,26 @@ key are skipped unless `--yes` is supplied.
 | Claude Desktop | Linux | `~/.config/Claude/claude_desktop_config.json` |
 | Claude Code | All | `./.claude/settings.json` (project, preferred) then `~/.claude/settings.json` (user) |
 | Cursor | All | `./.cursor/mcp.json` (project, preferred) then `~/.cursor/mcp.json` (user) |
+
+### `neurodock host install` / `uninstall`
+
+```
+neurodock host install [--extension-id <id>]
+neurodock host uninstall
+```
+
+`host install` registers `com.neurodock.profile` (a Chrome Native
+Messaging host shipped as `@neurodock/native-host`) with every supported
+browser on the machine. After install, the browser extension reads and
+writes `~/.neurodock/profile.yaml` directly instead of maintaining a
+duplicate in `chrome.storage.local`.
+
+`--extension-id` is repeatable. Pass the published extension id once it
+is allocated by the store; while the package is unpublished the default
+is a placeholder.
+
+The host is OPTIONAL. The extension keeps working without it — the
+popup just shows `Profile sync: extension-local`.
 
 ### Profile precedence
 

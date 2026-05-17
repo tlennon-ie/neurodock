@@ -7,6 +7,7 @@ import { runProfileValidate, runProfileShow } from "./commands/profile.js";
 import { runValidate, formatViolation } from "./commands/validate.js";
 import { runUpdate } from "./commands/update.js";
 import { runUninstall } from "./commands/uninstall.js";
+import { runHostInstall, runHostUninstall } from "./commands/host.js";
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
@@ -83,6 +84,7 @@ export function buildProgram(): Command {
       process.exit(0);
     });
 
+<<<<<<< HEAD
   program
     .command("validate")
     .description("validate a NeuroDock profile against the canonical schema")
@@ -149,6 +151,43 @@ export function buildProgram(): Command {
         process.exit(0);
       },
     );
+=======
+  const hostCmd = program
+    .command("host")
+    .description("manage the optional native messaging host (browser extension <-> ~/.neurodock/profile.yaml)");
+
+  hostCmd
+    .command("install")
+    .description("register the NeuroDock native messaging host with installed browsers")
+    .option(
+      "--extension-id <id>",
+      "browser extension id allowed to connect (repeatable)",
+      (value: string, prev: string[]) => [...prev, value],
+      [] as string[],
+    )
+    .action((opts: { extensionId: string[] }) => {
+      const result = runHostInstall({ extensionIds: opts.extensionId });
+      print(`Installing com.neurodock.profile (platform=${result.platform})`);
+      for (const o of result.outcomes) {
+        const detail = o.detail ? ` — ${o.detail}` : "";
+        print(`  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${o.manifestPath}${detail}`);
+      }
+      process.exit(0);
+    });
+
+  hostCmd
+    .command("uninstall")
+    .description("remove the NeuroDock native messaging host manifests / registry pointers")
+    .action(() => {
+      const result = runHostUninstall();
+      print(`Removing com.neurodock.profile (platform=${result.platform})`);
+      for (const o of result.outcomes) {
+        const detail = o.detail ? ` — ${o.detail}` : "";
+        print(`  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${o.manifestPath}${detail}`);
+      }
+      process.exit(0);
+    });
+>>>>>>> 0436401 (feat(cli): add 'neurodock host install' and 'neurodock host uninstall')
 
   return program;
 }

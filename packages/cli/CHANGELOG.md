@@ -2,6 +2,15 @@
 
 ## 0.2.0 (unreleased)
 
+### Added
+
+- `neurodock host install` and `neurodock host uninstall` subcommands.
+  Wire / unwire the optional Chrome Native Messaging host
+  (`@neurodock/native-host`) so the browser extension reads and writes
+  `~/.neurodock/profile.yaml` directly. Per-platform manifest dispatch
+  lives in the host package; the CLI is a thin commander wrapper.
+- `@neurodock/native-host` is now a workspace dependency.
+
 Adds three top-level subcommands and bumps `prompts` into the dependency set.
 
 - `neurodock validate` — Ajv-driven schema validation against `packages/core/schemas/profile.schema.json`. Reports field-path violations with `file:line` references. Supports `--file <path>` to validate an alternate file and `--strict` to flag unknown keys (default remains forward-compat per ADR 0004).

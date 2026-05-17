@@ -32,6 +32,7 @@
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
+    "@neurodock/native-host": "workspace:^0.1.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "chalk": "^5.3.0",
