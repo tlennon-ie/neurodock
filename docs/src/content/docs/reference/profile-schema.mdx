@@ -1,0 +1,118 @@
+---
+title: Profile schema
+description: Field-by-field reference for ~/.neurodock/profile.yaml.
+---
+
+The full reference for `~/.neurodock/profile.yaml`. Schema lives at `packages/core/schemas/profile.schema.json` (`$id: https://schemas.neurodock.org/profile/v0.1.0/profile.schema.json`).
+
+Rationale and the design alternatives we rejected are in [ADR 0004](/decisions/0004-profile/).
+
+## Top-level shape
+
+| Block | Required? | Notes |
+|---|---|---|
+| `identity` | Yes | Display name plus self-identified neurotypes. The only required block. |
+| `preferences` | No | Output format, chunk size, font hint, motion. |
+| `chronometric` | No | Hyperfocus break threshold, end-of-day cut-off, zones. |
+| `guardrails` | No | Rumination threshold and window, sycophancy posture. |
+| `privacy` | No | Embeddings, telemetry, OS idle consent. |
+| `schema_version` | No | Self-declared version string. Informational. |
+| `extends` | No | Single-level preset extension. |
+
+`additionalProperties: true` at every level — see the forward-compatibility note below.
+
+## `identity` (required)
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `display_name` | string | _none_ | Free-form. One letter is fine. Never an email, never a real name. |
+| `neurotypes` | string[] | _none_ | Self-identified. Enum: `adhd \| asd \| audhd \| ocd \| dyslexia \| dyspraxia \| tourette \| other`. |
+| `additional_notes` | string | _none_ | Optional free-form, never used to gate features. |
+
+`audhd` is its own value, not `["adhd", "asd"]`. The lived experience differs from either alone.
+
+## `preferences`
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `output_format` | enum | `answer_first` | `answer_first \| conventional \| bullet_first` |
+| `max_chunk_size` | integer 1..20 | 7 | 5 is the ADHD-preset override; ships in `profiles/presets/adhd-*`. |
+| `reading_font_hint` | enum | `atkinson_hyperlegible` | `atkinson_hyperlegible \| lexend \| system_default` |
+| `motion` | enum | `reduced` | `reduced \| system \| full` |
+
+## `chronometric`
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `hyperfocus_break_minutes` | integer 15..240 | 90 | Anchors the 'nudge' rung of the 60/90/120 ladder. |
+| `end_of_day_local` | `HH:MM` string | _none_ | Local timezone. Used by the after-end-of-day hyperfocus nudge. |
+| `zones` | map | _none_ | Per-band overrides for the `energy_zone` heuristic. |
+| `session_overlap_policy` | enum | `auto_close` | `auto_close \| error` — what happens when `mark_session_start` finds an open prior session. |
+
+## `guardrails`
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `rumination_threshold` | integer 1..20 | 3 | Repeat-count that triggers intervention. |
+| `rumination_window_minutes` | integer 5..1440 | 90 | Sliding window in minutes. |
+| `sycophancy_check` | enum | `warn` | `off \| warn \| refuse` — `off` still logs locally for self-audit. |
+
+## `privacy`
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `embeddings` | enum | `local` | `local \| cloud_voyage \| cloud_openai` — cloud triggers a visible session-start notice. |
+| `telemetry` | enum | `off` | `off \| local_otel_only \| full` — `full` requires a future ADR plus clinical sign-off. |
+| `os_idle_consent` | boolean | `false` | Required `true` for `idle_status` to return real data. |
+
+## Example profile (rich)
+
+```yaml
+identity:
+  display_name: "T"
+  neurotypes: ["adhd", "asd"]
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+chronometric:
+  hyperfocus_break_minutes: 90
+  end_of_day_local: "18:30"
+guardrails:
+  rumination_threshold: 3
+  sycophancy_check: "warn"
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+```
+
+## Minimal profile
+
+```yaml
+identity:
+  display_name: "T"
+  neurotypes: ["adhd"]
+```
+
+Everything else uses safe defaults. The loader applies them at read time — they are not written into the file.
+
+## Forward compatibility (the load-bearing rule)
+
+`additionalProperties: true` at every object level. Loaders **must** preserve unknown top-level and nested keys on round-trip. A v0.1 loader reading a v0.2 file must re-emit those v0.2 keys unchanged. See [ADR 0004 §C](/decisions/0004-profile/) for the rationale and the rejected strict-schema alternatives.
+
+Typos are caught by `neurodock profile validate`, not by the loader.
+
+## Validating
+
+```bash
+neurodock profile validate
+```
+
+Warns on unknown keys with "did you mean…" hints. Refuses to load only when a *known* field is malformed (out-of-range integer, bad enum value).
+
+## What's next
+
+- [ADR 0004](/decisions/0004-profile/) for the design rationale.
+- [Concepts: profiles](/concepts/profiles/) for the higher-level picture.
+- [Getting started: profile](/getting-started/profile/) for practical edits.

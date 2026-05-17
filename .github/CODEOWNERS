@@ -1,0 +1,57 @@
+# NeuroDock CODEOWNERS
+#
+# Default owner is the founding council placeholder. Real council handles
+# need to be filled in once the council is seated. See GOVERNANCE.md.
+#
+# Rules below are evaluated in order; later rules win. Lived-experience
+# review routing is enforced through the contribution guide and CI labels,
+# not through CODEOWNERS (since self-identification cannot be encoded here).
+
+# Default owners — every PR pings the council placeholder
+* @thomas-lennon
+
+# Workspace tooling
+/pnpm-workspace.yaml          @thomas-lennon
+/pyproject.toml               @thomas-lennon
+/turbo.json                   @thomas-lennon
+/package.json                 @thomas-lennon
+/tsconfig.base.json           @thomas-lennon
+/.changeset/                  @thomas-lennon
+/.github/                     @thomas-lennon
+
+# Governance and docs
+/MANIFESTO.md                 @thomas-lennon
+/GOVERNANCE.md                @thomas-lennon
+/CODE_OF_CONDUCT.md           @thomas-lennon
+/ETHICS.md                    @thomas-lennon
+/SECURITY.md                  @thomas-lennon
+/CONTRIBUTING.md              @thomas-lennon
+/LICENSE                      @thomas-lennon
+/outreach/                    @thomas-lennon
+/docs/                        @thomas-lennon
+/docs/decisions/              @thomas-lennon
+
+# TypeScript packages
+/packages/core/               @thomas-lennon
+/packages/cli/                @thomas-lennon
+/packages/extension-browser/  @thomas-lennon
+
+# Python MCP servers
+/packages/mcp-chronometric/         @thomas-lennon
+/packages/mcp-cognitive-graph/      @thomas-lennon
+/packages/mcp-task-fractionator/    @thomas-lennon
+/packages/mcp-translation/          @thomas-lennon
+/packages/mcp-guardrail/            @thomas-lennon
+
+# Python libraries
+/packages/clinical/           @thomas-lennon
+/packages/evals/              @thomas-lennon
+
+# Skills
+/packages/skills/             @thomas-lennon
+
+# Plugins, profiles, examples
+/plugins/                     @thomas-lennon
+/profiles/                    @thomas-lennon
+/examples/                    @thomas-lennon
+/scripts/                     @thomas-lennon

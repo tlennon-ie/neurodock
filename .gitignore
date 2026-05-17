@@ -1,0 +1,189 @@
+# ─────────────────────────────────────────────────────────────
+# Node / pnpm (TypeScript packages: core, cli, extension-browser, docs)
+# ─────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+.next/
+.nuxt/
+
+# Turborepo cache
+.turbo/
+
+# ─────────────────────────────────────────────────────────────
+# Python / uv (MCP servers, clinical, evals)
+# ─────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# uv / virtualenvs
+.venv/
+venv/
+env/
+.python-version
+
+# Packaging
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+*.whl
+
+# Test / coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.hypothesis/
+
+# Jupyter (in case any analysis notebooks land in scripts/)
+.ipynb_checkpoints/
+
+# ─────────────────────────────────────────────────────────────
+# WXT browser extension (packages/extension-browser/)
+# ─────────────────────────────────────────────────────────────
+.output/
+.wxt/
+web-ext-artifacts/
+*.zip
+*.crx
+*.xpi
+
+# Extension store submission artefacts — keep these local
+extension-submission/
+
+# ─────────────────────────────────────────────────────────────
+# Astro / Starlight docs (docs/)
+# ─────────────────────────────────────────────────────────────
+.astro/
+
+# ─────────────────────────────────────────────────────────────
+# Local NeuroDock runtime data — NEVER commit
+# ─────────────────────────────────────────────────────────────
+# Profile files contain user neurotype declarations
+profile.yaml
+profile.yml
+.neurodock/
+**/.neurodock/
+
+# SQLite stores (cognitive graph, embeddings, traces)
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-journal
+
+# JSONL event logs
+*.jsonl
+!packages/evals/**/*.jsonl       # eval corpora are checked in
+!**/fixtures/*.jsonl              # test fixtures are checked in
+
+# Local embedding caches
+.embeddings/
+embeddings-cache/
+
+# OpenTelemetry local trace dumps
+.otel/
+traces/
+
+# ─────────────────────────────────────────────────────────────
+# Secrets / environment
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+secrets/
+
+# Anthropic / LLM provider keys (defence in depth)
+.anthropic/
+.openai/
+
+# Browser extension signing keys — local only
+*.signing-key
+extension-private-key.pem
+
+# ─────────────────────────────────────────────────────────────
+# OS / editor (you're on Windows + VS Code)
+# ─────────────────────────────────────────────────────────────
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS (in case any contributor PRs from a Mac)
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# VS Code — share recommendations, ignore personal state
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.shared.json
+!.vscode/launch.shared.json
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+.\#*
+\#*\#
+
+# ─────────────────────────────────────────────────────────────
+# Claude Code / agent runtime — keep agents tracked, ignore state
+# ─────────────────────────────────────────────────────────────
+.claude/cache/
+.claude/history/
+.claude/sessions/
+.claude/local/
+
+# Do keep: .claude/agents/, .claude/skills/, .claude/settings.json
+
+# ─────────────────────────────────────────────────────────────
+# Misc
+# ─────────────────────────────────────────────────────────────
+*.log
+logs/
+tmp/
+.tmp/
+.cache/
+.parcel-cache/
+
+# Lockfiles policy: KEEP these committed
+# !pnpm-lock.yaml
+# !uv.lock
+# (intentionally not listed above so they're tracked)

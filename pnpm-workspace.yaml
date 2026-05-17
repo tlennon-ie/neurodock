@@ -1,0 +1,16 @@
+packages:
+  - "packages/core"
+  - "packages/cli"
+  - "packages/extension-browser"
+  - "plugins/*"
+  - "profiles/*"
+  - "docs"
+  - "examples/*"
+allowBuilds:
+  esbuild: true
+  sharp: true
+  spawn-sync: true
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - spawn-sync

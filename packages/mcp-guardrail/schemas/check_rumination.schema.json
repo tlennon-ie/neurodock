@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-guardrail/v0.1.0/check_rumination.schema.json",
+  "title": "check_rumination",
+  "description": "Detect whether the user's current prompt is a semantic repeat of recent prompts within a rolling window. Returns a structured advisory signal with the rule that fired, a confidence score, and a non-empty list of overrides the user may invoke. NEVER blocks the user's action; the calling skill decides whether to surface, defer, or ignore. Stateless: the caller supplies the history; this server stores nothing.",
+  "version": "0.1.0",
+  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/clinical/ requires sign-off from  and consultation with the  per ETHICS.md commitment 3 and plan.md §8.",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_prompt", "history"],
+      "properties": {
+        "current_prompt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000,
+          "description": "The user's current prompt under evaluation. Verbatim; the server does not paraphrase. Max length keeps the comparison bounded; longer prompts SHOULD be truncated by the caller and the truncation flagged in the calling skill."
+        },
+        "history": {
+          "type": "array",
+          "description": "Recent prior prompts from the same user, oldest-first. The caller is responsible for filtering to a sensible window (e.g. last 24h) and for redacting anything that should not be compared. The server treats this array as authoritative and does not augment it from any store.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "at"],
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8000,
+                "description": "Verbatim text of the prior prompt."
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp with explicit timezone offset for when the prior prompt was issued. Used to clip the window to window_minutes."
+              }
+            }
+          },
+          "maxItems": 500
+        },
+        "window_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1440,
+          "default": 90,
+          "description": "Rolling window in minutes within which similar prompts are counted. Default 90 per plan.md §8. Callers SHOULD source from profile.guardrails.rumination_window_minutes when set."
+        },
+        "threshold_count": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 50,
+          "default": 3,
+          "description": "Number of semantically-similar prompts within the window that triggers detection. Default 3 per plan.md §8. Threshold of 2 is intentionally the floor: a single repeat is normal human behaviour."
+        },
+        "similarity_threshold": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.55,
+          "description": "Minimum word-overlap Jaccard score (v0.1.0 heuristic) at which two prompts are considered semantically similar. Default 0.55 is calibrated on the field-study corpus; lower values yield more sensitivity and more false positives. v0.0.2 will introduce embedding-based similarity; this field will remain to support deterministic fallback."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detected",
+        "count",
+        "window_seconds",
+        "threshold",
+        "confidence",
+        "reason",
+        "heuristic",
+        "override_options",
+        "false_positive_feedback_path"
+      ],
+      "properties": {
+        "detected": {
+          "type": "boolean",
+          "description": "True when count >= threshold within window_seconds. False is a first-class return; the caller MUST respond normally and SHOULD NOT surface any guardrail UI."
+        },
+        "similar_prompts": {
+          "type": "array",
+          "description": "The prior prompts that matched the current prompt above similarity_threshold, oldest-first. Empty when detected is false. Verbatim; the server does not redact. Skills that surface this MUST quote, not paraphrase.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "at", "similarity"],
+            "properties": {
+              "text": { "type": "string" },
+              "at": { "type": "string", "format": "date-time" },
+              "similarity": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Score from the heuristic (Jaccard in v0.1.0). Surfaced so a skill can explain 'this matched at 0.78'."
+              }
+            }
+          },
+          "maxItems": 50
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of similar prompts found in the window (inclusive of the current_prompt's matches; the current_prompt itself is not counted)."
+        },
+        "window_seconds": {
+          "type": "integer",
+          "minimum": 60,
+          "description": "Echo of the evaluated window in seconds (window_minutes * 60). Surfaced so skills can render 'within the last X minutes' without recomputing."
+        },
+        "threshold": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Echo of threshold_count. Surfaced so a skill can render 'this is the 4th of 3'."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the detection on a 0..1 scale. Computed from the spread of similarity scores above threshold and the proximity of count to threshold. Required even when detected is false (in which case it expresses non-detection confidence). Per ETHICS.md commitment 5, callers SHOULD use confidence to modulate UI assertiveness; low-confidence detections should never trigger hard interventions."
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "Plain-language sentence the skill MAY surface verbatim. Example: '3 prompts within 90 minutes matched this one above 0.55 word-overlap similarity.' Per ETHICS.md commitment 2, every fired detection has a stated reason."
+        },
+        "heuristic": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "description": "Identifies the exact rule that fired. Per ETHICS.md commitment 3 (heuristics are public and auditable), this MUST be populated on every response, including non-detections.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": ["word_overlap_jaccard", "embedding_cosine", "topic_model"],
+              "description": "v0.1.0 ships only 'word_overlap_jaccard'. Other values reserved for future minor versions."
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$",
+              "description": "Semantic version of the heuristic implementation in packages/clinical/. Surfaced so a user reading the explanation can pin the exact rule."
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 500,
+              "description": "Plain-language description of the rule. The actual source lives in packages/clinical/ and is auditable from there."
+            }
+          }
+        },
+        "override_options": {
+          "type": "array",
+          "description": "User-actionable overrides. MUST be non-empty when detected is true (enforced via allOf below). Per ETHICS.md commitment 2, no detection ships without an override path.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "description"],
+            "properties": {
+              "token": {
+                "type": "string",
+                "enum": [
+                  "fresh-context",
+                  "override-once",
+                  "disable-for-session",
+                  "lower-sensitivity"
+                ],
+                "description": "Canonical override vocabulary. 'fresh-context' = the user is bringing new information; 'override-once' = ignore the guardrail for this one prompt; 'disable-for-session' = silence this detector for the rest of the session; 'lower-sensitivity' = re-evaluate with a higher similarity_threshold. The vocabulary is closed for v0.1.0 (see ADR 0006 open question 3)."
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 200,
+                "description": "Human-readable description the skill MAY surface verbatim."
+              }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 10
+        },
+        "false_positive_feedback_path": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL the user can visit to report a false positive. Per ETHICS.md commitment 5, every detection surface offers this path. Fixed at the schema level so skills surface a consistent route; the server does not log false-positive submissions, the user does.",
+          "default": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "detected": { "const": true } }, "required": ["detected"] },
+          "then": {
+            "properties": {
+              "override_options": { "minItems": 1 },
+              "similar_prompts": { "minItems": 1 }
+            },
+            "required": ["similar_prompts"]
+          }
+        }
+      ]
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "INPUT_TOO_LARGE": {
+        "description": "current_prompt or history.text exceeded 8000 characters. The caller MUST truncate before retrying."
+      },
+      "HISTORY_OUT_OF_ORDER": {
+        "description": "history items were not oldest-first or contained timestamps in the future relative to current_prompt's evaluation time. The server does not silently re-sort; misordered input is rejected so callers do not develop a habit of relying on it."
+      },
+      "WINDOW_OUT_OF_RANGE": {
+        "description": "window_minutes was outside 1..1440. Out-of-range is rejected rather than clamped so callers cannot accidentally disable the check by passing 0 or a huge number."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "no detection - first time asking",
+      "input": {
+        "current_prompt": "should I use Postgres or SQLite for this?",
+        "history": []
+      },
+      "output": {
+        "detected": false,
+        "count": 0,
+        "window_seconds": 5400,
+        "threshold": 3,
+        "confidence": 0.95,
+        "reason": "0 prior prompts within 90 minutes matched this one above 0.55 word-overlap similarity.",
+        "heuristic": {
+          "name": "word_overlap_jaccard",
+          "version": "0.1.0",
+          "description": "Tokenises both prompts on whitespace and punctuation, lowercases, removes a 60-word stoplist, and computes the Jaccard index on the resulting sets."
+        },
+        "override_options": [],
+        "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+      }
+    },
+    {
+      "name": "detected - 4th near-identical re-ask within 75 minutes",
+      "input": {
+        "current_prompt": "should I really use Postgres for this or is SQLite better?",
+        "history": [
+          { "text": "should I use Postgres or SQLite for this?", "at": "2026-05-16T13:02:00+01:00" },
+          { "text": "is Postgres really the right choice over SQLite here?", "at": "2026-05-16T13:34:00+01:00" },
+          { "text": "am I sure Postgres beats SQLite for this workload?", "at": "2026-05-16T14:05:00+01:00" }
+        ],
+        "window_minutes": 90,
+        "threshold_count": 3,
+        "similarity_threshold": 0.55
+      },
+      "output": {
+        "detected": true,
+        "similar_prompts": [
+          { "text": "should I use Postgres or SQLite for this?", "at": "2026-05-16T13:02:00+01:00", "similarity": 0.78 },
+          { "text": "is Postgres really the right choice over SQLite here?", "at": "2026-05-16T13:34:00+01:00", "similarity": 0.71 },
+          { "text": "am I sure Postgres beats SQLite for this workload?", "at": "2026-05-16T14:05:00+01:00", "similarity": 0.64 }
+        ],
+        "count": 3,
+        "window_seconds": 5400,
+        "threshold": 3,
+        "confidence": 0.82,
+        "reason": "3 prompts within 90 minutes matched this one above 0.55 word-overlap similarity.",
+        "heuristic": {
+          "name": "word_overlap_jaccard",
+          "version": "0.1.0",
+          "description": "Tokenises both prompts on whitespace and punctuation, lowercases, removes a 60-word stoplist, and computes the Jaccard index on the resulting sets."
+        },
+        "override_options": [
+          { "token": "fresh-context", "description": "You have new information that changes the question; the detector will skip and the new context will be recorded." },
+          { "token": "override-once", "description": "Run this prompt anyway, just this once. Nothing is logged." },
+          { "token": "disable-for-session", "description": "Stop the rumination check until you end this session." },
+          { "token": "lower-sensitivity", "description": "Re-run the check with a stricter similarity threshold (0.75)." }
+        ],
+        "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The override_options token enum and the heuristic.name enum are closed; additions require a minor bump (additive) and  sign-off. Default thresholds (window_minutes=90, threshold_count=3, similarity_threshold=0.55) may be revised within v0.1.x based on field-study data, but the field types and bounds are frozen.",
+    "user_overridable": true,
+    "privacy": "local-only",
+    "side_effects": "None. The server is stateless: it does not log, persist, or transmit current_prompt, history, or detection outcomes. A calling skill MAY choose to record a detection event into the cognitive graph (e.g. via record_fact), but the guardrail server itself writes nothing.",
+    "telemetry": "None. Per ETHICS.md commitment 4, detection events are never aggregated. The server has no telemetry endpoints in default or non-default configurations.",
+    "idempotency": "Trivially idempotent. The same input yields the same output; there is no internal state.",
+    "consent_gate": "Install-time only. The user opts into the guardrail layer when configuring profile.guardrails.rumination_threshold; no per-call consent is required because nothing leaves the server.",
+    "heuristic_source": "packages/clinical/rumination/word_overlap_jaccard.py (path is normative; the source code IS the auditable specification per ETHICS.md commitment 3).",
+    "clinical_review_required": true,
+    "field_study_target": "False-positive rate < 5% on the field-study corpus per plan.md §13."
+  }
+}

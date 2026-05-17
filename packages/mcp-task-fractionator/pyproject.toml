@@ -1,0 +1,32 @@
+[project]
+name = "neurodock-mcp-task-fractionator"
+version = "0.0.1"
+description = "NeuroDock task fractionator MCP server — goal decomposition and next-action selection."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "NeuroDock contributors" }]
+dependencies = [
+    "fastmcp>=3.3.0",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "jsonschema>=4.21.0",
+]
+
+[project.scripts]
+neurodock-mcp-task-fractionator = "neurodock_mcp_task_fractionator.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neurodock_mcp_task_fractionator"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

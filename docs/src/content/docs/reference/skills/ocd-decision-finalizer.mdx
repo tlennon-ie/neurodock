@@ -1,0 +1,41 @@
+---
+title: ocd-decision-finalizer
+description: On repeat-validation requests for the same decision, enforces a decision-finality response grounded in prior evidence.
+---
+
+> Source: `packages/skills/ocd-decision-finalizer/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+A skill that intervenes when a user repeatedly asks for validation of a decision already made. Surfaces the prior decision verbatim with its timestamp, names the prior evidence, and declines further validation unless new information is provided. Hooks the guardrail layer.
+
+## Frontmatter summary
+
+| Field | Value |
+|---|---|
+| `name` | `ocd-decision-finalizer` |
+| `version` | `0.0.0` (Phase 1 stub) |
+| `status` | `stub` — implementation in Phase 1 |
+| `neurotypes` | `[]` (to be set to `["ocd"]` when implemented) |
+
+## Triggers
+
+- Detected repeat-validation requests on the same decision entity.
+- Hooks the rumination detector (Phase 2 alpha).
+
+## MCP dependencies
+
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — `recall_decisions`, `recall_entity`.
+
+## Profile dependencies
+
+- `guardrails.sycophancy_check` — `off | warn | refuse`. The skill respects this posture.
+- `guardrails.rumination_threshold` — repeat-count that triggers intervention.
+- `guardrails.rumination_window_minutes` — sliding window.
+
+## Acceptance (from )
+
+> On the 4th re-validation of the same module today, get a grounded decision-finality response, not more analysis. Response cites validation timestamp and prior evidence; `--override "fresh-context"` available, logged locally only.
+
+## What's next
+
+- [Guardrails concept page](/concepts/guardrails/) for the broader safety layer.
+- [Ethics](/ethics/) — why this skill refuses rather than re-explains.

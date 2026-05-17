@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-chronometric/v0.1.0/mark_session_start.schema.json",
+  "title": "mark_session_start",
+  "description": "Open a new work session anchored to a stated intent and return a freshly generated session id. Captures the user's own framing of what they are about to do so later interventions can quote it back verbatim.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["intent"],
+      "properties": {
+        "intent": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Plain-language statement of what the user intends to do in this session. Stored verbatim. Surfaced unmodified by hyperfocus nudges and end-of-session reflection.",
+          "examples": [
+            "finish draft RFC reply",
+            "triage inbox for 25 minutes only",
+            "write the migration ADR and stop at 1 page"
+          ]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "started_at", "intent"],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUIDv4 identifier for the new session. Stable for the session's lifetime; opaque to callers.",
+          "examples": ["6f9f4f5e-3b1c-4e2a-9f7d-2b3c4d5e6f70"]
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp with timezone offset for when the server recorded the session start.",
+          "examples": ["2026-05-15T09:14:22+01:00"]
+        },
+        "intent": {
+          "type": "string",
+          "description": "The intent as stored, echoed back unmodified so the caller can verify what was recorded."
+        },
+        "auto_closed_prior_session": {
+          "type": ["object", "null"],
+          "description": "If a prior session was still open when this one started, this field MAY describe the action taken. The exact policy (auto-close vs error) is an open question tracked in ADR 0001; null when not applicable.",
+          "additionalProperties": false,
+          "properties": {
+            "prior_session_id": { "type": "string", "format": "uuid" },
+            "closed_at": { "type": "string", "format": "date-time" }
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "INTENT_REQUIRED": {
+        "description": "The intent argument was missing or empty after trimming. Sessions without stated intent defeat the purpose of this tool."
+      },
+      "INTENT_TOO_LONG": {
+        "description": "Intent exceeded 500 characters. Encourage the caller to summarise; long intents are themselves a hyperfocus signal."
+      },
+      "SESSION_ALREADY_OPEN": {
+        "description": "Returned only if the server policy is configured to error on overlapping sessions rather than auto-close. See ADR 0001 open question."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "typical start with no prior session",
+      "input": { "intent": "finish draft RFC reply" },
+      "output": {
+        "session_id": "6f9f4f5e-3b1c-4e2a-9f7d-2b3c4d5e6f70",
+        "started_at": "2026-05-15T09:14:22+01:00",
+        "intent": "finish draft RFC reply",
+        "auto_closed_prior_session": null
+      }
+    },
+    {
+      "name": "start that auto-closes a forgotten prior session",
+      "input": { "intent": "triage inbox for 25 minutes only" },
+      "output": {
+        "session_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        "started_at": "2026-05-15T13:02:11+01:00",
+        "intent": "triage inbox for 25 minutes only",
+        "auto_closed_prior_session": {
+          "prior_session_id": "11111111-2222-4333-8444-555555555555",
+          "closed_at": "2026-05-15T13:02:11+01:00"
+        }
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. Adding the optional output field 'auto_closed_prior_session' is itself an example of the kind of additive change permitted. Removing or retyping any field requires a new major.",
+    "side_effects": "Mutates server-local session state. NOT idempotent — calling twice creates two sessions.",
+    "idempotency": "Not idempotent. Callers SHOULD NOT retry blindly on network errors; instead they should query session state first.",
+    "privacy": "Intent strings are stored locally only. They are sensitive (they reveal user goals and emotional framing) and MUST NOT be transmitted off-device by this server."
+  }
+}

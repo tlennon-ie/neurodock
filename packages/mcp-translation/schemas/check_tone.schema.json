@@ -1,0 +1,288 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/check_tone.schema.json",
+  "title": "check_tone",
+  "description": "Score an outgoing message on three tone axes (directness, warmth, urgency) on a 0..100 scale, optionally relative to a baseline of the sender's prior messages, and flag phrases whose tone deviates meaningfully from baseline or from the target register. Does NOT rewrite; pair with rewrite_outgoing for that. Server orchestrates a structured prompt against the caller's MCP-client LLM; the server itself performs NO LLM calls.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000,
+          "description": "The outgoing message to score. Stored only in-memory for the duration of the call; never logged.",
+          "examples": [
+            "This is broken. Please fix before EOD.",
+            "Just circling back on the spec review — any chance you've had a look?",
+            "Strong nack. The approach in section 3 will not scale and we need to revisit before merge."
+          ]
+        },
+        "baseline_messages": {
+          "type": "array",
+          "description": "Optional sample of the same sender's prior messages in this thread or channel. Used to compute baseline_delta — how much this message's tone diverges from the sender's usual register. Capped at 20 items. When absent or fewer than 3 items, baseline_delta is null in the output.",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "examples": [
+            [
+              "Thanks for the writeup — really useful framing.",
+              "Happy to pair on this tomorrow if helpful.",
+              "Good catch on the migration edge case; let's land that fix first."
+            ]
+          ]
+        },
+        "target_register": {
+          "$ref": "#/$defs/TargetRegister",
+          "description": "Optional target register against which to score the message. When present, axes_target is populated and suggested_rewrite_hint is keyed off the gap. When absent, the analysis is descriptive only."
+        },
+        "channel": {
+          "$ref": "#/$defs/Channel",
+          "description": "Optional channel hint. Influences register expectations (slack is informal, email is formal, github lean technical/blunt). When absent the prompt assumes 'generic'."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "axes",
+        "baseline_delta",
+        "flagged_phrases",
+        "suggested_rewrite_hint",
+        "eval_corpus_slice",
+        "model_provenance"
+      ],
+      "properties": {
+        "axes": {
+          "$ref": "#/$defs/ToneAxes",
+          "description": "Absolute tone scores on three axes, each 0..100. Calibration: 50 is neutral; <30 is notably low; >70 is notably high. Calibration anchors are documented in the eval corpus README."
+        },
+        "axes_target": {
+          "type": ["object", "null"],
+          "description": "Tone scores corresponding to the target_register, when target_register was supplied. Null otherwise. These are the values the rewrite would aim for.",
+          "additionalProperties": false,
+          "required": ["directness", "warmth", "urgency"],
+          "properties": {
+            "directness": { "type": "number", "minimum": 0, "maximum": 100 },
+            "warmth": { "type": "number", "minimum": 0, "maximum": 100 },
+            "urgency": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "baseline_delta": {
+          "type": ["object", "null"],
+          "description": "Signed percentage-point deltas vs the baseline_messages sample. Null when baseline_messages was absent or fewer than 3 items were supplied. Positive means this message is more X than baseline; negative means less. Per plan.md §7 acceptance, phrases with thread-baseline delta > 25 percentage points are flagged.",
+          "additionalProperties": false,
+          "required": ["directness", "warmth", "urgency"],
+          "properties": {
+            "directness": { "type": "number", "minimum": -100, "maximum": 100 },
+            "warmth": { "type": "number", "minimum": -100, "maximum": 100 },
+            "urgency": { "type": "number", "minimum": -100, "maximum": 100 }
+          }
+        },
+        "flagged_phrases": {
+          "type": "array",
+          "description": "Phrases whose tone diverges from baseline by more than 25 percentage points on any axis, OR which read as substantially off-target relative to target_register. Ordered by severity desc. Empty array when nothing is flagged.",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/FlaggedPhrase" }
+        },
+        "suggested_rewrite_hint": {
+          "type": ["string", "null"],
+          "maxLength": 1000,
+          "description": "Short prose hint describing the direction a rewrite should take (e.g. 'soften the directness, preserve the technical correction'). Null when no rewrite is recommended. This is a hint — the actual rewrite happens via rewrite_outgoing."
+        },
+        "eval_corpus_slice": {
+          "type": "string",
+          "description": "Identifier of the eval corpus slice that validates this prompt template. Required so that any prompt change can be re-evaluated in CI per plan.md §7.",
+          "examples": [
+            "packages/evals/corpora/translation/tone/v0.1.0/general.jsonl"
+          ]
+        },
+        "model_provenance": {
+          "$ref": "#/$defs/ModelProvenance",
+          "description": "Where the LLM call ran (local or cloud, model id). Surfaced so the user / extension can render the 'cloud mode' banner accurately."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "TEXT_REQUIRED": { "description": "The text argument was missing or empty." },
+      "TEXT_TOO_LONG": {
+        "description": "Input text exceeded the 8000-character cap. Caller SHOULD split or excerpt before calling."
+      },
+      "BASELINE_TOO_SMALL": {
+        "description": "Soft signal, not a hard error: fewer than 3 baseline_messages were supplied. The server returns axes but sets baseline_delta to null. Callers MAY ignore."
+      },
+      "TARGET_REGISTER_UNKNOWN": {
+        "description": "target_register was not one of: direct, warm, formal, concise, clarifying."
+      },
+      "MODEL_UNAVAILABLE": {
+        "description": "The caller's MCP client could not reach its configured LLM."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "blunt PR comment on a thread of warm baseline messages",
+      "input": {
+        "text": "Strong nack. The approach in section 3 will not scale and we need to revisit before merge.",
+        "baseline_messages": [
+          "Thanks for the writeup — really useful framing.",
+          "Happy to pair on this tomorrow if helpful.",
+          "Good catch on the migration edge case; let's land that fix first."
+        ],
+        "target_register": "direct",
+        "channel": "github"
+      },
+      "output": {
+        "axes": { "directness": 92, "warmth": 18, "urgency": 71 },
+        "axes_target": { "directness": 75, "warmth": 45, "urgency": 50 },
+        "baseline_delta": { "directness": 47, "warmth": -52, "urgency": 33 },
+        "flagged_phrases": [
+          {
+            "start_char": 0,
+            "end_char": 11,
+            "phrase": "Strong nack.",
+            "axis": "warmth",
+            "delta": -58,
+            "note": "Opens with a blunt rejection token; reads as a 58 percentage-point drop in warmth vs this sender's baseline. Considered substantially blunter-than-baseline."
+          },
+          {
+            "start_char": 39,
+            "end_char": 53,
+            "phrase": "will not scale",
+            "axis": "directness",
+            "delta": 41,
+            "note": "Strong assertion with no hedge; readers may parse as a dismissal of the author's work rather than a technical concern."
+          }
+        ],
+        "suggested_rewrite_hint": "Preserve the technical objection and the merge-blocker signal, but open with one sentence of acknowledgement and replace 'Strong nack' with a phrase that names the specific concern (e.g. 'I think section 3 is going to hit a scaling limit — can we revisit before merge?').",
+        "eval_corpus_slice": "packages/evals/corpora/translation/tone/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "local",
+          "provider": "ollama",
+          "model": "llama3.1:8b-instruct"
+        }
+      }
+    },
+    {
+      "name": "polite follow-up against unknown baseline (descriptive only)",
+      "input": {
+        "text": "Just circling back on the spec review — any chance you've had a look?",
+        "channel": "slack"
+      },
+      "output": {
+        "axes": { "directness": 38, "warmth": 64, "urgency": 35 },
+        "baseline_delta": null,
+        "flagged_phrases": [],
+        "suggested_rewrite_hint": null,
+        "eval_corpus_slice": "packages/evals/corpora/translation/tone/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "cloud",
+          "provider": "anthropic",
+          "model": "claude-sonnet-4.6"
+        }
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional axes (e.g. formality) are minor bumps. Renaming or retyping axes requires a new major version with a parallel $id. The 25 percentage-point flagging threshold is an internal heuristic, not part of the wire contract, and may be tuned within v0.1.x as the eval corpus grows.",
+    "side_effects": "None. Pure read. The server stores no input and emits no telemetry.",
+    "idempotency": "Trivially idempotent on the server. LLM-side determinism depends on the caller's model and sampling settings.",
+    "privacy": "local-only-by-default. The server itself does not call any provider. Cloud-mode is selected by the caller's MCP client and the user's profile; this server is provider-agnostic."
+  },
+  "$defs": {
+    "Channel": {
+      "type": "string",
+      "enum": ["email", "slack", "linear", "github", "notion", "gdocs", "outlook", "generic"]
+    },
+    "TargetRegister": {
+      "type": "string",
+      "enum": ["direct", "warm", "formal", "concise", "clarifying"],
+      "description": "Target register the rewrite should aim for. 'direct' = unhedged but not aggressive; 'warm' = relational, acknowledges person; 'formal' = professional, third-person friendly; 'concise' = minimum viable words; 'clarifying' = framed around surfacing missing information."
+    },
+    "ToneAxes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directness", "warmth", "urgency"],
+      "properties": {
+        "directness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Unhedged-ness. 0 = entirely hedged / softened; 100 = blunt, unmitigated assertion."
+        },
+        "warmth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Relational warmth. 0 = cold, transactional; 100 = effusively friendly."
+        },
+        "urgency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Time pressure signalled. 0 = no time pressure; 100 = drop-everything urgency."
+        }
+      }
+    },
+    "FlaggedPhrase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_char", "end_char", "phrase", "axis", "delta"],
+      "properties": {
+        "start_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed inclusive character offset into input.text."
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed exclusive character offset. end_char > start_char."
+        },
+        "phrase": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "description": "Verbatim slice of input.text between the offsets, for caller convenience."
+        },
+        "axis": {
+          "type": "string",
+          "enum": ["directness", "warmth", "urgency"],
+          "description": "Which axis this phrase moves significantly."
+        },
+        "delta": {
+          "type": "number",
+          "minimum": -100,
+          "maximum": 100,
+          "description": "Estimated contribution of this phrase to the baseline_delta or target gap on the named axis, in percentage points."
+        },
+        "note": {
+          "type": ["string", "null"],
+          "maxLength": 500,
+          "description": "Optional short prose explanation of why this phrase was flagged."
+        }
+      }
+    },
+    "ModelProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "provider", "model"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["local", "cloud", "unknown"] },
+        "provider": { "type": "string" },
+        "model": { "type": "string" }
+      }
+    }
+  }
+}

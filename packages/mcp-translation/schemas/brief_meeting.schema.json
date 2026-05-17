@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/brief_meeting.schema.json",
+  "title": "brief_meeting",
+  "description": "Convert a meeting transcript into a four-section structured brief: my_asks (asks of the recipient), others_asks (asks the recipient is making of others), decisions (concrete commitments reached), and ambiguous_items (things left unresolved or unclear). Per plan.md §7 acceptance, ambiguous_items MUST quote the exact transcript span. The server orchestrates a structured prompt against the caller's MCP-client LLM; the server itself performs NO LLM calls.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transcript", "me"],
+      "properties": {
+        "transcript": {
+          "type": "string",
+          "minLength": 20,
+          "maxLength": 200000,
+          "description": "Verbatim meeting transcript. Speaker labels SHOULD be present (e.g. 'Priya: ...') but are not required. Stored only in-memory for the duration of the call; never logged. The 200k-character cap handles roughly a 90-minute meeting; longer transcripts SHOULD be chunked by the caller.",
+          "examples": [
+            "Priya: Let's get the rollout date on the calendar. Thomas, can you own the migration script?\nThomas: Yes — I'll have it ready by Wednesday.\nRoberto: We should also think about rollback. Can someone draft the runbook?\nPriya: We can revisit that next week.\n"
+          ]
+        },
+        "me": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Speaker label or name that identifies the recipient ('me') in the transcript. Used to partition my_asks vs others_asks. Required — without it the four-section partition is ill-defined.",
+          "examples": ["Thomas", "Priya", "engineering director"]
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Optional project context. When supplied, the prompt template biases extraction toward asks and decisions relevant to this project and may be cross-referenced with mcp-cognitive-graph in downstream skills.",
+          "examples": ["neurodock", ""]
+        },
+        "speakers": {
+          "type": "array",
+          "description": "Optional roster of speaker labels present in the transcript. Helps the model disambiguate when speaker labels are inconsistent (e.g. 'Pri' vs 'Priya'). Capped at 30.",
+          "maxItems": 30,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "examples": [["Priya", "Thomas", "Roberto"]]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "my_asks",
+        "others_asks",
+        "decisions",
+        "ambiguous_items",
+        "eval_corpus_slice",
+        "model_provenance"
+      ],
+      "properties": {
+        "my_asks": {
+          "type": "array",
+          "description": "Concrete asks the transcript places on 'me' (the recipient identified by input.me). Empty array when none. Ordered by transcript appearance.",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/Ask" }
+        },
+        "others_asks": {
+          "type": "array",
+          "description": "Concrete asks 'me' is making of others, or that one third party is making of another. Empty array when none. Ordered by transcript appearance.",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/Ask" }
+        },
+        "decisions": {
+          "type": "array",
+          "description": "Concrete decisions or commitments reached during the meeting. Each is verbatim-anchored to a transcript span. Ordered by transcript appearance.",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/Decision" }
+        },
+        "ambiguous_items": {
+          "type": "array",
+          "description": "Things the transcript leaves unresolved, deferred, or unclear. Each item MUST quote the exact transcript span verbatim (verbatim=true and quoted_span populated). Items where verbatim is false are not permitted in v0.1.0 — the field exists for forward-compatibility with summarised ambiguity that might land in v0.2. Ordered by transcript appearance.",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/AmbiguousItem" }
+        },
+        "eval_corpus_slice": {
+          "type": "string",
+          "description": "Identifier of the eval corpus slice that validates this prompt template. Required so that any prompt change can be re-evaluated in CI per plan.md §7. The brief_meeting slice ties to the 30-meeting pilot referenced in §7 acceptance.",
+          "examples": [
+            "packages/evals/corpora/translation/meeting/v0.1.0/general.jsonl"
+          ]
+        },
+        "model_provenance": {
+          "$ref": "#/$defs/ModelProvenance",
+          "description": "Where the LLM call ran (local or cloud, model id). Surfaced so the user / extension can render the 'cloud mode' banner accurately."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "TRANSCRIPT_REQUIRED": {
+        "description": "The transcript argument was missing or shorter than 20 characters."
+      },
+      "TRANSCRIPT_TOO_LONG": {
+        "description": "Transcript exceeded the 200000-character cap (roughly 90 minutes of speech). Caller SHOULD chunk and call repeatedly."
+      },
+      "ME_REQUIRED": {
+        "description": "The me argument was missing. Without it the four-section partition is ill-defined; the server refuses rather than guessing."
+      },
+      "VERBATIM_ANCHOR_FAILED": {
+        "description": "The LLM returned an ambiguous_item whose quoted_span text could not be located in the transcript. The server rejects the entire response rather than fabricating; caller MAY retry. This is the verbatim-anchor enforcement required by plan.md §7."
+      },
+      "MODEL_UNAVAILABLE": {
+        "description": "The caller's MCP client could not reach its configured LLM."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "short rollout meeting with one decision, one ask of me, one ambiguous item",
+      "input": {
+        "transcript": "Priya: Let's get the rollout date on the calendar. Thomas, can you own the migration script?\nThomas: Yes — I'll have it ready by Wednesday.\nRoberto: We should also think about rollback. Can someone draft the runbook?\nPriya: We can circle back on that next week.\n",
+        "me": "Thomas",
+        "project": "neurodock",
+        "speakers": ["Priya", "Thomas", "Roberto"]
+      },
+      "output": {
+        "my_asks": [
+          {
+            "text": "Own the migration script and have it ready by Wednesday.",
+            "asker": "Priya",
+            "due": "Wednesday",
+            "quoted_span": {
+              "start_char": 47,
+              "end_char": 138,
+              "text": "Thomas, can you own the migration script?\nThomas: Yes — I'll have it ready by Wednesday."
+            }
+          }
+        ],
+        "others_asks": [
+          {
+            "text": "Someone (unassigned) drafts a rollback runbook.",
+            "asker": "Roberto",
+            "due": null,
+            "quoted_span": {
+              "start_char": 139,
+              "end_char": 215,
+              "text": "Roberto: We should also think about rollback. Can someone draft the runbook?"
+            }
+          }
+        ],
+        "decisions": [
+          {
+            "text": "Thomas owns the migration script with a Wednesday deadline.",
+            "decided_by": ["Priya", "Thomas"],
+            "quoted_span": {
+              "start_char": 47,
+              "end_char": 138,
+              "text": "Thomas, can you own the migration script?\nThomas: Yes — I'll have it ready by Wednesday."
+            }
+          }
+        ],
+        "ambiguous_items": [
+          {
+            "text": "Rollback runbook ownership and timing — deferred to 'next week' with no named owner.",
+            "verbatim": true,
+            "quoted_span": {
+              "start_char": 216,
+              "end_char": 263,
+              "text": "Priya: We can circle back on that next week."
+            },
+            "reason": "vague_timeline"
+          }
+        ],
+        "eval_corpus_slice": "packages/evals/corpora/translation/meeting/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "local",
+          "provider": "ollama",
+          "model": "llama3.1:8b-instruct"
+        }
+      }
+    },
+    {
+      "name": "strategy meeting with two ambiguous items, no decision",
+      "input": {
+        "transcript": "Director: I want us to revisit the Q3 priorities. The current list doesn't feel right.\nThomas: Which priorities specifically?\nDirector: We'll work through that offline. For now I'd like everyone to think about it before next Friday.\nPriya: I'll loop back with thoughts on the architecture doc next week.\n",
+        "me": "Thomas",
+        "speakers": ["Director", "Thomas", "Priya"]
+      },
+      "output": {
+        "my_asks": [
+          {
+            "text": "Think about Q3 priorities before next Friday.",
+            "asker": "Director",
+            "due": "next Friday",
+            "quoted_span": {
+              "start_char": 130,
+              "end_char": 230,
+              "text": "Director: We'll work through that offline. For now I'd like everyone to think about it before next Friday."
+            }
+          }
+        ],
+        "others_asks": [],
+        "decisions": [],
+        "ambiguous_items": [
+          {
+            "text": "Which Q3 priorities the Director wants revisited — deferred to 'offline' without scope.",
+            "verbatim": true,
+            "quoted_span": {
+              "start_char": 130,
+              "end_char": 175,
+              "text": "Director: We'll work through that offline."
+            },
+            "reason": "vague_referent"
+          },
+          {
+            "text": "Priya's architecture-doc feedback — 'next week' with no committed day.",
+            "verbatim": true,
+            "quoted_span": {
+              "start_char": 231,
+              "end_char": 304,
+              "text": "Priya: I'll loop back with thoughts on the architecture doc next week."
+            },
+            "reason": "vague_timeline"
+          }
+        ],
+        "eval_corpus_slice": "packages/evals/corpora/translation/meeting/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "cloud",
+          "provider": "anthropic",
+          "model": "claude-sonnet-4.6"
+        }
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional output fields (e.g. mermaid_sequence_diagram, action_item_priorities) MAY land in v0.1.x. The verbatim-anchor requirement on ambiguous_items is part of the v0.1.0 contract and cannot be relaxed without a major bump. New ambiguity reason codes are minor bumps. Renaming or retyping any field requires a new major version with a parallel $id.",
+    "side_effects": "None. Pure read. The server stores no input and emits no telemetry. Persisting the brief to mcp-cognitive-graph is the caller's responsibility.",
+    "idempotency": "Server-side idempotent. LLM-side determinism depends on the caller's model and sampling settings; the verbatim-anchor check rejects responses whose spans cannot be located, which provides a soft consistency guarantee.",
+    "privacy": "local-only-by-default. The server itself does not call any provider. Meeting transcripts are highly sensitive (third-party speakers, internal strategy); cloud-mode for brief_meeting SHOULD surface a stronger consent prompt than other tools — that is the extension's responsibility, not this server's."
+  },
+  "$defs": {
+    "Ask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "asker", "quoted_span"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Plain-language paraphrase of the ask."
+        },
+        "asker": {
+          "type": ["string", "null"],
+          "maxLength": 200,
+          "description": "Speaker who made the ask, or null when not attributable from the transcript."
+        },
+        "due": {
+          "type": ["string", "null"],
+          "maxLength": 200,
+          "description": "Free-text due indicator as expressed in the transcript ('Wednesday', 'EOD', 'next sprint'). Null when no timing was given. Not parsed to a structured date in v0.1.0 — that is reserved for a future minor version."
+        },
+        "quoted_span": {
+          "$ref": "#/$defs/QuotedSpan",
+          "description": "Verbatim transcript span supporting this ask. The text field MUST be a substring of the input transcript at the named offsets."
+        }
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "decided_by", "quoted_span"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Plain-language paraphrase of the decision."
+        },
+        "decided_by": {
+          "type": "array",
+          "description": "Speakers credited with the decision. May be empty when attribution is unclear.",
+          "maxItems": 20,
+          "items": { "type": "string", "minLength": 1, "maxLength": 200 }
+        },
+        "quoted_span": {
+          "$ref": "#/$defs/QuotedSpan",
+          "description": "Verbatim transcript span supporting this decision."
+        }
+      }
+    },
+    "AmbiguousItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "verbatim", "quoted_span", "reason"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Plain-language description of what is ambiguous or unresolved."
+        },
+        "verbatim": {
+          "type": "boolean",
+          "const": true,
+          "description": "MUST be true in v0.1.0 — every ambiguous item is anchored to a verbatim transcript span. The field exists as a const for forward-compatibility with v0.2 summarised-ambiguity items; v0.1.0 callers can assert this is always true."
+        },
+        "quoted_span": {
+          "$ref": "#/$defs/QuotedSpan",
+          "description": "Verbatim transcript span. The text field MUST be a substring of input.transcript at the named offsets. The server SHOULD reject (VERBATIM_ANCHOR_FAILED) any LLM response where this condition is violated, rather than fabricating ambiguity."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "vague_timeline",
+            "vague_referent",
+            "unassigned_owner",
+            "hedged_commitment",
+            "deferred_topic",
+            "contested",
+            "other"
+          ],
+          "description": "Reason code for the ambiguity. Callers MUST treat unknown values as 'other' (forward-compatibility)."
+        }
+      }
+    },
+    "QuotedSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_char", "end_char", "text"],
+      "properties": {
+        "start_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed inclusive character offset into input.transcript."
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed exclusive character offset. end_char > start_char."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Verbatim transcript text between the offsets. MUST equal input.transcript.slice(start_char, end_char). Surfaced redundantly so callers can render quotes without re-slicing."
+        }
+      }
+    },
+    "ModelProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "provider", "model"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["local", "cloud", "unknown"] },
+        "provider": { "type": "string" },
+        "model": { "type": "string" }
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "neurodock",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Open-source, MCP-native, vendor-neutral, local-first cognitive substrate for neurodivergent professionals.",
+  "homepage": "https://neurodock.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlennon-ie/neurodock.git"
+  },
+  "license": "AGPL-3.0-or-later",
+  "packageManager": "pnpm@11.1.2",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.10",
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "sharp"],
+    "overrides": {
+      "@astrojs/sitemap": "3.2.1",
+      "@astrojs/starlight>@astrojs/sitemap": "3.2.1"
+    }
+  }
+}

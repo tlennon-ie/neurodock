@@ -1,0 +1,54 @@
+name: Accessibility
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "packages/extension-browser/**"
+  workflow_dispatch:
+
+concurrency:
+  group: a11y-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  axe:
+    name: axe-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.1.2
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Detect axe-core target
+        id: probe
+        run: |
+          if [ -f "docs/package.json" ] \
+              && [ -f "docs/astro.config.mjs" ] \
+              && grep -q '"test:a11y"' docs/package.json; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "axe-core target (docs test:a11y) not yet wired — exiting cleanly."
+          fi
+
+      - name: Install dependencies
+        if: steps.probe.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build docs
+        if: steps.probe.outputs.ready == 'true'
+        run: pnpm --filter @neurodock/docs build
+
+      - name: Run axe-core
+        if: steps.probe.outputs.ready == 'true'
+        run: pnpm --filter @neurodock/docs test:a11y

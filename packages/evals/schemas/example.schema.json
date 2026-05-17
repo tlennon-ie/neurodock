@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/evals/v0.0.1/example.schema.json",
+  "title": "NeuroDock eval example",
+  "description": "One YAML file under packages/evals/corpora/<server>/<slice>/. Stored as YAML on disk; validated as JSON.",
+  "type": "object",
+  "required": ["id", "slice", "created_at", "consent", "status", "license", "input", "expected"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 200
+    },
+    "slice": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+(?:/[a-z0-9_-]+)+$",
+      "description": "Slash-delimited slice identifier, e.g. 'translation/incoming'."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date"
+    },
+    "consent": {
+      "type": "object",
+      "required": ["contributor", "consent_token", "anonymisation_pass"],
+      "additionalProperties": false,
+      "properties": {
+        "contributor": {
+          "type": "string",
+          "pattern": "^(anon|synth|curator)-[a-z0-9-]+$",
+          "description": "Pseudonymous contributor id; never a real name."
+        },
+        "consent_token": {
+          "type": "string",
+          "minLength": 8,
+          "description": "Opaque token verifying opt-in; sha256-prefixed in v0.0.1."
+        },
+        "anonymisation_pass": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Version of anonymise.py that processed this example."
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["synthesised", "contributed", "published"]
+    },
+    "license": {
+      "type": "string",
+      "enum": ["AGPL-3.0-or-later"]
+    },
+    "input": {
+      "type": "object",
+      "description": "Tool-specific input payload. Validated by the harness against the tool's input model.",
+      "additionalProperties": true
+    },
+    "expected": {
+      "type": "object",
+      "description": "Expected fragments of the tool's output. The runner does partial matching, not exact equality.",
+      "additionalProperties": true
+    },
+    "ratings": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 10,
+      "items": {
+        "$ref": "annotation.schema.json"
+      }
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000,
+      "description": "Optional curator notes about the example."
+    }
+  }
+}

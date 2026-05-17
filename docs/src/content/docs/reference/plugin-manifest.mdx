@@ -1,0 +1,229 @@
+---
+title: Plugin manifest
+description: Field-by-field reference for plugin.yaml. The single contract every plugin honours.
+---
+
+The full reference for `plugin.yaml`. Schema lives at `packages/core/schemas/plugin.schema.json` (`$id: https://schemas.neurodock.org/plugin/v0.1.0/plugin.schema.json`). The schema is the source of truth; this page is the human-readable view.
+
+> **Status note.** The schema file is owned by the `mcp-architect` agent and arrives alongside ADR 0007. Until that ADR merges, this reference reflects the agreed shape from  and the doc-writer-architect contract; field names may shift by name but not by intent before `v0.1.0` is tagged.
+
+Rationale and the design alternatives rejected are in ADR 0007 (forthcoming).
+
+## Top-level shape
+
+| Block | Required? | Notes |
+|---|---|---|
+| `name` | Yes | kebab-case identifier, globally unique within a discovery root. |
+| `version` | Yes | Semver string (`0.1.0`, not `v0.1.0`). |
+| `type` | Yes | Enum: `skill \| mcp-server \| profile \| translation-pack \| language-pack \| theme`. |
+| `description` | Yes | One-sentence statement of what the plugin does and for whom. |
+| `authors` | No (recommended) | List of `{name, contact?, lived_experience?}` entries. |
+| `license` | No (recommended) | SPDX identifier from the compatible whitelist. Defaults to `AGPL-3.0-or-later`. |
+| `neurotypes` | No | Self-identified neurotype tags the plugin targets. Drives auto-activation and review routing. |
+| `trust` | No | `{level, signature?, reviewed_by?}`. Defaults to `level: community`. |
+| `profile_dependencies` | No | Profile fields the plugin reads. Used for composability. |
+| `mcp_dependencies` | No | Other MCP servers this plugin needs at runtime. |
+| Type-specific block | Conditional | One of `skill`, `mcp_server`, `profile`, `translation_pack`, `language_pack`, or `theme`. |
+
+`additionalProperties: true` at every object level. Unknown fields are preserved on round-trip. See [forward compatibility](#forward-compatibility) below.
+
+## Required fields
+
+### `name`
+
+| Type | Constraint | Notes |
+|---|---|---|
+| string | `^[a-z][a-z0-9-]{1,63}$` | kebab-case, starts with a letter, 2–64 chars. |
+
+Names are globally unique within a discovery root (in-tree `plugins/` or per-user `~/.neurodock/plugins/`). A duplicate name fails the loader. Choose a name that is unlikely to collide with someone else's plugin — prefix with your handle (`acme-engineering-review`) if the name is generic.
+
+### `version`
+
+| Type | Constraint | Notes |
+|---|---|---|
+| string | semver | `0.1.0`, `1.2.3`, `0.1.0-beta.1`. Never `v`-prefixed. |
+
+### `type`
+
+| Type | Constraint |
+|---|---|
+| enum | `skill \| mcp-server \| profile \| translation-pack \| language-pack \| theme` |
+
+Pick one. See [Write a plugin: the six plugin types](/contribute/write-a-plugin/#the-six-plugin-types) for picking guidance.
+
+### `description`
+
+| Type | Constraint |
+|---|---|
+| string | 10–200 chars |
+
+One sentence, plain prose. The substrate displays this on first activation; users decide whether to opt in based on this text.
+
+## Identity and licensing
+
+### `authors`
+
+A list of author entries. At least one entry is recommended; the field is technically optional to support anonymous contributions.
+
+```yaml
+authors:
+  - name: "Your name or handle"
+    contact: "email-or-url@example.org"   # Optional
+    lived_experience: ["adhd"]            # Optional self-ID
+```
+
+### `license`
+
+| Type | Constraint | Default |
+|---|---|---|
+| string | SPDX identifier from the compatible whitelist | `AGPL-3.0-or-later` |
+
+The compatible whitelist is fixed at twelve entries:
+
+- `AGPL-3.0-or-later`, `AGPL-3.0-only`
+- `GPL-3.0-or-later`, `GPL-3.0-only`
+- `LGPL-3.0-or-later`, `LGPL-3.0-only`
+- `MIT`, `Apache-2.0`, `BSD-3-Clause`, `BSD-2-Clause`
+- `MPL-2.0`, `ISC`
+
+A plugin declaring any other SPDX identifier fails to load. See [Write a plugin: license rules](/contribute/write-a-plugin/#license-rules) for the rationale.
+
+## Neurotype targeting
+
+### `neurotypes`
+
+| Type | Constraint |
+|---|---|
+| string[] | Subset of `adhd \| asd \| audhd \| ocd \| dyslexia \| dyspraxia \| tourette \| other` |
+
+Drives two behaviours: auto-activation against the user's profile, and review routing (a plugin tagged `adhd` requires an ADHD- before promotion to `reviewed`). `audhd` is its own value, not `["adhd", "asd"]`. The lived experience differs from either alone.
+
+## Trust and signing
+
+### `trust`
+
+```yaml
+trust:
+  level: community               # Required if trust block present
+  signature: null                # Reserved for Phase 3
+  reviewed_by: []                # Optional list of Maintainer-registered reviewer handles
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `level` | enum `community \| reviewed \| verified \| core` | `community` | See the [trust ladder](/contribute/write-a-plugin/#the-trust-ladder). |
+| `signature` | string or null | `null` | Reserved. Phase 3 fills this in. |
+| `reviewed_by` | string[] | `[]` | Maintainer-registered reviewer handles who have signed off. |
+
+## Composability
+
+### `profile_dependencies`
+
+| Type | Notes |
+|---|---|
+| string[] | Dotted-path profile field names the plugin reads. |
+
+Drives auto-activation. A plugin that reads `privacy.embeddings` and requires `cloud_voyage` will not auto-activate for a user whose profile has `privacy.embeddings: local`.
+
+### `mcp_dependencies`
+
+A list of MCP servers the plugin needs at runtime. Skill plugins typically list the substrate servers they compose; MCP server plugins typically list none.
+
+```yaml
+mcp_dependencies:
+  - server: mcp-chronometric
+    tools: [get_time_context]
+    version: ">=0.1.0,<0.2.0"
+```
+
+## Type-specific blocks
+
+Each plugin type has a dedicated block; the loader requires exactly one to be present matching the declared `type`. See the per-type contributor pages for the full block shape:
+
+- [`skill` block](/contribute/plugin-types/skill/)
+- [`mcp_server` block](/contribute/plugin-types/mcp-server/)
+- [`profile` block](/contribute/plugin-types/profile/)
+- [`translation_pack` block](/contribute/plugin-types/translation-pack/)
+- [`language_pack` block](/contribute/plugin-types/language-pack/)
+- [`theme` block](/contribute/plugin-types/theme/)
+
+## Worked example
+
+A full plugin manifest for a hypothetical `acme-engineering-review` translation pack:
+
+```yaml
+name: acme-engineering-review
+version: 0.1.0
+type: translation-pack
+description: Translation pack for engineering code-review correspondence at Acme Corp.
+
+authors:
+  - name: "T"
+    contact: "https://github.com/example"
+    lived_experience: ["adhd"]
+
+license: AGPL-3.0-or-later
+neurotypes: ["adhd", "asd"]
+
+trust:
+  level: community
+  signature: null
+  reviewed_by: []
+
+profile_dependencies:
+  - preferences.output_format
+  - privacy.embeddings
+
+mcp_dependencies:
+  - server: mcp-translation
+    tools: [literal_translate, tone_check]
+    version: ">=0.1.0,<0.2.0"
+
+translation_pack:
+  domain: "engineering-review"
+  prompts:
+    literal_meaning: prompts/literal_meaning.md
+    subtext: prompts/subtext.md
+    tone: prompts/tone.md
+  base_prompt_version: ">=0.1.0,<0.2.0"
+  eval_corpus: eval/corpus.yaml
+```
+
+## Minimal manifest
+
+The shortest manifest the loader accepts — four required fields, defaults for everything else:
+
+```yaml
+name: my-first-plugin
+version: 0.1.0
+type: skill
+description: My first NeuroDock plugin — a morning brief for sleep-deprived parents.
+```
+
+The loader applies safe defaults at read time: `license: AGPL-3.0-or-later`, `trust.level: community`, no neurotype targeting, no profile dependencies. These are not written into the file — they are how the loader composes against a partial manifest.
+
+## Forward compatibility
+
+`additionalProperties: true` at every object level. Two binding rules:
+
+1. The schema does not reject unknown fields.
+2. Loaders preserve unknown keys on round-trip. A `v0.1` loader reading a `v0.2` manifest must re-emit any unknown keys unchanged.
+
+These rules mean a plugin written today against `v0.1.0` of the protocol will still load in `v1.0.0`, and you can experiment with new manifest fields without proposing them upstream first. The same property the profile schema enforces — see [ADR 0004 §C](/decisions/0004-profile/) for the rationale that applies here unchanged.
+
+## Validating
+
+Until the `neurodock validate <plugin-dir>` CLI subcommand lands in Phase 3, validate with any JSON Schema tool against `packages/core/schemas/plugin.schema.json`:
+
+```bash
+npx -p ajv-cli -p ajv-formats ajv validate \
+  -s packages/core/schemas/plugin.schema.json \
+  -d plugins/<your-plugin>/plugin.yaml \
+  --spec=draft2020 --strict=false
+```
+
+## What's next
+
+- [Write a plugin](/contribute/write-a-plugin/) for the contributor walkthrough.
+- [Concepts: plugins](/concepts/plugins/) for the higher-level picture.
+- [Profile schema](/reference/profile-schema/) for the related schema with the same forward-compatibility rules.

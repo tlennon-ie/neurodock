@@ -1,0 +1,199 @@
+---
+title: Write a plugin
+description: The contributor's guide to shipping a NeuroDock plugin. Manifest, six types, trust ladder, licensing, distribution.
+---
+
+Hello, you are welcome here. This page is the contributor's guide to shipping a plugin for NeuroDock. The on-ramp is the same fifteen-minute commitment described in `CONTRIBUTING.md`: from "I want to add this" to "PR opened" should fit inside a short focused block of attention. If you spend longer than that on the manifest itself, the documentation has failed and we want to hear about it.
+
+**Estimated time to first plugin:** 15 minutes.
+
+**Prerequisites:** comfortable with `git`, comfortable editing YAML. Per-type assets need the runtime appropriate to that type (Python for an MCP server, markdown for a skill, etc.) — each per-type subpage states its prerequisites explicitly.
+
+## What a plugin is
+
+A plugin is a directory containing a `plugin.yaml` manifest plus the assets for one of six declared types. The substrate auto-discovers plugins from two locations on the user's machine and composes them with the user's profile. There is no plugin runtime, no compiler, no central server: a plugin is content the substrate reads.
+
+Plugins are how the project grows without forking. Anything that extends the substrate — a new skill, a domain-specific translation pack, a curated profile preset, a theme — ships as a plugin. The core repository stays small; the surface area for contribution stays wide.
+
+There is a deliberate distinction between **in-tree first-party skills** (which live in `packages/skills/` and ship with the project's release cadence) and **plugins** (which live in `plugins/` in this repo or in `~/.neurodock/plugins/` on the user's machine and ship on their own cadence). In-tree skills do not need a `plugin.yaml`. Plugins always do. See [Concepts: plugins](/concepts/plugins/) for the conceptual distinction.
+
+## The six plugin types
+
+| Type | You want this if... |
+|---|---|
+| [`skill`](/contribute/plugin-types/skill/) | You have a workflow that activates inside an MCP-aware client (Claude Code, Claude Desktop, Cursor) and want to ship it independently of the core skills bundle. |
+| [`mcp-server`](/contribute/plugin-types/mcp-server/) | You want to expose a new set of typed tools (a calendar adapter, a domain API wrapper, a local-only secret store) that any client and any skill can call. |
+| [`profile`](/contribute/plugin-types/profile/) | You have a stable, well-considered preset of profile fields worth sharing (e.g. an autism-and-Tourette preset, a high-contrast preset, a quiet-hours preset). |
+| [`translation-pack`](/contribute/plugin-types/translation-pack/) | You have domain-specific or relationship-specific prompt overrides for `mcp-translation` (engineering review, legal correspondence, customer success, founder-to-board). |
+| [`language-pack`](/contribute/plugin-types/language-pack/) | You have locale-specific corporate-culture translation prompts (Hiberno-English, German directness norms, Japanese *keigo*). |
+| [`theme`](/contribute/plugin-types/theme/) | You have a design-system-keeper-approved theme bundle (token set + CSS) that respects the visual language of the project. |
+
+Pick exactly one type per plugin. A plugin that wants to ship both a skill and an MCP server ships as two plugins in two directories. This keeps the auto-discovery model simple and the trust ladder per-asset.
+
+## From zero to your first plugin in fifteen minutes
+
+This walkthrough takes you from a clean checkout to a working plugin discovered by the substrate.
+
+### 1. Pick a home
+
+Two options:
+
+- **In-tree.** Fork `github.com/tlennon-ie/neurodock`, create a branch, and put the plugin at `plugins/<your-plugin>/`. This path gets the fastest review and the most reach, at the cost of accepting the repository's process.
+- **Standalone repo.** Create a fresh repository at `github.com/<your-handle>/neurodock-<your-plugin>`. Users install it by cloning into `~/.neurodock/plugins/` or by symlinking during development.
+
+You can move between the two later. Start where it is cheapest.
+
+### 2. Copy the minimal manifest
+
+```bash
+cp packages/core/schemas/plugin.minimal.yaml plugins/<your-plugin>/plugin.yaml
+```
+
+The minimal manifest has the four required top-level fields: `name`, `version`, `type`, and `description`. Open it and fill those in. Names use kebab-case. Versions use semver (`0.1.0`, not `v0.1.0`).
+
+### 3. Add identity, license, and trust
+
+After the four required fields, add `authors`, `license`, and `trust`. Start at `trust.level: community` — this is the default tier for any contributor without a Maintainer-signed key. Don't aspire to `verified` on your first plugin; that tier exists for plugins that have already proved themselves and want Maintainer-level cosigning. See [the trust ladder](#the-trust-ladder) below.
+
+```yaml
+authors:
+  - name: "Your name or handle"
+license: AGPL-3.0-or-later
+trust:
+  level: community
+```
+
+### 4. Add the type-specific assets
+
+Each of the six types has its own per-page guide for the assets it needs. Open the linked page for your type, follow the asset checklist, and place files alongside `plugin.yaml`. The per-type guide is the source of truth for asset layout.
+
+### 5. Validate locally
+
+The substrate's plugin schema lives at `packages/core/schemas/plugin.schema.json`. Until the dedicated `neurodock validate` CLI subcommand lands in Phase 3, validate using any JSON Schema tool:
+
+```bash
+# Example with ajv-cli (one option among several).
+npx -p ajv-cli -p ajv-formats ajv validate \
+  -s packages/core/schemas/plugin.schema.json \
+  -d plugins/<your-plugin>/plugin.yaml \
+  --spec=draft2020 --strict=false
+```
+
+A clean validation prints `valid`. A failed validation prints a path to the offending field. The CLI subcommand `neurodock validate <plugin-dir>` ships in Phase 3 alongside the marketplace; until then, raw JSON Schema validation is the supported path.
+
+### 6. Install locally and reload
+
+For an in-tree plugin, no install step is needed — the substrate discovers `plugins/*/plugin.yaml` as part of repo-relative discovery.
+
+For a standalone plugin during development, symlink it into your user plugins directory:
+
+```bash
+# macOS / Linux
+ln -s "$(pwd)" ~/.neurodock/plugins/<your-plugin>
+
+# Windows PowerShell (admin)
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.neurodock\plugins\<your-plugin>" -Target (Get-Location)
+```
+
+### 7. Test
+
+Open Claude Desktop, Claude Code, or whichever MCP-aware client you use. The substrate auto-discovers the plugin on the next session start. If your plugin is a skill, invoke it. If your plugin is an MCP server, list tools and call one. If your plugin is a profile preset, point the user's profile at it via `extends:`. If discovery fails silently, run validation again first — most "it doesn't show up" reports trace back to a manifest the loader refused.
+
+## The trust ladder
+
+Every plugin declares a `trust.level` value. The four tiers — `community`, `reviewed`, `verified`, and `core` — are not a hierarchy of quality. They are a hierarchy of **how much social process has touched this plugin**, and the substrate uses them to decide what to auto-load and what to surface for explicit user consent.
+
+| Level | Who can ship at this level | What the substrate does |
+|---|---|---|
+| `community` | Anyone. Default for any contributor. | Loads on explicit user opt-in. Surfaces a clear "community plugin" notice on first activation. |
+| `reviewed` | Plugins that have passed lived-experience review by at least one Maintainer-registered reviewer with the relevant neurotype tag. | Loads on explicit user opt-in. No first-activation notice. |
+| `verified` | Plugins signed against the maintainer-curated keyring. Phase 3. | Loads on profile match. No notice needed; the signature is the consent. |
+| `core` | First-party packages shipped from this repository. | Loads on profile match. No notice; the substrate vouches for it. |
+
+When you are a brand-new contributor, you start at `community`. To graduate to `reviewed`, request a lived-experience review through the `community-triage` agent — this is the existing review channel and is not new ceremony. To graduate to `verified`, the maintainer adds your author key to the keyring; the signing infrastructure lands in Phase 3 with the marketplace, so today this level is a forward-compatible field that the loader recognises but the toolchain does not yet enforce.
+
+The substrate never silently elevates a plugin. A `community` plugin stays `community` until a higher-tier review process touches it. There is no automatic promotion.
+
+## License rules
+
+A plugin's `license` field must be AGPL-3.0-or-later-compatible. The substrate's loader refuses to load a plugin with an incompatible license. This is structural protection of the project's licence — not a value judgement on other licences.
+
+The compatible whitelist is a fixed SPDX set:
+
+- `AGPL-3.0-or-later`, `AGPL-3.0-only`
+- `GPL-3.0-or-later`, `GPL-3.0-only`
+- `LGPL-3.0-or-later`, `LGPL-3.0-only`
+- `MIT`, `Apache-2.0`, `BSD-3-Clause`, `BSD-2-Clause`
+- `MPL-2.0`, `ISC`
+
+A plugin that declares any other SPDX identifier (including SPDX expressions that mix incompatible terms) fails to load. The failure surfaces an actionable message; this is not a silent refusal. If you have a genuine reason to need a different licence, open a discussion before you write the plugin — the answer is sometimes "use a different shape" rather than "change the rule".
+
+## Forward-compatibility rules
+
+The plugin manifest is **additive forever**. Two binding rules:
+
+1. **`additionalProperties: true` at every object level.** The schema does not reject unknown fields. New plugin types can be added without breaking existing manifests.
+2. **Loaders preserve unknown keys on round-trip.** A `v0.1` loader reading a `v0.2` manifest must re-emit any unknown keys unchanged. This is the same property the profile schema enforces — see [ADR 0004](/decisions/0004-profile/) for the rationale that applies here unchanged.
+
+These two rules mean a plugin written today against `v0.1.0` of the protocol will still load in `v1.0.0`. They also mean you can experiment with new manifest fields without proposing them upstream first — if the experiment proves useful, propose it; if not, the field stays harmlessly in your manifest.
+
+## Discovery and auto-activation
+
+The substrate discovers plugins from two paths, in this order:
+
+1. **In-repo** — `plugins/*/plugin.yaml` relative to the repository root, when the substrate is running from a checkout (the development case).
+2. **Per-user** — `~/.neurodock/plugins/*/plugin.yaml` on the user's machine (the install case).
+
+Discovery is recursive one level deep. A plugin must sit directly under the discovery root; nesting is not supported. Symlinks are followed for the development workflow described earlier.
+
+Auto-activation is decided by **profile composability**. A plugin's manifest declares which profile fields it depends on and which neurotype tags it targets. The substrate composes these with the user's `profile.yaml` and activates only the plugins that match. A plugin tagged `neurotypes: ["adhd"]` does not activate for a user whose profile says `neurotypes: ["asd"]` — even if it is installed. Self-identification gates activation; diagnosis is never required.
+
+## Signing and verification
+
+The `trust.signature` field is reserved in `v0.1.0` of the manifest. The loader recognises the field but does not yet verify a signature against it; this is forward-compatibility for the `verified` tier.
+
+Verified-tier signing lands in Phase 3 alongside the federated registry at `plugins.neurodock.org`. The signing process the maintainer will operate:
+
+- A per-author signing key. Authors generate the key locally; the private half never leaves their machine.
+- A Maintainer-curated keyring of recognised author keys, published in the repository and signed by the maintainer's own root.
+- A `trust.signature` value computed over the manifest and the plugin's asset hashes.
+- Loader verification against the keyring at install time.
+
+If you want to be ready for verified-tier when it ships, write your manifest with `trust.signature: null` today. The field is reserved; the value is unset; the upgrade path is "fill it in when the toolchain lands".
+
+## Distribution
+
+Three distribution paths, in increasing order of reach:
+
+1. **In-tree.** Your plugin lives in this repository's `plugins/` directory. Fastest review (it goes through the project's existing PR process), highest discoverability (it ships with the project), narrowest scope (the maintainer can decline to host plugins that don't fit the project's values). This is the right path for plugins with general relevance.
+
+2. **GitHub repo plus manual install.** Your plugin lives in its own repo. Users install it by cloning into `~/.neurodock/plugins/` or by following whatever install instructions you write. Slower reach (no central discovery), full author control (your repo, your rules), zero project-side review (this is also a trust ladder concern — see above). This is the right path for plugins that are domain-specific, employer-specific, or experimental.
+
+3. **Federated registry at `plugins.neurodock.org`.** Coming in Phase 3 (target: v0.3). Authors register their plugin's manifest URL with the registry; the registry indexes for discovery; users install with `neurodock plugin install <name>`. Signed plugins surface verified-tier badges; unsigned plugins surface `community` tier notices. The registry is intentionally federated — anyone can run a fork — and the maintainer operates the canonical one. No specific dates yet; we will document the onboarding when it lands.
+
+## Lived-experience review
+
+A plugin that declares a `neurotypes` tag (e.g. `neurotypes: ["adhd"]`) requires at least one reviewer with that lived experience before it can graduate from `community` to `reviewed`. This is the same rule that governs in-tree skills targeting a neurotype, and it is enforced through `CODEOWNERS` for in-tree plugins.
+
+Self-identification is sufficient. Diagnosis is never required. This is a manifesto property — see [MANIFESTO.md](/manifesto/) §3.
+
+For plugins outside the in-tree path, lived-experience review is requested through the `community-triage` agent. Open a discussion; declare the tag; ask for a reviewer match. Async is the default; you do not owe a fast turnaround, and you should not expect one.
+
+## What we will reject
+
+The same spirit as `CONTRIBUTING.md`. Four categories of plugin will not be accepted into the in-tree `plugins/` directory and will not receive `reviewed` or higher trust elevation:
+
+- **Plugins that aggregate user data anywhere off-machine.** The local-first principle is not negotiable. A plugin that phones home with neurodivergent telemetry — even anonymised, even aggregated — is incompatible with the manifesto. This is true even if the author argues the aggregation is useful.
+- **Plugins that disable substrate guardrails silently.** A plugin can offer the user explicit control over a guardrail threshold. A plugin cannot bypass the rumination, hyperfocus, or sycophancy detectors without the user knowing. Silent bypass is a clinical-safety issue.
+- **Plugins that introduce vendor lock-in.** A plugin that only works with one LLM vendor breaks the substrate's vendor-neutrality property. If your plugin needs vendor-specific features, ship the vendor-specific parts behind an adapter and a clearly-labelled `vendor:` field — do not bake the vendor into the core path.
+- **Plugins with a non-compatible licence.** See the licence rules above. This is structural, not editorial.
+
+This is not an exhaustive list. the maintainer has discretion on edge cases. Where we reject, we explain the reasoning and link to the relevant principle.
+
+## Get help
+
+- **GitHub Discussions** at `github.com/tlennon-ie/neurodock/discussions` is the slowest path and the path most likely to produce a written record useful to the next contributor with the same question. Prefer it for questions that aren't urgent.
+- **`#plugins` Discord channel** is the live channel. The channel is being set up by the `community-triage` agent as part of Phase 3 community infrastructure — until then, use Discussions. We will link the invite from this page when it goes live.
+- **The `community-triage` agent** triages new contributor PRs and opens issues. If you don't know which lane your question belongs in, that agent will route you.
+
+You do not have to know everything before you start. Opening a draft PR with a half-finished manifest is welcome; we would rather review iterations than absences.

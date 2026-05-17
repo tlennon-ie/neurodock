@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder logomark for NeuroDock.
+  Single neutral hue per plan.md §2. No gradients. No decorative flourish.
+  design-system-keeper owns the final logomark.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="NeuroDock">
+  <rect x="2" y="2" width="28" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="2"/>
+  <rect x="10" y="10" width="12" height="12" rx="2" fill="currentColor"/>
+</svg>

@@ -1,0 +1,29 @@
+id: "translation.tone.001"
+slice: "translation/tone"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Strong nack. This is broken. Fix it before EOD."
+  channel: "github"
+  target_register: "warm"
+expected:
+  flagged_phrases:
+    __len__: 4
+  suggested_rewrite_hint: "Lift warmth by opening with a brief relational acknowledgement before the technical content."
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["asd"]
+    agreement_with_expected: 1.0
+    notes: |
+      Maximum-coldness baseline. The tool flags four phrases: 'strong nack',
+      'this is broken', 'fix it', and 'before EOD' — and proposes the warm-
+      register hint because warmth is well below the target register.
+notes: |
+  Worst-case-style blunt PR comment a directness-leaning engineer might
+  send. The check_tone baseline lights up four flagged phrases (without a
+  baseline_messages list, all rule-matched flags pass through).

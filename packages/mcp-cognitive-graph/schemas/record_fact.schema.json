@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-cognitive-graph/v0.1.0/record_fact.schema.json",
+  "title": "record_fact",
+  "description": "Persist a typed-edge fact (subject, predicate, object) into the local cognitive graph and return the stored fact id. Entities referenced by name are auto-created if they do not exist. Predicate is drawn from a controlled vocabulary in v0.1.0; source and confidence are optional declarative metadata.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject", "predicate", "object"],
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/EntityRef",
+          "description": "The subject of the fact. If id is provided, it is used; otherwise the (type, name) pair is upserted."
+        },
+        "predicate": {
+          "type": "string",
+          "description": "Edge type drawn from the v0.1.0 controlled vocabulary. Extensible later via type_extensions.",
+          "enum": [
+            "mentioned_in",
+            "decided_in",
+            "reports_to",
+            "depends_on",
+            "resolved_by",
+            "blocked_by",
+            "tagged",
+            "belongs_to"
+          ]
+        },
+        "object": {
+          "$ref": "#/$defs/EntityRefOrLiteral",
+          "description": "The object of the fact. Use the literal form for tag values, status strings, or free-text notes where the target is a value rather than an entity."
+        },
+        "source": {
+          "type": ["string", "null"],
+          "maxLength": 2000,
+          "description": "Optional free-text origin (URL, message id, transcript citation). Stored verbatim; never fetched. Null or absent means undeclared.",
+          "examples": [
+            "msg://slack/C123/p1715683200000100",
+            "https://github.com/neurodock/neurodock/issues/42",
+            null
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 1.0,
+          "description": "Declared confidence in the fact, 0..1. Defaults to 1.0 when omitted (declarative). Callers SHOULD lower this for inferred facts."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact_id", "recorded_at", "subject", "predicate", "object", "deduplicated"],
+      "properties": {
+        "fact_id": {
+          "type": "string",
+          "description": "Stable canonical id for the stored fact. Opaque to callers.",
+          "examples": ["fact_01HZ0AABBCCDDEEFFGGHHJJKKLL"]
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp with timezone offset for when the fact was committed.",
+          "examples": ["2026-05-15T09:14:22+01:00"]
+        },
+        "subject": {
+          "$ref": "#/$defs/EntityRef",
+          "description": "Resolved subject (with id populated) as stored."
+        },
+        "predicate": {
+          "type": "string",
+          "enum": [
+            "mentioned_in",
+            "decided_in",
+            "reports_to",
+            "depends_on",
+            "resolved_by",
+            "blocked_by",
+            "tagged",
+            "belongs_to"
+          ]
+        },
+        "object": { "$ref": "#/$defs/EntityRefOrLiteral" },
+        "deduplicated": {
+          "type": "boolean",
+          "description": "True when an existing near-identical fact was matched and reused instead of inserting a new row. Dedup strategy is server-internal in v0.1.0 (see ADR 0002 open question).",
+          "default": false
+        },
+        "auto_created_entities": {
+          "type": "array",
+          "description": "Entities that were created as a side effect of this call because they did not previously exist. Empty array when no creation occurred.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "name"],
+            "properties": {
+              "id": { "type": "string" },
+              "type": {
+                "type": "string",
+                "enum": ["person", "project", "decision", "concept", "source"]
+              },
+              "name": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "SUBJECT_REQUIRED": {
+        "description": "The subject argument was missing or did not include at least one of {id, name}."
+      },
+      "OBJECT_REQUIRED": {
+        "description": "The object argument was missing or did not include at least one of {id, name, literal}."
+      },
+      "PREDICATE_UNKNOWN": {
+        "description": "Predicate is not in the v0.1.0 controlled vocabulary. Use one of: mentioned_in, decided_in, reports_to, depends_on, resolved_by, blocked_by, tagged, belongs_to. Extension predicates land in v0.2."
+      },
+      "ENTITY_TYPE_UNKNOWN": {
+        "description": "Subject or object referenced an entity type not in the v0.1.0 taxonomy."
+      },
+      "CONFIDENCE_OUT_OF_RANGE": {
+        "description": "Confidence was not in the closed interval [0, 1]."
+      },
+      "GRAPH_WRITE_FAILED": {
+        "description": "Local SQLite store rejected the write (disk full, locked, or corrupted). Caller MAY retry once; persistent failure requires user action."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "record a decision attribution with a slack source",
+      "input": {
+        "subject": { "type": "person", "name": "Roberto" },
+        "predicate": "decided_in",
+        "object": { "type": "decision", "name": "Adopt SQLite + sqlite-vec" },
+        "source": "msg://slack/C123/p1715683200000100",
+        "confidence": 1.0
+      },
+      "output": {
+        "fact_id": "fact_01HZ0AABBCCDDEEFFGGHHJJKKLL",
+        "recorded_at": "2026-05-15T09:14:22+01:00",
+        "subject": { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" },
+        "predicate": "decided_in",
+        "object": { "type": "decision", "id": "ent_01HZDEC0001", "name": "Adopt SQLite + sqlite-vec" },
+        "deduplicated": false,
+        "auto_created_entities": [
+          { "id": "ent_01HZDEC0001", "type": "decision", "name": "Adopt SQLite + sqlite-vec" }
+        ]
+      }
+    },
+    {
+      "name": "tag a project with a free-text literal",
+      "input": {
+        "subject": { "type": "project", "name": "" },
+        "predicate": "tagged",
+        "object": { "literal": "external-memory" },
+        "confidence": 0.8
+      },
+      "output": {
+        "fact_id": "fact_01HZTAG0001",
+        "recorded_at": "2026-05-15T09:15:01+01:00",
+        "subject": { "type": "project", "id": "ent_01HZPRJKIPISYSTEM", "name": "" },
+        "predicate": "tagged",
+        "object": { "literal": "external-memory" },
+        "deduplicated": false,
+        "auto_created_entities": []
+      }
+    },
+    {
+      "name": "duplicate fact is deduplicated, not inserted",
+      "input": {
+        "subject": { "type": "project", "name": "" },
+        "predicate": "depends_on",
+        "object": { "type": "concept", "name": "sqlite-vec" }
+      },
+      "output": {
+        "fact_id": "fact_01HZKIPI001",
+        "recorded_at": "2026-04-10T12:00:00+01:00",
+        "subject": { "type": "project", "id": "ent_01HZPRJKIPISYSTEM", "name": "" },
+        "predicate": "depends_on",
+        "object": { "type": "concept", "id": "ent_01HZCONCEPTSQLITEVEC", "name": "sqlite-vec" },
+        "deduplicated": true,
+        "auto_created_entities": []
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New predicates and entity types land via the v0.2 type_extensions mechanism, not by mutating this schema. Renaming or retyping any field requires a new major version with a parallel $id.",
+    "side_effects": "Mutates the local cognitive graph. Auto-creates entities by (type, name) when they do not exist. Idempotent under the dedup policy: recording the same (subject, predicate, object) twice returns the same fact_id with deduplicated=true on the second call.",
+    "idempotency": "Idempotent at the (subject, predicate, object) granularity. Source and confidence on a duplicate call are merged server-side per a documented policy (see ADR 0002 open question).",
+    "privacy": "Writes only to the local SQLite store. No remote calls. Source strings (which may be URLs or message ids) are sensitive: they reveal where the user was when they observed the fact. Stored verbatim, never fetched, never transmitted off-device by this server."
+  },
+  "$defs": {
+    "EntityRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["person", "project", "decision", "concept", "source"],
+          "description": "Entity type from the v0.1.0 taxonomy."
+        },
+        "id": {
+          "type": "string",
+          "description": "Canonical id if known. When omitted, the (type, name) pair is used to upsert."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Display name. Required when id is not provided."
+        }
+      }
+    },
+    "EntityRefOrLiteral": {
+      "oneOf": [
+        { "$ref": "#/$defs/EntityRef" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["literal"],
+          "properties": {
+            "literal": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1000,
+              "description": "Free-text value used when the fact's object is not an entity (e.g. a tag, a status, a short note)."
+            }
+          }
+        }
+      ]
+    }
+  }
+}

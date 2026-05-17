@@ -1,0 +1,53 @@
+---
+title: Substrate
+description: The MCP servers that externalise executive function. Three of them ship in Phase 1.
+---
+
+The substrate is the layer of MCP servers and skills that externalise executive function — time awareness, persistent memory, task decomposition. Three MCP servers ship in `v0.1`. Each is small, single-purpose, and independently versioned.
+
+## What an MCP server is
+
+The Model Context Protocol (MCP) is a standard for connecting language models to external tools and data. An MCP server exposes a set of named **tools** with typed inputs and outputs. Any MCP-aware client (Claude Desktop, Claude Code, Cursor, others) can call those tools at the model's request.
+
+NeuroDock's substrate is a set of MCP servers, not a wrapper around any one model vendor. The user's MCP client is the LLM boundary; the substrate never embeds a model call.
+
+## Why MCP
+
+- **Vendor-neutral.** The same servers work in any MCP-aware client. Switching models does not break your substrate.
+- **Auditable.** Tool calls are visible in the client. Every nudge, every recall, every decomposition is inspectable.
+- **Composable.** Skills compose tool calls; tools compose into skills. Nothing is a monolith.
+
+## The three substrate servers (Phase 1)
+
+| Server | Tools | Job |
+|---|---|---|
+| [`mcp-chronometric`](/reference/mcp-servers/chronometric/) | `get_time_context`, `mark_session_start`, `mark_session_end`, `request_break_if_needed`, `idle_status` | Externalise time and session awareness. |
+| [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) | `recall_entity`, `record_fact`, `recall_decisions`, `weekly_rollup` | Externalise memory: people, projects, decisions, concepts. |
+| [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) | `decompose`, `next_one` | Externalise decomposition: vague goal in, atomic tasks out. |
+
+Each tool's input and output schema lives at `packages/<server>/schemas/*.schema.json` and is the source of truth.
+
+## Design rules that bind every substrate server
+
+These are inherited from [ADR 0001](/decisions/0001-chronometric/) and adopted by every subsequent server:
+
+- **Small tools, single responsibility.** Each tool does one job. No god-tool.
+- **Server-side state, not LLM-maintained state.** The model never has to remember a `session_id` or a `fact_id`.
+- **Local-first.** No remote calls. Profile and storage live on the user's machine.
+- **Enums for coarse signals, not floats.** `energy_zone`, `resolution.method`, error codes — all enums.
+- **`null` is a first-class return.** Tools return `null` for "no match"; callers MUST handle it.
+- **Additive-only within a `v0.1.x` line.** Renames and removals require a new major version with a parallel schema `$id`.
+
+See the [decisions index](/decisions/) for the full set of design ADRs.
+
+## What is NOT in the substrate (Phase 1)
+
+- **No LLM call from inside a substrate server.** The user's MCP client is the only LLM boundary. The cognitive graph's `weekly_rollup` and the fractionator's decomposition both use local heuristics; the LLM-assisted variants land in `v0.2`.
+- **No remote storage.** SQLite + `sqlite-vec` lives at `~/.neurodock/store.sqlite`. SQLCipher is the opt-in at-rest encryption layer.
+- **No telemetry.** The substrate has no remote endpoint to send to.
+
+## What's next
+
+- [Skills](/concepts/skills/) — how user-facing workflows compose substrate tools.
+- [Profiles](/concepts/profiles/) — the consent and preference manifest every server reads.
+- [Guardrails](/concepts/guardrails/) — the clinical safety layer (Phase 3, with Phase 1 hooks already in the profile).

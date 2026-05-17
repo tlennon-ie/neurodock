@@ -1,0 +1,81 @@
+---
+title: mcp-task-fractionator
+description: Decompose vague goals into atomic 5-90 minute tasks. Two tools. Stateless. No LLM inside the server.
+---
+
+`mcp-task-fractionator` carves a vague goal into a small ordered list of atomic 5–90 minute tasks with explicit acceptance criteria and dependency edges. It is stateless — persistence is the caller's job, via `mcp-cognitive-graph`.
+
+- **Package:** `packages/mcp-task-fractionator/`
+- **Schemas:** `packages/mcp-task-fractionator/schemas/*.schema.json`
+- **ADR:** [0003 — Task fractionator tool design](/decisions/0003-task-fractionator/)
+- **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-task-fractionator/v0.1.0/`
+
+## Tools
+
+| Tool | Input | Output |
+|---|---|---|
+| `decompose` | `{ goal: string, time_budget?: string }` | `{ tasks: Task[], rationale: string }` |
+| `next_one` | `{ project: string }` | `{ task: Task, reasoning: string, confidence: number }` |
+
+### `decompose`
+
+Input:
+
+- `goal` — plain-language goal, 5–500 characters. Treated as private user data; never logged.
+- `time_budget` — optional ISO 8601 duration (`PT4H`, `P3D`, `PT30M`). The total `estimated_minutes` across returned tasks fits within the budget; otherwise the server returns `BUDGET_INFEASIBLE` rather than silently truncating.
+
+Output:
+
+- `tasks` — array of 1–20 tasks (target 3–12, per ADR 0003). Each task has:
+  - `id` — UUIDv4, server-generated.
+  - `title`, `description` — verb-led, concrete.
+  - `estimated_minutes` — integer in `[5, 90]`. Floor prevents trivial-shred; ceiling enforces atomicity.
+  - `acceptance_criteria` — non-empty array. Required. An empty array is rejected as `ACCEPTANCE_CRITERIA_REQUIRED`.
+  - `dependencies` — UUIDv4 references to siblings in the same response. Cycles are rejected.
+  - `sequence` — 1-indexed total order. Distinct for every task; `next_one` is "sequence = 1 of the unfinished subset".
+  - `tags` — free-form labels for filtering.
+- `rationale` — one paragraph the user can read in 5 seconds. Surfaces assumptions ("I assumed Friday meant end-of-business Friday in your local timezone"). Not a marketing summary.
+
+### `next_one`
+
+Reads from `mcp-cognitive-graph` to find pending tasks under the named project. Returns exactly one task plus reasoning and a confidence number.
+
+The fractionator owns the *decomposition algorithm*; the graph owns the *state*.
+
+## Error codes
+
+| Code | Meaning |
+|---|---|
+| `GOAL_REQUIRED` | Goal missing or shorter than 5 characters after trimming. |
+| `GOAL_TOO_LONG` | Goal exceeded 500 characters. Split the goal itself. |
+| `TIME_BUDGET_UNPARSEABLE` | Budget did not match the ISO 8601 duration regex. No silent fallback. |
+| `BUDGET_INFEASIBLE` | No task list fits the budget while still covering the goal. May include `minimum_feasible_minutes`. |
+| `DEPENDENCY_CYCLE` | Candidate decomposition produced a cycle. Server bug, surfaced explicitly. |
+| `ACCEPTANCE_CRITERIA_REQUIRED` | Internal invariant — a candidate task had zero acceptance criteria. |
+| `DECOMPOSITION_UNAVAILABLE` | Local heuristic engine could not produce a credible decomposition. Payload SHOULD include a `clarifying_question` string. |
+
+## Statelessness
+
+`decompose` returns a task list but **does NOT persist it**. Callers (typically skills) write the tasks to `mcp-cognitive-graph`:
+
+- Each task becomes an entity (`record_fact` with the task id as subject and `estimated_minutes`, `acceptance_criteria` as facts).
+- Each dependency becomes a fact with `predicate: "depends_on"`.
+- The project becomes an entity that owns the tasks via `predicate: "part_of"` (note: `part_of` lands in v0.2; v0.1 uses `belongs_to`).
+
+The skill SDK ships a one-liner — `decompose_and_persist(goal, project, time_budget?)` — for the common path.
+
+## Privacy
+
+- No remote calls.
+- No LLM call from inside the server. The v0.2 `decompose_with_assist` path will accept an LLM-drafted decomposition as input; the server remains the schema and invariants authority.
+- Goal text is **never logged** — not at info, not at debug, not in error payloads. Validation errors reference field names, not content.
+
+## Versioning
+
+- Additive-only within `v0.1.x`.
+- The 5–90 minute `estimated_minutes` range, the 1–20 task count range, and the required non-empty `acceptance_criteria` are part of the contract; changing them is a major bump.
+
+## What's next
+
+- [ADR 0003](/decisions/0003-task-fractionator/) for the full design rationale.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — the state owner.

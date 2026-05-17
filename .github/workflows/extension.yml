@@ -1,0 +1,64 @@
+name: Browser extension
+
+on:
+  push:
+    tags:
+      - "extension-browser@*"
+  pull_request:
+    paths:
+      - "packages/extension-browser/**"
+  workflow_dispatch:
+
+concurrency:
+  group: extension-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (Chrome / Firefox / Edge)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.1.2
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check extension source present
+        id: probe
+        run: |
+          if [ -f "packages/extension-browser/wxt.config.ts" ] || [ -f "packages/extension-browser/wxt.config.js" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Extension scaffold not yet present — exiting cleanly."
+          fi
+
+      - name: Build Chrome bundle
+        if: steps.probe.outputs.ready == 'true'
+        run: pnpm --filter @neurodock/extension-browser build --target chrome
+
+      - name: Build Firefox bundle
+        if: steps.probe.outputs.ready == 'true'
+        run: pnpm --filter @neurodock/extension-browser build --target firefox
+
+      - name: Build Edge bundle
+        if: steps.probe.outputs.ready == 'true'
+        run: pnpm --filter @neurodock/extension-browser build --target edge
+
+      - name: Upload artefacts
+        if: steps.probe.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: extension-bundles
+          path: packages/extension-browser/.output/**

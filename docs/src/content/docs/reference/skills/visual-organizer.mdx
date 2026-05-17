@@ -1,0 +1,42 @@
+---
+title: visual-organizer
+description: Generates Mermaid diagrams when textual output is overwhelming or when the user asks for visual organisation.
+---
+
+> Source: `packages/skills/visual-organizer/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+A skill that turns dense text into a Mermaid diagram — flowchart, sequence, mindmap — when the user is overwhelmed by linear output or asks for visual organisation explicitly.
+
+## Frontmatter summary
+
+| Field | Value |
+|---|---|
+| `name` | `visual-organizer` |
+| `version` | `0.0.0` (Phase 1 stub) |
+| `status` | `stub` — implementation in Phase 1 |
+| `neurotypes` | `[]` (to be set to `["adhd", "audhd", "asd"]` when implemented) |
+
+## Triggers
+
+- Slash command: `/visualise` (subject to skill-author finalisation).
+- Semantic match against phrases like *"show me this as a diagram"*, *"too much text"*.
+
+## MCP dependencies
+
+None required. The skill is content-only — it instructs the model to emit a Mermaid block.
+
+## Profile dependencies
+
+- `preferences.motion` — diagrams are static; no animated diagrams ever.
+- `preferences.reading_font_hint` — informs labelling.
+
+## Acceptance
+
+- Output contains exactly one Mermaid code block.
+- Diagram is renderable in standard Mermaid (no experimental syntax).
+- All node labels are under 40 characters.
+
+## What's next
+
+- [Concepts: skills](/concepts/skills/) for what content-only skills look like.
+- [Plan §6](https://github.com/tlennon-ie/neurodock/blob/main/plan.md) for the user-story acceptance bar.

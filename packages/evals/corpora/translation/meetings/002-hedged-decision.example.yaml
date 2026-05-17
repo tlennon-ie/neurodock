@@ -1,0 +1,37 @@
+id: "translation.meetings.002"
+slice: "translation/meetings"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  transcript: |
+    Alex: Sam, can you draft the migration plan?
+    Sam: I'll circle back next week with thoughts.
+    Alex: Someone should also think about the rollback path.
+  me: "Sam"
+  speakers: ["Alex", "Sam"]
+  project: "rollout"
+expected:
+  my_asks:
+    __len__: 1
+  decisions:
+    __len__: 0
+  ambiguous_items:
+    __len__: 2
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["audhd"]
+    agreement_with_expected: 0.85
+    notes: |
+      Sam's 'I'll circle back next week' is both a (weak) decision and a
+      hedged commitment — the baseline surfaces it under both categories.
+      Alex's 'Someone should also think' has unassigned owner + hedged commitment.
+notes: |
+  Tests the verbatim-anchor invariant on ambiguous_items: every quoted_span
+  must slice cleanly from the transcript. This example also documents the
+  case where one line becomes both a decision and an ambiguous_item, which
+  the LLM-refinement layer can later collapse.

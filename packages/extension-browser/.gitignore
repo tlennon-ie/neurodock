@@ -1,0 +1,12 @@
+node_modules/
+.output/
+.wxt/
+.turbo/
+coverage/
+dist/
+*.log
+.env
+.env.local
+
+# Synced from packages/mcp-translation at build time; not committed.
+src/lib/prompts/*.md

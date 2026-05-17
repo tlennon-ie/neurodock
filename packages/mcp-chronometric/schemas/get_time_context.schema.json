@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-chronometric/v0.1.0/get_time_context.schema.json",
+  "title": "get_time_context",
+  "description": "Return the current time context for the active user: wall-clock time, day of week, time since last LLM prompt, length of the current session if one is open, and a heuristic energy zone bucket. No side effects; safe to call freely.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "description": "No inputs. This tool reads server-local state only.",
+      "additionalProperties": false,
+      "properties": {},
+      "required": []
+    },
+    "output": {
+      "type": "object",
+      "description": "Structured time context.",
+      "additionalProperties": false,
+      "required": [
+        "now",
+        "day_of_week",
+        "time_since_last_prompt",
+        "current_session_length",
+        "energy_zone"
+      ],
+      "properties": {
+        "now": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Current wall-clock time as an ISO 8601 timestamp with an explicit timezone offset. Never naive.",
+          "examples": ["2026-05-15T09:14:22+01:00"]
+        },
+        "day_of_week": {
+          "type": "string",
+          "description": "Local day of the week, capitalised English.",
+          "enum": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ]
+        },
+        "time_since_last_prompt": {
+          "type": "string",
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+          "description": "ISO 8601 duration since the previous prompt was recorded by this server. PT0S if this is the first prompt of the process lifetime.",
+          "examples": ["PT0S", "PT14M32S", "PT2H07M"]
+        },
+        "current_session_length": {
+          "type": "string",
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+          "description": "ISO 8601 duration since the current open session began. PT0S when no session is open.",
+          "examples": ["PT0S", "PT47M12S"]
+        },
+        "energy_zone": {
+          "type": "string",
+          "description": "Heuristic bucket for likely cognitive availability based on local clock-time and profile-declared rhythms. Skills MAY use this to shape output. Computation is documented in ADR 0001.",
+          "enum": [
+            "morning_peak",
+            "midday",
+            "afternoon_dip",
+            "evening_quiet",
+            "night_owl_caution",
+            "unknown"
+          ]
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "description": "Structured error codes this tool may return.",
+    "properties": {
+      "INTERNAL_CLOCK_UNAVAILABLE": {
+        "description": "The server could not read the system clock or timezone. Returned as a tool error, never as silent default."
+      },
+      "PROFILE_UNREADABLE": {
+        "description": "Profile YAML present but unparseable; energy_zone falls back to 'unknown' rather than failing the whole call when possible."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "fresh process, no session, weekday morning",
+      "input": {},
+      "output": {
+        "now": "2026-05-15T09:14:22+01:00",
+        "day_of_week": "Friday",
+        "time_since_last_prompt": "PT0S",
+        "current_session_length": "PT0S",
+        "energy_zone": "morning_peak"
+      }
+    },
+    {
+      "name": "mid-session afternoon dip",
+      "input": {},
+      "output": {
+        "now": "2026-05-15T14:42:08+01:00",
+        "day_of_week": "Friday",
+        "time_since_last_prompt": "PT3M11S",
+        "current_session_length": "PT1H22M",
+        "energy_zone": "afternoon_dip"
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within the v0.1.x line. New optional output fields MAY be appended; existing fields MUST NOT change type, name, or semantics. Any breaking change requires a new major version and a parallel schema $id.",
+    "side_effects": "None. Pure read.",
+    "idempotency": "Trivially idempotent.",
+    "privacy": "Reads local profile and local session state only. No remote calls. No data leaves the user's machine."
+  }
+}

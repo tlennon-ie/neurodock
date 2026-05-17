@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-chronometric/v0.1.0/mark_session_end.schema.json",
+  "title": "mark_session_end",
+  "description": "Close the currently open session, optionally attach a summary, and return final session metadata. Closes only the most recent open session for the user; explicitly does not take a session id to avoid the LLM having to maintain state across calls.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Optional plain-language summary of what was actually accomplished. Stored verbatim alongside the original intent for later reflection skills (e.g. weekly_rollup).",
+          "examples": [
+            "shipped the RFC reply, parked two follow-ups in inbox",
+            "got distracted into refactor; did not finish the planned migration ADR"
+          ]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id",
+        "started_at",
+        "ended_at",
+        "duration",
+        "intent"
+      ],
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+          "description": "UUIDv4 of the session that was just closed."
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp the session began."
+        },
+        "ended_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp the session ended."
+        },
+        "duration": {
+          "type": "string",
+          "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
+          "description": "ISO 8601 duration between started_at and ended_at."
+        },
+        "intent": {
+          "type": "string",
+          "description": "The stated intent recorded at mark_session_start, echoed back unmodified."
+        },
+        "summary": {
+          "type": ["string", "null"],
+          "description": "The summary as stored, or null if none was provided."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "NO_OPEN_SESSION": {
+        "description": "No session was open at the time of the call. Returned instead of silently no-op so callers can distinguish 'I forgot to start one' from 'this succeeded'."
+      },
+      "SUMMARY_TOO_LONG": {
+        "description": "Summary exceeded 1000 characters."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "clean end with summary",
+      "input": { "summary": "shipped the RFC reply, parked two follow-ups in inbox" },
+      "output": {
+        "session_id": "6f9f4f5e-3b1c-4e2a-9f7d-2b3c4d5e6f70",
+        "started_at": "2026-05-15T09:14:22+01:00",
+        "ended_at": "2026-05-15T10:31:05+01:00",
+        "duration": "PT1H16M43S",
+        "intent": "finish draft RFC reply",
+        "summary": "shipped the RFC reply, parked two follow-ups in inbox"
+      }
+    },
+    {
+      "name": "end without summary",
+      "input": {},
+      "output": {
+        "session_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+        "started_at": "2026-05-15T13:02:11+01:00",
+        "ended_at": "2026-05-15T13:27:55+01:00",
+        "duration": "PT25M44S",
+        "intent": "triage inbox for 25 minutes only",
+        "summary": null
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The deliberate choice to not accept a session_id input means we may NEVER add one later without a major bump, since callers would then need to maintain state. This is documented in ADR 0001.",
+    "side_effects": "Mutates server-local session state (closes the open session). Idempotent only in the sense that a second call returns NO_OPEN_SESSION rather than mutating further.",
+    "idempotency": "Calling twice in succession: first call closes; second call returns NO_OPEN_SESSION.",
+    "privacy": "Summary strings are sensitive (reveal user accomplishments, frustrations, self-talk) and MUST NOT be transmitted off-device by this server."
+  }
+}

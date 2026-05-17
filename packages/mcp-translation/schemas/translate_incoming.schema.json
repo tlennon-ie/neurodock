@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/translate_incoming.schema.json",
+  "title": "translate_incoming",
+  "description": "Decode subtext, ambiguity, and likely implicit asks in an incoming corporate message. The server orchestrates a structured prompt against the caller's MCP-client LLM (local Ollama or cloud per the user's profile) and returns a typed analysis with explicit ask, ranked likely subtext, ambiguity spans, and a recommended next action. The server itself performs NO LLM calls and stores NO inputs.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000,
+          "description": "The verbatim incoming message to decode. Stored only in-memory for the duration of the call; never logged. PII redaction is upstream (extension or caller) — this server analyses whatever it is given.",
+          "examples": [
+            "Hey — can we revisit the rollout timeline? I'm not sure everyone is aligned.",
+            "Quick one: I'll loop back next week with thoughts on the architecture doc.",
+            "Have you had a chance to look at the PR? No rush but it's been a while."
+          ]
+        },
+        "channel": {
+          "$ref": "#/$defs/Channel",
+          "description": "Optional channel hint. Influences register expectations (slack is informal, email is formal, linear/github lean technical). When absent, the prompt template assumes 'generic'."
+        },
+        "thread_context": {
+          "type": "array",
+          "description": "Optional preceding messages in the thread, oldest first, used to disambiguate. Each entry is a short verbatim quote. Capped at 20 items to keep prompt length bounded and the analysis focused on the latest message. Server SHOULD truncate to the most recent 20 if more are supplied.",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "examples": [
+            [
+              "We agreed last sprint to ship the rollout by end of May.",
+              "Two engineers flagged risk on the migration script."
+            ]
+          ]
+        },
+        "target_language": {
+          "type": "string",
+          "description": "Optional BCP-47 language tag of the message. Defaults to 'en' when absent. Used to select a language pack when one is registered (e.g. 'en-IE' for Hiberno-English, 'de' for German directness norms, 'ja' for Japanese keigo).",
+          "examples": ["en", "en-IE", "de", "ja"]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "explicit_ask",
+        "likely_subtext",
+        "ambiguity",
+        "recommended_next_action",
+        "eval_corpus_slice",
+        "model_provenance"
+      ],
+      "properties": {
+        "explicit_ask": {
+          "type": ["string", "null"],
+          "maxLength": 1000,
+          "description": "The literal, surface-level request the sender made, paraphrased plainly. Null when the message contains no explicit ask (e.g. a status update). When non-null, this is what a literal reader would extract before considering subtext.",
+          "examples": [
+            "Reopen the rollout-timeline discussion with the wider group.",
+            "Acknowledge the PR review request.",
+            null
+          ]
+        },
+        "likely_subtext": {
+          "type": "array",
+          "description": "Ranked list of likely implicit meanings. Highest-confidence first. Each entry has a paraphrased text and a 0..1 confidence score reflecting the analysis model's certainty given the text, channel, and thread context. raters on the eval corpus should agree on the top entry ≥75% of the time (per plan.md §7 acceptance).",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/SubtextHypothesis"
+          }
+        },
+        "ambiguity": {
+          "$ref": "#/$defs/AmbiguityReport",
+          "description": "Spans of the input whose meaning is genuinely unclear, with reason codes. The extension uses these to render highlights; skills use them to decide whether to ask the sender for clarification."
+        },
+        "recommended_next_action": {
+          "$ref": "#/$defs/NextAction",
+          "description": "One concrete suggested next step for the recipient. Action is a coarse enum; reason is a short prose justification. The skill or UI surface decides whether to follow the recommendation."
+        },
+        "eval_corpus_slice": {
+          "type": "string",
+          "description": "Identifier of the eval corpus slice that validates this prompt template. Required so that any prompt change in the server can be re-evaluated in CI per plan.md §7 (every prompt change runs against the eval corpus).",
+          "examples": [
+            "packages/evals/corpora/translation/incoming/v0.1.0/general.jsonl"
+          ]
+        },
+        "model_provenance": {
+          "$ref": "#/$defs/ModelProvenance",
+          "description": "Where the LLM call ran (local or cloud, model id). The server itself does not call any provider — this field reflects what the caller's MCP client reported. Surfaced so the user / extension can render the 'cloud mode' banner accurately."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "TEXT_REQUIRED": {
+        "description": "The text argument was missing or empty."
+      },
+      "TEXT_TOO_LONG": {
+        "description": "Input text exceeded the 8000-character cap. Caller SHOULD split or excerpt before calling."
+      },
+      "CHANNEL_UNKNOWN": {
+        "description": "channel value was not one of the v0.1.0 enum. Use 'generic' if unsure."
+      },
+      "LANGUAGE_PACK_MISSING": {
+        "description": "target_language was supplied but no language pack is registered for it. Caller MAY retry without target_language to fall back to the default English prompts."
+      },
+      "MODEL_UNAVAILABLE": {
+        "description": "The caller's MCP client could not reach its configured LLM (local Ollama not running, cloud provider unreachable, no API key). The server does not retry; the caller decides whether to surface the failure or queue the request."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "classic 'can we revisit' with thread context implying push-back",
+      "input": {
+        "text": "Hey — can we revisit the rollout timeline? I'm not sure everyone is aligned.",
+        "channel": "slack",
+        "thread_context": [
+          "We agreed last sprint to ship the rollout by end of May.",
+          "Two engineers flagged risk on the migration script."
+        ]
+      },
+      "output": {
+        "explicit_ask": "Reopen the rollout-timeline discussion with the wider group.",
+        "likely_subtext": [
+          {
+            "text": "The sender wants to delay or change the agreed end-of-May rollout date and is signalling disagreement without stating it directly.",
+            "confidence": 0.82
+          },
+          {
+            "text": "The sender is raising air-cover for engineers who flagged risk and wants the recipient to take their concerns seriously before the deadline.",
+            "confidence": 0.61
+          }
+        ],
+        "ambiguity": {
+          "detected": true,
+          "spans": [
+            {
+              "start_char": 11,
+              "end_char": 41,
+              "reason": "soft_request",
+              "note": "'can we revisit' frequently implies 'I want to change' rather than a neutral re-open."
+            },
+            {
+              "start_char": 43,
+              "end_char": 76,
+              "reason": "vague_referent",
+              "note": "'everyone' is unspecified — which stakeholders are misaligned?"
+            }
+          ]
+        },
+        "recommended_next_action": {
+          "action": "clarify",
+          "reason": "Ask the sender which specific concerns or stakeholders prompted the request before agreeing to reopen scope, so the conversation surfaces the real issue rather than getting stuck in a meta-debate.",
+          "draft_reply": "Happy to revisit — could you name the specific concerns or stakeholders you're thinking of, so we can come prepared?"
+        },
+        "eval_corpus_slice": "packages/evals/corpora/translation/incoming/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "local",
+          "provider": "ollama",
+          "model": "llama3.1:8b-instruct"
+        }
+      }
+    },
+    {
+      "name": "'I'll loop back' status with no explicit ask",
+      "input": {
+        "text": "Quick one: I'll loop back next week with thoughts on the architecture doc.",
+        "channel": "email"
+      },
+      "output": {
+        "explicit_ask": null,
+        "likely_subtext": [
+          {
+            "text": "The sender is deferring engagement and may not loop back without a reminder; 'next week' is non-committal.",
+            "confidence": 0.71
+          },
+          {
+            "text": "The sender has not yet read the architecture doc and is signalling that this is not a priority for them right now.",
+            "confidence": 0.55
+          }
+        ],
+        "ambiguity": {
+          "detected": true,
+          "spans": [
+            {
+              "start_char": 14,
+              "end_char": 38,
+              "reason": "vague_timeline",
+              "note": "'next week' has no committed day; soft-deadline phrases like this rarely self-fulfil."
+            }
+          ]
+        },
+        "recommended_next_action": {
+          "action": "set_reminder",
+          "reason": "Treat this as a non-commitment. Set a follow-up reminder for the start of next week so the conversation does not silently drop.",
+          "draft_reply": null
+        },
+        "eval_corpus_slice": "packages/evals/corpora/translation/incoming/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "cloud",
+          "provider": "anthropic",
+          "model": "claude-sonnet-4.6"
+        }
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional input fields (e.g. sender_relationship, prior_decisions_ref) MAY land in v0.1.x. New ambiguity reason codes and new next-action enum values are minor bumps (they are read-only enums, callers MUST treat unknown values as opaque per ADR 0005). Renaming or retyping any field requires a new major version with a parallel $id.",
+    "side_effects": "None. Pure read. The server stores no input and emits no telemetry. The caller's MCP client makes the LLM call; that client's logging policy is upstream.",
+    "idempotency": "Trivially idempotent on the server. LLM-side determinism depends on the caller's model and sampling settings.",
+    "privacy": "local-only-by-default. The server itself does not call any provider. Cloud-mode is selected by the caller's MCP client and the user's profile; this server is provider-agnostic. PII redaction is upstream — the server analyses whatever text it is given and never logs it."
+  },
+  "$defs": {
+    "Channel": {
+      "type": "string",
+      "enum": ["email", "slack", "linear", "github", "notion", "gdocs", "outlook", "generic"],
+      "description": "Channel of origin. Drives register expectations in the prompt template."
+    },
+    "SubtextHypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "confidence"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "Paraphrased implicit meaning. Plain, non-clinical wording per the NeuroDock voice guidelines (§2)."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model-reported confidence in the hypothesis. Used as a ranking key, not as a probabilistic claim."
+        }
+      }
+    },
+    "AmbiguityReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detected", "spans"],
+      "properties": {
+        "detected": {
+          "type": "boolean",
+          "description": "True when at least one ambiguous span was identified."
+        },
+        "spans": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/AmbiguitySpan" },
+          "description": "Character-offset spans into the input text. Empty array when detected is false."
+        }
+      }
+    },
+    "AmbiguitySpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_char", "end_char", "reason"],
+      "properties": {
+        "start_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed inclusive character offset into input.text. Used by the browser extension to highlight the span."
+        },
+        "end_char": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Zero-indexed exclusive character offset into input.text. end_char > start_char."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "soft_request",
+            "vague_timeline",
+            "vague_referent",
+            "hedged_commitment",
+            "implied_urgency",
+            "implied_blame",
+            "passive_voice_actor",
+            "rhetorical_question",
+            "other"
+          ],
+          "description": "Reason code. Callers MUST treat unknown values as 'other' (forward-compatibility)."
+        },
+        "note": {
+          "type": ["string", "null"],
+          "maxLength": 500,
+          "description": "Optional short prose explaining why this span is ambiguous in plain language."
+        }
+      }
+    },
+    "NextAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "reason"],
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "reply",
+            "clarify",
+            "acknowledge",
+            "set_reminder",
+            "escalate",
+            "ignore",
+            "defer"
+          ],
+          "description": "Coarse next-action enum. Callers MUST treat unknown values as opaque (forward-compatibility)."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One-paragraph plain-language justification for the recommendation."
+        },
+        "draft_reply": {
+          "type": ["string", "null"],
+          "maxLength": 2000,
+          "description": "Optional suggested reply text when action is 'reply', 'clarify', or 'acknowledge'. Null otherwise. The caller MAY use rewrite_outgoing to refine this further."
+        }
+      }
+    },
+    "ModelProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "provider", "model"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["local", "cloud", "unknown"],
+          "description": "Whether the LLM call ran locally (e.g. Ollama) or against a cloud provider. 'unknown' is permitted only when the caller's MCP client did not report it."
+        },
+        "provider": {
+          "type": "string",
+          "description": "Provider id reported by the caller (e.g. 'ollama', 'anthropic', 'openai', 'azure-openai'). Free-form to permit new providers without a schema bump."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model id reported by the caller (e.g. 'llama3.1:8b-instruct', 'claude-sonnet-4.6')."
+        }
+      }
+    }
+  }
+}

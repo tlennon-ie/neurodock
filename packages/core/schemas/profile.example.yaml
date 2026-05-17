@@ -1,0 +1,112 @@
+# NeuroDock Profile — worked example ("T" profile from plan.md §6)
+#
+# This file is the template copied to ~/.neurodock/profile.yaml by
+# `npx neurodock init`. Every block except `identity` is optional and
+# falls back to the safe defaults documented in profile.schema.json.
+#
+# Loader precedence (highest wins):
+#   1. $NEURODOCK_PROFILE_PATH               (testing override)
+#   2. $XDG_CONFIG_HOME/neurodock/profile.yaml
+#   3. ~/.neurodock/profile.yaml             (default)
+#   4. ./profile.yaml                        (project-local override)
+#
+# Forward-compatibility: unknown keys at any level are preserved by
+# loaders, not stripped. A v0.1.0 install can round-trip a v0.2.0
+# profile without data loss. Run `neurodock profile validate` to catch
+# typos that permissive parsing would otherwise swallow.
+
+# Optional. Declares which schema version this file targets. Loaders
+# accept any version; they only warn when the file is newer than they
+# understand.
+schema_version: "0.1.0"
+
+# Required. Self-declared identity. No PII is required.
+identity:
+  # How NeuroDock addresses you. Free-form; one letter is fine.
+  display_name: "T"
+
+  # Self-identified neurotypes. Self-ID is sufficient — diagnosis is
+  # never required and is never used to gate features. Skills targeted
+  # at a neurotype activate when the tag appears here.
+  # Allowed: adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other
+  neurotypes:
+    - "adhd"
+    - "asd"
+
+  # Optional free-form notes. Surfaced only when a skill explicitly
+  # asks; never logged or transmitted.
+  # additional_notes: "sensory-sensitive to motion; prefers terse output"
+
+# Optional. Output and reading preferences.
+preferences:
+  # answer_first | conventional | bullet_first  (default: answer_first)
+  output_format: "answer_first"
+
+  # Max items in any list/group/step sequence. 1..20. Default 7
+  # (Miller's-number neighbourhood); 5 is the ADHD-tuned manifesto value.
+  max_chunk_size: 5
+
+  # atkinson_hyperlegible | lexend | system_default
+  # Default: atkinson_hyperlegible (evidence-based for dyslexia).
+  # 'lexend' is evidence-based for ADHD readability.
+  reading_font_hint: "atkinson_hyperlegible"
+
+  # reduced | system | full  (default: reduced)
+  # 'reduced' disables animation/transitions; 'system' follows the OS
+  # prefers-reduced-motion setting.
+  motion: "reduced"
+
+# Optional. Thresholds consumed by mcp-chronometric.
+chronometric:
+  # Continuous-session length, in minutes, at which the hyperfocus
+  # nudge fires. 15..240. Default 90. The 60/+30/+60 escalation ladder
+  # shape itself is fixed in v0.1.0; this only re-anchors the 'nudge' rung.
+  hyperfocus_break_minutes: 90
+
+  # Optional. Your self-declared end-of-day time, local clock, 24h.
+  # When present, the hyperfocus monitor uses this for the
+  # "after end_of_day" nudge.
+  end_of_day_local: "18:30"
+
+  # Optional override of the energy_zone clock-band heuristic from
+  # ADR 0001. Omit unless you want to redraw your own bands.
+  # zones:
+  #   morning_peak: "06:00-10:30"
+  #   afternoon_dip: "14:00-16:00"
+
+  # auto_close | error  (default: auto_close)
+  # What mark_session_start does when a prior session is still open.
+  # 'auto_close' is charitable to forgotten sessions; the closed
+  # session metadata is returned so the skill can surface it.
+  session_overlap_policy: "auto_close"
+
+# Optional. Thresholds for mcp-guardrail detectors. Heuristics are
+# public and auditable per ETHICS; detection never blocks silently.
+guardrails:
+  # Number of semantically-equivalent queries in the window that
+  # triggers the rumination signal. 1..20. Default 3.
+  rumination_threshold: 3
+
+  # Rolling window in minutes for rumination counting. 5..1440.
+  # Default 90.
+  rumination_window_minutes: 90
+
+  # off | warn | refuse  (default: warn)
+  sycophancy_check: "warn"
+
+# Optional. Consent and data-flow. Defaults are local-first; nothing
+# leaves your machine without an explicit opt-in here.
+privacy:
+  # local | cloud_voyage | cloud_openai  (default: local)
+  # Cloud options trigger a visible "cloud embeddings enabled" notice
+  # at session start.
+  embeddings: "local"
+
+  # off | local_otel_only | full  (default: off)
+  # 'full' is reserved in v0.1.0; do not use until a future ADR lands.
+  telemetry: "off"
+
+  # Consent for mcp-chronometric.idle_status to read OS idle time.
+  # When false (default), idle_status returns consent_granted=false
+  # and hyperfocus_signal=unknown without error.
+  os_idle_consent: false

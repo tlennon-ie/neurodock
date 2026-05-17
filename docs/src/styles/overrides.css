@@ -1,0 +1,107 @@
+/*
+ * Starlight theme overrides.
+ *
+ * Goal: enforce plan.md §2 visual language on top of Starlight defaults.
+ *   - No gradients.
+ *   - No decorative animation.
+ *   - Line-height >= 1.65 in body copy.
+ *   - Lexend on headings; Atkinson on everything else.
+ *   - High-contrast variant: deferred to design-system-keeper component pass.
+ */
+
+body {
+  font-family: var(--sl-font);
+  line-height: var(--sl-line-height);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.sl-heading-anchor {
+  font-family: var(--nd-font-heading);
+  line-height: var(--sl-line-height-headings);
+  letter-spacing: -0.005em;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--sl-font-mono);
+}
+
+/* No gradients anywhere */
+* {
+  background-image: none !important;
+}
+
+img,
+svg,
+picture {
+  background-image: initial !important;
+}
+
+/* Honour prefers-reduced-motion strictly */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Skip-to-content link is provided by Starlight; surface it on focus only */
+.sr-only:focus,
+.sl-skip-link:focus {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 9999;
+  padding: 0.5rem 0.75rem;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-text);
+  border: 1px solid var(--sl-color-hairline);
+}
+
+/* Tables — readable, not decorative */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--sl-color-hairline);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  background: transparent;
+}
+
+/* Block quotes — used sparingly for source citations */
+blockquote {
+  border-left: 3px solid var(--sl-color-hairline-shade);
+  padding-left: 1rem;
+  margin-left: 0;
+  color: var(--sl-color-text-accent);
+}
+
+/* Inline code — readable, non-decorative */
+:not(pre) > code {
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 3px;
+  background: var(--sl-color-bg-inline-code);
+}

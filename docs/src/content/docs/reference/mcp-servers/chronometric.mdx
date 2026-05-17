@@ -1,0 +1,80 @@
+---
+title: mcp-chronometric
+description: Time, session, and break management. Five tools. Five schemas. No remote calls.
+---
+
+`mcp-chronometric` externalises time and session awareness so the LLM does not have to maintain that state across turns. It is the first substrate server scheduled for Phase 1 and the precedent-setting design for every later substrate server.
+
+- **Package:** `packages/mcp-chronometric/`
+- **Schemas:** `packages/mcp-chronometric/schemas/*.schema.json`
+- **ADR:** [0001 — Chronometric tool design](/decisions/0001-chronometric/)
+- **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-chronometric/v0.1.0/`
+
+## Tools
+
+| Tool | Input | Output |
+|---|---|---|
+| `get_time_context` | _none_ | `{ now, day_of_week, time_since_last_prompt, current_session_length, energy_zone }` |
+| `mark_session_start` | `{ intent: string }` | `{ session_id, started_at, auto_closed_prior_session? }` |
+| `mark_session_end` | `{ summary?: string }` | `{ session_id, ended_at, duration }` |
+| `request_break_if_needed` | `{ threshold_minutes: integer }` | `null` OR `{ elapsed, prior_intent, suggested_action }` |
+| `idle_status` | _none_ | `{ consent_granted, os_idle_duration?, hyperfocus_signal }` |
+
+### `get_time_context`
+
+Returns the current time context: wall-clock time, day of week, duration since the last prompt this server saw, length of the current open session, and a heuristic `energy_zone` bucket.
+
+- `now` — ISO 8601 with explicit timezone offset. Never naive.
+- `energy_zone` — enum: `morning_peak | midday | afternoon_dip | evening_quiet | night_owl_caution | unknown`. Computation is documented in ADR 0001.
+- Pure read. No side effects. Safe to call freely.
+
+### `mark_session_start`
+
+Anchors a unit of work with a stated intent. Returns a `session_id` (UUIDv4) and the start time. The intent string is preserved verbatim — skills like the hyperfocus nudge quote it back to the user.
+
+If a prior session is still open, the server auto-closes it (configurable via `chronometric.session_overlap_policy` in the profile) and reports the auto-closed metadata in `auto_closed_prior_session`.
+
+### `mark_session_end`
+
+Closes the most recent open session. Takes an optional `summary`. Returns the session id, end time, and ISO 8601 duration.
+
+The tool deliberately takes **no `session_id` input** — that would force the LLM to maintain state. The server tracks the active session.
+
+### `request_break_if_needed`
+
+Caller passes `threshold_minutes`. Returns `null` when no break is warranted, or a structured payload containing the elapsed time, the user's verbatim prior intent, and a `suggested_action` enum.
+
+`null` is a first-class return; callers MUST handle it.
+
+### `idle_status`
+
+Reads OS idle time, **consent-gated**. Without `privacy.os_idle_consent: true` in the profile, the tool returns a successful result with `consent_granted: false` and `hyperfocus_signal: "unknown"` — never an exception. Consent failures are not errors.
+
+The `hyperfocus_signal` enum distinguishes hyperfocus-elsewhere (idle in this client but active on the system) from distraction-or-break (idle everywhere).
+
+## Error codes
+
+| Code | Meaning |
+|---|---|
+| `INTERNAL_CLOCK_UNAVAILABLE` | Server could not read system clock or timezone. Surfaced explicitly; never silent default. |
+| `PROFILE_UNREADABLE` | Profile YAML present but unparseable. `energy_zone` falls back to `unknown` when possible rather than failing the whole call. |
+| `SESSION_ALREADY_OPEN` | (Optional) `mark_session_start` called while a prior session is open and the profile says `error` instead of `auto_close`. |
+| `NO_OPEN_SESSION` | `mark_session_end` called when no session is open. |
+| `INVALID_THRESHOLD` | `request_break_if_needed` received a non-positive `threshold_minutes`. |
+| `CONSENT_REQUIRED` | (Reserved) Future use only — `idle_status` does **not** raise this; it returns `consent_granted: false` instead. |
+
+## Privacy
+
+- Reads local profile and local session state only.
+- No remote calls.
+- The `intent` string passed to `mark_session_start` is treated as private user data. It is stored in the local session row and never logged in error payloads or telemetry.
+
+## Versioning
+
+- Additive-only within the `v0.1.x` line.
+- Any rename, retype, removed enum value, or required-input addition is a major bump and ships under a new `$id` path (`/v1.0.0/...`).
+
+## What's next
+
+- [ADR 0001](/decisions/0001-chronometric/) for the full design rationale.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — the persistence backbone the time context feeds into.

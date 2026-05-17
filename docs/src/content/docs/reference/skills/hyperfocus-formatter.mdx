@@ -1,0 +1,47 @@
+---
+title: hyperfocus-formatter
+description: Answer-First output structure that activates during long sessions when distress signals appear.
+---
+
+> Source: `packages/skills/hyperfocus-formatter/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+A skill that reshapes output to "Answer First" structure — the bottom line first, the rationale below — activated automatically during long sessions when distress signals appear.
+
+## Frontmatter summary
+
+| Field | Value |
+|---|---|
+| `name` | `hyperfocus-formatter` |
+| `version` | `0.0.0` (Phase 1 stub) |
+| `status` | `stub` — implementation in Phase 1 |
+| `neurotypes` | `[]` (to be set to `["adhd", "audhd"]` when implemented) |
+
+## Triggers
+
+- Session length exceeding `chronometric.hyperfocus_break_minutes`.
+- Distress-signal heuristics in user input (terse all-lower-case, repetition, urgency markers).
+
+## MCP dependencies
+
+- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) — `get_time_context()` for session length and energy zone.
+
+## Profile dependencies
+
+- `preferences.output_format` — already drives base layout; this skill switches to `answer_first` regardless.
+- `preferences.max_chunk_size` — strict cap during hyperfocus.
+- `preferences.motion` — respected by any rendered diagrams.
+
+## Acceptance
+
+The output:
+
+1. Leads with the answer in one sentence.
+2. Lists rationale in 3–5 short bullets.
+3. Names what was assumed and what is uncertain.
+
+No prefatory disclaimers. No hedging. No "let me explain."
+
+## What's next
+
+- [Concepts: skills](/concepts/skills/) — what activation actually means.
+- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) — the session-length signal.

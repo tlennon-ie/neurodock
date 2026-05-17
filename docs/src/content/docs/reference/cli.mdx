@@ -1,0 +1,88 @@
+---
+title: CLI
+description: The neurodock command-line interface. init, doctor, profile.
+---
+
+:::caution[Phase 1 — in development]
+The `neurodock` CLI is being built by a parallel agent in `packages/cli/`. This page documents the **intended** interface. Commands may not all be implemented yet. Where the CLI is unavailable, MCP servers can be configured manually per their per-client guides.
+:::
+
+The CLI is the lowest-friction onboarding path: `npx neurodock init` should take a fresh install from zero to a working substrate in under fifteen minutes.
+
+## Commands
+
+| Command | Job |
+|---|---|
+| `neurodock init` | Detect installed MCP clients, scaffold the profile, register the three substrate servers. |
+| `neurodock doctor` | Verify the install. Profile is readable, all servers start, embedding backend reachable. |
+| `neurodock profile validate` | Check `~/.neurodock/profile.yaml` for typos and out-of-range values. |
+| `neurodock profile show` | Print the loaded profile with defaults applied, so you see what the substrate actually uses. |
+
+### `neurodock init`
+
+```bash
+npx neurodock init
+```
+
+Flags:
+
+- `--dry-run` — print every file that would be created or modified without touching anything.
+- `--profile-path <path>` — non-standard location for the profile (mirrors `$NEURODOCK_PROFILE_PATH`).
+- `--no-register` — write the profile but skip MCP-client registration.
+
+What it does:
+
+1. Detects Claude Desktop, Claude Code, and Cursor installs.
+2. Prompts for `display_name` (default: `$USER` / `%USERNAME%`) and at least one entry for `neurotypes`.
+3. Writes a minimal profile to the resolved profile path.
+4. Registers the three substrate MCP servers with each detected client.
+5. Prints a summary of changes.
+
+### `neurodock doctor`
+
+```bash
+neurodock doctor
+```
+
+Checks:
+
+- Profile path resolves and the file parses.
+- All three MCP servers start under their configured command.
+- Embedding backend is reachable (Ollama with the configured model, or `fastembed-py` fallback).
+- SQLite store at `~/.neurodock/store.sqlite` is writable.
+
+Failures are explained with the next action to take. No fix-it-for-you magic — every step is overt.
+
+### `neurodock profile validate`
+
+```bash
+neurodock profile validate
+```
+
+Returns:
+
+- **OK** when every known field is within range and no unknown keys are present.
+- **Warnings** for unknown keys (with "did you mean…" hints), preserved because of the forward-compat rule.
+- **Errors** for out-of-range integers, malformed enums, or missing required fields under `identity`.
+
+### `neurodock profile show`
+
+```bash
+neurodock profile show
+```
+
+Prints the loaded profile with loader-applied defaults filled in. Useful for confirming what the substrate actually reads, since defaults are not written into the file on disk.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success. |
+| 1 | User-actionable failure (bad input, missing profile, validation error). |
+| 2 | Environment failure (server failed to start, store unwritable). |
+| 64 | CLI usage error (bad flag, unknown command). |
+
+## What's next
+
+- [Installation](/getting-started/installation/) for the end-to-end install flow.
+- [Profile schema](/reference/profile-schema/) for the file `init` writes.

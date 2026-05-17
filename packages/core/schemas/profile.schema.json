@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/profile/v0.1.0/profile.schema.json",
+  "title": "NeuroDock Profile",
+  "description": "Cross-cutting user manifest read by every MCP server and every skill. Declares neurotype(s), output preferences, chronometric thresholds, guardrail thresholds, and privacy consents. Forward-compatible: unknown keys at every nesting level MUST be preserved by loaders.",
+  "$comment": "Loader precedence (highest wins): (1) $NEURODOCK_PROFILE_PATH env var; (2) $XDG_CONFIG_HOME/neurodock/profile.yaml; (3) ~/.neurodock/profile.yaml; (4) ./profile.yaml in the current working directory. Loaders MUST preserve unknown top-level and nested keys when round-tripping a profile so a v0.1.0 install can read and re-emit a v0.2.0 file without data loss.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["identity"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Optional. Declared profile schema version this file targets, e.g. '0.1.0'. Loaders SHOULD warn but never fail when the version is newer than what they understand; they MUST still load known fields and preserve unknown ones.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "examples": ["0.1.0"]
+    },
+    "extends": {
+      "type": "string",
+      "description": "Optional. Path or identifier of a preset profile this file extends. v0.1.0 supports single-level extension only; resolved presets MUST NOT themselves declare 'extends'. Resolution order: (a) bare identifier 'presets/<name>' resolves under the installed profiles package; (b) a path starting with './' or '../' resolves relative to this file; (c) absolute paths are honoured as-is.",
+      "examples": ["presets/adhd-engineer", "./team-defaults.yaml"]
+    },
+    "identity": {
+      "type": "object",
+      "description": "Required. Self-declared identity. No PII required. 'neurotypes' is a self-identification list, never a diagnosis claim, and is NEVER used to gate features. Skills targeted at a neurotype activate when that tag appears in this list.",
+      "additionalProperties": true,
+      "required": ["display_name", "neurotypes"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "How NeuroDock should address the user. Free-form. May be a single letter, nickname, or full name. Loaders SHOULD default this from $USER / %USERNAME% at 'neurodock init' time rather than prompting.",
+          "examples": ["T", "alex"]
+        },
+        "neurotypes": {
+          "type": "array",
+          "description": "Self-identified neurotype tags. Self-ID is sufficient per ETHICS; diagnosis is never required. Empty array is valid (the user opts out of any neurotype-specific skill activation). 'other' is a catch-all that pairs with 'additional_notes' for free-form description.",
+          "minItems": 0,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "adhd",
+              "asd",
+              "audhd",
+              "ocd",
+              "dyslexia",
+              "dyspraxia",
+              "tourette",
+              "other"
+            ],
+            "description": "Allowed values: 'adhd', 'asd', 'audhd' (combined ADHD + autism, treated as a first-class identity rather than a sum), 'ocd', 'dyslexia', 'dyspraxia', 'tourette', 'other'."
+          },
+          "examples": [["adhd"], ["adhd", "asd"], ["audhd"], []]
+        },
+        "additional_notes": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional. Free-form self-description that supplements 'neurotypes'. Surfaced to skills only when explicitly requested; never logged or transmitted."
+        }
+      }
+    },
+    "preferences": {
+      "type": "object",
+      "description": "Optional. Output and reading preferences. All fields have safe defaults applied by the loader when absent; the entire block may be omitted.",
+      "additionalProperties": true,
+      "properties": {
+        "output_format": {
+          "type": "string",
+          "enum": ["answer_first", "conventional", "bullet_first"],
+          "default": "answer_first",
+          "description": "How skills should shape their responses. 'answer_first' = the headline answer in the first sentence, then context (default; lived-experience-led for ADHD). 'conventional' = traditional prose with reasoning before conclusion. 'bullet_first' = a bullet list before any prose."
+        },
+        "max_chunk_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 7,
+          "description": "Maximum items skills should present in any single list, group, or step sequence. Defaults to 7 (Miller's-number neighbourhood). The manifesto-tuned value for ADHD is 5; presets MAY override.",
+          "examples": [5, 7]
+        },
+        "reading_font_hint": {
+          "type": "string",
+          "enum": ["atkinson_hyperlegible", "lexend", "system_default"],
+          "default": "atkinson_hyperlegible",
+          "description": "Font family hint for any client that renders NeuroDock output as HTML or rich text. 'atkinson_hyperlegible' is the project default (evidence-based for dyslexia). 'lexend' is evidence-based for ADHD readability. 'system_default' opts out of any hint."
+        },
+        "motion": {
+          "type": "string",
+          "enum": ["reduced", "system", "full"],
+          "default": "reduced",
+          "description": "Animation policy hint. 'reduced' = no animation, no transitions, no auto-scroll (default). 'system' = follow the OS prefers-reduced-motion setting. 'full' = animations allowed."
+        }
+      }
+    },
+    "chronometric": {
+      "type": "object",
+      "description": "Optional. Thresholds and zones consumed by mcp-chronometric. All fields have defaults; the block may be omitted.",
+      "additionalProperties": true,
+      "properties": {
+        "hyperfocus_break_minutes": {
+          "type": "integer",
+          "minimum": 15,
+          "maximum": 240,
+          "default": 90,
+          "description": "Continuous-session length, in minutes, at which the hyperfocus monitor fires its structured nudge. Per plan.md §8 the escalation ladder is 60 min (gentle) → 90 min (nudge, default) → 120 min (hard surface). Setting this value re-anchors the 'nudge' rung only; the 60/+30 ladder shape is fixed in v0.1.0."
+        },
+        "end_of_day_local": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "Optional. The user's self-declared end-of-day time in their local timezone, as 'HH:MM' (24h). When present, the hyperfocus monitor uses this for the 'after end_of_day' nudge described in the AuDHD founder user story (§6). Absent = no end-of-day nudge.",
+          "examples": ["18:30", "22:00"]
+        },
+        "zones": {
+          "type": "object",
+          "description": "Optional. Per-user override of the energy_zone clock-band heuristic (ADR 0001). Keys are zone names from the chronometric enum ('morning_peak' | 'midday' | 'afternoon_dip' | 'evening_quiet' | 'night_owl_caution'); values declare local-time ranges. Unrecognised keys are preserved but ignored; malformed entries yield 'unknown' rather than failing.",
+          "additionalProperties": true
+        },
+        "session_overlap_policy": {
+          "type": "string",
+          "enum": ["auto_close", "error"],
+          "default": "auto_close",
+          "description": "Behaviour of mark_session_start when a prior session is still open. 'auto_close' (default, charitable) closes the prior session and returns its metadata so the skill can surface it. 'error' refuses to start a new session until the prior one is explicitly closed. See ADR 0001, open question 3."
+        }
+      }
+    },
+    "guardrails": {
+      "type": "object",
+      "description": "Optional. Thresholds for mcp-guardrail detectors. Per ETHICS, detection heuristics are public and auditable; thresholds are user-configured at install and can always be overridden in-session. Detection NEVER blocks silently.",
+      "additionalProperties": true,
+      "properties": {
+        "rumination_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 3,
+          "description": "Number of semantically-equivalent queries within 'rumination_window_minutes' that triggers the rumination signal. Plan.md §8 default is 3."
+        },
+        "rumination_window_minutes": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 1440,
+          "default": 90,
+          "description": "Rolling window (minutes) over which semantically-equivalent queries are counted toward 'rumination_threshold'. Plan.md §8 default is 90."
+        },
+        "sycophancy_check": {
+          "type": "string",
+          "enum": ["off", "warn", "refuse"],
+          "default": "warn",
+          "description": "What the sycophancy/anti-validation guard does when it fires. 'off' = disabled (still logged locally for self-audit). 'warn' = inject a counter-prompt and surface a small marker (default). 'refuse' = decline further validation on the flagged decision until new information is provided."
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "description": "Optional. Consent and data-flow declarations. Defaults are local-first per the manifesto: nothing leaves the user's machine without an explicit opt-in here.",
+      "additionalProperties": true,
+      "properties": {
+        "embeddings": {
+          "type": "string",
+          "enum": ["local", "cloud_voyage", "cloud_openai"],
+          "default": "local",
+          "description": "Embedding backend. 'local' = local model via Ollama or fastembed (default). 'cloud_voyage' or 'cloud_openai' = explicit opt-in to a named cloud provider; the loader MUST emit a visible 'cloud embeddings enabled' notice on session start when either is selected."
+        },
+        "telemetry": {
+          "type": "string",
+          "enum": ["off", "local_otel_only", "full"],
+          "default": "off",
+          "description": "Telemetry policy. 'off' = no traces, no metrics, no logs leave any process boundary (default, per plan.md §4). 'local_otel_only' = OpenTelemetry traces emitted to a local collector the user controls; nothing remote. 'full' = currently undefined in v0.1.0 and reserved for a future remote-collector design that will require its own ADR and a  sign-off."
+        },
+        "os_idle_consent": {
+          "type": "boolean",
+          "default": false,
+          "description": "Consent for mcp-chronometric.idle_status to read OS idle time. False (default) means idle_status returns 'consent_granted: false' and 'hyperfocus_signal: unknown' without error, per ADR 0001 cross-cutting decision 5."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "identity": {
+        "display_name": "T",
+        "neurotypes": ["adhd", "asd"]
+      },
+      "preferences": {
+        "output_format": "answer_first",
+        "max_chunk_size": 5,
+        "reading_font_hint": "atkinson_hyperlegible",
+        "motion": "reduced"
+      },
+      "chronometric": {
+        "hyperfocus_break_minutes": 90,
+        "end_of_day_local": "18:30"
+      },
+      "guardrails": {
+        "rumination_threshold": 3,
+        "sycophancy_check": "warn"
+      },
+      "privacy": {
+        "embeddings": "local",
+        "telemetry": "off"
+      }
+    },
+    {
+      "identity": {
+        "display_name": "your-name",
+        "neurotypes": ["adhd"]
+      }
+    }
+  ]
+}

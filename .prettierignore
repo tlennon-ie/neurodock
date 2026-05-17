@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.turbo/
+.wxt/
+coverage/
+.venv/
+__pycache__/
+*.lock
+pnpm-lock.yaml
+uv.lock
+.changeset/

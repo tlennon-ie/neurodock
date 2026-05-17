@@ -1,0 +1,46 @@
+---
+title: Your first skill
+description: Run the morning brief skill end-to-end in Claude Desktop. About five minutes.
+---
+
+After this page you will have run one NeuroDock skill end-to-end and seen the substrate work as a chain: chronometric → cognitive-graph → `adhd-daily-planner`.
+
+## Prerequisites
+
+- [Installation](/getting-started/installation/) is complete and `neurodock doctor` passes.
+- Claude Desktop is restarted and you can see the three NeuroDock MCP servers in its tool list.
+
+## Run it
+
+1. Open Claude Desktop.
+2. In a new chat, type:
+
+   ```
+   /morning-brief
+   ```
+
+3. Watch the tool calls.
+
+You will see the chain run:
+
+- `get_time_context()` from `mcp-chronometric` — returns the current time, your energy zone, and how long since your last prompt.
+- `recall_decisions(project: ..., since: ...)` from `mcp-cognitive-graph` — pulls decisions made overnight, if any.
+- The `adhd-daily-planner` skill composes those into a one-paragraph brief plus 1–3 things that matter today.
+
+## Expect the first run to be sparse
+
+The first time you run this, the cognitive graph is empty. The brief will say so plainly — something like:
+
+> The cognitive graph has no decisions or open blockers recorded yet. That is expected on a fresh install. Today's brief is just the time context: morning peak, Friday, no open session.
+
+This is correct behaviour. The substrate does not fabricate context it does not have. As you use NeuroDock — recording decisions, naming projects, closing sessions — the brief gets richer.
+
+## What happened
+
+The skill called two MCP tools (no LLM call inside the substrate) and assembled the result. None of this leaves your machine: the profile, the graph, the session state — all local.
+
+## What's next
+
+- [Edit your profile](/getting-started/profile/) so the substrate matches your rhythms.
+- Look at the `adhd-daily-planner` source in `packages/skills/adhd-daily-planner/SKILL.md` to see exactly what the skill does. Skills are markdown bundles, not opaque code.
+- Try `/resume` (the [`audhd-context-recovery`](/reference/skills/audhd-context-recovery/) skill) for the inverse experience: yesterday's mental state, reconstructed from the graph.
