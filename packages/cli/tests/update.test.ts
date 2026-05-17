@@ -38,7 +38,7 @@ describe("neurodock update", () => {
   it("detects stale NeuroDock entries and lists them in the dry-run diff", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    const cfg = join(claudeDir, "settings.json");
+    const cfg = join(sandbox.cwd, ".mcp.json");
     writeFileSync(
       cfg,
       JSON.stringify(
@@ -90,7 +90,7 @@ describe("neurodock update", () => {
   it("rewrites stale NeuroDock entries while preserving customisations", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    const cfg = join(claudeDir, "settings.json");
+    const cfg = join(sandbox.cwd, ".mcp.json");
     writeFileSync(
       cfg,
       JSON.stringify(
@@ -138,26 +138,15 @@ describe("neurodock update", () => {
   });
 
   it("reports no-change when entries are already up to date", async () => {
-    const claudeDir = join(sandbox.cwd, ".claude");
-    mkdirSync(claudeDir, { recursive: true });
-    const cfg = join(claudeDir, "settings.json");
+    const cfg = join(sandbox.cwd, ".mcp.json");
     writeFileSync(
       cfg,
       JSON.stringify(
         {
           mcpServers: {
-            "neurodock-chronometric": {
-              command: "uv",
-              args: ["run", "neurodock-mcp-chronometric"],
-            },
-            "neurodock-cognitive-graph": {
-              command: "uv",
-              args: ["run", "neurodock-mcp-cognitive-graph"],
-            },
-            "neurodock-task-fractionator": {
-              command: "uv",
-              args: ["run", "neurodock-mcp-task-fractionator"],
-            },
+            "neurodock-chronometric": { command: "neurodock-mcp-chronometric" },
+            "neurodock-cognitive-graph": { command: "neurodock-mcp-cognitive-graph" },
+            "neurodock-task-fractionator": { command: "neurodock-mcp-task-fractionator" },
           },
         },
         null,
@@ -185,7 +174,7 @@ describe("neurodock update", () => {
   it("returns 'not-wired' when no NeuroDock entries are present", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    const cfg = join(claudeDir, "settings.json");
+    const cfg = join(sandbox.cwd, ".mcp.json");
     writeFileSync(
       cfg,
       JSON.stringify(

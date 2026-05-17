@@ -31,9 +31,7 @@ function makeSandbox(): { home: string; cwd: string; cleanup: () => void } {
 }
 
 function seedClaudeCode(cwd: string): string {
-  const claudeDir = join(cwd, ".claude");
-  mkdirSync(claudeDir, { recursive: true });
-  const cfg = join(claudeDir, "settings.json");
+  const cfg = join(cwd, ".mcp.json");
   writeFileSync(
     cfg,
     JSON.stringify(
@@ -211,7 +209,7 @@ describe("neurodock uninstall", () => {
   it("reports 'untouched' when no NeuroDock entries are present", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    const cfg = join(claudeDir, "settings.json");
+    const cfg = join(sandbox.cwd, ".mcp.json");
     writeFileSync(
       cfg,
       JSON.stringify(
