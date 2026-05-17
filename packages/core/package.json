@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/core",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": false,
   "description": "Shared types, profile schema, and plugin protocol for NeuroDock.",
   "license": "AGPL-3.0-or-later",
@@ -10,7 +10,20 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "src",
+    "schemas",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tlennon-ie/neurodock.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/tlennon-ie/neurodock#readme",
   "scripts": {
     "build": "echo 'core: build stub' && exit 0",
     "lint": "echo 'core: lint stub' && exit 0",

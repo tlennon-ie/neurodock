@@ -1,7 +1,6 @@
 {
   "name": "@neurodock/cli",
   "version": "0.1.0",
-  "private": true,
   "description": "NeuroDock installer and diagnostic CLI.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -10,6 +9,15 @@
   "bin": {
     "neurodock": "./dist/index.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tlennon-ie/neurodock.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/tlennon-ie/neurodock#readme",
   "files": [
     "dist",
     "README.md",
