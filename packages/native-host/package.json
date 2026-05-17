@@ -1,0 +1,51 @@
+{
+  "name": "@neurodock/native-host",
+  "version": "0.1.0",
+  "description": "Chrome Native Messaging host that exposes ~/.neurodock/profile.yaml to the NeuroDock browser extension.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "neurodock-native-host": "./dist/cli.js"
+  },
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tlennon-ie/neurodock.git",
+    "directory": "packages/native-host"
+  },
+  "homepage": "https://github.com/tlennon-ie/neurodock#readme",
+  "files": [
+    "dist",
+    "manifest.template.json",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "echo 'native-host: lint via tsc strict mode' && pnpm typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.test.json --noEmit",
+    "clean": "rimraf dist .turbo"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

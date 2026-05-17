@@ -1,0 +1,9 @@
+{
+  "name": "com.neurodock.profile",
+  "description": "NeuroDock native messaging host. Exposes ~/.neurodock/profile.yaml to the browser extension over the Chrome Native Messaging protocol.",
+  "path": "{{HOST_PATH}}",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://__NEURODOCK_EXTENSION_ID__/"
+  ]
+}
