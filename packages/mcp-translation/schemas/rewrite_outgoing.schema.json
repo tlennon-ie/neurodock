@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/rewrite_outgoing.schema.json",
+  "title": "rewrite_outgoing",
+  "description": "Rewrite an outgoing message toward a target register while preserving caller-named technical terms and the message's underlying intent. Returns the rewritten text, a verified list of preserved terms, and a short diff summary. The server orchestrates a structured prompt against the caller's MCP-client LLM; the server itself performs NO LLM calls and stores NO inputs.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "target_register"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000,
+          "description": "The verbatim outgoing message to rewrite. Stored only in-memory for the duration of the call; never logged.",
+          "examples": [
+            "This is broken. Please fix before EOD.",
+            "Strong nack. The approach in section 3 will not scale.",
+            "I'll loop back next week with thoughts on the architecture doc."
+          ]
+        },
+        "target_register": {
+          "$ref": "#/$defs/TargetRegister",
+          "description": "Required target register for the rewrite. Per plan.md §7 acceptance, rewrites MUST preserve all technical terms."
+        },
+        "preserve_terms": {
+          "type": "array",
+          "description": "Caller-supplied list of terms (technical jargon, names, system identifiers, ticket ids) that MUST appear unchanged in the rewritten text. Each term is checked by exact substring match after rewrite; missing terms appear in unpreserved_terms in the output. Capped at 100.",
+          "maxItems": 100,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "examples": [
+            ["EOD", "section 3", "migration script"],
+            ["mcp-cognitive-graph", "sqlite-vec", "Ollama"]
+          ]
+        },
+        "channel": {
+          "$ref": "#/$defs/Channel",
+          "description": "Optional channel hint. Influences register expectations and acceptable length."
+        },
+        "preserve_intent": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true (default), the rewrite preserves the message's underlying ask or position even if surface phrasing softens. When false, the caller is explicitly allowing semantic shift; rarely needed and SHOULD be left at the default."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rewritten",
+        "preserved_terms",
+        "unpreserved_terms",
+        "diff_summary",
+        "eval_corpus_slice",
+        "model_provenance"
+      ],
+      "properties": {
+        "rewritten": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 12000,
+          "description": "The rewritten message in the target register. The 12000-character ceiling is wider than the input ceiling to permit explanatory expansion (e.g. when shifting from 'concise' to 'clarifying'). The caller is responsible for choosing whether to present this as a one-click replace or as a side-by-side suggestion."
+        },
+        "preserved_terms": {
+          "type": "array",
+          "description": "Terms from input.preserve_terms that the server verified are present in rewritten via exact substring match. Order matches input order.",
+          "items": { "type": "string" }
+        },
+        "unpreserved_terms": {
+          "type": "array",
+          "description": "Terms from input.preserve_terms that were NOT found verbatim in rewritten. Empty array when all terms were preserved. A non-empty array is a soft signal that the caller MAY want to retry or surface the gap to the user; the server does NOT auto-retry.",
+          "items": { "type": "string" }
+        },
+        "diff_summary": {
+          "$ref": "#/$defs/DiffSummary",
+          "description": "Short structured summary of what changed. Used by the extension to render an 'I changed: X, Y, Z' explanation rather than a raw diff."
+        },
+        "eval_corpus_slice": {
+          "type": "string",
+          "description": "Identifier of the eval corpus slice that validates this prompt template. Required so that any prompt change can be re-evaluated in CI per plan.md §7.",
+          "examples": [
+            "packages/evals/corpora/translation/rewrite/v0.1.0/general.jsonl"
+          ]
+        },
+        "model_provenance": {
+          "$ref": "#/$defs/ModelProvenance",
+          "description": "Where the LLM call ran (local or cloud, model id). Surfaced so the user / extension can render the 'cloud mode' banner accurately."
+        }
+      }
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "TEXT_REQUIRED": { "description": "The text argument was missing or empty." },
+      "TEXT_TOO_LONG": {
+        "description": "Input text exceeded the 8000-character cap. Caller SHOULD split or excerpt before calling."
+      },
+      "TARGET_REGISTER_REQUIRED": {
+        "description": "target_register was missing. Use one of: direct, warm, formal, concise, clarifying."
+      },
+      "TARGET_REGISTER_UNKNOWN": {
+        "description": "target_register was not one of the v0.1.0 enum values."
+      },
+      "PRESERVE_TERMS_TOO_MANY": {
+        "description": "preserve_terms exceeded 100 entries. Most messages should not approach this; if you do, you may be overusing the tool."
+      },
+      "MODEL_UNAVAILABLE": {
+        "description": "The caller's MCP client could not reach its configured LLM."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "blunt PR comment rewritten toward 'direct' (technical, not aggressive)",
+      "input": {
+        "text": "Strong nack. The approach in section 3 will not scale and we need to revisit before merge.",
+        "target_register": "direct",
+        "preserve_terms": ["section 3"],
+        "channel": "github"
+      },
+      "output": {
+        "rewritten": "I think section 3 is going to hit a scaling limit — I'd like to revisit before we merge. Happy to walk through the specific concern in a comment or a quick call, whichever is easier.",
+        "preserved_terms": ["section 3"],
+        "unpreserved_terms": [],
+        "diff_summary": {
+          "tone_shift": "Replaced 'Strong nack' (blunt rejection token) with a specific technical concern; preserved the merge-blocker signal but framed as collaborative.",
+          "structural_changes": [
+            "Removed opening rejection token",
+            "Added offer to walk through the concern",
+            "Preserved technical claim and merge-blocker intent"
+          ],
+          "warnings": []
+        },
+        "eval_corpus_slice": "packages/evals/corpora/translation/rewrite/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "local",
+          "provider": "ollama",
+          "model": "llama3.1:8b-instruct"
+        }
+      }
+    },
+    {
+      "name": "EOD ask rewritten toward 'warm'; preserves EOD verbatim",
+      "input": {
+        "text": "This is broken. Please fix before EOD.",
+        "target_register": "warm",
+        "preserve_terms": ["EOD"],
+        "channel": "slack"
+      },
+      "output": {
+        "rewritten": "Hey — heads up that this is broken on my end. Any chance you can land a fix by EOD? Happy to help debug if it would speed things up.",
+        "preserved_terms": ["EOD"],
+        "unpreserved_terms": [],
+        "diff_summary": {
+          "tone_shift": "Lifted warmth by opening with relational acknowledgement and offering help; preserved the EOD deadline and the broken-state report.",
+          "structural_changes": [
+            "Added relational opener",
+            "Reframed imperative as a request",
+            "Added offer to help debug"
+          ],
+          "warnings": []
+        },
+        "eval_corpus_slice": "packages/evals/corpora/translation/rewrite/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "cloud",
+          "provider": "anthropic",
+          "model": "claude-sonnet-4.6"
+        }
+      }
+    },
+    {
+      "name": "rewrite drops a preserve term; server surfaces the gap rather than retrying",
+      "input": {
+        "text": "We should swap fastembed-py for sqlite-vec on the alias-resolution path.",
+        "target_register": "concise",
+        "preserve_terms": ["fastembed-py", "sqlite-vec", "alias-resolution"]
+      },
+      "output": {
+        "rewritten": "Swap fastembed-py for sqlite-vec on the alias path.",
+        "preserved_terms": ["fastembed-py", "sqlite-vec"],
+        "unpreserved_terms": ["alias-resolution"],
+        "diff_summary": {
+          "tone_shift": "Compressed to a single imperative sentence in the 'concise' register.",
+          "structural_changes": [
+            "Removed 'We should'",
+            "Shortened 'alias-resolution path' to 'alias path'"
+          ],
+          "warnings": [
+            "Term 'alias-resolution' was not preserved verbatim. Caller may retry with stricter instruction or surface the gap to the user."
+          ]
+        },
+        "eval_corpus_slice": "packages/evals/corpora/translation/rewrite/v0.1.0/general.jsonl",
+        "model_provenance": {
+          "mode": "local",
+          "provider": "ollama",
+          "model": "llama3.1:8b-instruct"
+        }
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. New optional input fields (e.g. style_examples, max_length) MAY land in v0.1.x. New target_register enum values are minor bumps (read-only enum; callers MUST treat unknown values as opaque). Renaming or retyping any field requires a new major version with a parallel $id.",
+    "side_effects": "None. Pure read. The server stores no input, emits no telemetry, and does NOT replace text in the user's editor — that is the caller's (extension's) responsibility.",
+    "idempotency": "Server-side idempotent. LLM-side determinism depends on the caller's model and sampling settings; repeated calls MAY produce different rewrites.",
+    "privacy": "local-only-by-default. The server itself does not call any provider. Cloud-mode is selected by the caller's MCP client and the user's profile."
+  },
+  "$defs": {
+    "Channel": {
+      "type": "string",
+      "enum": ["email", "slack", "linear", "github", "notion", "gdocs", "outlook", "generic"]
+    },
+    "TargetRegister": {
+      "type": "string",
+      "enum": ["direct", "warm", "formal", "concise", "clarifying"]
+    },
+    "DiffSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tone_shift", "structural_changes", "warnings"],
+      "properties": {
+        "tone_shift": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000,
+          "description": "One-sentence plain-language description of the tone change."
+        },
+        "structural_changes": {
+          "type": "array",
+          "description": "Short bullet list of concrete structural changes the rewrite made.",
+          "maxItems": 20,
+          "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+        },
+        "warnings": {
+          "type": "array",
+          "description": "Soft warnings the caller MAY want to surface to the user. Includes per-term preservation failures and intent-drift warnings. Empty array when no warnings.",
+          "maxItems": 20,
+          "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+        }
+      }
+    },
+    "ModelProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "provider", "model"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["local", "cloud", "unknown"] },
+        "provider": { "type": "string" },
+        "model": { "type": "string" }
+      }
+    }
+  }
+}

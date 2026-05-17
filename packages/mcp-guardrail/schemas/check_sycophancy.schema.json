@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-guardrail/v0.1.0/check_sycophancy.schema.json",
+  "title": "check_sycophancy",
+  "description": "Detect (a) over-validation patterns in a candidate LLM response or (b) repeated reassurance-seeking in recent user messages on the same decision. Returns the matched pattern, a confidence score, a counter-prompt for the calling skill to optionally surface to the model, and user overrides. NEVER rewrites the model's output; the calling skill decides whether to use counter_prompt. Phase 3 deliverable: in v0.1.0 the schema is locked but the runtime returns DETECTOR_NOT_YET_IMPLEMENTED until the field study endorses the patterns.",
+  "version": "0.1.0",
+  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/clinical/ requires sign-off from the clinical-reviewer agent and consultation with the clinical advisory board per ETHICS.md commitment 3 and plan.md §8.",
+  "x-implementation-status": "schema-only-v0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "At least one of candidate_response or recent_user_messages MUST be provided (enforced via anyOf).",
+      "properties": {
+        "candidate_response": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 16000,
+          "description": "A draft model response to evaluate for over-validation patterns. Verbatim; the server does not paraphrase. Optional when recent_user_messages is provided (reassurance-seeking can be detected from the user side alone)."
+        },
+        "recent_user_messages": {
+          "type": "array",
+          "description": "Recent user messages, oldest-first, scoped to the same decision_context. Used to detect repeated-reassurance-request patterns. Optional when candidate_response is provided.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "at"],
+            "properties": {
+              "text": { "type": "string", "minLength": 1, "maxLength": 8000 },
+              "at": { "type": "string", "format": "date-time" }
+            }
+          },
+          "maxItems": 200
+        },
+        "decision_context": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Optional. The decision under discussion (e.g. 'whether to ship the v0.2 RFC today'). Used to scope reassurance-seeking detection; without it, the server cannot determine 'same decision' and falls back to within-response detection only."
+        }
+      },
+      "anyOf": [
+        { "required": ["candidate_response"] },
+        { "required": ["recent_user_messages"] }
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detected",
+        "pattern",
+        "confidence",
+        "reason",
+        "heuristic",
+        "override_options",
+        "false_positive_feedback_path"
+      ],
+      "properties": {
+        "detected": {
+          "type": "boolean",
+          "description": "True when a sycophancy pattern was matched above the confidence threshold."
+        },
+        "pattern": {
+          "type": "string",
+          "enum": [
+            "none",
+            "unconditional_agreement",
+            "repeated_reassurance_request",
+            "praise_without_evidence",
+            "escalating_validation",
+            "other"
+          ],
+          "description": "Closed v0.1.0 vocabulary. 'unconditional_agreement' = the candidate_response agrees with the user without naming trade-offs on a subjective question; 'repeated_reassurance_request' = the user has asked for validation of the same decision_context >=3 times in recent_user_messages; 'praise_without_evidence' = the candidate_response opens with affirmation lacking referenced prior evidence; 'escalating_validation' = the candidate_response intensifies agreement compared to its own prior turns; 'other' = pattern matched but does not fit a canonical bucket; 'none' = no pattern. Each non-'none' value MUST be backed by a documented heuristic in packages/clinical/sycophancy/."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence on a 0..1 scale. Per ETHICS.md commitment 5, callers SHOULD NOT surface a counter_prompt when confidence < 0.5; below that threshold the most likely outcome is a false-positive that condescends to the user."
+        },
+        "matched_spans": {
+          "type": "array",
+          "description": "Verbatim text spans from candidate_response or recent_user_messages that matched the heuristic. Empty when detected is false. Surfaced so users auditing a detection can see exactly what the rule caught.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "text"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": ["candidate_response", "recent_user_messages"]
+              },
+              "text": { "type": "string", "minLength": 1, "maxLength": 1000 },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp when source is recent_user_messages; omitted for candidate_response spans."
+              }
+            }
+          },
+          "maxItems": 20
+        },
+        "counter_prompt": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Optional. A short instruction the calling skill MAY prepend to a re-roll of the model response, asking the model to ground in prior evidence, name trade-offs honestly, or refuse to re-validate. Per plan.md §8. NEVER returned when detected is false; NEVER auto-applied by the server. The skill remains responsible for the model interaction."
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 280,
+          "description": "Plain-language sentence the skill MAY surface verbatim. Per ETHICS.md commitment 2."
+        },
+        "heuristic": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "description"],
+          "description": "Identifies the exact rule that fired. Per ETHICS.md commitment 3.",
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": [
+                "none",
+                "agreement_without_tradeoff_marker",
+                "reassurance_request_count",
+                "opening_affirmation_without_citation",
+                "agreement_intensity_delta",
+                "other"
+              ],
+              "description": "One heuristic per pattern, plus 'none' and 'other'. Source code path is canonical: packages/clinical/sycophancy/<name>.py."
+            },
+            "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+            "description": { "type": "string", "maxLength": 500 }
+          }
+        },
+        "override_options": {
+          "type": "array",
+          "description": "User-actionable overrides. MUST be non-empty when detected is true (enforced via allOf). Per ETHICS.md commitment 2.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["token", "description"],
+            "properties": {
+              "token": {
+                "type": "string",
+                "enum": [
+                  "fresh-context",
+                  "override-once",
+                  "disable-for-session",
+                  "i-want-validation",
+                  "explain-the-match"
+                ],
+                "description": "Closed v0.1.0 vocabulary. 'i-want-validation' is explicit consent to validation despite the detection - the user has decided that is what they need right now and that is their call. 'explain-the-match' asks the skill to surface matched_spans so the user can audit."
+              },
+              "description": { "type": "string", "maxLength": 200 }
+            }
+          },
+          "minItems": 0,
+          "maxItems": 10
+        },
+        "false_positive_feedback_path": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "detected": { "const": true } }, "required": ["detected"] },
+          "then": {
+            "properties": {
+              "override_options": { "minItems": 1 },
+              "matched_spans": { "minItems": 1 }
+            },
+            "required": ["matched_spans", "counter_prompt"]
+          }
+        },
+        {
+          "if": { "properties": { "detected": { "const": false } }, "required": ["detected"] },
+          "then": {
+            "properties": { "pattern": { "const": "none" } }
+          }
+        }
+      ]
+    }
+  },
+  "errors": {
+    "type": "object",
+    "properties": {
+      "DETECTOR_NOT_YET_IMPLEMENTED": {
+        "description": "Returned by v0.1.0 runtime until the Phase 3 field study endorses the patterns. The schema is finalised so callers can integrate; the runtime returns this error with `phase: \"3\"`. Callers MUST tolerate this error and fall through to no-intervention behaviour."
+      },
+      "INPUT_MISSING": {
+        "description": "Neither candidate_response nor recent_user_messages was provided. At least one is required."
+      },
+      "INPUT_TOO_LARGE": {
+        "description": "candidate_response exceeded 16000 characters or a recent_user_messages.text exceeded 8000. The caller MUST truncate before retrying."
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "no detection - balanced response with named trade-offs",
+      "input": {
+        "candidate_response": "Postgres gives you better concurrency and JSON ops but at the cost of operational overhead; given your local-first constraint from the manifesto, SQLite is the more honest choice. Trade-off: you give up future multi-writer scenarios.",
+        "decision_context": "database choice for neurodock substrate"
+      },
+      "output": {
+        "detected": false,
+        "pattern": "none",
+        "confidence": 0.88,
+        "reason": "Candidate response names trade-offs and grounds in stated constraints.",
+        "heuristic": {
+          "name": "agreement_without_tradeoff_marker",
+          "version": "0.1.0",
+          "description": "Flags responses that affirm a user's stated preference on a subjective question without any of the configured trade-off markers ('trade-off', 'however', 'but', 'cost', 'risk', 'downside') appearing in the response body."
+        },
+        "override_options": [],
+        "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+      }
+    },
+    {
+      "name": "detected - repeated reassurance-seeking on the same decision",
+      "input": {
+        "recent_user_messages": [
+          { "text": "is shipping the v0.2 RFC today the right call?", "at": "2026-05-16T13:00:00+01:00" },
+          { "text": "am I sure I should ship the RFC today?", "at": "2026-05-16T13:20:00+01:00" },
+          { "text": "should we really go ahead with the RFC today?", "at": "2026-05-16T13:45:00+01:00" }
+        ],
+        "decision_context": "ship v0.2 RFC today"
+      },
+      "output": {
+        "detected": true,
+        "pattern": "repeated_reassurance_request",
+        "confidence": 0.84,
+        "matched_spans": [
+          { "source": "recent_user_messages", "text": "is shipping the v0.2 RFC today the right call?", "at": "2026-05-16T13:00:00+01:00" },
+          { "source": "recent_user_messages", "text": "am I sure I should ship the RFC today?", "at": "2026-05-16T13:20:00+01:00" },
+          { "source": "recent_user_messages", "text": "should we really go ahead with the RFC today?", "at": "2026-05-16T13:45:00+01:00" }
+        ],
+        "counter_prompt": "The user has asked for validation of 'ship v0.2 RFC today' three times in the last 45 minutes. Do not re-validate. Surface what was already established about this decision and ask the user to add new information before further analysis.",
+        "reason": "3 reassurance requests on the same decision within 45 minutes.",
+        "heuristic": {
+          "name": "reassurance_request_count",
+          "version": "0.1.0",
+          "description": "Counts recent_user_messages whose embeddings (or word-overlap, in v0.1.0) match decision_context above 0.55 and whose surface form contains a reassurance marker ('is this okay', 'am I sure', 'should I really', 'should we really')."
+        },
+        "override_options": [
+          { "token": "fresh-context", "description": "You have new information that changes the question." },
+          { "token": "i-want-validation", "description": "Acknowledge you want validation anyway; the skill will proceed normally." },
+          { "token": "explain-the-match", "description": "Show me which prior messages were counted." }
+        ],
+        "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
+      }
+    }
+  ],
+  "compatibility": {
+    "policy": "Additive-only within v0.1.x. The pattern enum and heuristic.name enum are closed; new patterns require a minor bump (additive) and clinical-reviewer sign-off. v0.1.0 runtime returns DETECTOR_NOT_YET_IMPLEMENTED; callers MUST handle this error gracefully. Phase 3 will flip the runtime on once the field study endorses thresholds.",
+    "user_overridable": true,
+    "privacy": "local-only",
+    "side_effects": "None. The server is stateless: candidate_response and recent_user_messages are evaluated and discarded; the server does not log, persist, or transmit them.",
+    "telemetry": "None. Per ETHICS.md commitment 4.",
+    "idempotency": "Trivially idempotent.",
+    "consent_gate": "Install-time only. profile.guardrails.sycophancy_check is the configuration surface (values: 'off' | 'warn' | 'enforce'). When 'off' the tool is never called.",
+    "heuristic_source": "packages/clinical/sycophancy/ (path is normative; one file per heuristic name).",
+    "clinical_review_required": true,
+    "field_study_target": "False-positive rate < 5% on the field-study corpus per plan.md §13. Particularly: detections that fire on responses ND raters consider appropriately validating rather than sycophantic."
+  }
+}
