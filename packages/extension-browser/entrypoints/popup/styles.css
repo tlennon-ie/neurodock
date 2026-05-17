@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reduced-motion default per plan.md §2. The popup never animates by
+ * default; this rule keeps any third-party CSS from re-introducing motion. */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+:root {
+  color-scheme: light dark;
+}

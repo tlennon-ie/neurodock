@@ -1,15 +1,57 @@
 {
   "name": "@neurodock/extension-browser",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
-  "description": "NeuroDock browser extension (Chrome, Firefox, Edge). MV3, WXT-built.",
+  "description": "NeuroDock browser extension (Chrome, Firefox, Edge). MV3, WXT-built. Area 2 communication translation surface.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
-    "build": "echo 'extension-browser: build stub' && exit 0",
-    "lint": "echo 'extension-browser: lint stub' && exit 0",
-    "test": "echo 'extension-browser: no tests yet' && exit 0",
-    "typecheck": "echo 'extension-browser: typecheck stub' && exit 0",
-    "clean": "rm -rf .output .wxt .turbo"
+    "sync:prompts": "tsx scripts/sync-prompts.ts",
+    "dev": "pnpm sync:prompts && wxt",
+    "dev:firefox": "pnpm sync:prompts && wxt -b firefox",
+    "dev:edge": "pnpm sync:prompts && wxt -b edge",
+    "build": "pnpm sync:prompts && wxt build && wxt build -b firefox && wxt build -b edge",
+    "build:chrome": "pnpm sync:prompts && wxt build",
+    "build:firefox": "pnpm sync:prompts && wxt build -b firefox",
+    "build:edge": "pnpm sync:prompts && wxt build -b edge",
+    "zip": "pnpm sync:prompts && wxt zip && wxt zip -b firefox && wxt zip -b edge",
+    "lint": "echo 'extension-browser: lint via tsc strict mode' && pnpm typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm sync:prompts && wxt prepare && tsc --noEmit",
+    "clean": "rimraf .output .wxt .turbo coverage src/lib/prompts"
+  },
+  "dependencies": {
+    "@wxt-dev/module-react": "^1.2.2",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "idb": "^8.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "yaml": "^2.6.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/chrome": "^0.0.287",
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "fake-indexeddb": "^6.0.0",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.4.49",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.3.5",
+    "vitest": "^2.1.8",
+    "wxt": "^0.20.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
