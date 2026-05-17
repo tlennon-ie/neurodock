@@ -67,9 +67,9 @@ def resolve_thresholds(
             nudge_seconds=explicit_nudge * 60,
             hard_seconds=explicit_hard * 60,
         )
-    gentle_minutes = int(round(hyperfocus_break_minutes * _GENTLE_RATIO))
-    nudge_minutes = int(round(hyperfocus_break_minutes * _NUDGE_RATIO))
-    hard_minutes = int(round(hyperfocus_break_minutes * _HARD_RATIO))
+    gentle_minutes = round(hyperfocus_break_minutes * _GENTLE_RATIO)
+    nudge_minutes = round(hyperfocus_break_minutes * _NUDGE_RATIO)
+    hard_minutes = round(hyperfocus_break_minutes * _HARD_RATIO)
     return HyperfocusThresholds(
         gentle_seconds=gentle_minutes * 60,
         nudge_seconds=nudge_minutes * 60,
