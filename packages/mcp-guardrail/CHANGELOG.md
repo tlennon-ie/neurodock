@@ -3,7 +3,77 @@
 All notable changes to `neurodock-mcp-guardrail` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This package follows semantic versioning per .
+This package follows semantic versioning.
+
+## [0.0.2] - 2026-05-17
+
+### Added
+
+- **`check_hyperfocus` is now live.** Replaces the v0.0.1
+  `DETECTOR_NOT_YET_IMPLEMENTED` stub with the
+  `elapsed_threshold_with_eod` heuristic (version `0.2.0`).
+  Defaults: 90-minute break threshold scaled to a four-rung ladder
+  (none < gentle < nudge < hard) at 60% / 100% / 133% of the break.
+  When `end_of_day_local` is supplied and `now` is past it, the level
+  escalates one rung (gentle->nudge, nudge->hard). `prior_intent` is
+  quoted verbatim per ADR 0001. Source:
+  `src/neurodock_mcp_guardrail/heuristics/hyperfocus.py`.
+- **`check_sycophancy` is now live.** Replaces the v0.0.1 stub with a
+  five-pattern detection pipeline (version `0.2.0`) evaluated in fixed
+  order: `repeated_reassurance_request`, `unconditional_agreement`,
+  `praise_without_evidence`, `escalating_validation`, with an `other`
+  soft-signal catch-all. All phrase lists live in
+  `src/neurodock_mcp_guardrail/heuristics/_phrases.py` and are
+  clinical-review-gated per ADR 0006 and `ETHICS.md` commitment 3.
+- Override-option helper functions `hyperfocus_override_options(...)` and
+  `sycophancy_default_override_options()` in
+  `src/neurodock_mcp_guardrail/overrides.py`.
+- Hyperfocus `gentle` rung surfaces `disable-for-session`; `nudge` and
+  `hard` surface the full canonical four-token set
+  (`snooze-15m`, `commit-and-close`, `extend-end-of-day`,
+  `disable-for-session`).
+- Sycophancy detection surfaces the canonical five-token set
+  (`i-want-validation`, `override-once`, `fresh-context`,
+  `disable-for-session`, `explain-the-match`).
+
+### Changed
+
+- `SERVER_VERSION` bumped to `0.0.2`.
+- `check_sycophancy` runtime no longer raises
+  `DetectorNotYetImplementedError`. The class is retained as a no-op
+  type for v0.0.1 caller compatibility; it will be removed in v0.1.0.
+- `check_hyperfocus` runtime no longer raises the same error; it now
+  returns a fully-populated `HyperfocusOutput`.
+- Protocol conformance tests exercise the live detectors and validate
+  every response payload against the JSON schema.
+
+### Heuristic versions shipped
+
+| Detector | Heuristic name | Version |
+|----------|----------------|---------|
+| `check_rumination` | `word_overlap_jaccard` | `0.1.0` (unchanged) |
+| `check_hyperfocus` | `elapsed_threshold_with_eod` | `0.2.0` (new) |
+| `check_sycophancy` | (5 heuristics, see schema enum) | `0.2.0` (new) |
+
+### Server invariants (unchanged from v0.0.1)
+
+- **Stateless.** No SQLite, no JSONL, no in-memory caches.
+- **No user content in logs.** Only `tool_invoked` metadata at INFO.
+- **Override-token vocabulary is closed.** Per ADR 0006 section 2.
+- **Clinical review gate.** Changes to
+  `src/neurodock_mcp_guardrail/heuristics/` require
+  `clinical-reviewer` sign-off per ADR 0006 and `ETHICS.md`
+  commitment 3.
+
+### Known limitations
+
+- Hyperfocus end-of-day comparison uses local-clock-only semantics
+  (HH:MM on `now`'s local date). Multi-timezone scenarios where the
+  user crosses midnight are not yet handled; deferred to v0.0.3.
+- Sycophancy phrase matching is surface-form (case-insensitive substring
+  / start-of-string). Paraphrases of the canonical openers will not
+  fire; the field-study corpus calibrates whether this is acceptable
+  per ADR 0006 open question 1.
 
 ## [0.0.1] - 2026-05-17
 
@@ -11,51 +81,22 @@ This package follows semantic versioning per .
 
 - Initial Phase-2 implementation of the guardrail MCP server, per
   [`docs/decisions/0006-guardrail-tool-design.md`](../../docs/decisions/0006-guardrail-tool-design.md):
-  - `check_rumination(current_prompt, history, ...)` — word-overlap Jaccard
+  - `check_rumination(current_prompt, history, ...)` - word-overlap Jaccard
     detection over a rolling window. Defaults: window 90 minutes, threshold
     count 3, similarity threshold 0.55. Returns a structured advisory
     signal, never blocks the user.
-  - `check_hyperfocus(chronometric_snapshot, ...)` — schema-only stub;
+  - `check_hyperfocus(chronometric_snapshot, ...)` - schema-only stub;
     runtime returns `DETECTOR_NOT_YET_IMPLEMENTED` with `phase: "3"`
-    metadata. Input is validated against the v0.1.0 schema so callers can
-    integrate against the permanent contract today.
-  - `check_sycophancy(candidate_response?, recent_user_messages?, ...)` —
+    metadata.
+  - `check_sycophancy(candidate_response?, recent_user_messages?, ...)` -
     same pattern as `check_hyperfocus`. Enforces the `anyOf` constraint
     (`INPUT_MISSING` error) before falling through to the stub.
-- Pydantic types in `types.py` that mirror the JSON Schemas under
-  `packages/mcp-guardrail/schemas/`.
+- Pydantic types in `types.py` that mirror the JSON Schemas.
 - Word-overlap Jaccard heuristic in
   `neurodock_mcp_guardrail.heuristics.rumination` with a hand-rolled
-  60-word English stoplist. Implementation is small and auditable per
-  `ETHICS.md` commitment 3.
+  60-word English stoplist.
 - Closed v0.1.0 override-token vocabulary in
   `neurodock_mcp_guardrail.overrides` for all three tools.
 - FastMCP server exposed as the `neurodock-mcp-guardrail` console script
   and importable as `neurodock_mcp_guardrail.server.app`.
-- Protocol conformance tests that validate `check_rumination` responses
-  against the JSON schema and confirm both stub detectors surface
-  `DETECTOR_NOT_YET_IMPLEMENTED`.
-
-### Server invariants (per ADR 0006)
-
-- **Stateless.** No SQLite, no JSONL, no in-memory caches. The server
-  persists nothing and exposes no telemetry endpoints.
-- **No user content in logs.** Only `tool_invoked` metadata (tool name,
-  timestamp) is logged at INFO. Prompts, history, and detection outcomes
-  are never logged.
-- **Override-token vocabulary is closed.** New tokens require a minor bump
-  and  sign-off.
-- ** gate.** Changes to
-  `src/neurodock_mcp_guardrail/heuristics/` or to `_stopwords.py` require
-   sign-off per ADR 0006 and `ETHICS.md` commitment 3.
-
-### Known limitations
-
-- `check_hyperfocus` and `check_sycophancy` runtimes return
-  `DETECTOR_NOT_YET_IMPLEMENTED` until the Phase-3  endorses
-  the thresholds and patterns ().
-- The word-overlap Jaccard heuristic misses paraphrases. v0.0.2 introduces
-  embedding-based similarity (`embedding_cosine` is already a reserved
-  value in the schema's `heuristic.name` enum). See ADR 0006 §6 Option B.
-- The English stoplist is the only language supported in v0.1.0. ADR 0006
-  open question 6 covers the multi-language plan.
+- Protocol conformance tests.

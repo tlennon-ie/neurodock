@@ -1,11 +1,4 @@
-"""Protocol conformance: boot the FastMCP server in-process, call each of the
-three tools via the MCP protocol, and validate every response against the
-JSON schema in ``packages/mcp-guardrail/schemas/``.
-
-This is the architect-contract gate. The two stubbed detectors return a
-structured ``DETECTOR_NOT_YET_IMPLEMENTED`` error; the active rumination
-detector returns a payload that MUST validate against its schema.
-"""
+"""Protocol conformance tests for the live v0.0.2 server."""
 
 from __future__ import annotations
 
@@ -84,44 +77,81 @@ async def test_check_rumination_response_conforms_to_schema_when_detected() -> N
         )
         _output_validator(_load_schema("check_rumination.schema.json")).validate(result.data)
         assert result.data["detected"] is True
-        # ADR 0006 §2: detected==true MUST carry non-empty override_options
-        # and a non-empty similar_prompts array (schema-enforced).
         assert len(result.data["override_options"]) >= 1
-        assert len(result.data["similar_prompts"]) >= 1
 
 
 @pytest.mark.asyncio
-async def test_check_hyperfocus_returns_detector_not_yet_implemented() -> None:
+async def test_check_hyperfocus_no_session_returns_level_none() -> None:
     server = build_server()
     async with Client(server) as client:
-        # The FastMCP client raises on tool errors. We accept any exception
-        # whose surface includes DETECTOR_NOT_YET_IMPLEMENTED.
-        with pytest.raises(Exception) as exc_info:
-            await client.call_tool(
-                "check_hyperfocus",
-                {
-                    "chronometric_snapshot": {
-                        "open_session": None,
-                        "now": "2026-05-16T14:00:00+01:00",
-                    }
-                },
-            )
-        assert "DETECTOR_NOT_YET_IMPLEMENTED" in str(exc_info.value)
+        result = await client.call_tool(
+            "check_hyperfocus",
+            {
+                "chronometric_snapshot": {
+                    "open_session": None,
+                    "now": "2026-05-16T14:00:00+01:00",
+                }
+            },
+        )
+        _output_validator(_load_schema("check_hyperfocus.schema.json")).validate(result.data)
+        assert result.data["level"] == "none"
+        assert result.data["override_options"] == []
 
 
 @pytest.mark.asyncio
-async def test_check_sycophancy_returns_detector_not_yet_implemented() -> None:
+async def test_check_hyperfocus_nudge_level_with_prior_intent_echoed() -> None:
     server = build_server()
     async with Client(server) as client:
-        with pytest.raises(Exception) as exc_info:
-            await client.call_tool(
-                "check_sycophancy",
-                {
-                    "candidate_response": (
-                        "Postgres gives you better concurrency but at the cost of operational "
-                        "overhead; SQLite is the more honest choice for local-first."
-                    ),
-                    "decision_context": "database choice for neurodock substrate",
+        result = await client.call_tool(
+            "check_hyperfocus",
+            {
+                "chronometric_snapshot": {
+                    "open_session": {
+                        "session_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "started_at": "2026-05-16T13:00:00+01:00",
+                        "intent": "ship the v0.0.2 RFC and stop by 18:30",
+                        "elapsed_seconds": 100 * 60,
+                    },
+                    "now": "2026-05-16T14:40:00+01:00",
                 },
-            )
-        assert "DETECTOR_NOT_YET_IMPLEMENTED" in str(exc_info.value)
+                "hyperfocus_break_minutes": 90,
+            },
+        )
+        _output_validator(_load_schema("check_hyperfocus.schema.json")).validate(result.data)
+        assert result.data["level"] == "nudge"
+        assert result.data["prior_intent"] == "ship the v0.0.2 RFC and stop by 18:30"
+
+
+@pytest.mark.asyncio
+async def test_check_sycophancy_unconditional_agreement_response_validates() -> None:
+    server = build_server()
+    async with Client(server) as client:
+        result = await client.call_tool(
+            "check_sycophancy",
+            {
+                "candidate_response": "Yes, that is exactly the right call. Go ahead.",
+                "decision_context": "database choice for neurodock substrate",
+            },
+        )
+        _output_validator(_load_schema("check_sycophancy.schema.json")).validate(result.data)
+        assert result.data["detected"] is True
+        assert result.data["pattern"] == "unconditional_agreement"
+
+
+@pytest.mark.asyncio
+async def test_check_sycophancy_balanced_response_validates_as_not_detected() -> None:
+    server = build_server()
+    async with Client(server) as client:
+        result = await client.call_tool(
+            "check_sycophancy",
+            {
+                "candidate_response": (
+                    "Postgres gives you better concurrency but at the cost of operational "
+                    "overhead; SQLite is the more honest choice for local-first."
+                ),
+                "decision_context": "database choice for neurodock substrate",
+            },
+        )
+        _output_validator(_load_schema("check_sycophancy.schema.json")).validate(result.data)
+        assert result.data["detected"] is False
+        assert result.data["pattern"] == "none"

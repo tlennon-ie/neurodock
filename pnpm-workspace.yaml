@@ -2,6 +2,7 @@ packages:
   - "packages/core"
   - "packages/cli"
   - "packages/extension-browser"
+  - "packages/native-host"
   - "plugins/*"
   - "profiles/*"
   - "docs"
