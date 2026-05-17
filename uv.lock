@@ -1270,11 +1270,10 @@ source = { editable = "packages/clinical" }
 
 [[package]]
 name = "neurodock-evals"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "packages/evals" }
 dependencies = [
     { name = "jsonschema" },
-    { name = "neurodock-mcp-translation" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
@@ -1284,17 +1283,20 @@ test = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
+translation = [
+    { name = "neurodock-mcp-translation" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "jsonschema", specifier = ">=4.21" },
-    { name = "neurodock-mcp-translation", editable = "packages/mcp-translation" },
+    { name = "neurodock-mcp-translation", marker = "extra == 'translation'", editable = "packages/mcp-translation" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.3.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
-provides-extras = ["test"]
+provides-extras = ["test", "translation"]
 
 [[package]]
 name = "neurodock-mcp-chronometric"
@@ -1366,7 +1368,7 @@ provides-extras = ["test", "vec"]
 
 [[package]]
 name = "neurodock-mcp-guardrail"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "packages/mcp-guardrail" }
 dependencies = [
     { name = "fastmcp" },
@@ -1392,7 +1394,7 @@ provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-task-fractionator"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "packages/mcp-task-fractionator" }
 dependencies = [
     { name = "fastmcp" },

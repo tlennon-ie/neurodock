@@ -25,8 +25,8 @@
         "time_budget": {
           "type": "string",
           "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
-          "description": "Optional ISO 8601 duration capping total estimated_minutes across the returned tasks. Examples: 'PT4H' (four hours), 'P3D' (three days, treated as 3 working blocks of profile-declared hours), 'PT30M' (thirty minutes). When absent the server returns the smallest credible set of atomic tasks that fully covers the goal — 'unbounded' does NOT mean 'maximally decomposed'. When present, total estimated_minutes across returned tasks MUST fit within the budget; if the server cannot construct such a list it returns BUDGET_INFEASIBLE rather than silently truncating.",
-          "examples": ["PT4H", "P3D", "PT30M", "PT2H30M"]
+          "description": "Optional ISO 8601 duration capping total estimated_minutes across the returned tasks. MUST be ISO 8601 format — natural language like '3 hours' is rejected with TIME_BUDGET_UNPARSEABLE. Common values: 'PT30M' = 30 minutes, 'PT3H' = 3 hours, 'PT1H30M' = 1 hour 30 minutes, 'PT4H' = 4 hours, 'P1D' = 1 day, 'P3D' = 3 days. When absent the server returns the smallest credible set of atomic tasks that fully covers the goal — 'unbounded' does NOT mean 'maximally decomposed'. When present, total estimated_minutes across returned tasks MUST fit within the budget; if the server cannot construct such a list it returns BUDGET_INFEASIBLE rather than silently truncating.",
+          "examples": ["PT30M", "PT3H", "PT1H30M", "PT4H", "P1D", "P3D"]
         }
       }
     },

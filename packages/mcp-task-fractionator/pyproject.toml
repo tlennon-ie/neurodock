@@ -1,6 +1,6 @@
 [project]
 name = "neurodock-mcp-task-fractionator"
-version = "0.0.1"
+version = "0.0.2"
 description = "NeuroDock task fractionator MCP server — goal decomposition and next-action selection."
 readme = "README.md"
 requires-python = ">=3.11"
