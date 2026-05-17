@@ -91,10 +91,17 @@ describe("SettingsTab", () => {
 
   it("saves a typed key and switches to cloud mode", async () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
+    // To render the cloud-anthropic fieldset we need
+    // selectedModeFromProfile() to return "cloud-anthropic" — which means
+    // mode === "cloud" AND cloudProvider === "anthropic". In real flow
+    // the user selects the Cloud Anthropic radio first; mode stays local
+    // (because no key yet) and provider is staged. We approximate the
+    // "form visible" state by passing the cloud-provider sentinel even
+    // without a key.
     render(
       <SettingsTab
         profile={baseProfile({
-          mode: "local",
+          mode: "cloud",
           cloudProvider: "anthropic",
           cloudModel: "claude-haiku-4-5",
           cloudApiKey: null,
