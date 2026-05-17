@@ -10,3 +10,5 @@ dist/
 
 # Synced from packages/mcp-translation at build time; not committed.
 src/lib/prompts/*.md
+src/lib/schemas/*.schema.json
+public/schemas/*.schema.json
