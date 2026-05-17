@@ -1,0 +1,74 @@
+---
+title: Plugin type — language-pack
+description: Locale-specific corporate-culture translation packs. Hiberno-English, German directness, Japanese keigo.
+---
+
+A `type: language-pack` plugin ships locale-specific corporate-culture translation prompts for `mcp-translation`. The base server's prompts assume US English business idiom — a defensible default, not a universal one. A language pack rewrites the assumptions for a different register: Hiberno-English understatement and indirection, German directness norms, Japanese *keigo* honorifics, Brazilian Portuguese warmth markers, and so on.
+
+Language packs are the fourth of the four communication-layer contribution lanes described in `plan.md` §7, and they are the lane that scales the project internationally without forcing the core prompts to become a compromise across cultures.
+
+**Prerequisites:** native or near-native fluency in the locale's corporate register, comfortable editing YAML and prose prompts.
+
+## What a language pack changes
+
+A language pack ships the same three prompt overrides as a translation pack — `literal_meaning`, `subtext`, `tone` — but the overrides target a *cultural register* rather than a domain or relationship. Concretely:
+
+- The **literal-meaning** override teaches the model that "we should consider..." in Hiberno-English usually means "we should do this", not "we should think about whether to do this".
+- The **subtext** override teaches the model that the German directness norm reads as confrontational *only* through a US-English lens; in-register it is neutral, and surfacing it as confrontation is the false positive.
+- The **tone** override teaches the model the appropriate *keigo* register to flag in a Japanese outgoing message, where the base prompt has nothing useful to say.
+
+A language pack without these culture-specific corrections is not a language pack. Translation alone — turning English prompts into German prompts of equivalent semantics — does not produce a language pack. The cultural register is the point.
+
+## Asset layout
+
+```
+plugins/<your-pack>/
+├── plugin.yaml                          # Manifest with type: language-pack
+├── prompts/
+│   ├── literal_meaning.md
+│   ├── subtext.md
+│   └── tone.md
+├── eval/
+│   └── corpus.yaml                      # Locale-specific eval examples
+├── locales/
+│   └── messages.json                    # ICU MessageFormat for UI strings
+└── README.md
+```
+
+The `locales/messages.json` block is for the substrate's own UI strings as they relate to this language (notice text, consent prompts, error messages from the server). UI strings follow the ICU MessageFormat convention used by the docs site and the browser extension — see `plan.md` §9.
+
+## Locale declaration
+
+The plugin manifest declares the locale and corporate-culture region:
+
+```yaml
+type: language-pack
+language_pack:
+  locale: "en-IE"                     # BCP 47 locale code
+  cultural_register: "hiberno-english"
+  base_prompt_version: ">=0.1.0,<0.2.0"
+```
+
+The `cultural_register` field is a free-form string. We avoid an enum because corporate registers do not map cleanly onto locale codes: there is no enum value that captures the difference between West Coast US tech idiom and East Coast US finance idiom, and forcing one would lie about what the pack does.
+
+## Native-speaker review is required
+
+A language pack cannot graduate from `community` to `reviewed` without review by at least one native or near-native speaker of the locale **with experience of the corporate register the pack covers**. Native speakers of a locale who have not worked in that corporate culture are not the right reviewers — the cultural-register knowledge is the load-bearing part. This is documented in the agent operating model for `doc-writer` (translation accept-then-recruit pattern) and applies the same way to language packs.
+
+Self-identification is sufficient. We do not gate on residency, citizenship, or credentials.
+
+## When a machine-translated pack is acceptable
+
+It is not. A language pack cannot be machine-translated and submitted unreviewed; the corpus-cultural-register-cultural-register knowledge is precisely what a translation model does not encode well. A machine-translated pack will be accepted as a *draft* at `community` trust with a clear "awaiting native-speaker review" marker, and will not graduate to `reviewed` until a native-speaker reviewer is recruited.
+
+This is the same accept-then-recruit pattern the project uses for documentation translation.
+
+## Eval corpus
+
+Like translation packs, language packs ship a versioned, consented, anonymised eval corpus. The corpus must contain examples *in the target locale* — examples of corporate messages that exercise the cultural register the pack adjusts for. A corpus of US English examples translated into German is not a German eval corpus; it is a translation of a US corpus.
+
+## What's next
+
+- [Plugin type — translation-pack](/contribute/plugin-types/translation-pack/) for the domain-and-relationship counterpart.
+- [Plugin manifest reference](/reference/plugin-manifest/) for the full `language_pack` block.
+- `plan.md` §7 for the broader communication-layer architecture and the four contribution lanes.

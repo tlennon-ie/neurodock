@@ -1,0 +1,70 @@
+---
+title: Plugin type — theme
+description: Design-system-keeper-approved theme bundles. Token sets plus CSS, accessibility audit required.
+---
+
+A `type: theme` plugin ships a design-system-keeper-approved theme bundle — a set of design tokens (colour, typography, spacing, motion) plus the CSS that applies them. Themes change the *look* of the substrate's UI surfaces (the docs site, the browser extension, future GUI components); they do not change behaviour, do not change content, and cannot disable accessibility constraints.
+
+**Prerequisites:** comfortable with CSS custom properties, comfortable with design tokens, willing to run an accessibility audit on every change.
+
+## The constraints a theme cannot break
+
+NeuroDock's visual language is bound by `plan.md` §2 and enforced by the `design-system-keeper` agent. Themes inherit these constraints without exception:
+
+- **One neutral hue for the logomark.** A theme can recolour the body of the UI but cannot brand-stamp the logomark. The single neutral hue is structural identity, not decoration.
+- **Body line-height ≥ 1.65.** Themes cannot tighten body line-height below this floor. The floor is evidence-based for dyslexia and ADHD readability.
+- **No animation by default.** A theme can declare animation rules, but they fire only when `motion: full` is set in the user's profile. Default and `motion: reduced` users see no animation, regardless of the theme.
+- **`prefers-reduced-motion: reduce` is honoured at the platform level.** Themes cannot override this; the substrate's stylesheet strips remaining transitions in reduced-motion contexts.
+- **No gradients.** Single solid hues for surfaces. This is a tested readability property, not an aesthetic preference.
+- **Two colour modes minimum.** Every theme must ship both a calm-light and a dim-dark variant. High-contrast and reduced-motion variants are optional but encouraged.
+
+A theme that violates any of these constraints will not load. The loader checks at install time and refuses themes whose token set declares values outside the allowed ranges.
+
+## Asset layout
+
+```
+plugins/<your-theme>/
+├── plugin.yaml          # Manifest with type: theme
+├── tokens.css           # Design tokens as CSS custom properties
+├── overrides.css        # Component-level overrides
+└── a11y-audit.json      # Result of axe-core run; required
+```
+
+The `tokens.css` file declares the theme's tokens against the substrate's expected variable names:
+
+```css
+:root {
+  /* Colours */
+  --color-surface: <value>;
+  --color-text: <value>;
+  --color-accent: <value>;
+
+  /* Typography — substrate-pinned, theme cannot change family */
+  --font-body: "Atkinson Hyperlegible", sans-serif;
+  --font-headings: "Lexend", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Sizing */
+  --line-height-body: 1.65;   /* Floor; theme can raise, cannot lower */
+}
+```
+
+Typography families are pinned to Atkinson Hyperlegible (body), Lexend (headings), JetBrains Mono (code) per the brand and positioning rules in `plan.md` §2. A theme cannot change these. A theme can tune size, weight, and tracking.
+
+## Per-theme accessibility audit
+
+Every theme ships an `a11y-audit.json` produced by running `axe-core` against the substrate's reference UI surfaces with this theme applied. The audit must show zero critical and zero serious violations. The audit is regenerated on every theme change; a stale audit will not pass review.
+
+CI replays the audit on every PR touching a theme plugin. The `accessibility-auditor` agent gates promotion from `community` to `reviewed`.
+
+## Why themes are a plugin type at all
+
+Aesthetic choice is a legitimate accessibility axis. Some users find high-contrast easier; some find calm-light easier; some find a specific palette less fatiguing. Making themes a plugin type lets the project ship one tightly-constrained reference theme without precluding user choice — and lets users contribute themes that work for their specific eyes without modifying core.
+
+The constraints exist so that "user choice" never becomes "user accidentally breaks accessibility on themselves". Every theme that ships through the plugin protocol has already passed the audit; the choice is between known-good options.
+
+## What's next
+
+- [Plugin manifest reference](/reference/plugin-manifest/) for the manifest schema.
+- `plan.md` §2 for the visual-language rules a theme inherits.
+- `.claude/agents/design-system-keeper.md` for the agent that reviews themes.

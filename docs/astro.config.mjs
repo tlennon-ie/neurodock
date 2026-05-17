@@ -59,6 +59,7 @@ export default defineConfig({
             { label: "Skills", link: "/concepts/skills/" },
             { label: "Profiles", link: "/concepts/profiles/" },
             { label: "Guardrails", link: "/concepts/guardrails/" },
+            { label: "Plugins", link: "/concepts/plugins/" },
           ],
         },
         {
@@ -107,6 +108,7 @@ export default defineConfig({
               ],
             },
             { label: "Profile schema", link: "/reference/profile-schema/" },
+            { label: "Plugin manifest", link: "/reference/plugin-manifest/" },
             { label: "CLI", link: "/reference/cli/" },
           ],
         },
@@ -137,6 +139,18 @@ export default defineConfig({
           items: [
             { label: "Overview", link: "/contribute/overview/" },
             { label: "Write a skill", link: "/contribute/write-a-skill/" },
+            { label: "Write a plugin", link: "/contribute/write-a-plugin/" },
+            {
+              label: "Plugin types",
+              items: [
+                { label: "skill", link: "/contribute/plugin-types/skill/" },
+                { label: "mcp-server", link: "/contribute/plugin-types/mcp-server/" },
+                { label: "profile", link: "/contribute/plugin-types/profile/" },
+                { label: "translation-pack", link: "/contribute/plugin-types/translation-pack/" },
+                { label: "language-pack", link: "/contribute/plugin-types/language-pack/" },
+                { label: "theme", link: "/contribute/plugin-types/theme/" },
+              ],
+            },
             {
               label: "Contribute an eval example",
               link: "/contribute/contribute-eval-example/",
