@@ -42,24 +42,19 @@ jobs:
 
       - name: Configure npm auth
         run: |
-          # Diagnostic: confirm the secret reached the runner and has the right shape.
           if [ -z "${NPM_TOKEN:-}" ]; then
             echo "::error::NPM_TOKEN secret is empty or not set"
             exit 1
           fi
-          echo "Token length: ${#NPM_TOKEN}"
-          echo "Token prefix: ${NPM_TOKEN:0:4}..."
-          # Classic automation + granular tokens both start with 'npm_'.
-          case "$NPM_TOKEN" in
-            npm_*)
-              echo "Token format looks correct (npm_ prefix)."
-              ;;
-            *)
-              echo "::warning::Token does not start with 'npm_' — likely invalid or old format. Regenerate at npmjs.com/settings/<user>/tokens."
-              ;;
-          esac
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
-          # whoami probes auth without requiring publish perms; failure here = bad token.
+          # setup-node@v6 with registry-url writes a placeholder .npmrc at
+          # NPM_CONFIG_USERCONFIG (typically /home/runner/work/_temp/.npmrc).
+          # npm-cli reads from that path, not $HOME/.npmrc. Overwrite it.
+          NPMRC_PATH="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          echo "Writing .npmrc to: $NPMRC_PATH"
+          {
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
+            echo "always-auth=true"
+          } > "$NPMRC_PATH"
           npm whoami --registry=https://registry.npmjs.org/
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
