@@ -72,20 +72,25 @@ jobs:
 
       - name: Build all Python packages
         run: |
+          mkdir -p dist
           for pkg in packages/mcp-* packages/clinical packages/evals; do
             if [ -f "$pkg/pyproject.toml" ]; then
               echo "Building $pkg"
-              (cd "$pkg" && uv build) || echo "Skipping $pkg (build failed or stub)"
+              uv build --package "$(grep -m1 '^name = ' "$pkg/pyproject.toml" | cut -d'"' -f2)" --out-dir dist
             fi
           done
+          echo ""
+          echo "Built artefacts:"
+          ls -la dist/
 
       - name: Publish to PyPI
         run: |
-          for pkg in packages/mcp-* packages/clinical packages/evals; do
-            if [ -d "$pkg/dist" ]; then
-              echo "Publishing $pkg"
-              uv publish --token "$PYPI_TOKEN" "$pkg/dist/"* || echo "Skipping $pkg"
-            fi
-          done
+          set -e
+          if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "No artefacts in dist/ — nothing to publish."
+            exit 1
+          fi
+          echo "Publishing $(ls dist/ | wc -l) files to PyPI..."
+          uv publish --token "$PYPI_TOKEN" dist/*
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
