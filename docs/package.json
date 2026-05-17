@@ -1,7 +1,7 @@
 {
   "name": "@neurodock/docs",
   "version": "0.0.0",
-  "private": false,
+  "private": true,
   "description": "NeuroDock documentation site (Astro Starlight).",
   "license": "AGPL-3.0-or-later",
   "type": "module",
