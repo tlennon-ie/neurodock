@@ -71,6 +71,16 @@ exclude = [
     "build",
 ]
 
+# Third-party / sibling packages without published type stubs. Tracked so we
+# can drop the overrides as the upstream packages publish `py.typed`.
+[[tool.mypy.overrides]]
+module = "jsonschema.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "neurodock_mcp_translation.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["packages"]

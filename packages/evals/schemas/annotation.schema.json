@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/evals/v0.0.1/annotation.schema.json",
+  "title": "NeuroDock eval rater annotation",
+  "description": "One ND-rater's judgement of an eval example.",
+  "type": "object",
+  "required": ["rater_id", "rater_neurotypes", "agreement_with_expected"],
+  "additionalProperties": false,
+  "properties": {
+    "rater_id": {
+      "type": "string",
+      "pattern": "^rater-[A-Za-z0-9-]+$",
+      "description": "Pseudonymous rater id."
+    },
+    "rater_neurotypes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "type": "string",
+        "enum": ["adhd", "asd", "audhd", "ocd", "dyslexic", "dyspraxic", "other"]
+      }
+    },
+    "agreement_with_expected": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "0..1 score: how closely the rater agrees with the example's `expected` block."
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    },
+    "rated_at": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

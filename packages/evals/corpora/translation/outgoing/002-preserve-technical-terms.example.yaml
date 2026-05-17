@@ -1,0 +1,33 @@
+id: "translation.outgoing.002"
+slice: "translation/outgoing"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "I just need the GraphQL schema fragment for the LoaderContext type, perhaps before EOD."
+  target_register: "concise"
+  channel: "slack"
+  preserve_terms: ["GraphQL", "LoaderContext"]
+expected:
+  preserved_terms:
+    - "GraphQL"
+    - "LoaderContext"
+  unpreserved_terms: []
+  diff_summary:
+    tone_shift: "Compressed to the minimum viable wording in the 'concise' register."
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["adhd"]
+    agreement_with_expected: 0.9
+    notes: |
+      The concise-register baseline drops 'just ' and 'perhaps ' as hedges
+      while keeping the technical terms intact. Demonstrates the preserve-
+      terms contract from ADR 0005.
+notes: |
+  Validates the preserve_terms invariant: both GraphQL and LoaderContext
+  must survive the rewrite verbatim. If a future baseline change started
+  paraphrasing technical identifiers, this example would regress.

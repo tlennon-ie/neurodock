@@ -1,0 +1,47 @@
+id: "translation.meetings.003"
+slice: "translation/meetings"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  transcript: |
+    Alex: We should revisit the design doc — those priorities feel off to me.
+    Sam: I'll loop back offline. We agreed last sprint, didn't we?
+    Alex: Sounds good. Let's land it before next week.
+  me: "Sam"
+  speakers: ["Alex", "Sam"]
+  project: "design-review"
+expected:
+  decisions:
+    __len__: 2
+  ambiguous_items:
+    __len__: 3
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["asd"]
+    agreement_with_expected: 0.85
+    notes: |
+      'revisit' + 'those priorities' + 'I'll loop back offline' + 'next week'
+      all read as ambiguity. The baseline catches multiple but conflates
+      them onto a smaller set of lines.
+  - rater_id: "rater-curator-B"
+    rater_neurotypes: ["adhd"]
+    agreement_with_expected: 0.7
+    notes: |
+      I'd weight 'we agreed last sprint, didn't we?' as a fourth ambiguity
+      (rhetorical / contested) even though the baseline doesn't flag it.
+  - rater_id: "rater-curator-C"
+    rater_neurotypes: ["audhd"]
+    agreement_with_expected: 0.8
+    notes: |
+      Agree with rater-A; the 'sounds good / let's land it' pair reads as a
+      decision pair, not an ambiguity.
+notes: |
+  Multi-rater example demonstrating the Cohen's kappa pathway. The three
+  raters disagree on whether one extra line is ambiguous; the harness can
+  surface this via `agreement_with_expected` quantiles and via
+  `cohens_kappa` over discretised ratings.
