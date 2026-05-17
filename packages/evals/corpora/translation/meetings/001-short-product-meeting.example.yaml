@@ -1,0 +1,38 @@
+id: "translation.meetings.001"
+slice: "translation/meetings"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  transcript: |
+    Alex: Sam, can you own the migration script for the rollout?
+    Sam: Yes — I'll have it by Wednesday.
+    Alex: Great. We agreed to ship by end of May.
+  me: "Sam"
+  speakers: ["Alex", "Sam"]
+  project: "rollout"
+expected:
+  my_asks:
+    __len__: 1
+  others_asks:
+    __len__: 0
+  decisions:
+    __len__: 2
+  ambiguous_items:
+    __len__: 0
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["asd"]
+    agreement_with_expected: 0.95
+    notes: |
+      Clean partition: Alex's 'Can you own ...' becomes Sam's my_ask; Sam's
+      'Yes — I'll have it' is a decision; Alex's 'We agreed' is also a
+      decision. No ambiguity in this transcript.
+notes: |
+  Demonstrates the four-section partition with verbatim-anchored spans. Both
+  the 'me' ask and the two decision lines are line-anchored in the transcript;
+  the runner enforces the verbatim invariant on every load.

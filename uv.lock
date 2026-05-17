@@ -959,8 +959,31 @@ source = { editable = "packages/clinical" }
 
 [[package]]
 name = "neurodock-evals"
-version = "0.0.0"
+version = "0.0.1"
 source = { editable = "packages/evals" }
+dependencies = [
+    { name = "jsonschema" },
+    { name = "neurodock-mcp-translation" },
+    { name = "pydantic" },
+    { name = "pyyaml" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "jsonschema", specifier = ">=4.21" },
+    { name = "neurodock-mcp-translation", editable = "packages/mcp-translation" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.3.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-chronometric"
@@ -1022,8 +1045,29 @@ provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-guardrail"
-version = "0.0.0"
+version = "0.0.1"
 source = { editable = "packages/mcp-guardrail" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "jsonschema" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=3.3.0" },
+    { name = "jsonschema", marker = "extra == 'test'", specifier = ">=4.21.0" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.24.0" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-task-fractionator"
@@ -1053,8 +1097,29 @@ provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-translation"
-version = "0.0.0"
+version = "0.0.1"
 source = { editable = "packages/mcp-translation" }
+dependencies = [
+    { name = "fastmcp" },
+    { name = "pydantic" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "jsonschema" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fastmcp", specifier = ">=3.3.0" },
+    { name = "jsonschema", marker = "extra == 'test'", specifier = ">=4.21.0" },
+    { name = "pydantic", specifier = ">=2.7" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.0" },
+    { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.3.0" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-workspace"

@@ -1,0 +1,27 @@
+id: "translation.tone.002"
+slice: "translation/tone"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Hey — thanks for the heads up on the migration. Happy to help land it; no rush, whenever you have time is great."
+  channel: "slack"
+  target_register: "warm"
+expected:
+  flagged_phrases:
+    __len__: 0
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["audhd"]
+    agreement_with_expected: 0.9
+    notes: |
+      The baseline finds no flagged phrases — the message is already warm
+      and low-urgency. Useful as a negative example: a message that
+      shouldn't trip any rule.
+notes: |
+  Negative-case tone example. With no flagged phrases, suggested_rewrite_hint
+  is null (no baseline available, no flags, no hint).

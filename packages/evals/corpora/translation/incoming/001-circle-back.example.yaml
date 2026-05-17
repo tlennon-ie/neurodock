@@ -1,0 +1,27 @@
+id: "translation.incoming.001"
+slice: "translation/incoming"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "I'll circle back on the migration plan next week — quick one, just need a sanity check."
+  channel: "slack"
+expected:
+  explicit_ask: null
+  ambiguity:
+    detected: true
+  recommended_next_action:
+    action: "set_reminder"
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["adhd"]
+    agreement_with_expected: 0.9
+    notes: "Classic soft-deferral. 'I'll circle back' + 'next week' both signal the response will not self-fulfil."
+notes: |
+  Demonstrates the hedged-commitment / vague-timeline combination. The baseline
+  should flag both phrases and recommend `set_reminder` because there is no
+  explicit ask to act on.

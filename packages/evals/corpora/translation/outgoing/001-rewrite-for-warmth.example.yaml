@@ -1,0 +1,29 @@
+id: "translation.outgoing.001"
+slice: "translation/outgoing"
+created_at: "2026-05-17"
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-seed-2026-05-17"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Strong nack. This will block the release."
+  target_register: "warm"
+  channel: "github"
+expected:
+  preserved_terms: []
+  unpreserved_terms: []
+  diff_summary:
+    tone_shift: "Lifted warmth by opening with a relational acknowledgement; preserved the underlying ask."
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["asd"]
+    agreement_with_expected: 0.85
+    notes: |
+      The baseline drops 'strong nack' and prepends a 'Hey — ' opener. The
+      underlying concern survives; the relational opener softens the blow.
+notes: |
+  Warmth-rewrite baseline test. The structural_changes array should contain
+  "Removed opening rejection token" and "Added relational opener". The
+  `tone_shift` summary is deterministic and matched verbatim.
