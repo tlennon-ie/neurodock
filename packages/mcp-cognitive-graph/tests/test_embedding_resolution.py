@@ -13,7 +13,6 @@ A separate slow-marked test exercises the real fastembed model when the
 from __future__ import annotations
 
 import os
-from collections.abc import Iterator
 from typing import cast
 
 import numpy as np
@@ -118,8 +117,7 @@ def test_semantic_neighbour_resolves(
 ) -> None:
     """'Postgres' resolves to a stored 'PostgreSQL' entity via the
     embedding rung when fuzzy is exhausted."""
-    _seed_entity(memory_storage, fixed_clock, stub_embedder,
-                 etype="concept", name="PostgreSQL")
+    _seed_entity(memory_storage, fixed_clock, stub_embedder, etype="concept", name="PostgreSQL")
 
     # We need to bypass the fuzzy rung; "Postgres" vs "PostgreSQL" is high
     # WRatio so it will actually win fuzzy. Test the embedding path with a
@@ -183,10 +181,8 @@ def test_numpy_searcher_returns_ordered_hits(
     stub_embedder: StubEmbedder,
 ) -> None:
     """The NumPy searcher returns hits ordered by descending similarity."""
-    _seed_entity(memory_storage, fixed_clock, stub_embedder,
-                 etype="concept", name="PostgreSQL")
-    _seed_entity(memory_storage, fixed_clock, stub_embedder,
-                 etype="concept", name="kipi-system")
+    _seed_entity(memory_storage, fixed_clock, stub_embedder, etype="concept", name="PostgreSQL")
+    _seed_entity(memory_storage, fixed_clock, stub_embedder, etype="concept", name="kipi-system")
 
     query = stub_embedder.embed("postgres workload")
     searcher = NumpySearcher(memory_storage)

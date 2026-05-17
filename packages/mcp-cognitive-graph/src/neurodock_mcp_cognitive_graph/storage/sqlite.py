@@ -372,8 +372,7 @@ class SQLiteStorage:
         input_text: str,
     ) -> tuple[str, str, float] | None:
         cur = self._c.execute(
-            "SELECT entity_id, method, score FROM entity_resolution_cache "
-            "WHERE input_text = ?",
+            "SELECT entity_id, method, score FROM entity_resolution_cache WHERE input_text = ?",
             (input_text,),
         )
         row = cur.fetchone()

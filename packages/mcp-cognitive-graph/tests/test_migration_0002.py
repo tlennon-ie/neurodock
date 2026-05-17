@@ -54,9 +54,7 @@ def test_existing_v0_0_1_db_upgrades_in_place(tmp_path: Path) -> None:
     db_path = tmp_path / "v001.sqlite"
     # Simulate a v0.0.1 database by running only the first migration.
     package_root = Path(__file__).resolve().parent.parent / "src" / "neurodock_mcp_cognitive_graph"
-    migration_0001 = (
-        package_root / "migrations" / "0001_init.sql"
-    ).read_text(encoding="utf-8")
+    migration_0001 = (package_root / "migrations" / "0001_init.sql").read_text(encoding="utf-8")
     conn = sqlite3.connect(db_path)
     try:
         conn.executescript(migration_0001)

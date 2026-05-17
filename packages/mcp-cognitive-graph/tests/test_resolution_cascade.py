@@ -199,9 +199,7 @@ def test_short_circuit_does_not_call_lower_rungs(
         def embed(self, text: str) -> npt.NDArray[np.float32]:
             raise AssertionError("embedding rung was reached")
 
-        def embed_many(
-            self, texts: list[str]
-        ) -> list[npt.NDArray[np.float32]]:
+        def embed_many(self, texts: list[str]) -> list[npt.NDArray[np.float32]]:
             raise AssertionError("embedding rung was reached")
 
     record_fact(

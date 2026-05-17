@@ -173,7 +173,7 @@ def _resolve_embedding(
         return None
     try:
         query = active_embedder.embed(needle)
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.exception("embedding the needle failed; skipping embedding rung")
         return None
 

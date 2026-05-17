@@ -81,6 +81,18 @@ ignore_missing_imports = true
 module = "neurodock_mcp_translation.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "sqlite_vec.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastembed.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "rapidfuzz.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["packages"]

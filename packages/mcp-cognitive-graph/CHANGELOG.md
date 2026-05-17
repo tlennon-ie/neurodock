@@ -6,6 +6,70 @@ to [semantic versioning](https://semver.org/spec/v2.0.0.html). Schemas under
 `schemas/` are versioned independently against `v0.1.0` of the contract; the
 package implements that contract.
 
+## [0.0.2] — 2026-05-17
+
+Completes the `recall_entity` resolution cascade by adding the `fuzzy` and
+`embedding` rungs that v0.0.1 deferred. No schema change; the
+`resolution.method` enum in `recall_entity.schema.json` already permits all
+four values. ADR 0002 open question 1 is resolved as **conservative
+defaults** (the second of the three positions in the ADR); profile
+overrides are still a future minor version.
+
+### Added
+
+- Fuzzy resolution rung via `rapidfuzz.fuzz.WRatio` with a 75/100 threshold,
+  scoring every entity's name and aliases and returning the highest-scoring
+  hit. Ties break on `created_at` for deterministic ordering. Cap of 10
+  candidates evaluated per call.
+- Embedding resolution rung via `fastembed.TextEmbedding`
+  (`BAAI/bge-small-en-v1.5` by default). Cosine threshold 0.82 against
+  every (name, alias) surface. Vectors are truncated to 256 dimensions
+  before L2-renormalisation and storage so each BLOB is bounded at ~1 KiB.
+- Optional `sqlite-vec` integration: when the package is installed and the
+  Python build supports `enable_load_extension`, a `vec0` virtual table
+  serves cosine queries. Otherwise a NumPy fallback runs the same cosine
+  pass in Python. Both paths produce identical results on the test corpus.
+- Migration `0002_embeddings.sql` adds `entity_embeddings` and
+  `entity_resolution_cache` tables. Existing v0.0.1 databases upgrade in
+  place on the next `initialise()` call (the applier runs all
+  `NNNN_*.sql` migrations in lexical order on every connection).
+- `__schema_version__` constant in the package root, bumped to `2`.
+- `NEURODOCK_GRAPH_DISABLE_EMBEDDINGS` opt-out env var: when truthy,
+  `get_embedder()` returns `None` and the cascade silently drops the
+  embedding rung. Useful for CI runners that cannot download model files.
+- Write-side embedding indexing: `record_fact` calls
+  `embedding_indexer.index_entity` whenever it auto-creates an entity, so
+  the `entity_embeddings` table stays in sync with `entities`.
+- 22 new tests across four test modules (`test_fuzzy_resolution.py`,
+  `test_embedding_resolution.py`, `test_resolution_cascade.py`,
+  `test_migration_0002.py`). All use stub embedders so the test suite
+  never downloads the real model.
+
+### Dependencies
+
+- `rapidfuzz>=3.10` (runtime).
+- `fastembed>=0.4` (runtime).
+- `numpy>=1.26` (runtime).
+- `sqlite-vec>=0.1.6` (optional, exposed as the `[vec]` extra).
+
+### Thresholds
+
+| Rung      | Threshold       | Score in `resolution.score` |
+|-----------|-----------------|-----------------------------|
+| exact     | n/a             | 1.0                         |
+| alias     | n/a             | 0.95                        |
+| fuzzy     | WRatio >= 75    | WRatio / 100                |
+| embedding | cosine >= 0.82  | cosine (clamped 0..1)       |
+
+### Notes
+
+- The cognitive graph server still does not call out to the network at
+  runtime; `fastembed` downloads the model file once into the user's
+  HuggingFace cache (`~/.cache/huggingface`) on first invocation and reuses
+  it from disk thereafter.
+- ADR 0002 open question 1 (alias-matching thresholds) ships with the
+  **conservative** position. Profile-declared overrides remain future work.
+
 ## [0.0.1] — 2026-05-15
 
 First working slice of the cognitive-graph MCP server. Implements the four

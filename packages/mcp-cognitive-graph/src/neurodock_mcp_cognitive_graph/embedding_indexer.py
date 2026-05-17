@@ -46,7 +46,7 @@ def index_entity(
         return
     try:
         vectors = active.embed_many([text for _, text in surfaces])
-    except Exception:  # noqa: BLE001
+    except Exception:
         logger.exception(
             "embedding entity surfaces failed entity=%s",
             entity.id,
