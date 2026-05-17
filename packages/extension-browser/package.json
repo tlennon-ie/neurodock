@@ -27,7 +27,7 @@
     "ajv-formats": "^3.0.1",
     "idb": "^8.0.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.2.6",
     "yaml": "^2.6.1",
     "zustand": "^5.0.2"
   },
@@ -37,7 +37,7 @@
     "@types/chrome": "^0.0.287",
     "@types/node": "^22.10.5",
     "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "fake-indexeddb": "^6.0.0",
