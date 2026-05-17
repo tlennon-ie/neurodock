@@ -1,0 +1,88 @@
+# Changelog
+
+All notable changes to `neurodock-mcp-translation` are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+This package follows semantic versioning per `plan.md` §4.
+
+## [0.0.1] - 2026-05-17
+
+### Added
+
+- Initial deterministic-baseline implementation of all four translation MCP
+  tools defined in `plan.md` Section 7 and ADR
+  [`0005-translation-tool-design.md`](../../docs/decisions/0005-translation-tool-design.md):
+  - `translate_incoming(text, channel?, thread_context?, target_language?)` —
+    regex-based ambiguity detection (`can we revisit`, `circle back`,
+    `let me know your thoughts`, `no rush`, `quick one`, ...), explicit-ask
+    extraction from question-marked clauses, and a coarse recommended next
+    action.
+  - `check_tone(text, baseline_messages?, target_register?, channel?)` —
+    word-list-based scoring on the directness / warmth / urgency axes, with
+    a >25 percentage-point flagging threshold relative to baseline messages.
+  - `rewrite_outgoing(text, target_register, preserve_terms?, channel?, preserve_intent?)` —
+    register-specific surface transforms (relational opener for `warm`,
+    blunt-opener strip for `direct`, hedge removal for `concise`, contraction
+    expansion for `formal`, clarifying-question reframe for `clarifying`),
+    plus exact-substring verification of every `preserve_terms` entry.
+  - `brief_meeting(transcript, me, project?, speakers?)` — line-indexed
+    transcript scan that partitions asks, decisions, and ambiguous items
+    into the four-section brief, with verbatim-anchor enforcement on every
+    ambiguous item (`VERBATIM_ANCHOR_FAILED` on slice mismatch).
+- LLM-refinement prompt templates as `.prompt.md` resources, one per tool,
+  rendered with the deterministic baseline summary embedded so a caller's
+  MCP client can either use the deterministic answer or refine it against
+  its own configured LLM.
+- Pydantic models (`types.py`) that mirror the JSON Schemas under
+  `packages/mcp-translation/schemas/` (the v0.1.0 wire contract from
+  ADR 0005). The v0.0.1 response envelope wraps these as
+  `{deterministic_analysis, prompt_for_llm_refinement, eval_corpus_slice}`.
+- FastMCP server entrypoint exposed as the `neurodock-mcp-translation`
+  console script and importable as `neurodock_mcp_translation.server.app`.
+- Protocol conformance test that validates every tool's
+  `deterministic_analysis` payload against the v0.1.0 output sub-schemas
+  under `packages/mcp-translation/schemas/`.
+- 29 tests across the four tools plus protocol conformance; 91% line
+  coverage overall, 92-100% on each tool file.
+
+### Design notes
+
+- Per ADR 0005 §1 (and the now-load-bearing precedent across `mcp-chronometric`,
+  `mcp-cognitive-graph`, and this server), the server imports **no LLM
+  vendor SDK**. The substrate is provider-agnostic. Verified via grep of the
+  source tree for `import anthropic | import openai | import ollama |
+  import langchain | import litellm`: zero hits.
+- The server never logs input text. Tool invocations emit a single
+  `tool_invoked` log line with the tool name only.
+- All character offsets in spans and quoted spans are zero-indexed,
+  `start_char` inclusive, `end_char` exclusive, consistent with ADR 0005 §8.
+- The verbatim-anchor enforcement runs on the deterministic baseline as well
+  as the LLM-refined response (the server validates whatever it returns).
+
+### Known limitations / deferred to v0.1.0+
+
+- **No real LLM refinement flow yet.** The server returns the prompt; the
+  caller's MCP client is expected to execute it. Wiring the refinement loop
+  (and merging the LLM response back into the envelope) is Phase 2 work and
+  requires the eval corpus to validate prompt regressions.
+- **English-only heuristics.** BCP-47 `target_language` is accepted as input
+  and rendered into the prompt, but the deterministic ambiguity / tone
+  scoring word lists are English-only. Hiberno-English, German directness,
+  and Japanese keigo packs land as plugins per plan.md §4 / open question 3
+  in ADR 0005.
+- **No `mcp-cognitive-graph` integration.** `check_tone.baseline_messages` is
+  caller-supplied in v0.0.1 (per the ADR's recommended resolution to open
+  question 1). A skill MAY wrap the call and inject baselines from the
+  cognitive graph; the server does not.
+- **No streaming.** Long meeting briefs return as a single response.
+- **No eval corpus yet.** Every response carries an `eval_corpus_slice` path,
+  but the slices themselves are owned by `eval-curator` and populated in
+  Phase 2. CI does not yet gate prompt changes on the corpus.
+- **No language-pack registration.** Open question 3 in ADR 0005 deferred to a
+  separate ADR.
+- **Inline-draft `recommended_next_action.draft_reply` is always null in the
+  deterministic baseline.** The LLM refinement may populate it; the
+  deterministic path does not draft.
+- **`brief_meeting` decision detection is regex-based and conservative.** Some
+  decisions phrased without explicit commitment language ("Wednesday it is.")
+  will be missed by the baseline and surface only via LLM refinement.
