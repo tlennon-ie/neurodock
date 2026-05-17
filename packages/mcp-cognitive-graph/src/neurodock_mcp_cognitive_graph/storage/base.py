@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Protocol
+from typing import Literal, Protocol
 
 from neurodock_mcp_cognitive_graph.types import EntityType, Predicate
+
+SurfaceKind = Literal["name", "alias"]
+"""Whether an embedding row belongs to the canonical name or to an alias."""
 
 DEFAULT_FACTS_CAP = 500
 """Hard cap on facts returned per ``recall_entity`` call."""
@@ -30,6 +33,18 @@ class EntityRow:
     name: str
     aliases: tuple[str, ...] = field(default_factory=tuple)
     created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class EmbeddingRow:
+    """One embedded surface form of an entity (its name or one alias)."""
+
+    entity_id: str
+    surface_kind: SurfaceKind
+    surface_text: str
+    vector: bytes  # raw float32 little-endian bytes
+    dim: int
+    model: str
 
 
 @dataclass(frozen=True)
@@ -139,3 +154,50 @@ class Storage(Protocol):
     ) -> list[FactRow]: ...
 
     def all_entities(self) -> list[EntityRow]: ...
+
+    # -- embeddings (v0.0.2) ---------------------------------------------
+
+    def upsert_embedding(
+        self,
+        entity_id: str,
+        surface_kind: SurfaceKind,
+        surface_text: str,
+        vector: bytes,
+        dim: int,
+        model: str,
+        *,
+        now: datetime,
+    ) -> None:
+        """Insert or replace one embedding row.
+
+        ``surface_kind`` is ``"name"`` for the canonical display name and
+        ``"alias"`` for any of the entity's aliases. The triple
+        ``(entity_id, surface_kind, surface_text)`` is the primary key.
+        """
+
+    def all_embeddings(self) -> list[EmbeddingRow]:
+        """Return every embedding row in stable order. Used by the NumPy
+        fallback when sqlite-vec is unavailable."""
+
+    def delete_embeddings_for_entity(self, entity_id: str) -> None:
+        """Remove all embedding rows for an entity. Used when re-embedding
+        after a model swap is detected."""
+
+    # -- resolution cache (v0.0.2) ---------------------------------------
+
+    def get_cached_resolution(
+        self,
+        input_text: str,
+    ) -> tuple[str, str, float] | None:
+        """Return ``(entity_id, method, score)`` if the input was cached."""
+
+    def cache_resolution(
+        self,
+        input_text: str,
+        entity_id: str,
+        method: str,
+        score: float,
+        *,
+        now: datetime,
+    ) -> None:
+        """Persist a resolved input so subsequent lookups short-circuit."""

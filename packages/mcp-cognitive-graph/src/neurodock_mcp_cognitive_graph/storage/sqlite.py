@@ -19,8 +19,10 @@ from typing import cast
 from neurodock_mcp_cognitive_graph.storage.base import (
     DEFAULT_FACTS_CAP,
     DEFAULT_RELATED_CAP,
+    EmbeddingRow,
     EntityRow,
     FactRow,
+    SurfaceKind,
 )
 from neurodock_mcp_cognitive_graph.types import EntityType, Predicate
 
@@ -310,6 +312,96 @@ class SQLiteStorage:
     def all_entities(self) -> list[EntityRow]:
         cur = self._c.execute("SELECT * FROM entities")
         return [_row_to_entity(r) for r in cur.fetchall()]
+
+    # -- embeddings (v0.0.2) ---------------------------------------------
+
+    def upsert_embedding(
+        self,
+        entity_id: str,
+        surface_kind: SurfaceKind,
+        surface_text: str,
+        vector: bytes,
+        dim: int,
+        model: str,
+        *,
+        now: datetime,
+    ) -> None:
+        self._c.execute(
+            "INSERT INTO entity_embeddings "
+            "(entity_id, surface_kind, surface_text, vector, dim, model, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(entity_id, surface_kind, surface_text) DO UPDATE SET "
+            "  vector = excluded.vector, "
+            "  dim = excluded.dim, "
+            "  model = excluded.model, "
+            "  created_at = excluded.created_at",
+            (entity_id, surface_kind, surface_text, vector, dim, model, now.isoformat()),
+        )
+        self._c.commit()
+
+    def all_embeddings(self) -> list[EmbeddingRow]:
+        cur = self._c.execute(
+            "SELECT entity_id, surface_kind, surface_text, vector, dim, model "
+            "FROM entity_embeddings ORDER BY entity_id, surface_kind, surface_text"
+        )
+        rows: list[EmbeddingRow] = []
+        for r in cur.fetchall():
+            rows.append(
+                EmbeddingRow(
+                    entity_id=r["entity_id"],
+                    surface_kind=cast(SurfaceKind, r["surface_kind"]),
+                    surface_text=r["surface_text"],
+                    vector=bytes(r["vector"]),
+                    dim=int(r["dim"]),
+                    model=r["model"],
+                )
+            )
+        return rows
+
+    def delete_embeddings_for_entity(self, entity_id: str) -> None:
+        self._c.execute(
+            "DELETE FROM entity_embeddings WHERE entity_id = ?",
+            (entity_id,),
+        )
+        self._c.commit()
+
+    # -- resolution cache (v0.0.2) ---------------------------------------
+
+    def get_cached_resolution(
+        self,
+        input_text: str,
+    ) -> tuple[str, str, float] | None:
+        cur = self._c.execute(
+            "SELECT entity_id, method, score FROM entity_resolution_cache "
+            "WHERE input_text = ?",
+            (input_text,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+        return row["entity_id"], row["method"], float(row["score"])
+
+    def cache_resolution(
+        self,
+        input_text: str,
+        entity_id: str,
+        method: str,
+        score: float,
+        *,
+        now: datetime,
+    ) -> None:
+        self._c.execute(
+            "INSERT INTO entity_resolution_cache "
+            "(input_text, entity_id, method, score, resolved_at) "
+            "VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(input_text) DO UPDATE SET "
+            "  entity_id = excluded.entity_id, "
+            "  method = excluded.method, "
+            "  score = excluded.score, "
+            "  resolved_at = excluded.resolved_at",
+            (input_text, entity_id, method, score, now.isoformat()),
+        )
+        self._c.commit()
 
 
 def _iter_migration_resources() -> Iterable[str]:

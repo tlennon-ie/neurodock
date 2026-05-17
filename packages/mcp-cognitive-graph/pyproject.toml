@@ -1,6 +1,6 @@
 [project]
 name = "neurodock-mcp-cognitive-graph"
-version = "0.0.1"
+version = "0.0.2"
 description = "NeuroDock cognitive graph MCP server — persistent entity memory and recall."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -10,6 +10,12 @@ dependencies = [
     "mcp>=1.0.0",
     "pydantic>=2.7",
     "pyyaml>=6.0",
+    # v0.0.2 — embedding-based fuzzy recall. Both are local-only; fastembed
+    # caches its model files under the user's HF cache after first download
+    # and does NOT call out to the network on subsequent runs.
+    "rapidfuzz>=3.10",
+    "fastembed>=0.4",
+    "numpy>=1.26",
 ]
 
 [project.optional-dependencies]
@@ -17,6 +23,13 @@ test = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "jsonschema>=4.0",
+]
+# sqlite-vec is a recommended-but-optional dependency. When present the
+# embedding rung uses a vec0 virtual table for similarity search; absent
+# that, the same algorithm runs in pure NumPy. Both code paths produce
+# identical resolution results.
+vec = [
+    "sqlite-vec>=0.1.6",
 ]
 
 [project.scripts]
@@ -31,3 +44,4 @@ packages = ["src/neurodock_mcp_cognitive_graph"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "src/neurodock_mcp_cognitive_graph/migrations/0001_init.sql" = "neurodock_mcp_cognitive_graph/migrations/0001_init.sql"
+"src/neurodock_mcp_cognitive_graph/migrations/0002_embeddings.sql" = "neurodock_mcp_cognitive_graph/migrations/0002_embeddings.sql"

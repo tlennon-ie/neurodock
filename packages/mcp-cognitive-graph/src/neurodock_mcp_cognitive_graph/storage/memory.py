@@ -14,8 +14,10 @@ from datetime import datetime
 from neurodock_mcp_cognitive_graph.storage.base import (
     DEFAULT_FACTS_CAP,
     DEFAULT_RELATED_CAP,
+    EmbeddingRow,
     EntityRow,
     FactRow,
+    SurfaceKind,
 )
 from neurodock_mcp_cognitive_graph.types import EntityType, Predicate
 
@@ -31,6 +33,10 @@ class InMemoryStorage:
         self._entities: dict[str, EntityRow] = {}
         self._facts: dict[str, FactRow] = {}
         self._provenance: list[tuple[str, str | None, float, datetime]] = []
+        # Keyed by (entity_id, surface_kind, surface_text).
+        self._embeddings: dict[tuple[str, SurfaceKind, str], EmbeddingRow] = {}
+        # input_text -> (entity_id, method, score)
+        self._resolution_cache: dict[str, tuple[str, str, float]] = {}
 
     # -- lifecycle --------------------------------------------------------
 
@@ -201,3 +207,53 @@ class InMemoryStorage:
 
     def all_entities(self) -> list[EntityRow]:
         return list(self._entities.values())
+
+    # -- embeddings (v0.0.2) ---------------------------------------------
+
+    def upsert_embedding(
+        self,
+        entity_id: str,
+        surface_kind: SurfaceKind,
+        surface_text: str,
+        vector: bytes,
+        dim: int,
+        model: str,
+        *,
+        now: datetime,
+    ) -> None:
+        key = (entity_id, surface_kind, surface_text)
+        self._embeddings[key] = EmbeddingRow(
+            entity_id=entity_id,
+            surface_kind=surface_kind,
+            surface_text=surface_text,
+            vector=vector,
+            dim=dim,
+            model=model,
+        )
+
+    def all_embeddings(self) -> list[EmbeddingRow]:
+        return [self._embeddings[k] for k in sorted(self._embeddings.keys())]
+
+    def delete_embeddings_for_entity(self, entity_id: str) -> None:
+        for key in list(self._embeddings.keys()):
+            if key[0] == entity_id:
+                del self._embeddings[key]
+
+    # -- resolution cache (v0.0.2) ---------------------------------------
+
+    def get_cached_resolution(
+        self,
+        input_text: str,
+    ) -> tuple[str, str, float] | None:
+        return self._resolution_cache.get(input_text)
+
+    def cache_resolution(
+        self,
+        input_text: str,
+        entity_id: str,
+        method: str,
+        score: float,
+        *,
+        now: datetime,
+    ) -> None:
+        self._resolution_cache[input_text] = (entity_id, method, score)

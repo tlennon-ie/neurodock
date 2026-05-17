@@ -30,7 +30,13 @@ from neurodock_mcp_cognitive_graph.types import (
 # Backwards-compatible re-export name.
 LiteralObject = LiteralValue
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
+
+__schema_version__ = 2
+"""Storage schema version. Bumped every time a new SQL migration ships in
+``src/neurodock_mcp_cognitive_graph/migrations/``. The migration applier
+runs every ``NNNN_*.sql`` file in lexical order on each connection; existing
+v0.0.1 databases will pick up migration ``0002_embeddings.sql`` in place."""
 
 __all__ = [
     "Decision",
@@ -42,5 +48,6 @@ __all__ = [
     "RecallEntityResult",
     "RecordFactResult",
     "WeeklyRollupResult",
+    "__schema_version__",
     "__version__",
 ]
