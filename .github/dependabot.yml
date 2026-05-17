@@ -14,6 +14,32 @@ updates:
     labels:
       - dependencies
       - npm
+    groups:
+      npm-minor-patch:
+        applies-to: version-updates
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Astro 4 -> 6 is a content-config breaking change; hold for an
+      # explicit migration PR. See PR #11 history.
+      - dependency-name: "astro"
+        update-types: ["version-update:semver-major"]
+      # Starlight major bumps require Astro 5+; tied to astro hold.
+      - dependency-name: "@astrojs/starlight"
+        update-types: ["version-update:semver-major"]
+      # @astrojs/sitemap is pinned via pnpm.overrides to 3.2.1 for the
+      # Starlight + Astro 4.16 workaround.
+      - dependency-name: "@astrojs/sitemap"
+      # Vitest 2 -> 4 breaks pool/transform config used by the extension.
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      # TypeScript major bumps coordinate with docs astro-check.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # Commander 12 -> 14 changes option API used by the CLI.
+      - dependency-name: "commander"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: pip
     directory: "/"
