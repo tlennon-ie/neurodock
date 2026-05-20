@@ -1,13 +1,5 @@
-# NeuroDock CODEOWNERS
-#
-# Default owner is the founding council placeholder. Real council handles
-# need to be filled in once the council is seated. See GOVERNANCE.md.
-#
-# Rules below are evaluated in order; later rules win. Lived-experience
-# review routing is enforced through the contribution guide and CI labels,
-# not through CODEOWNERS (since self-identification cannot be encoded here).
+# CODEOWNERS — every PR pings the default owner. See GOVERNANCE.md for the contribution path.
 
-# Default owners — every PR pings the council placeholder
 * @thomas-lennon
 
 # Workspace tooling

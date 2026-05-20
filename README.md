@@ -38,6 +38,10 @@ the MCP tools under the hood; you just talk.
 
 For testing from a clone (development mode), see `TESTING_LOCAL.md`.
 
+## See it in action
+
+_(demo GIF coming — see [issue #27](https://github.com/tlennon-ie/neurodock/issues/27) — until then, try the [Claude Desktop walkthrough](./examples/claude-desktop/README.md))_
+
 ## What's inside
 
 ```
