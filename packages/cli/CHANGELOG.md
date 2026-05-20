@@ -1,5 +1,28 @@
 # @neurodock/cli changelog
 
+## 0.3.0
+
+### Added
+
+- `neurodock install-all` — single-command first-time install. Detects
+  whether `uv` is on PATH (preferred) and falls back to `python -m pip`,
+  then installs the six Python MCP servers (`neurodock-mcp-chronometric`,
+  `neurodock-mcp-cognitive-graph`, `neurodock-mcp-task-fractionator`,
+  `neurodock-mcp-translation`, `neurodock-mcp-guardrail`,
+  `neurodock-evals`), verifies each entrypoint is on PATH with
+  `<command> --help`, and runs `neurodock init` to wire MCP clients —
+  collapsing six `pip install` lines plus an `init` into one command.
+  Flags: `--client`, `--profile`, `--installer <uv|pip|auto>`,
+  `--skip-install`, `--yes`, `--dry-run`. Exit codes: 0 on success,
+  1 if any entrypoint is missing from PATH, 2 if init fails.
+- `neurodock examples` — copy-pasteable prompt cheat-sheet that exercises
+  every wired NeuroDock MCP tool. Detects which servers are wired across
+  all detected client configs and prints 2–3 example prompts per server,
+  each annotated with the underlying tool name. Flags: `--server <name>`
+  to filter, `--json` for scripting. Honors `NO_COLOR` / `FORCE_COLOR`
+  via the existing `colorEnabled()` helper.
+- New tests: `tests/install-all.test.ts`, `tests/examples.test.ts`.
+
 ## 0.2.0 (unreleased)
 
 ### Added

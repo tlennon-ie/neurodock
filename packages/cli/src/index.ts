@@ -8,10 +8,12 @@ import { runValidate, formatViolation } from "./commands/validate.js";
 import { runUpdate } from "./commands/update.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { runHostInstall, runHostUninstall } from "./commands/host.js";
+import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
+import { runExamples } from "./commands/examples.js";
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.2.0";
+export const CLI_VERSION = "0.3.0";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -33,6 +35,54 @@ export function buildProgram(): Command {
       const profile = validateProfile(opts.profile);
       const result = await runInit({ client, profile, dryRun: opts.dryRun, yes: opts.yes });
       for (const m of result.messages) print(m);
+      process.exit(0);
+    });
+
+  program
+    .command("install-all")
+    .description("install the 6 Python MCP servers and wire MCP clients in one step")
+    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .option("--profile <id>", "minimal | example", "example")
+    .option("--installer <id>", "uv | pip | auto", "auto")
+    .option("--skip-install", "skip the Python install step (only run init)", false)
+    .option("--yes", "answer yes to all prompts (idempotent re-runs, collisions)", false)
+    .option("--dry-run", "print what would happen without writing anything", false)
+    .action(
+      async (opts: {
+        client: string;
+        profile: string;
+        installer: string;
+        skipInstall: boolean;
+        yes: boolean;
+        dryRun: boolean;
+      }) => {
+        const client = validateClient(opts.client);
+        const profile = validateProfile(opts.profile);
+        const installer = validateInstaller(opts.installer);
+        const r = await runInstallAll({
+          client,
+          profile,
+          installer,
+          skipInstall: opts.skipInstall === true,
+          yes: opts.yes === true,
+          dryRun: opts.dryRun === true,
+        });
+        for (const m of r.messages) print(m);
+        process.exit(r.exitCode);
+      },
+    );
+
+  program
+    .command("examples")
+    .description("print copy-pasteable prompts that exercise every wired NeuroDock MCP tool")
+    .option("--server <name>", "filter to a single server (e.g. neurodock-chronometric)")
+    .option("--json", "print the example data as JSON for scripting", false)
+    .action(async (opts: { server?: string; json: boolean }) => {
+      const r = await runExamples({
+        ...(opts.server !== undefined ? { server: opts.server } : {}),
+        json: opts.json === true,
+      });
+      for (const m of r.messages) print(m);
       process.exit(0);
     });
 
@@ -200,6 +250,11 @@ function validateClient(value: string): ClientId | "all" {
 function validateProfile(value: string): "minimal" | "example" {
   if (value === "minimal" || value === "example") return value;
   throw new Error(`Unknown --profile value: ${value}`);
+}
+
+function validateInstaller(value: string): InstallerChoice {
+  if (value === "uv" || value === "pip" || value === "auto") return value;
+  throw new Error(`Unknown --installer value: ${value}`);
 }
 
 function print(line: string): void {
