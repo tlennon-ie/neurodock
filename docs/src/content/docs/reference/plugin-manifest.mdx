@@ -105,14 +105,14 @@ Drives two behaviours: auto-activation against the user's profile, and review ro
 ```yaml
 trust:
   level: community               # Required if trust block present
-  signature: null                # Reserved for Phase 3
+  signature: null                # Reserved — see ROADMAP.md (verified-tier signing)
   reviewed_by: []                # Optional list of Maintainer-registered reviewer handles
 ```
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
 | `level` | enum `community \| reviewed \| verified \| core` | `community` | See the [trust ladder](/contribute/write-a-plugin/#the-trust-ladder). |
-| `signature` | string or null | `null` | Reserved. Phase 3 fills this in. |
+| `signature` | string or null | `null` | Reserved. Verified-tier signing is future work — see [ROADMAP.md](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md). |
 | `reviewed_by` | string[] | `[]` | Maintainer-registered reviewer handles who have signed off. |
 
 ## Composability
@@ -213,7 +213,7 @@ These rules mean a plugin written today against `v0.1.0` of the protocol will st
 
 ## Validating
 
-Until the `neurodock validate <plugin-dir>` CLI subcommand lands in Phase 3, validate with any JSON Schema tool against `packages/core/schemas/plugin.schema.json`:
+Until a dedicated `neurodock validate <plugin-dir>` CLI subcommand lands (planned — see [ROADMAP.md](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md)), validate with any JSON Schema tool against `packages/core/schemas/plugin.schema.json`:
 
 ```bash
 npx -p ajv-cli -p ajv-formats ajv validate \

@@ -1,0 +1,106 @@
+---
+title: mcp-translation
+description: Communication and translation as an MCP server. Four tools, four schemas, no LLM SDK inside the server.
+---
+
+`mcp-translation` decodes corporate ambiguity. It is the substrate's communication-layer server: it scores tone, rewrites for register, decodes incoming subtext, and briefs meeting transcripts. The server itself contains **no LLM SDK** — every tool returns a deterministic baseline plus a structured prompt the caller's MCP client executes against its configured model.
+
+- **Package:** `packages/mcp-translation/`
+- **Version:** `0.0.1` (developer preview, deterministic baseline + LLM-refinement prompt envelope)
+- **Schemas:** `packages/mcp-translation/schemas/*.schema.json`
+- **ADR:** [0005 — Translation tool design](/decisions/0005-translation/)
+- **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-translation/v0.1.0/`
+
+## Design framing
+
+Per [ADR 0005 §2](/decisions/0005-translation/), the server imports no `anthropic`, no `openai`, no `ollama`. The substrate is vendor-neutral by construction. Each tool returns an envelope:
+
+```json
+{
+  "deterministic_analysis": { /* v0.1.0 output shape, populated heuristically */ },
+  "prompt_for_llm_refinement": {
+    "role": "user",
+    "content": "<rendered prompt template>",
+    "output_schema_ref": "packages/mcp-translation/schemas/<tool>.schema.json"
+  },
+  "eval_corpus_slice": "packages/evals/corpora/translation/<slice>.jsonl"
+}
+```
+
+The caller MAY use the deterministic analysis alone (no LLM required) or feed `prompt_for_llm_refinement.content` to its configured model and replace the deterministic block with the refined response. This makes the server useful without a connected LLM and vendor-neutral when one is connected.
+
+## Tools
+
+| Tool | Input | Output |
+|---|---|---|
+| `translate_incoming` | `{ text, channel?, thread_context?, target_language? }` | `{ explicit_ask, likely_subtext[], ambiguity, recommended_next_action, model_provenance, eval_corpus_slice }` |
+| `check_tone` | `{ text, baseline_messages?, target_register?, channel? }` | `{ axes, axes_target?, baseline_delta, flagged_phrases[], suggested_rewrite_hint, model_provenance, eval_corpus_slice }` |
+| `rewrite_outgoing` | `{ text, target_register, preserve_terms?, channel?, preserve_intent? }` | `{ rewritten, preserved_terms[], unpreserved_terms[], diff_summary, model_provenance, eval_corpus_slice }` |
+| `brief_meeting` | `{ transcript, me, project?, speakers? }` | `{ my_asks[], others_asks[], decisions[], ambiguous_items[], model_provenance, eval_corpus_slice }` |
+
+### `translate_incoming`
+
+Decode subtext, ambiguity, and the likely implicit ask in an incoming corporate message. Returns the explicit ask (or `null` if there is none), a ranked list of likely subtext hypotheses with confidence scores, ambiguity spans with character offsets, and a recommended next action.
+
+- `channel` is an enum: `email | slack | linear | github | notion | gdocs | outlook | generic`. Influences register expectations.
+- `thread_context` accepts up to twenty prior messages, oldest first.
+- `target_language` is BCP-47 (`en`, `en-IE`, `de`, `ja`). Used to select a language pack when one is registered.
+
+### `check_tone`
+
+Score an outgoing message on three axes — `directness`, `warmth`, `urgency` — on a 0..100 scale. 50 is neutral, &lt;30 is notably low, &gt;70 is notably high. When `baseline_messages` is supplied (at least three), `baseline_delta` reports how each axis diverges from the sender's usual register in signed percentage points.
+
+- Does **not** rewrite. Pair with `rewrite_outgoing` to actually shift register.
+- `flagged_phrases` use `{start_char, end_char, reason}` — the same shape as `translate_incoming.ambiguity.spans` and `brief_meeting.*.quoted_span` for shared rendering.
+
+### `rewrite_outgoing`
+
+Rewrite an outgoing message toward a `target_register` while preserving caller-named technical terms and the message's underlying intent.
+
+- `target_register` enum: `direct | warm | formal | concise | clarifying`.
+- `preserve_terms` is a caller-supplied list of exact substrings (jargon, system names, ticket ids) that MUST appear verbatim in the rewrite. The server checks this with exact substring match and reports gaps in `unpreserved_terms` — but does **not** auto-retry. A non-empty `unpreserved_terms` is a soft signal the caller may surface or chain another rewrite.
+- `preserve_intent` defaults to `true` and SHOULD be left at the default.
+
+### `brief_meeting`
+
+Convert a transcript into a four-section brief: asks of the recipient, asks the recipient is making of others, concrete decisions, and ambiguous items quoted verbatim from the transcript.
+
+- `transcript` is 20–200,000 characters (roughly a 90-minute meeting). Longer transcripts MUST be chunked by the caller; the tool returns `TRANSCRIPT_TOO_LONG` otherwise.
+- `me` is required. Without a speaker label that identifies the recipient, the four-section partition is ill-defined; the tool returns `ME_REQUIRED` rather than guessing.
+- `ambiguous_items[].quoted_span.text` MUST equal `input.transcript[start_char:end_char]`. The server validates this on every response (including its own deterministic output) and raises `VERBATIM_ANCHOR_FAILED` if the model fabricates a span. This is anti-hallucination armour — a fabricated "ambiguous item" not in the transcript is worse than no brief at all.
+
+## Error codes
+
+| Code | Meaning |
+|---|---|
+| `VERBATIM_ANCHOR_FAILED` | `brief_meeting` produced an ambiguous item whose `quoted_span.text` did not match `transcript[start_char:end_char]`. Caller MUST surface; never silently retry. |
+| `TRANSCRIPT_TOO_LONG` | `brief_meeting` transcript exceeded 200,000 characters. Caller chunks. |
+| `ME_REQUIRED` | `brief_meeting` was called without a `me` label. |
+| `MODEL_UNAVAILABLE` | The caller's MCP client could not reach its configured LLM during refinement. The deterministic baseline is still returned; this error appears in the envelope only when the caller explicitly required refinement. |
+| `INPUT_TOO_LARGE` | An input string exceeded its per-field cap. Caller MUST truncate before retrying. |
+
+## Privacy
+
+- The server stores no inputs. All text is in-memory for the call duration only.
+- The server logs structured event names and outcomes, never input text.
+- PII redaction is upstream (browser extension or caller). The server analyses whatever it is given.
+- `model_provenance` is required output: `{mode, provider, model}`. Surfaces `cloud` vs `local` honestly so a calling surface can render an accurate cloud-mode banner.
+- `brief_meeting` operates on third-party speech (meeting transcripts). Cloud-mode for `brief_meeting` SHOULD prompt the user with a stronger consent surface; that is the calling skill or extension's responsibility, not the server's.
+
+## Versioning
+
+- v0.0.1 envelopes wrap the v0.1.0 wire contract. The envelope collapses to the wire contract once Phase 2 LLM-refinement flow is the default path.
+- Additive-only within the `v0.1.x` line. Channel enum, target-register enum, and error codes are closed at v0.1.0; additions are minor bumps.
+
+## Known limitations (v0.0.1)
+
+- English-only deterministic heuristics. BCP-47 `target_language` is accepted but only passed through to the prompt template.
+- No `model_provenance` from a real LLM. The deterministic analysis sets `mode="unknown"` on every response; a connected MCP client populates this in the refined response.
+- No eval-corpus integration yet. The `eval_corpus_slice` paths are recorded on every response, but the slices themselves are owned by `eval-curator` and land in Phase 2.
+- No streaming. Long meeting transcripts (&gt;200k chars) must be chunked.
+
+## What's next
+
+- [ADR 0005](/decisions/0005-translation/) for the four-tool decomposition rationale and the seventeen binding decisions.
+- [`asd-meeting-translator`](/reference/skills/asd-meeting-translator/) — the reference Phase 2 consumer of `brief_meeting`.
+- [Contribute an eval example](/contribute/contribute-eval-example/) — the lowest-friction way to improve the translation corpus.

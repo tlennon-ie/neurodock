@@ -65,6 +65,6 @@ The default disclosure window is ninety days from acknowledgement. We publish a 
 
 We shorten the window when the fix is trivial and the reporter agrees. We extend the window only by mutual agreement with the reporter, and only when a longer window meaningfully reduces user risk.
 
-## Alignment with 
+## Alignment with the manifesto and governance
 
-This document operationalises (security and supply chain) and inherits the AFK and maintainer coverage commitments from `GOVERNANCE.md`.
+This document operationalises the manifesto's security and supply-chain commitments and inherits the AFK and maintainer-coverage rules from `GOVERNANCE.md`. See `MANIFESTO.md` for the principles this policy enforces and `GOVERNANCE.md` for the maintainer-rotation rules that keep response SLAs honest when any one maintainer is offline.

@@ -1,0 +1,110 @@
+---
+title: asd-meeting-translator
+description: Transcript → four-section brief with verbatim ambiguity quotes. Records decisions into the cognitive graph.
+---
+
+> Source: `packages/skills/asd-meeting-translator/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+A skill that takes a meeting transcript and produces a four-section brief: decisions reached, asks of the user, asks of others, and ambiguous items quoted verbatim from the transcript. It also surfaces prior project decisions from the cognitive graph and writes the new decisions back into it. It does not interpret motivation, infer subtext, or fabricate asks — the `brief_meeting` server enforces verbatim anchoring and rejects fabrications with `VERBATIM_ANCHOR_FAILED`.
+
+## Frontmatter summary
+
+| Field | Value |
+|---|---|
+| `name` | `asd-meeting-translator` |
+| `version` | `0.1.0` |
+| `status` | `beta` |
+| `neurotypes` | `["asd"]` |
+| `license` | `AGPL-3.0-or-later` |
+
+## Triggers
+
+- Slash command: `/brief` or `/meeting`.
+- Semantic match against phrases: *"summarize this meeting"*, *"summarise this meeting"*, *"what did we agree"*, *"what did I commit to"*.
+- File pattern: `*.transcript.txt` or `*.meeting.md` is attached or referenced.
+- Heuristic: the user pastes ≥ 200 lines of speaker-labelled prose with no specific instruction. The skill offers the brief in one line rather than running silently: `Looks like a transcript. Want a brief? (decisions, asks, ambiguous items)`.
+
+The skill does not activate inside an ongoing conversation that already has the brief on screen, and it does not activate on chat logs that are not meeting transcripts (PR review threads, Slack DMs) — those are translation-layer work.
+
+## MCP dependencies
+
+- [`mcp-translation`](/reference/mcp-servers/translation/) — `brief_meeting` is the core call.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — `record_fact` (writes decisions), `recall_decisions` (pulls prior project decisions for the closing section).
+
+## Profile dependencies
+
+- `identity.neurotypes` — gates activation.
+- `identity.display_name` — used to resolve the `me` speaker label without asking. If unset, the skill asks one clarifying question; if no answer, it stops.
+
+## Required inputs
+
+Two things before `brief_meeting` is called:
+
+1. **A transcript of 20–200,000 characters.** Shorter → tell the user the input is too short. Longer (roughly a 90-minute meeting) → tell the user to chunk and call once per chunk.
+2. **A `me` label that identifies the user in the transcript.** Resolution order: (a) `profile.identity.display_name` if set; (b) ask exactly one question — `Which name in this transcript is you?` — and stop if no answer. Do not guess; the verbatim-anchor downstream will reject fabricated attributions.
+
+## Operating contract
+
+Follow in order. No improvised tool calls.
+
+1. **Detect the project** if possible, from the invoking message (`/brief neurodock`) or from the first 1000 characters of the transcript (`Project:`, `Re:`). If not found, leave unset; do not invent.
+2. **Call `brief_meeting`** with `transcript`, `me`, and `project` if known. Pass `speakers` only if the user supplied a roster.
+3. **Handle errors plainly.** `VERBATIM_ANCHOR_FAILED` is surfaced verbatim and the skill stops — never silently retry. `TRANSCRIPT_TOO_LONG`, `ME_REQUIRED`, `MODEL_UNAVAILABLE` each get a one-line plain explanation. Any other error: name the code and stop.
+4. **Pull prior project decisions** with `recall_decisions(project, since=30 days ago)` only if `project` is set. Keep up to three most-recent. Never query an unscoped graph.
+5. **Render the four-section brief** in strict Answer-First structure. The brief is the deliverable; no follow-up question.
+6. **Record decisions into the graph** — for each item in `output.decisions`, one `record_fact` call with `predicate: "decided_in"` and `object: {type: "project", name: <project>}` if project is set. Decisions only; no asks, no ambiguous items. Cap at 10 writes; mention truncation in the closing line.
+7. **Stop.**
+
+## Output format
+
+The first sentence must fit in 80 characters and state four counts in order: decisions / asks of you / asks of others / ambiguous items.
+
+```
+Brief: 4 decisions, 2 asks of you, 3 asks of others, 2 ambiguous items.
+
+### Decisions
+- <decision.text> · decided by <decided_by> (or "unattributed")
+
+### Asks of you
+- <ask.text> · due <ask.due> (or "(no deadline stated)") · asked by <ask.asker or "unattributed">
+
+### Asks of others
+- <ask.text> · asked by <ask.asker> · due <ask.due>
+
+### Ambiguous items
+- "<quoted_span.text>" — <ambiguous_item.reason>
+
+### Prior decisions on this project (last 30 days)
+- <decision name> (<decided_on>)
+
+Source: meeting transcript. Model: <provider>/<model> (<mode>). Decisions written to graph: <N>.
+```
+
+Rules:
+
+- Ambiguous items quote `quoted_span.text` character-for-character. Do not paraphrase, do not normalise punctuation, do not strip speaker labels.
+- Unknown reason codes render as `other`.
+- Empty sections render `- (none)` rather than dropping the header — the structure stays predictable.
+- The "Prior decisions" section is omitted entirely when `project` is unset or `recall_decisions` returned nothing.
+- If `model_provenance.mode == "cloud"`, prepend `Cloud mode.` to the closing line so the user can see where their transcript was sent.
+
+## Distress signal handling
+
+If the invoking message contains overwhelm phrases — `I can't`, `too much`, `overwhelmed`, `I'm stuck`, `exhausted`, `burned out` — the skill keeps the brief but trims each section to **3 bullets maximum**, drops the rest into `(N further items in the transcript)`, and replaces `Model:` with `Model: configured LLM`. The skill does not lecture, diagnose, or refuse.
+
+## Hard refusals
+
+- Does not interpret motivation. "Priya seemed frustrated" is out of scope; what was said is in scope.
+- Does not paraphrase ambiguous items. The verbatim span is the contract.
+- Does not invent asker names. `null` renders as `unattributed`.
+- Does not retry on `VERBATIM_ANCHOR_FAILED`. The user decides whether to try again.
+- Does not record asks or ambiguous items into the graph. Decisions only.
+- Does not use the words `autistic`, `neurodivergent`, `spectrum`, `executive function`, `neurotype`, `clinical`, `symptom` in user-facing output.
+- Does not use motivational language: `superpower`, `crusher`, `smash`, `you got this`, `let's go`, `differently abled`.
+- Does not append a follow-up question. The brief is the deliverable.
+
+## What's next
+
+- [`mcp-translation` reference](/reference/mcp-servers/translation/) — the server that backs `brief_meeting`.
+- [Write a skill](/contribute/write-a-skill/) for the skill-author contract.
+- The skill's test corpus lives at `packages/skills/asd-meeting-translator/tests/`; CI replays it against a reference MCP client on every PR.

@@ -16,31 +16,34 @@ hero:
 
 NeuroDock consolidates the currently fragmented ecosystem of ADHD, autistic, AuDHD, and OCD-supportive AI tooling into one composable stack. It is anchored by three pillars: a **substrate** of skills and MCP servers that externalise executive function, a **communication layer** that translates corporate ambiguity and modulates tone, and a **clinical guardrails** layer that prevents AI from amplifying rumination, hyperfocus, and sycophancy.
 
-## What you can do today (Phase 1)
+## What you can do today (v0.2.1)
+
+All three pillars are live on `main` and installable from npm + PyPI. See [`CHANGELOG.md`](https://github.com/tlennon-ie/neurodock/blob/main/CHANGELOG.md) for the per-package version index.
 
 ### Substrate
 
-Three MCP servers ship in `v0.1`:
+Three MCP servers, all published to PyPI:
 
-- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) — time, session, and break management.
-- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) — persistent entity memory and recall, local-first.
-- [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) — decompose vague goals into atomic 5–90 minute tasks.
+- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) `v0.0.1` — time, session, and break management.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) `v0.0.2` — persistent entity memory and recall, local-first, with a 4-rung resolution cascade (exact → alias → fuzzy → embedding).
+- [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) `v0.0.2` — decompose vague goals into atomic 5–90 minute tasks (ISO 8601 duration parsing).
 
-Five launch skills compose those servers into daily-use workflows:
+Six skills compose those servers into daily-use workflows:
 
 - [`adhd-daily-planner`](/reference/skills/adhd-daily-planner/) — Monday-morning brief.
 - [`audhd-context-recovery`](/reference/skills/audhd-context-recovery/) — `/resume` from yesterday's state.
 - [`ocd-decision-finalizer`](/reference/skills/ocd-decision-finalizer/) — refuse to re-validate a closed decision.
 - [`hyperfocus-formatter`](/reference/skills/hyperfocus-formatter/) — "Answer First" output shaping.
 - [`visual-organizer`](/reference/skills/visual-organizer/) — Mermaid for overwhelm states.
+- `asd-meeting-translator` — transcript → four-section brief with verbatim ambiguity quotes.
 
 ### Communication layer
 
-Public beta in Phase 2. Bidirectional translation of corporate communication: literal-translate incoming subtext, tone-check outgoing messages, structure meeting transcripts.
+`mcp-translation` `v0.0.1` ships a deterministic baseline plus an LLM refinement envelope, both behind one MCP contract. Bidirectional translation of corporate communication: literal-translate incoming subtext, tone-check outgoing messages, structure meeting transcripts. Real provider wiring (Ollama, Anthropic, OpenAI) is on the [Q3 2026 roadmap](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md#next--q3-2026).
 
 ### Guardrails
 
-Detection alpha in Phase 2, full release in Phase 3. Rumination, hyperfocus, and sycophancy detection — transparent, user-configured, overridable.
+`mcp-guardrail` `v0.0.2` ships all three detectors live: rumination, hyperfocus, and sycophancy (48 tests). Transparent, user-configured, overridable. Thresholds live in the user's profile under `guardrails`.
 
 ## Principles
 

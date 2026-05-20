@@ -1,9 +1,9 @@
 ---
 title: Substrate
-description: The MCP servers that externalise executive function. Three of them ship in Phase 1.
+description: The MCP servers that externalise executive function. Three shipped in v0.2.1.
 ---
 
-The substrate is the layer of MCP servers and skills that externalise executive function — time awareness, persistent memory, task decomposition. Three MCP servers ship in `v0.1`. Each is small, single-purpose, and independently versioned.
+The substrate is the layer of MCP servers and skills that externalise executive function — time awareness, persistent memory, task decomposition. Three MCP servers shipped in `v0.2.1` and are installable from PyPI. Each is small, single-purpose, and independently versioned.
 
 ## What an MCP server is
 
@@ -17,7 +17,7 @@ NeuroDock's substrate is a set of MCP servers, not a wrapper around any one mode
 - **Auditable.** Tool calls are visible in the client. Every nudge, every recall, every decomposition is inspectable.
 - **Composable.** Skills compose tool calls; tools compose into skills. Nothing is a monolith.
 
-## The three substrate servers (Phase 1)
+## The three substrate servers
 
 | Server | Tools | Job |
 |---|---|---|
@@ -40,9 +40,9 @@ These are inherited from [ADR 0001](/decisions/0001-chronometric/) and adopted b
 
 See the [decisions index](/decisions/) for the full set of design ADRs.
 
-## What is NOT in the substrate (Phase 1)
+## What is NOT in the substrate
 
-- **No LLM call from inside a substrate server.** The user's MCP client is the only LLM boundary. The cognitive graph's `weekly_rollup` and the fractionator's decomposition both use local heuristics; the LLM-assisted variants land in `v0.2`.
+- **No LLM call from inside a substrate server.** The user's MCP client is the only LLM boundary. The cognitive graph's `weekly_rollup` and the fractionator's decomposition both use local heuristics. LLM-assisted variants are an envelope on the caller side — see `mcp-translation` `v0.0.1` for the deterministic-plus-LLM-envelope pattern.
 - **No remote storage.** SQLite + `sqlite-vec` lives at `~/.neurodock/store.sqlite`. SQLCipher is the opt-in at-rest encryption layer.
 - **No telemetry.** The substrate has no remote endpoint to send to.
 
@@ -50,4 +50,4 @@ See the [decisions index](/decisions/) for the full set of design ADRs.
 
 - [Skills](/concepts/skills/) — how user-facing workflows compose substrate tools.
 - [Profiles](/concepts/profiles/) — the consent and preference manifest every server reads.
-- [Guardrails](/concepts/guardrails/) — the clinical safety layer (Phase 3, with Phase 1 hooks already in the profile).
+- [Guardrails](/concepts/guardrails/) — the clinical safety layer. `mcp-guardrail` `v0.0.2` ships all three detectors live; profile-level hooks under `guardrails` configure them.

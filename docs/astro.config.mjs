@@ -21,6 +21,32 @@ export default defineConfig({
         replacesTitle: false,
       },
       favicon: "/favicon.svg",
+      // OpenGraph + Twitter social card. SVG is intentional: GitHub's
+      // social-card preview server and most messaging clients accept it,
+      // and we avoid shipping a rasterised duplicate that drifts from
+      // the visual tokens in src/styles/tokens.css. See docs/public/og-image.svg.
+      head: [
+        {
+          tag: "meta",
+          attrs: { property: "og:image", content: "/og-image.svg" },
+        },
+        {
+          tag: "meta",
+          attrs: { property: "og:image:width", content: "1200" },
+        },
+        {
+          tag: "meta",
+          attrs: { property: "og:image:height", content: "630" },
+        },
+        {
+          tag: "meta",
+          attrs: { name: "twitter:card", content: "summary_large_image" },
+        },
+        {
+          tag: "meta",
+          attrs: { name: "twitter:image", content: "/og-image.svg" },
+        },
+      ],
       social: {
         github: "https://github.com/tlennon-ie/neurodock",
       },
@@ -80,6 +106,14 @@ export default defineConfig({
                   label: "mcp-task-fractionator",
                   link: "/reference/mcp-servers/task-fractionator/",
                 },
+                {
+                  label: "mcp-translation",
+                  link: "/reference/mcp-servers/translation/",
+                },
+                {
+                  label: "mcp-guardrail",
+                  link: "/reference/mcp-servers/guardrail/",
+                },
               ],
             },
             {
@@ -88,6 +122,10 @@ export default defineConfig({
                 {
                   label: "adhd-daily-planner",
                   link: "/reference/skills/adhd-daily-planner/",
+                },
+                {
+                  label: "asd-meeting-translator",
+                  link: "/reference/skills/asd-meeting-translator/",
                 },
                 {
                   label: "audhd-context-recovery",
@@ -131,6 +169,18 @@ export default defineConfig({
             {
               label: "0004 — Profile schema design",
               link: "/decisions/0004-profile/",
+            },
+            {
+              label: "0005 — Translation tool design",
+              link: "/decisions/0005-translation/",
+            },
+            {
+              label: "0006 — Guardrail tool design",
+              link: "/decisions/0006-guardrail/",
+            },
+            {
+              label: "0007 — Plugin protocol design",
+              link: "/decisions/0007-plugin-protocol/",
             },
           ],
         },

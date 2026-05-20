@@ -29,12 +29,12 @@ Every plugin declares one of four trust levels. The levels are not a hierarchy o
 |---|---|---|
 | `community` | Anyone, by default. | Loads on explicit user opt-in; surfaces a "community plugin" notice on first activation. |
 | `reviewed` | Plugins that have passed lived-experience review. | Loads on explicit opt-in; no first-activation notice. |
-| `verified` | Plugins signed against the maintainer-curated keyring (Phase 3). | Loads on profile match; the signature is the consent. |
+| `verified` | Plugins signed against the maintainer-curated keyring (planned — see [ROADMAP.md](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md)). | Loads on profile match; the signature is the consent. |
 | `core` | First-party packages from this repository. | Loads on profile match; the substrate vouches for it. |
 
 The substrate never silently elevates a plugin. Promotion requires a deliberate review step. There is no automatic promotion based on download count, usage, or time.
 
-Signing infrastructure (the `verified` tier) lands in Phase 3 alongside the federated registry at `plugins.neurodock.org`. Until then, the `trust.signature` field is reserved in the manifest but unenforced.
+Signing infrastructure (the `verified` tier) is future work alongside the plugin marketplace — see [ROADMAP.md](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md) §Later. Until then, the `trust.signature` field is reserved in the manifest but unenforced.
 
 ## How profile composability decides auto-activation
 
@@ -61,9 +61,9 @@ A plugin that depends on a profile field set to a value the plugin cannot honour
 
 See [Write a plugin: the six plugin types](/contribute/write-a-plugin/#the-six-plugin-types) for picking guidance.
 
-## The federated registry (Phase 3)
+## The federated registry (planned)
 
-A public registry at `plugins.neurodock.org` ships in Phase 3 alongside the marketplace. The registry indexes plugin manifests for discovery and lets users install plugins with a single command. Signed plugins surface verified-tier badges; unsigned plugins surface `community` tier notices.
+A plugin marketplace and federated registry are tracked on [ROADMAP.md](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md) §Later. The registry would index plugin manifests for discovery and let users install plugins with a single command. Signed plugins would surface verified-tier badges; unsigned plugins would surface `community` tier notices.
 
 The registry is intentionally federated. The protocol for a plugin registry is open; anyone can run a fork; the maintainer operates the canonical one. This is the same federation principle that applies to the eval corpus (`packages/evals/`) and the language packs: no single index can become a chokepoint for what counts as a legitimate plugin.
 

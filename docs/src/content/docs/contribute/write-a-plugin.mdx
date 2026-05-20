@@ -69,7 +69,7 @@ Each of the six types has its own per-page guide for the assets it needs. Open t
 
 ### 5. Validate locally
 
-The substrate's plugin schema lives at `packages/core/schemas/plugin.schema.json`. Until the dedicated `neurodock validate` CLI subcommand lands in Phase 3, validate using any JSON Schema tool:
+The substrate's plugin schema lives at `packages/core/schemas/plugin.schema.json`. A dedicated `neurodock validate <plugin-dir>` CLI subcommand is future work (see [Future work](#future-work) below); until then, validate using any JSON Schema tool:
 
 ```bash
 # Example with ajv-cli (one option among several).
@@ -79,7 +79,7 @@ npx -p ajv-cli -p ajv-formats ajv validate \
   --spec=draft2020 --strict=false
 ```
 
-A clean validation prints `valid`. A failed validation prints a path to the offending field. The CLI subcommand `neurodock validate <plugin-dir>` ships in Phase 3 alongside the marketplace; until then, raw JSON Schema validation is the supported path.
+A clean validation prints `valid`. A failed validation prints a path to the offending field. Raw JSON Schema validation is the supported path today; a dedicated plugin-directory CLI subcommand is tracked under [Future work](#future-work) below.
 
 ### 6. Install locally and reload
 
@@ -107,10 +107,10 @@ Every plugin declares a `trust.level` value. The four tiers — `community`, `re
 |---|---|---|
 | `community` | Anyone. Default for any contributor. | Loads on explicit user opt-in. Surfaces a clear "community plugin" notice on first activation. |
 | `reviewed` | Plugins that have passed lived-experience review by at least one Maintainer-registered reviewer with the relevant neurotype tag. | Loads on explicit user opt-in. No first-activation notice. |
-| `verified` | Plugins signed against the maintainer-curated keyring. Phase 3. | Loads on profile match. No notice needed; the signature is the consent. |
+| `verified` | Plugins signed against the maintainer-curated keyring (future work — see [Future work](#future-work)). | Loads on profile match. No notice needed; the signature is the consent. |
 | `core` | First-party packages shipped from this repository. | Loads on profile match. No notice; the substrate vouches for it. |
 
-When you are a brand-new contributor, you start at `community`. To graduate to `reviewed`, request a lived-experience review through the `community-triage` agent — this is the existing review channel and is not new ceremony. To graduate to `verified`, the maintainer adds your author key to the keyring; the signing infrastructure lands in Phase 3 with the marketplace, so today this level is a forward-compatible field that the loader recognises but the toolchain does not yet enforce.
+When you are a brand-new contributor, you start at `community`. To graduate to `reviewed`, request a lived-experience review through the `community-triage` agent — this is the existing review channel and is not new ceremony. To graduate to `verified`, the maintainer adds your author key to the keyring; the signing infrastructure is future work alongside the marketplace (see [Future work](#future-work)), so today this level is a forward-compatible field that the loader recognises but the toolchain does not yet enforce.
 
 The substrate never silently elevates a plugin. A `community` plugin stays `community` until a higher-tier review process touches it. There is no automatic promotion.
 
@@ -152,7 +152,7 @@ Auto-activation is decided by **profile composability**. A plugin's manifest dec
 
 The `trust.signature` field is reserved in `v0.1.0` of the manifest. The loader recognises the field but does not yet verify a signature against it; this is forward-compatibility for the `verified` tier.
 
-Verified-tier signing lands in Phase 3 alongside the federated registry at `plugins.neurodock.org`. The signing process the maintainer will operate:
+Verified-tier signing is future work alongside the federated registry (see [Future work](#future-work)). The signing process the maintainer will operate:
 
 - A per-author signing key. Authors generate the key locally; the private half never leaves their machine.
 - A Maintainer-curated keyring of recognised author keys, published in the repository and signed by the maintainer's own root.
@@ -169,7 +169,7 @@ Three distribution paths, in increasing order of reach:
 
 2. **GitHub repo plus manual install.** Your plugin lives in its own repo. Users install it by cloning into `~/.neurodock/plugins/` or by following whatever install instructions you write. Slower reach (no central discovery), full author control (your repo, your rules), zero project-side review (this is also a trust ladder concern — see above). This is the right path for plugins that are domain-specific, employer-specific, or experimental.
 
-3. **Federated registry at `plugins.neurodock.org`.** Coming in Phase 3 (target: v0.3). Authors register their plugin's manifest URL with the registry; the registry indexes for discovery; users install with `neurodock plugin install <name>`. Signed plugins surface verified-tier badges; unsigned plugins surface `community` tier notices. The registry is intentionally federated — anyone can run a fork — and the maintainer operates the canonical one. No specific dates yet; we will document the onboarding when it lands.
+3. **Federated registry.** Future work — see [Future work](#future-work). Authors will register their plugin's manifest URL with the registry; the registry indexes for discovery; users will install with `neurodock plugin install <name>`. Signed plugins surface verified-tier badges; unsigned plugins surface `community` tier notices. The registry is intentionally federated — anyone can run a fork — and the maintainer operates the canonical one.
 
 ## Lived-experience review
 
@@ -190,10 +190,21 @@ The same spirit as `CONTRIBUTING.md`. Four categories of plugin will not be acce
 
 This is not an exhaustive list. the maintainer has discretion on edge cases. Where we reject, we explain the reasoning and link to the relevant principle.
 
+## Future work
+
+A small set of plugin-ecosystem items is intentionally out of scope for v0.2.1. They are tracked on [`ROADMAP.md`](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md) §Later under "Plugin marketplace" and elsewhere:
+
+- **Plugin marketplace and federated registry** at a canonical discovery host. The registry would index third-party plugin manifests and let users install with `neurodock plugin install <name>`.
+- **Verified-tier signing infrastructure.** A maintainer-curated author keyring plus loader-side signature verification, populating the `trust.signature` field.
+- **Dedicated `neurodock validate <plugin-dir>` CLI subcommand.** Today the CLI ships `neurodock validate` for profiles; plugin-directory validation is still raw JSON Schema.
+- **`#plugins` Discord channel.** Community-infrastructure work owned by the `community-triage` agent.
+
+Until those land, the supported paths are: in-tree plugins (`plugins/`), per-user plugins (`~/.neurodock/plugins/`), and raw JSON Schema validation. The `trust.signature` field stays `null`. None of this blocks shipping a working plugin today.
+
 ## Get help
 
 - **GitHub Discussions** at `github.com/tlennon-ie/neurodock/discussions` is the slowest path and the path most likely to produce a written record useful to the next contributor with the same question. Prefer it for questions that aren't urgent.
-- **`#plugins` Discord channel** is the live channel. The channel is being set up by the `community-triage` agent as part of Phase 3 community infrastructure — until then, use Discussions. We will link the invite from this page when it goes live.
+- **`#plugins` Discord channel** is planned as a live channel — see [Future work](#future-work). Until it exists, use GitHub Discussions; we will link the invite from this page when it goes live.
 - **The `community-triage` agent** triages new contributor PRs and opens issues. If you don't know which lane your question belongs in, that agent will route you.
 
 You do not have to know everything before you start. Opening a draft PR with a half-finished manifest is welcome; we would rather review iterations than absences.

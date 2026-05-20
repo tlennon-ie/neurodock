@@ -41,7 +41,7 @@ privacy:
 - **`identity`** — the only required block. Self-identified `neurotypes`; diagnosis is never asked for.
 - **`preferences`** — output format, chunk size, font hint, motion. All defaulted by the loader.
 - **`chronometric`** — break thresholds, end-of-day cut-off. Read by `mcp-chronometric` and the hyperfocus monitor.
-- **`guardrails`** — rumination window and threshold, sycophancy posture. Read by `mcp-guardrail` (Phase 3) and by Phase 1's `sycophancy_check` field.
+- **`guardrails`** — rumination window and threshold, sycophancy posture. Read by `mcp-guardrail` `v0.0.2` (all three detectors live) and surfaced through the `sycophancy_check` field.
 - **`privacy`** — three independent consent gates: embeddings (local vs cloud), telemetry, and OS idle access.
 
 Full field-level reference: [profile schema](/reference/profile-schema/). Rationale: [ADR 0004](/decisions/0004-profile/).
@@ -87,4 +87,4 @@ Surfaces typos (which permissive parsing would otherwise swallow), out-of-range 
 
 - [Run your first skill](/getting-started/first-skill/) if you have not already.
 - [Substrate concepts](/concepts/substrate/) to understand what each MCP server does.
-- [Guardrails](/concepts/guardrails/) for what the `guardrails` block controls now and in Phase 3.
+- [Guardrails](/concepts/guardrails/) for what the `guardrails` block controls.

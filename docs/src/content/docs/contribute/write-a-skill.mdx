@@ -18,15 +18,15 @@ pnpm install
 uv sync
 ```
 
-## 2. Copy the template
+## 2. Copy an existing skill as your template
+
+The canonical copy-from skill is [`packages/skills/adhd-daily-planner/`](https://github.com/tlennon-ie/neurodock/tree/main/packages/skills/adhd-daily-planner) — it is `v0.1.0`, `status: stable`, and exercises every piece of the contract (frontmatter, triggers, MCP dependencies, profile dependencies, body, tests).
 
 ```bash
-cp -R packages/skills/_template packages/skills/<your-skill-name>
+cp -R packages/skills/adhd-daily-planner packages/skills/<your-skill-name>
 ```
 
-:::note[Template not yet in tree]
-The `packages/skills/_template/` directory is a Phase 1 deliverable owned by `skill-author`. Until it lands, copy an existing skill (e.g. `packages/skills/adhd-daily-planner/`) and rename it. The five launch skills are all currently `status: stub` so you will be inheriting a stub, not a finished implementation — that is fine for scaffolding the shape.
-:::
+Then rewrite `SKILL.md` for your skill: change `name`, `description`, `neurotypes`, `triggers`, `mcp_dependencies`, `profile_dependencies`, and the body itself. Replace the contents of `tests/` with at least three of your own test invocations. There is no `_template` directory — every shipped skill is a working example and any of them is a valid starting point. If you want a different shape (a guardrail-hooked skill, a content-only skill, a passive-formatter skill), pick the closest shipped skill from `packages/skills/` and copy that one instead.
 
 ## 3. Edit `SKILL.md`
 
@@ -96,6 +96,6 @@ Two reviewers will be auto-requested via CODEOWNERS: one core maintainer plus on
 
 ## What's next
 
-- [Contribute an eval example](/contribute/contribute-eval-example/) (Phase 2).
+- [Contribute an eval example](/contribute/contribute-eval-example/) — eval corpus growth is on the [Q3 2026 roadmap](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md#next--q3-2026).
 - [Governance](/contribute/governance/) for how your PR is reviewed.
 - Read [Concepts: skills](/concepts/skills/) for the bigger picture.

@@ -1,0 +1,82 @@
+---
+title: 0007 — Plugin protocol design
+description: One plugin.yaml manifest, six plugin types, four-tier trust ladder, SPDX whitelist. Filesystem discovery; federated registry indexes the same manifests in Phase 3.
+---
+
+> **Source:** `docs/decisions/0007-plugin-protocol.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered, the ten binding decisions, and the implementer's notes.
+
+- **Status:** Proposed
+- **Date:** 2026-05-16
+- **Deciders:** maintainer (TBD), `mcp-architect`
+
+## Context
+
+The plan defines the plugin protocol in one paragraph: every directory under `plugins/` ships a `plugin.yaml` manifest declaring name, type, version, neurotype tags, and trust level; the substrate auto-discovers plugins matching the user's profile. Phase 3 promises a federated registry at `plugins.neurodock.org` and language packs for ≥ 3 locales. ADR 0005 flagged that the language-pack manifest schema would need its own ADR before external contributors could land packs. This ADR is that schema.
+
+Three properties make the contract load-bearing: six plugin types across two ecosystems (Python and TypeScript), trust without central authority (air-gapped installs must work), and AGPL license-boundary protection.
+
+## Decision
+
+Adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validation.** Schema lives at `packages/core/schemas/plugin.schema.json`. Discovery is filesystem-based in v0.1.0; the federated registry indexes the same manifests in Phase 3.
+
+Alternatives rejected:
+
+- **Ad-hoc plugin discovery (no manifest)** — can't express cross-cutting metadata (trust, license, neurotypes, locale).
+- **Reuse `package.json` or `pyproject.toml`** — couples manifest to language ecosystems; profiles and language packs have neither.
+- **One global registry file** — single-point-of-merge-conflict; breaks the drop-a-directory air-gapped install.
+
+## Ten binding design decisions
+
+1. **Forward-compatibility is paramount.** `additionalProperties: true` at every nesting level. Loaders preserve unknown keys on round-trip. Mirrors [ADR 0004](/decisions/0004-profile/). Adding a new plugin type, asset sub-type, optional field, or trust level is additive — no major bump required.
+
+2. **Four-tier trust ladder.**
+   - `official` — published by the maintainer. Installs without prompting.
+   - `verified` — signed by a contributor whose key is in the maintainer-curated keyring. Installs without prompting (signature verification ships Phase 3).
+   - `community` — signed by the author's own key. Provenance recorded but not vouched. Prompts the user per profile preference.
+   - `experimental` — unsigned. Substrate refuses by default; user opts in explicitly.
+
+3. **Six plugin types (extends plan.md's five).** `skill | mcp-server | profile | translation-pack | language-pack | theme`. `theme` is added in v0.1.0 because `design-system-keeper` already needs the format. Adding a new type later is forward-compat: v0.1.0 loaders encountering an unknown `type` MUST skip with a structured `unknown_plugin_type` warning rather than erroring.
+
+4. **Discovery via filesystem scan.** Two roots at init: `<repo>/plugins/*/plugin.yaml` and the platform's per-user XDG-style root. No central registry required; the federated registry is opt-in.
+
+5. **`requires` is hard but acyclic.** Plugin requirement graph runs Tarjan's strongly-connected-components at load. Any SCC with size ≥ 2 is a cycle; the loader refuses every plugin in the SCC.
+
+6. **`provides[].path` paths are sandboxed.** Resolved against the plugin's absolute directory; rejected if the resolved path escapes the directory, follows a symlink out, or is absolute/Windows-drive-prefixed. Validation runs at manifest load before any asset is opened.
+
+7. **License compatibility is enforced at load.** SPDX whitelist: `AGPL-3.0-or-later`, `AGPL-3.0-only`, `GPL-3.0-or-later`, `GPL-3.0-only`, `LGPL-3.0-or-later`, `MIT`, `Apache-2.0`, `BSD-3-Clause`, `BSD-2-Clause`, `ISC`, `MPL-2.0`, `CC0-1.0`. Plugins with any other value refuse to load with `license_not_allowed`. `LicenseRef-*` is not accepted in v0.1.0.
+
+8. **Signature mechanism is reserved in v0.1.0; verified in Phase 3.** The schema reserves `trust.signature` and `trust.keyring_fingerprint`. v0.1.0 loaders store the signature on round-trip but do not verify it.
+
+9. **Hooks are optional and refuse-by-default in v0.1.0.** `on_install` and `on_uninstall` are paths to scripts inside the plugin directory. Hook execution refuses unless `trust.level in {official, verified}`. The Phase 3 sandbox allow-list (read-only FS inside the plugin directory; no network; allow-listed executables) is sketched but deferred.
+
+10. **Profile composability decides auto-activation.** A plugin's `neurotypes` array intersects with `profile.identity.neurotypes`:
+    - Empty plugin `neurotypes` (or omitted) → neurotype-agnostic → auto-activate.
+    - Non-empty intersection → auto-activate.
+    - Empty intersection → installed-but-not-activated; user can enable manually.
+
+    For language-pack and translation-pack, `locale` intersects similarly. Profile remains the single consent surface.
+
+## Cross-cutting rules established here
+
+- **Round-trip preservation.** YAML write paths use comment-preserving libraries (`ruamel.yaml`; equivalent in TS). Read paths may use simpler libraries.
+- **Versioning posture.** Patch and minor bumps within `v0.1.x` MUST be additive-only. Renames, value removals, required-field additions are major bumps at `/v1.0.0/...`.
+- **Vendor neutrality.** Plugins of `type: mcp-server` MUST NOT bundle vendor SDKs.
+- **Structured errors, never silent.** Every loader failure has a stable error code: `unknown_plugin_type`, `plugin_requirement_cycle`, `license_not_allowed`, `path_sandbox_violation`, `hook_sandbox_violation`, `signature_invalid`.
+
+## Open questions
+
+The full ADR carries six open questions:
+
+1. Signing key management for `verified` plugins. (Recommended: per-author keys with maintainer-curated keyring.)
+2. Plugin update mechanics. (Recommended: user-driven in v0.1.0; opt-in substrate-driven in Phase 3. No automatic updates without prompt.)
+3. Marketplace governance at `plugins.neurodock.org`. (Recommended: registry indexing opt-in, curation-free at v0.1.0.)
+4. Should `theme` ship in v0.1.0 or defer? (Recommended: ship in v0.1.0; adding later is forward-compat but cleaner to list now.)
+5. `extends:` for plugins inheriting from a base manifest. (Recommended: no in v0.1.0; revisit if a clear pattern emerges.)
+6. Cross-package version coupling at `requires.substrate_version`. (Recommended: confirm that minor substrate bumps are additive so `">=0.1.0"` is the right shape for almost every plugin.)
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0007-plugin-protocol.md).
+- [Plugins concept](/concepts/plugins/) for the higher-level framing.
+- [Plugin manifest reference](/reference/plugin-manifest/) for the v0.1.0 schema.
+- [Write a plugin](/contribute/write-a-plugin/) for the contributor on-ramp.

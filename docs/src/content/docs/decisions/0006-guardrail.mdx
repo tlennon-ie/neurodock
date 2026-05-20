@@ -1,0 +1,67 @@
+---
+title: 0006 — Guardrail tool design
+description: Three detector schemas locked at v0.1.0. Rumination live in Phase 2. Hyperfocus and sycophancy schema-only until Phase 3 field study endorses thresholds.
+---
+
+> **Source:** `docs/decisions/0006-guardrail-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the alternatives considered, the seven binding decisions, the open questions, and the implementer's notes.
+
+- **Status:** Proposed
+- **Date:** 2026-05-16
+- **Deciders:** maintainer (TBD), clinical reviewer, `mcp-architect`
+
+## Context
+
+`mcp-guardrail` is the substrate's clinical layer — the only server whose tool changes require sign-off from both the maintainer and the clinical reviewer, and the only server whose detectors directly mediate the conversation between an LLM and a neurodivergent user.
+
+Per the project plan, Phase 2 ships `mcp-guardrail` v0.1 with **rumination detection only**. Phase 3 ships all three detectors live once the field study (30–50 ND professionals, 8-week pilot) endorses heuristics and thresholds.
+
+This ADR locks the schemas for all three tools **now**, in advance of Phase 2 shipping, so the contract Phase-2 consumer skills (e.g. `ocd-decision-finalizer`) commit to is the contract Phase 3 honours. Future implementation work is constrained to filling in heuristic code, not redesigning the wire.
+
+## Decision
+
+We adopt:
+
+1. **Three schemas, locked at v0.1.0** as drafted in `packages/mcp-guardrail/schemas/`.
+2. **Word-overlap Jaccard** for `check_rumination` v0.1.0 (defaults: window 90 min, threshold count 3, similarity 0.55).
+3. **Caller-supplied `chronometric_snapshot`** for `check_hyperfocus`. No direct imports of `neurodock-mcp-chronometric`.
+4. **Schema-only deployment** for `check_hyperfocus` and `check_sycophancy` in Phase 2; runtime returns `DETECTOR_NOT_YET_IMPLEMENTED` with `phase: "3"` metadata.
+5. **Closed override-token vocabulary**: `fresh-context`, `override-once`, `disable-for-session`, `lower-sensitivity`, `snooze-15m`, `snooze-once`, `commit-and-close`, `extend-end-of-day`, `i-want-validation`, `explain-the-match`. Each tool exposes only the subset that makes sense.
+6. **`x-clinical-review-required: true`** annotation on every schema, recording the standing requirement that changes require clinical sign-off.
+7. **`heuristic_source` path** recorded in each schema's `compatibility` block. The path is normative: the source code IS the auditable specification per `ETHICS.md` commitment 3.
+
+Alternatives rejected:
+
+- **Sentence-embedding cosine** for rumination v0.1.0 — deferred to v0.0.2 once `mcp-cognitive-graph`'s embedding stack stabilises. Model weights complicate the "heuristics are public" commitment.
+- **Topic modelling over recent prompts** — introduces unsupervised learning state, violates stateless-server principle, brittle on N=3 windows.
+- **Direct Python import of `neurodock-mcp-chronometric`** for hyperfocus — tightens two servers into one logical unit, violates composability.
+- **Free-form override tokens** — fragments user-autonomy contract across skills.
+
+## Cross-cutting rules established here
+
+Each rule is a direct restatement of an `ETHICS.md` commitment, translated into a schema invariant:
+
+- **No treatment claims (commitment 1).** No tool name, field, enum value, or description uses clinical vocabulary that could be read as diagnosis or treatment.
+- **No silent blocks (commitment 2).** Every `detected: true` output carries a non-empty `override_options` array (enforced via JSON Schema `allOf` conditional). Every detection carries a `reason` string.
+- **Public, auditable heuristics (commitment 3).** Every detection output carries `heuristic.{name, version, description}`. The actual rule code lives in `packages/clinical/` and is git-auditable.
+- **No aggregation (commitment 4).** The server is stateless. `compatibility.side_effects` and `compatibility.telemetry` are uniformly "None". Skills MAY write detection events into the cognitive graph; the guardrail server never persists them.
+- **False-positive humility (commitment 5).** Every output carries `confidence: float 0..1` and `false_positive_feedback_path`. Low-confidence detections SHOULD NOT trigger hard interventions.
+
+Vendor-boundary discipline: `check_sycophancy` returns a `counter_prompt` string but does not call any LLM. The calling skill is responsible for any model interaction. All four substrate servers route LLM use through the user's MCP client.
+
+## Open questions
+
+The full ADR carries six open questions:
+
+1. Where does the field-study corpus live? (Recommended: HuggingFace, consistent with the translation eval corpus, with a small in-repo seed for CI replay.)
+2. Clinical-advisor sign-off process before tagging v0.1.0. (Recommended: tag the package and document detector status in release notes, with `x-implementation-status` carrying the truth in the schema.)
+3. Mechanism for plugin-distributed skills to introduce custom override tokens. (Recommended: no in v0.1.0; the closed vocabulary IS the consistency surface.)
+4. Cross-skill UI primitive for "this detector fired" rendering. (Recommended: defer to design-system-keeper; the schemas as drafted do not constrain rendering.)
+5. Repeated `disable-for-session` invocations — should install-time consent be re-confirmed? (Recommended: defer to profile UX, not schemas.)
+6. Multi-language support for the Jaccard stoplist. (Recommended: defer; v0.0.2 with embeddings is the better fix.)
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0006-guardrail-tool-design.md).
+- [`mcp-guardrail` reference](/reference/mcp-servers/guardrail/) for the tool surface.
+- [Guardrails concept](/concepts/guardrails/) for the higher-level framing.
+- [Ethics](/ethics/) for the five commitments that bind this layer.

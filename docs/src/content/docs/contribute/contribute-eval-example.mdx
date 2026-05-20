@@ -1,0 +1,90 @@
+---
+title: Contribute an eval example
+description: Add an anonymised real-world message to the translation eval corpus. Fifteen minutes, no code.
+---
+
+> Source: the eval corpus lives at `packages/evals/corpora/`. `packages/evals/README.md` is canonical for the harness; this page is the contributor on-ramp.
+
+The eval corpora are the most under-supplied resource in the project. Every contributed example improves how well the substrate handles real corporate ambiguity. It is also the lowest-friction way to contribute — fifteen minutes from "I want to add this" to "PR opened", no code, no Python toolchain.
+
+The translation corpus is the v0.0.1 contribution surface. Guardrail and other corpora open later (see `packages/evals/corpora/README.md`).
+
+## What you are adding
+
+One YAML file under `packages/evals/corpora/translation/community/`. The file describes one real Slack/email/Linear/PR-comment message you have received, anonymised, with your literal reading of what it actually meant. The harness replays your example against the four `mcp-translation` tools on every prompt change.
+
+The schema is at `packages/evals/schemas/example.schema.json`. Validate locally with the harness; CI re-validates on the PR.
+
+## The fifteen-minute flow
+
+1. **Pick a real message.** Slack, email, Linear, GitHub, Notion — anywhere a corporate ambiguity bit you. Pick one that needed mental translation.
+2. **Anonymise it.** Replace names, company refs, project codenames, dates, and any other identifying detail with generic placeholders (`Alex`, `Project Atlas`, `the team`, `Q2`). The substrate's `anonymise.py` will run a second pass in CI, but the contributor pass is required.
+3. **Drop a new YAML file** into `packages/evals/corpora/translation/community/`. Filename: any unique kebab-case slug (`alex-circle-back.example.yaml`).
+4. **Fill in `expected`** with your literal reading: the explicit ask (if any), whether there is ambiguity, and the action you would recommend.
+5. **Open a PR.** Title: `evals(translation): add <slug>`. Link to this page in the description.
+
+## Minimum example file
+
+```yaml
+id: "translation.incoming.community.alex-circle-back"
+slice: "translation/incoming"
+created_at: "2026-05-20"
+consent:
+  contributor: "anon-2026-05-20-001"
+  consent_token: "sha256:<paste contributor-generated token>"
+  anonymisation_pass: 1
+status: "contributed"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Hey - want to circle back on the Atlas rollout? No rush."
+  channel: "slack"
+expected:
+  explicit_ask: null
+  ambiguity:
+    detected: true
+  recommended_next_action:
+    action: "set_reminder"
+notes: |
+  Soft-deferral pattern: "circle back" and "no rush" together signal the
+  reply will not self-fulfil. The baseline should flag both phrases.
+```
+
+Existing files under `packages/evals/corpora/translation/incoming/` are good templates. Match their shape; the harness does partial matching, not exact equality, so you only need to assert the fields you are confident in.
+
+## Anonymisation tips
+
+- Replace names with single first names from a name generator (`Alex`, `Priya`, `Sam`). Avoid surnames entirely.
+- Replace project codenames with generic project nouns (`the rollout`, `Project Atlas`, `the migration`).
+- Replace dates with relative references (`next week`, `Q2`) or generic dates (`2026-Qn`). Do not preserve the original date if it could identify a release.
+- Replace company-specific jargon with the closest generic equivalent. If the jargon is the ambiguity, paraphrase the surrounding context and keep the jargon in quotes.
+- Remove URLs, ticket numbers, internal tool names. If the URL pattern matters (e.g. a Linear permalink shape), use a placeholder like `https://linear.app/<workspace>/<ticket>`.
+- Do not paste verbatim if the message contains anything you would not want a stranger reading. The corpus is published in the open; treat anonymisation as if it were.
+
+## Field-by-field reference
+
+- `id` — kebab-case, namespaced under your slice. `translation.incoming.community.<slug>`.
+- `slice` — must match the directory: `translation/incoming`, `translation/tone`, `translation/outgoing`, `translation/meetings`.
+- `created_at` — ISO date.
+- `consent.contributor` — pseudonymous id starting with `anon-`. Never a real name.
+- `consent.consent_token` — opaque sha256-prefixed string verifying opt-in. Generate locally; never reuse another contributor's token.
+- `consent.anonymisation_pass` — `1` for a contributor-anonymised example; CI runs pass 2.
+- `status` — `contributed` for community submissions. The harness sets `published` later in the curation pipeline.
+- `license` — must be `AGPL-3.0-or-later`. Same license as the rest of the repo.
+- `input` — tool-specific input. For `translation/incoming`, the shape is `{text, channel?, thread_context?, target_language?}`. Match the schema at `packages/mcp-translation/schemas/translate_incoming.schema.json`.
+- `expected` — your literal reading. Partial; only the fields you are confident about.
+- `ratings` — optional. If you can speak for a neurotype (`adhd`, `asd`, `audhd`, `ocd`), add a `ratings[]` entry with `rater_neurotypes` and `agreement_with_expected`.
+- `notes` — optional. Brief explanation of what pattern this example exercises. Future curators will thank you.
+
+## Before opening the PR
+
+- [ ] The message is anonymised. Re-read it as a stranger.
+- [ ] The `id` is unique and namespaced.
+- [ ] `consent.contributor` starts with `anon-`. No real names.
+- [ ] The file validates against `packages/evals/schemas/example.schema.json`. Run `uv run python -m neurodock_evals.validate packages/evals/corpora/translation/community/<your-file>.yaml` if your environment is set up; otherwise CI catches it.
+- [ ] You read `ETHICS.md` and confirmed the example does not embed personal data the substrate would refuse to log.
+
+## What's next
+
+- [Overview](/contribute/overview/) for the broader contribution lanes.
+- [Governance](/contribute/governance/) for how the corpus is reviewed and merged.
+- The seed examples at `packages/evals/corpora/translation/incoming/` are the best stylistic reference.

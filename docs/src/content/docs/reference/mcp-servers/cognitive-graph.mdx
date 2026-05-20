@@ -47,7 +47,7 @@ A "decision" is either a fact whose `predicate == "decided_in"` OR an entity who
 
 Returns a structured snapshot of the past seven days for a project: decisions, blockers, templated `next_actions`, plus a locally-templated `summary` (no LLM call inside the server).
 
-The Phase 2 enhancement is a `narrative` field populated by a caller-side LLM round trip; the v0.1.0 `summary` remains the local fallback.
+A planned enhancement (see [ROADMAP.md](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md) §Next) is a `narrative` field populated by a caller-side LLM round trip; the local-template `summary` remains the always-available fallback.
 
 ## Entity types (v0.1.0)
 

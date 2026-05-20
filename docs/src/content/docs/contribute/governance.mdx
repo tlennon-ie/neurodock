@@ -1,0 +1,45 @@
+---
+title: Governance
+description: How decisions are made on NeuroDock. Short, deliberate, biased toward direct conversation in the PR thread.
+---
+
+> Source: [`GOVERNANCE.md`](https://github.com/tlennon-ie/neurodock/blob/main/GOVERNANCE.md) at the repository root is canonical. This page is a docs-site summary; the file is short and worth reading in full.
+
+NeuroDock is maintained by the project owner and the contributors who land work in the repo. Governance is intentionally short: it defines who decides what, how disagreements resolve, and how the project can be forked without ambiguity.
+
+## Who decides
+
+The repository owner is the project maintainer and has final say on merges, releases, and direction. As contributors land sustained work, the maintainer may grant them commit access and shared decision-making on areas they own.
+
+There is no committee, no fixed seat count, and no required composition. The project stays small and direct.
+
+## How decisions are made
+
+- **Routine PRs** resolve in the PR or issue thread between the maintainer and the contributor. No process.
+- **Non-trivial decisions** land as a numbered [ADR](/decisions/) under `docs/decisions/` with a clear status. Two or three paragraphs of context, two or three alternatives, a paragraph of decision, a handful of consequences.
+- **Manifesto and ethics changes** are reviewed with the care they deserve and noted in the changelog.
+- **Clinical changes** (anything under `packages/mcp-guardrail/` or `packages/clinical/`) require sign-off from the clinical reviewer per [`ETHICS.md`](https://github.com/tlennon-ie/neurodock/blob/main/ETHICS.md). CODEOWNERS enforces this.
+
+## Maintainers, in and out
+
+- **Adding maintainers.** Sustained contribution earns commit access. Sustained means multiple landed PRs, demonstrated alignment with the manifesto, no Code of Conduct issues. The maintainer extends an invitation; the new maintainer accepts in writing.
+- **Removing maintainers.** A maintainer steps back voluntarily or, in the rare case of a substantiated Code of Conduct violation, is removed by the project owner with reasons recorded in the changelog. Inactive maintainers are not removed — silence is fine.
+
+## Dispute escalation
+
+Most disagreements resolve in the thread they started in. When they do not:
+
+1. The disagreeing parties summarise the question and the trade-offs they see in a single comment.
+2. The maintainer makes the call and records it.
+3. If the disagreement is about the manifesto or ethics, the change is refused unless and until the manifesto or ethics document itself is updated.
+
+## Forking
+
+The project is AGPL-3.0-or-later. A fork is always permitted; the canonical naming and trademark conventions are documented in `GOVERNANCE.md`. A fork that disagrees with this project's direction is a legitimate outcome, not a failure.
+
+## What's next
+
+- [`GOVERNANCE.md`](https://github.com/tlennon-ie/neurodock/blob/main/GOVERNANCE.md) — full canonical document.
+- [Ethics](/ethics/) — the five commitments that bind the clinical layer.
+- [Decisions index](/decisions/) — every non-trivial decision recorded as an ADR.
+- [Code of Conduct](https://github.com/tlennon-ie/neurodock/blob/main/CODE_OF_CONDUCT.md) — CC4 base plus three ND-aware additions.

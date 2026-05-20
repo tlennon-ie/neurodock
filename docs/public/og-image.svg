@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NeuroDock OpenGraph social card.
+  Spec: 1200 x 630 (OG standard, also reused by Twitter/X large card).
+  Visual language pinned by docs/astro.config.mjs:
+    * Body: Atkinson Hyperlegible.
+    * Headings: Lexend.
+    * Two colour modes, calm light shown here.
+    * Single neutral accent hue (oklch hue 250, slate-blue).
+    * No gradients. No animation. No external font imports.
+  Font stack falls back to system UI fonts so the file renders identically
+  on GitHub's social-card preview server (which does not load web fonts).
+  Hex values are sRGB approximations of the oklch tokens in tokens.css so
+  this file does not depend on browser oklch() support.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1200 630"
+  width="1200"
+  height="630"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">NeuroDock</title>
+  <desc id="desc">
+    Local-first cognitive substrate for neurodivergent professionals.
+  </desc>
+
+  <!-- Calm light background, matching sl-color-bg in light mode. -->
+  <rect width="1200" height="630" fill="#f8f7f2" />
+
+  <!-- Hairline frame, matches sl-color-hairline. -->
+  <rect
+    x="32"
+    y="32"
+    width="1136"
+    height="566"
+    fill="none"
+    stroke="#d8d6cf"
+    stroke-width="1"
+  />
+
+  <!-- Wordmark. Lexend → falls back to system sans on render servers. -->
+  <text
+    x="96"
+    y="260"
+    font-family="'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="120"
+    font-weight="600"
+    letter-spacing="-2"
+    fill="#1d2030"
+  >
+    NeuroDock
+  </text>
+
+  <!-- Accent rule. Single neutral hue, matches sl-color-accent. -->
+  <rect x="96" y="296" width="120" height="4" fill="#5a6a8f" />
+
+  <!-- Tagline. Atkinson Hyperlegible → system fallback. -->
+  <text
+    x="96"
+    y="376"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="40"
+    font-weight="400"
+    fill="#33384a"
+  >
+    Local-first cognitive substrate
+  </text>
+  <text
+    x="96"
+    y="430"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="40"
+    font-weight="400"
+    fill="#33384a"
+  >
+    for neurodivergent professionals.
+  </text>
+
+  <!-- Footer band: three substrate pillars, lowercase, low contrast. -->
+  <text
+    x="96"
+    y="548"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="22"
+    font-weight="400"
+    fill="#5a6075"
+    letter-spacing="0.5"
+  >
+    cognitive  ·  communication  ·  guardrails
+  </text>
+
+  <!-- Repo handle, right-aligned, JetBrains-Mono-like fallback. -->
+  <text
+    x="1104"
+    y="548"
+    text-anchor="end"
+    font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    font-size="22"
+    font-weight="400"
+    fill="#5a6075"
+  >
+    github.com/tlennon-ie/neurodock
+  </text>
+</svg>

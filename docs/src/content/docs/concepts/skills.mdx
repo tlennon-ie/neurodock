@@ -1,6 +1,6 @@
 ---
 title: Skills
-description: A skill is a markdown bundle, not opaque code. Five ship in Phase 1.
+description: A skill is a markdown bundle, not opaque code. Six ship in v0.2.1.
 ---
 
 A skill is a scoped instruction-and-asset bundle that activates on specific triggers within a Claude-style client. It is **markdown plus frontmatter plus tests**, not compiled code. Anyone who can read a markdown file can read a skill.
@@ -33,7 +33,7 @@ Every skill respects the profile. The skill SDK (`@neurodock/skill-sdk` for TS, 
 
 If a skill is tagged with a neurotype that the user has not self-identified, the skill does **not** activate. Self-ID gates activation, not access — diagnosis is never required.
 
-## The five launch skills (Phase 1)
+## The six launch skills
 
 | Skill | What it does |
 |---|---|
@@ -42,8 +42,9 @@ If a skill is tagged with a neurotype that the user has not self-identified, the
 | [`ocd-decision-finalizer`](/reference/skills/ocd-decision-finalizer/) | On repeat-validation requests, enforces a decision-finality response grounded in prior evidence. |
 | [`hyperfocus-formatter`](/reference/skills/hyperfocus-formatter/) | "Answer First" output structure that activates during long sessions when distress signals appear. |
 | [`visual-organizer`](/reference/skills/visual-organizer/) | Generates Mermaid diagrams when textual output is overwhelming or when the user asks for visual organisation. |
+| `asd-meeting-translator` | Transcript → four-section brief (my asks, others' asks, decisions, ambiguous items with verbatim quotes). Records decisions into the cognitive graph. |
 
-The sixth originally planned skill, `asd-meeting-translator`, depends on the translation server and ships in Phase 2.
+The `asd-meeting-translator` skill depends on `mcp-translation` and shipped in v0.2.1 (`v0.1.0`, `status: beta`). It is part of the same skill bundle.
 
 ## Skills do not call LLMs themselves
 

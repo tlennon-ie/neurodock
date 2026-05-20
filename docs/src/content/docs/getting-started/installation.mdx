@@ -3,7 +3,7 @@ title: Installation
 description: Install NeuroDock locally and wire it into Claude Desktop, Claude Code, or Cursor in under fifteen minutes.
 ---
 
-After this page you will have a working NeuroDock install: three MCP servers running locally, a profile on disk, and one MCP-aware client (Claude Desktop, Claude Code, or Cursor) talking to them.
+After this page you will have a working NeuroDock install (v0.2.1 developer preview): the substrate's MCP servers running locally, a profile on disk, and one MCP-aware client (Claude Desktop, Claude Code, or Cursor) talking to them.
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ The installer:
 4. Prints a summary of what was changed.
 
 :::note[CLI status]
-The `neurodock` CLI is being built by a parallel agent in `packages/cli/`. If `npx neurodock init` is not yet available when you read this, the intended interface is documented in the [CLI reference](/reference/cli/). Until then, MCP servers can be configured manually per their per-client guides.
+The `@neurodock/cli` package is shipped (`v0.3.0`) and exposes `init`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, plus the `install-all` and `examples` ergonomics shortcuts. See the [CLI reference](/reference/cli/) for the full command surface.
 :::
 
 ### Preview before writing

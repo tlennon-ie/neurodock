@@ -1,0 +1,114 @@
+---
+title: mcp-guardrail
+description: Clinical guardrails MCP server. Three detectors — rumination, hyperfocus, sycophancy. Stateless, override-first, auditable.
+---
+
+`mcp-guardrail` is the substrate's clinical layer. It exposes three detectors that flag patterns unmodified LLM interaction tends to amplify for neurodivergent users: rumination loops, unregulated hyperfocus, and sycophancy. It blocks nothing; every detection ships with a non-empty override list and a plain-language reason.
+
+- **Package:** `packages/mcp-guardrail/`
+- **Version:** `0.0.2` — all three detectors live (rumination, hyperfocus, sycophancy)
+- **Schemas:** `packages/mcp-guardrail/schemas/*.schema.json`
+- **ADR:** [0006 — Guardrail tool design](/decisions/0006-guardrail/)
+- **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-guardrail/v0.1.0/`
+- **Concept:** [Guardrails](/concepts/guardrails/)
+
+## Design invariants
+
+- **Stateless.** The server persists nothing — no SQLite, no JSONL, no in-memory caches that survive a tool call. Callers supply all history.
+- **No telemetry, no network sockets.** Per [`ETHICS.md`](https://github.com/tlennon-ie/neurodock/blob/main/ETHICS.md) commitment 4.
+- **No user content in logs.** Only `tool_invoked` metadata is logged.
+- **Override-token vocabulary is closed at v0.1.0.** New tokens require a minor bump and clinical sign-off per ADR 0006 §3 and §10.
+- **Heuristics are auditable.** Source for each heuristic lives in `packages/clinical/`. Changes require clinical sign-off per `ETHICS.md` commitment 3.
+
+## Tools
+
+| Tool | Status | Heuristic (v0.1.0) | Default thresholds |
+|---|---|---|---|
+| `check_rumination` | live (v0.0.1) | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
+| `check_hyperfocus` | live (v0.0.2) | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
+| `check_sycophancy` | live (v0.0.2) | pattern overlap (4 patterns) | similarity 0.5 |
+
+### `check_rumination`
+
+Detect whether the user's current prompt is a semantic repeat of recent prompts within a rolling window. Returns a structured advisory signal with the rule that fired, a confidence score, and a non-empty list of overrides the user may invoke. NEVER blocks the user's action; the calling skill decides whether to surface, defer, or ignore.
+
+**Input** — `{ current_prompt, history, window_minutes?, threshold_count?, similarity_threshold? }`
+
+- `current_prompt` — verbatim, max 8000 chars.
+- `history` — array of `{text, at}` oldest-first, max 500 items. The caller is responsible for filtering to a sensible window and for redacting anything that should not be compared.
+- `window_minutes` — default 90, range 1..1440.
+- `threshold_count` — default 3, range 2..50. Two is the floor: a single repeat is normal human behaviour.
+- `similarity_threshold` — default 0.55, range 0..1. Calibrated on the field-study corpus.
+
+**Output** — `{ detected, similar_prompts?, count, window_seconds, threshold, confidence, reason, heuristic, override_options, false_positive_feedback_path }`
+
+- `detected` — true when `count >= threshold` within `window_seconds`. False is a first-class return.
+- `similar_prompts` — verbatim prior matches with their similarity scores. Empty when `detected` is false.
+- `confidence` — 0..1. Low-confidence detections SHOULD NOT trigger hard interventions.
+- `heuristic.name` — enum: `word_overlap_jaccard | embedding_cosine | topic_model`. v0.1.0 ships only the first; the others are reserved.
+- `override_options[].token` — closed enum: `fresh-context | override-once | disable-for-session | lower-sensitivity`.
+
+The schema enforces `override_options.minItems >= 1` and `similar_prompts.minItems >= 1` when `detected` is true (JSON Schema `allOf` conditional).
+
+### `check_hyperfocus`
+
+Classify hyperfocus escalation into a coarse level given a snapshot of the chronometric session.
+
+**Input** — `{ chronometric_snapshot, session_id?, hyperfocus_break_minutes?, end_of_day_local?, escalation_thresholds? }`
+
+- `chronometric_snapshot` — caller-supplied. Contains `{open_session, now, idle_signal?}`. Loose-coupled: the guardrail server does NOT import `neurodock-mcp-chronometric`. Skills construct this from `get_time_context` + the in-flight session record.
+- `end_of_day_local` — optional `HH:MM` local time. When supplied, after this clock time the elapsed thresholds are interpreted more strictly (gentle becomes nudge, nudge becomes hard).
+- `escalation_thresholds` — optional `{gentle, nudge, hard}` in minutes. Defaults `(60, 90, 120)` per the field-study spec.
+
+**Output** — `{ level, elapsed_seconds, confidence, reason, heuristic, override_options, ... }`
+
+- `level` — enum: `none | gentle | nudge | hard`.
+- `override_options[].token` — closed enum includes `snooze-15m`, `snooze-once`, `commit-and-close`, `extend-end-of-day`.
+
+**Runtime (v0.0.2):** live. Returns a structured `{level, elapsed_seconds, confidence, reason, heuristic, override_options, ...}` advisory. Never blocks.
+
+### `check_sycophancy`
+
+Detect either over-validation patterns in a candidate LLM response, or repeated reassurance-seeking in recent user messages on the same decision. Returns the matched pattern, a confidence score, and a `counter_prompt` the calling skill MAY surface to the model — the server itself never invokes a model.
+
+**Input** — `{ candidate_response?, recent_user_messages?, decision_context? }`
+
+- At least one of `candidate_response` or `recent_user_messages` MUST be provided (`anyOf`).
+- `candidate_response` — draft model response to evaluate, max 16000 chars.
+- `recent_user_messages` — array of `{text, at}`, scoped to the same `decision_context`.
+
+**Output** — `{ detected, pattern, confidence, reason, heuristic, override_options, counter_prompt?, false_positive_feedback_path }`
+
+- `pattern` — closed enum for the four reserved heuristic names.
+- `counter_prompt` — string the calling skill may pass back to the model. The server NEVER calls a model itself.
+- `override_options[].token` — closed enum includes `i-want-validation` and `explain-the-match`.
+
+**Runtime (v0.0.2):** live. Returns a structured `{detected, pattern, confidence, reason, heuristic, override_options, counter_prompt?, ...}` advisory. The server NEVER calls a model itself — `counter_prompt` is a string the calling skill MAY pass back.
+
+## Error codes
+
+| Code | Meaning |
+|---|---|
+| `INPUT_TOO_LARGE` | A text input exceeded its per-field cap. Caller MUST truncate before retrying. |
+| `HISTORY_OUT_OF_ORDER` | `check_rumination.history` items were not oldest-first or contained future timestamps. The server does not silently re-sort. |
+| `WINDOW_OUT_OF_RANGE` | `window_minutes` was outside 1..1440. Rejected rather than clamped so callers cannot accidentally disable the check. |
+| `SESSION_ID_MISMATCH` | `check_hyperfocus` received conflicting `session_id` values in the snapshot vs the top-level argument. |
+
+## Privacy
+
+- The server is stateless. No SQLite, no JSONL, no caches.
+- No telemetry. No network sockets in default or non-default configurations.
+- The server does NOT log `current_prompt`, `history`, `candidate_response`, or `recent_user_messages`. Only structured event names.
+- `false_positive_feedback_path` is a public GitHub issue template URL. A user reporting a false positive thereby discloses the prompt that fired; the disclosure is user-initiated, not server-emitted.
+
+## Versioning
+
+- Additive-only within `v0.1.x`. Override-token enum and heuristic-name enum are closed; additions require a minor bump and clinical sign-off.
+- Default thresholds (rumination similarity 0.55, hyperfocus 60/90/120 minutes) may be revised within `v0.1.x` based on field-study data, but the field types and bounds are frozen.
+- The schemas at `packages/mcp-guardrail/schemas/` are the source of truth. CODEOWNERS requires clinical-reviewer approval on changes.
+
+## What's next
+
+- [Guardrails concept](/concepts/guardrails/) for the higher-level framing.
+- [ADR 0006](/decisions/0006-guardrail/) for the design rationale.
+- [Ethics](/ethics/) for the five commitments that bind this layer.

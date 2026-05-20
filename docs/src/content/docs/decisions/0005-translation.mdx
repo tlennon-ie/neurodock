@@ -1,0 +1,53 @@
+---
+title: 0005 — Translation tool design
+description: Four single-purpose tools instead of one overloaded analyzer. No LLM SDK inside the server. Verbatim-anchor enforcement for meeting briefs.
+---
+
+> **Source:** `docs/decisions/0005-translation-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered, the binding design decisions, and the implementer's notes.
+
+- **Status:** Proposed
+- **Date:** 2026-05-16
+- **Deciders:** maintainer (TBD), `mcp-architect`
+
+## Context
+
+`mcp-translation` is the third substrate MCP server and the engine of the communication-and-translation area. It ships in Phase 2 alongside a browser extension, and the same prompt library and eval corpus power both surfaces — one MCP server, one extension, one prompt repo, one test harness.
+
+The user stories partition cleanly into four jobs: decode an incoming message, score an outgoing message's tone, rewrite an outgoing message toward a target register, and brief a meeting transcript into a four-section structure.
+
+## Decision
+
+Adopt **Option B: four-tool decomposition** — `translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`. Each maps one-to-one with a user story; each is independently versionable; each is independently testable against its own eval slice.
+
+Alternatives rejected:
+
+- **One tool `analyze_message(direction, ...)`** — mixes two concepts in one parameter. Versioning becomes brittle (a meeting-brief change forces a major bump on tone-check). LLM invocation is harder with an overloaded discriminator.
+- **One tool per channel (`translate_slack`, `translate_gmail`, ...)** — channel is a parameter, not a tool boundary. Combinatorial explosion: 4 jobs × 8 channels = 32 tools.
+- **A pipeline tool (`translate_then_rewrite`)** — stateful pipelines belong to skills, not servers. The caller composes more flexibly.
+
+## Cross-cutting rules established here
+
+- **No LLM SDK inside the server.** This is the third substrate server in a row to enforce vendor-neutrality. The rule is now substrate-wide doctrine: substrate servers construct prompts and validate structured outputs; the caller's MCP client (Claude Desktop, Claude Code, custom MCP host) invokes the model.
+- **Local-first / cloud-mode parity.** The server's behaviour is identical regardless of which provider the user has configured. Each tool returns `model_provenance: {mode, provider, model}` so a calling surface can render an honest "cloud mode" banner.
+- **Verbatim-anchor enforcement on `brief_meeting`.** `ambiguous_items[].quoted_span.text` MUST equal `transcript[start_char:end_char]`. The server validates this on every response and raises `VERBATIM_ANCHOR_FAILED` rather than fabricating spans. This is anti-hallucination armour for a meeting brief an autistic director will rely on.
+- **Eval-corpus binding is structural.** Every tool's output requires an `eval_corpus_slice` identifier. Every prompt change SHALL run the named slice in CI before merge.
+- **Channel and target-register enums are closed.** Channels: `email | slack | linear | github | notion | gdocs | outlook | generic`. Registers: `direct | warm | formal | concise | clarifying`. Additions are minor bumps.
+- **Ambiguity span shape is shared.** `{start_char, end_char, reason}` zero-indexed appears in `translate_incoming.ambiguity.spans`, `check_tone.flagged_phrases`, and `brief_meeting.*.quoted_span` — one rendering primitive for in-page highlighting.
+- **PII redaction is upstream.** The server analyses whatever text it is given. The extension and the user's profile decide what gets passed.
+
+## Open questions
+
+The full ADR carries six open questions:
+
+1. Where do `baseline_messages` for `check_tone` come from? (Recommended: caller-supplied; skill-level wrappers may inject from the cognitive graph.)
+2. Should `brief_meeting` optionally output a Mermaid sequence diagram? (Recommended: no — the visual-organizer skill composes.)
+3. How do language packs override prompt templates? (Recommended: align with the plugin model; defer manifest detail to ADR 0007.)
+4. Should `translate_incoming` draft a reply inline, or always defer to `rewrite_outgoing`? (Recommended: inline draft as convenience; chain to `rewrite_outgoing` when register matters.)
+5. PII handling boundary — confirm the server explicitly does NOT redact. (Recommended: confirm; it is the only choice consistent with vendor-neutrality.)
+6. `brief_meeting.me` is required — confirm `ME_REQUIRED` over defaulting to `null`. (Recommended: confirm; the partition is ill-defined without it.)
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0005-translation-tool-design.md).
+- [`mcp-translation` reference](/reference/mcp-servers/translation/) for the tool surface.
+- [`asd-meeting-translator`](/reference/skills/asd-meeting-translator/) — Phase 2 reference consumer of `brief_meeting`.
