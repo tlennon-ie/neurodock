@@ -23,10 +23,11 @@ import { defineConfig } from "wxt";
  *   - http://localhost:11434 and http://127.0.0.1:11434 (Ollama)
  *   - https://api.anthropic.com
  *   - https://api.openai.com
+ *   - https://openrouter.ai
  *
  * No `eval`, no inline scripts. The Anthropic and OpenAI SDKs both
  * support browser-context fetch and stream parsing without dynamic
- * code evaluation.
+ * code evaluation. OpenRouter is hit via plain `fetch` (no SDK).
  */
 export default defineConfig({
   srcDir: ".",
@@ -60,6 +61,7 @@ export default defineConfig({
       "http://127.0.0.1/*",
       "https://api.anthropic.com/*",
       "https://api.openai.com/*",
+      "https://openrouter.ai/*",
     ],
     content_security_policy: {
       extension_pages:
@@ -69,7 +71,8 @@ export default defineConfig({
         "http://localhost:11434 " +
         "http://127.0.0.1:11434 " +
         "https://api.anthropic.com " +
-        "https://api.openai.com;",
+        "https://api.openai.com " +
+        "https://openrouter.ai;",
     },
     action: {
       default_title: "NeuroDock — Translate",

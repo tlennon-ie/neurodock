@@ -46,6 +46,7 @@ import type { Provider, ProviderRequest } from "./providers/provider.js";
 import { createOllamaProvider } from "./providers/ollama.js";
 import { createAnthropicProvider } from "./providers/anthropic.js";
 import { createOpenAIProvider } from "./providers/openai.js";
+import { createOpenRouterProvider } from "./providers/openrouter.js";
 import { createMockProvider, buildMockData } from "./providers/mock.js";
 
 const SCHEMA_VERSION = "0.1.0";
@@ -54,6 +55,10 @@ const DEFAULT_MODELS = {
   ollama: "llama3.2:3b",
   anthropic: "claude-haiku-4-5",
   openai: "gpt-4o-mini",
+  // OpenRouter's auto-router picks the best model per query; users can
+  // override with any OpenRouter slug (e.g. `anthropic/claude-3-5-sonnet`).
+  // https://openrouter.ai/docs/guides/routing/routers/auto-router
+  openrouter: "openrouter/auto",
 } as const;
 
 export interface TranslationClientOptions {
@@ -66,7 +71,7 @@ export interface TranslationClientOptions {
 
 export async function translate<T = unknown>(
   request: TranslationRequest,
-  options: TranslationClientOptions
+  options: TranslationClientOptions,
 ): Promise<TranslationResponse<T>> {
   const { profile, forceMock } = options;
   const timestamp = new Date().toISOString();
@@ -92,7 +97,9 @@ export async function translate<T = unknown>(
   } else {
     provider = createOllamaProvider({ endpoint: profile.localEndpoint });
     model =
-      profile.localModel.length > 0 ? profile.localModel : DEFAULT_MODELS.ollama;
+      profile.localModel.length > 0
+        ? profile.localModel
+        : DEFAULT_MODELS.ollama;
     fallbackOnError = "endpoint_unreachable";
   }
 
@@ -112,7 +119,7 @@ export async function translate<T = unknown>(
         request,
         timestamp,
         "endpoint_unreachable",
-        getErrorMessage(cause)
+        getErrorMessage(cause),
       );
     }
     return {
@@ -125,7 +132,7 @@ export async function translate<T = unknown>(
         mode: profile.mode === "cloud" ? "cloud" : "local",
         provider:
           profile.mode === "cloud"
-            ? (profile.cloudProvider ?? "unknown")
+            ? profile.cloudProvider ?? "unknown"
             : "ollama",
         model,
       },
@@ -171,7 +178,7 @@ interface CloudResolution {
 }
 
 function resolveCloudProvider(
-  profile: ExtensionProfile
+  profile: ExtensionProfile,
 ): CloudResolution | CloudResolveError {
   if (!profile.cloudProvider) return "MISSING_CLOUD_PROVIDER";
   if (!profile.cloudApiKey) return "MISSING_CLOUD_KEY";
@@ -190,6 +197,13 @@ function resolveCloudProvider(
       model,
     };
   }
+  if (profile.cloudProvider === "openrouter") {
+    const model = profile.cloudModel ?? DEFAULT_MODELS.openrouter;
+    return {
+      provider: createOpenRouterProvider({ apiKey: profile.cloudApiKey }),
+      model,
+    };
+  }
   return "UNSUPPORTED_CLOUD_PROVIDER";
 }
 
@@ -197,7 +211,7 @@ function cloudConfigError<T>(
   request: TranslationRequest,
   profile: ExtensionProfile,
   timestamp: string,
-  err: CloudResolveError
+  err: CloudResolveError,
 ): TranslationResponse<T> {
   const messages: Record<CloudResolveError, string> = {
     MISSING_CLOUD_PROVIDER:
@@ -208,8 +222,8 @@ function cloudConfigError<T>(
       "MISSING_CLOUD_KEY: Cloud mode is enabled but no API key is " +
       "stored. Open the popup Settings tab and paste your key.",
     UNSUPPORTED_CLOUD_PROVIDER:
-      "UNSUPPORTED_CLOUD_PROVIDER: Only 'anthropic' and 'openai' are " +
-      "supported in v0.0.2. Update Settings.",
+      "UNSUPPORTED_CLOUD_PROVIDER: Only 'anthropic', 'openai', and " +
+      "'openrouter' are supported in v0.0.2. Update Settings.",
   };
   return {
     ok: false,
@@ -230,7 +244,7 @@ function mockResponseFromData<T>(
   request: TranslationRequest,
   timestamp: string,
   reason: "force_mock" | "local_default" | "endpoint_unreachable",
-  detail?: string
+  detail?: string,
 ): TranslationResponse<T> {
   const provenance: ModelProvenance = {
     mode: "local",
@@ -270,7 +284,7 @@ export function detectChannelFromUrl(url: string): Channel {
 }
 
 export function buildProviderFromProfile(
-  profile: ExtensionProfile
+  profile: ExtensionProfile,
 ): { provider: Provider; model: string } | { error: string } {
   if (profile.mode === "mock") {
     return {

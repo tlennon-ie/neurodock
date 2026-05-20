@@ -31,9 +31,19 @@ const DEFAULT_MODELS: Record<string, string> = {
   ollama: "llama3.2:3b",
   anthropic: "claude-haiku-4-5",
   openai: "gpt-4o-mini",
+  // OpenRouter's auto-router; users can override with any model slug
+  // from https://openrouter.ai/models.
+  openrouter: "openrouter/auto",
 };
 
-type SelectedMode = "local" | "cloud-anthropic" | "cloud-openai" | "mock";
+type CloudProviderId = "anthropic" | "openai" | "openrouter";
+
+type SelectedMode =
+  | "local"
+  | "cloud-anthropic"
+  | "cloud-openai"
+  | "cloud-openrouter"
+  | "mock";
 
 function selectedModeFromProfile(profile: ExtensionProfile): SelectedMode {
   if (profile.mode === "mock") return "mock";
@@ -41,7 +51,18 @@ function selectedModeFromProfile(profile: ExtensionProfile): SelectedMode {
     return "cloud-anthropic";
   if (profile.mode === "cloud" && profile.cloudProvider === "openai")
     return "cloud-openai";
+  if (profile.mode === "cloud" && profile.cloudProvider === "openrouter")
+    return "cloud-openrouter";
   return "local";
+}
+
+function cloudProviderFromSelected(
+  selected: SelectedMode,
+): CloudProviderId | null {
+  if (selected === "cloud-anthropic") return "anthropic";
+  if (selected === "cloud-openai") return "openai";
+  if (selected === "cloud-openrouter") return "openrouter";
+  return null;
 }
 
 export function SettingsTab({
@@ -63,8 +84,11 @@ export function SettingsTab({
         await onChange({ mode: "mock" as ExtensionMode });
         return;
       }
-      const cloudProvider =
-        next === "cloud-anthropic" ? "anthropic" : "openai";
+      const cloudProvider = cloudProviderFromSelected(next);
+      if (cloudProvider === null) {
+        // Defensive; should be unreachable because `next` is exhausted.
+        return;
+      }
       const fallbackModel = DEFAULT_MODELS[cloudProvider] ?? "";
       const willEnableCloud = profile.cloudApiKey !== null;
       await onChange({
@@ -73,7 +97,7 @@ export function SettingsTab({
         cloudModel: profile.cloudModel ?? fallbackModel,
       });
     },
-    [onChange, profile.cloudApiKey, profile.cloudModel, profile.mode]
+    [onChange, profile.cloudApiKey, profile.cloudModel, profile.mode],
   );
 
   return (
@@ -95,18 +119,18 @@ export function SettingsTab({
         <LocalSettings profile={profile} onChange={onChange} />
       ) : null}
 
-      {selected === "cloud-anthropic" || selected === "cloud-openai" ? (
+      {cloudProviderFromSelected(selected) !== null ? (
         <CloudSettings
           profile={profile}
-          providerId={selected === "cloud-anthropic" ? "anthropic" : "openai"}
+          providerId={cloudProviderFromSelected(selected) as CloudProviderId}
           onChange={onChange}
         />
       ) : null}
 
       {selected === "mock" ? (
         <p className="text-xs text-neutral-500">
-          Mock mode is a developer-only deterministic provider. Use it to
-          verify the UI without a model. Output is always labelled [MOCK].
+          Mock mode is a developer-only deterministic provider. Use it to verify
+          the UI without a model. Output is always labelled [MOCK].
         </p>
       ) : null}
 
@@ -139,6 +163,13 @@ function ModeSelector({
       value: "cloud-openai",
       label: "Cloud OpenAI",
       help: "Sends text to api.openai.com. Requires an API key.",
+    },
+    {
+      value: "cloud-openrouter",
+      label: "Cloud OpenRouter",
+      help:
+        "Sends text to openrouter.ai. Default model `openrouter/auto` " +
+        "lets OpenRouter pick the best model per query. Requires an API key.",
     },
     {
       value: "mock",
@@ -217,8 +248,25 @@ function LocalSettings({
 
 interface CloudSettingsProps {
   readonly profile: ExtensionProfile;
-  readonly providerId: "anthropic" | "openai";
+  readonly providerId: CloudProviderId;
   readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void>;
+}
+
+function apiKeyPlaceholder(providerId: CloudProviderId): string {
+  if (providerId === "anthropic") return "sk-ant-…";
+  if (providerId === "openrouter") return "sk-or-…";
+  return "sk-…";
+}
+
+function modelHint(providerId: CloudProviderId): string | null {
+  if (providerId === "openrouter") {
+    return (
+      "Use `openrouter/auto` for auto-routing, or any model slug from " +
+      "openrouter.ai/models (e.g. anthropic/claude-3-5-sonnet, " +
+      "meta-llama/llama-3.3-70b-instruct)."
+    );
+  }
+  return null;
 }
 
 function CloudSettings({
@@ -263,6 +311,11 @@ function CloudSettings({
           className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
           data-testid="cloud-model-input"
         />
+        {modelHint(providerId) ? (
+          <span className="text-xs text-neutral-500">
+            {modelHint(providerId)}
+          </span>
+        ) : null}
       </label>
       <div className="flex flex-col gap-1 text-sm">
         <span className="text-xs text-neutral-500">API key</span>
@@ -289,7 +342,7 @@ function CloudSettings({
               type="password"
               value={pendingKey}
               onChange={(e) => setPendingKey(e.target.value)}
-              placeholder={providerId === "anthropic" ? "sk-ant-…" : "sk-…"}
+              placeholder={apiKeyPlaceholder(providerId)}
               autoComplete="off"
               spellCheck={false}
               className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"

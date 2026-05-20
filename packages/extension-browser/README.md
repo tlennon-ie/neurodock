@@ -4,26 +4,33 @@ NeuroDock browser extension. Manifest V3. Chrome, Edge, Firefox. Built with [WXT
 
 This package delivers Area 2 (communication translation) per .
 
-## What it does (v0.0.1)
+## What it does (v0.0.2)
 
 - Floats a non-intrusive "Translate" button on text fields across Gmail, Slack web, Linear, Notion, GitHub, Google Docs, and Outlook web.
 - Adds a right-click context-menu action ("NeuroDock: translate selection") on any selected text within a permitted site.
-- Opens a popup with:
-  - Mode toggle: local (default) or cloud (opt-in only).
-  - Local-only history toggle (off by default; metadata-only when on).
-  - Cloud provider id input.
+- Opens a tabbed popup (Home / Settings) for mode selection, provider configuration, and history.
 - Runs the four translation tools defined by the MCP twin (`translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`) using the **same prompt library** as `packages/mcp-translation`.
+- Dispatches real LLM calls through a single boundary (`translation-client.ts`) to one of five providers:
 
-### What v0.0.1 does NOT do (deferred to v0.0.2+)
+| Provider     | Mode  | Transport                                              | Default model      |
+| ------------ | ----- | ------------------------------------------------------ | ------------------ |
+| `ollama`     | local | HTTP NDJSON to `http://localhost:11434/api/generate`   | `llama3.2:3b`      |
+| `anthropic`  | cloud | `@anthropic-ai/sdk` SSE via `messages.stream`          | `claude-haiku-4-5` |
+| `openai`     | cloud | `openai` SDK SSE via `chat.completions.create`         | `gpt-4o-mini`      |
+| `openrouter` | cloud | `fetch` SSE to `https://openrouter.ai/api/v1/chat/...` | `openrouter/auto`  |
+| `mock`       | local | deterministic placeholder; no model call               | n/a                |
 
-| Feature                                                | Status                                                                                   |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Real local Ollama wiring (HTTP call)                   | Deferred — v0.0.1 returns a clearly-labelled MOCK response in local mode.                |
-| Real cloud provider integration (Anthropic, OpenAI)    | Deferred — v0.0.1 surfaces `CLOUD_NOT_WIRED` errors when cloud mode is fully configured. |
-| Native messaging bridge to `~/.neurodock/profile.yaml` | Deferred — v0.0.1 stores profile state in `chrome.storage.local` only.                   |
-| Browser store submission scripts                       | Deferred.                                                                                |
-| E2E Playwright suite against the loaded extension      | Deferred — Vitest covers units in v0.0.1.                                                |
-| `axe-core` automated runs in CI                        | Deferred — components are written to be a11y-clean and reduced-motion-by-default.        |
+**Recommended default for cloud users:** `openrouter` with model `openrouter/auto` — OpenRouter's [auto-router](https://openrouter.ai/docs/guides/routing/routers/auto-router) picks an appropriate model per query so you get good translations without having to pick a model yourself.
+
+Provider responses are parsed defensively and validated with Ajv against the relevant MCP output schema; validation failures surface a `LLM_OUTPUT_VALIDATION_FAILED` envelope with a Retry path. The popup syncs its profile with `~/.neurodock/profile.yaml` via the optional `@neurodock/native-host` native messaging bridge; when the host is not installed, the profile lives only in `chrome.storage.local`.
+
+### What v0.0.2 does NOT do (deferred to v0.0.3+)
+
+| Feature                                           | Status                                                                            |
+| ------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Browser store submission scripts                  | Deferred — this release ships as load-unpacked artefacts.                         |
+| E2E Playwright suite against the loaded extension | Deferred — Vitest covers units.                                                   |
+| `axe-core` automated runs in CI                   | Deferred — components are written to be a11y-clean and reduced-motion-by-default. |
 
 ## Privacy model
 

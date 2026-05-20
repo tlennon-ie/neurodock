@@ -18,9 +18,16 @@ export type ExtensionMode = "local" | "cloud" | "mock";
  * - `ollama`     : local-mode HTTP provider (default).
  * - `anthropic`  : cloud-mode provider via @anthropic-ai/sdk.
  * - `openai`     : cloud-mode provider via the official `openai` package.
+ * - `openrouter` : cloud-mode provider via OpenRouter's OpenAI-compatible
+ *                  API. Default model is `openrouter/auto` (auto-router).
  * - `mock`       : developer-only deterministic provider.
  */
-export type ProviderId = "ollama" | "anthropic" | "openai" | "mock";
+export type ProviderId =
+  | "ollama"
+  | "anthropic"
+  | "openai"
+  | "openrouter"
+  | "mock";
 
 export type TranslationTool =
   | "translate_incoming"
