@@ -11,24 +11,32 @@ Local-first by default. No telemetry. AGPL-3.0-or-later.
 
 ## Install
 
-> Note: `npx neurodock` will be live once the npm publish lands. Until then,
-> clone the repo and follow `TESTING_LOCAL.md` for a working setup against
-> Claude Desktop.
+Two registries, three commands:
 
 ```bash
-npx neurodock init
+# 1. Install the Python MCP servers (six of them — the runtime substrate)
+pip install \
+  neurodock-mcp-chronometric \
+  neurodock-mcp-cognitive-graph \
+  neurodock-mcp-task-fractionator \
+  neurodock-mcp-translation \
+  neurodock-mcp-guardrail \
+  neurodock-evals
+
+# 2. Wire them into your MCP-aware client (Claude Desktop, Claude Code, Cursor)
+npx --yes @neurodock/cli init
+
+# 3. Restart Claude (full quit, not just close-window)
 ```
 
-That single command:
-
-1. Detects your Claude client (Desktop, Code, or Cursor)
-2. Wires the NeuroDock MCP servers into your client's config
-3. Copies a starter profile to `~/.neurodock/profile.yaml`
-4. Tells you to restart Claude
+`init` detects your client(s), writes MCP server entries, copies a starter
+profile to `~/.neurodock/profile.yaml`, and prints next steps.
 
 Then in any conversation: `"What was I working on yesterday?"` /
-`"Plan my morning"` / `"Decompose this goal"`. Claude calls the MCP tools
-under the hood; you just talk.
+`"Plan my morning"` / `"Decompose this goal into atomic tasks"`. Claude calls
+the MCP tools under the hood; you just talk.
+
+For testing from a clone (development mode), see `TESTING_LOCAL.md`.
 
 ## What's inside
 
@@ -54,28 +62,29 @@ neurodock/
 
 ## Status
 
-**v0.2.0 developer preview.** All three substrate pillars (cognitive,
-communication, guardrails) are built and merged on `main`.
+**v0.2.1 developer preview shipped.** All three substrate pillars (cognitive,
+communication, guardrails) are built, on `main`, and installable.
 
-| Surface | State |
-|---|---|
-| MCP chronometric | v0.0.1 — 5 tools, 22 tests, mypy --strict |
-| MCP cognitive-graph | v0.0.1 — 4 tools, SQLite storage, 25 tests |
-| MCP task-fractionator | v0.0.1 — 2 tools, 32 tests |
-| MCP translation | v0.0.1 — 4 tools, 29 tests, deterministic baseline + LLM refinement |
-| MCP guardrail | v0.0.1 — rumination detection live; hyperfocus + sycophancy schema-only |
-| Six launch skills | adhd-daily-planner, audhd-context-recovery, ocd-decision-finalizer (beta), hyperfocus-formatter, visual-organizer, asd-meeting-translator |
-| Browser extension | v0.0.1 scaffold — 7 sites supported, MV3, mock LLM by default |
-| CLI installer | v0.0.1 — init, doctor, profile commands |
-| Docs site | 39 pages, builds clean |
-| Eval harness | Air-gapped, 10 synthesised seed examples |
+| Surface | Version | Notes |
+|---|---|---|
+| `neurodock-mcp-chronometric` | 0.0.1 | 5 tools, 22 tests, mypy --strict |
+| `neurodock-mcp-cognitive-graph` | 0.0.2 | 4 tools, SQLite + sqlite-vec + fastembed; 4-rung resolution cascade (exact → alias → fuzzy → embedding) |
+| `neurodock-mcp-task-fractionator` | 0.0.2 | 2 tools, 32 tests; ISO 8601 duration spec clarified |
+| `neurodock-mcp-translation` | 0.0.1 | 4 tools, 29 tests, deterministic baseline + LLM refinement envelope |
+| `neurodock-mcp-guardrail` | 0.0.2 | All three detectors live: rumination + hyperfocus + sycophancy (48 tests, public heuristics) |
+| `neurodock-evals` | 0.0.2 | Air-gapped harness + 10 seed corpus examples + contribution pipeline |
+| `neurodock-clinical` | 0.0.0 | Reserved name; importable detector library (currently a stub) |
+| `@neurodock/cli` | 0.2.0 | `init`, `doctor`, `validate`, `update`, `uninstall`, `host install`, `host uninstall`, `profile show/validate` |
+| `@neurodock/core` | 0.0.1 | Profile schema + plugin protocol manifests (JSON Schema 2020-12) |
+| `@neurodock/native-host` | 0.1.0 | Optional Chrome Native Messaging host for extension ↔ profile sync |
+| `@neurodock/extension-browser` | 0.0.1 (local) | WXT MV3, 7 sites, mock LLM provider; **not yet published** |
+| Six launch skills | — | adhd-daily-planner, audhd-context-recovery, ocd-decision-finalizer (beta), hyperfocus-formatter, visual-organizer, asd-meeting-translator |
+| Docs site | — | 36 pages, builds clean (Astro Starlight; deployment pending DNS) |
 
-What's deferred to a follow-up release:
+What's still deferred to a future release:
 
-- Real Ollama / cloud-provider wiring in the browser extension
-- Embedding-based fuzzy entity recall (currently exact + alias only)
-- `check_hyperfocus` + `check_sycophancy` implementations
-- Browser-store submissions
+- **Real Ollama / Anthropic / OpenAI provider wiring in the browser extension** — implementation exists on `feat/extension-browser/v0.0.2-llm` but needs a conflict-resolution merge pass before publishing.
+- **Browser-store submissions** — Chrome Web Store, Firefox Add-ons, Edge Add-ons developer accounts + screenshots; manual.
 
 ## How to actually test it right now
 
@@ -124,13 +133,39 @@ Design rationale lives in `docs/decisions/`:
 
 ## Contributing
 
-`CONTRIBUTING.md` has the welcome + on-ramp. Two contribution lanes:
+`CONTRIBUTING.md` has the welcome + on-ramp. Pick whichever lane matches
+what you want to do:
 
-- **Skills** — markdown bundles that activate on phrases. Easiest entry
- point. See `docs/src/content/docs/contribute/write-a-skill.mdx`.
-- **Code** — MCP servers, CLI commands, shared infrastructure. See
- `docs/src/content/docs/contribute/write-a-plugin.mdx` for the plugin
- protocol if you're shipping out-of-tree.
+**Smallest first PR (~15 min):**
+- Add a test to an existing skill (`packages/skills/<name>/tests/`)
+- Add a seed eval example (`packages/evals/corpora/translation/`)
+- Improve a tool's parameter description (the LLM uses these — clearer
+  descriptions = better tool use)
+
+**One-afternoon PR:**
+- Write a new skill — markdown bundle activating on specific phrases.
+  Copy any `packages/skills/<name>/` as a template; see
+  `docs/src/content/docs/contribute/write-a-skill.mdx`.
+- Sharpen the task-fractionator heuristics (regex / domain keyword maps).
+- Add a new entity-resolution heuristic (e.g., phonetic) to
+  `mcp-cognitive-graph`.
+
+**Multi-day PR:**
+- Build an out-of-tree plugin (skill / mcp-server / profile / translation
+  pack / language pack / theme) per the ADR 0007 plugin protocol. See
+  `docs/src/content/docs/contribute/write-a-plugin.mdx`.
+- Translation language pack (e.g., Hiberno-English, German directness norms,
+  Japanese keigo).
+
+**No code:**
+- Add an anonymised eval example from your own corporate inbox. The
+  contribution pipeline lives in `packages/evals/` and is the highest-
+  leverage non-code contribution.
+
+All PRs run CI: `pnpm turbo run lint typecheck test build` + `uv run pytest`
++ `uv run mypy --strict packages/...`. Every published package has its
+own CHANGELOG. Use Conventional Commits in PR titles (`feat:`, `fix:`,
+`docs:`, `test:`, `chore:`, `ci:`).
 
 ## Manifesto (short)
 
