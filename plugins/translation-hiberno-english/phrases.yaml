@@ -1,0 +1,213 @@
+# NeuroDock translation-pack — Hiberno-English workplace phrasebook
+#
+# Each entry maps a phrase commonly heard in Irish workplace conversation
+# (email, Slack, meetings) to a literal translation, a register tag, and
+# illustrative context.
+#
+# Conventions:
+#   - `phrase`:    the surface phrase the listener encounters.
+#   - `literal`:   plain-language translation of what the speaker typically
+#                  means. Respects that softening is doing real social work,
+#                  not just flagging it as evasion.
+#   - `register`:  one tag from a small open vocabulary (see README).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear. Helps with disambiguation.
+#   - `notes`:     optional longer note (when context flips the reading,
+#                  or when tone-of-voice changes the meaning).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  - phrase: "I'll have a go at it"
+    literal: "I am committing to attempt this, with the implicit caveat that I cannot guarantee the outcome. Treat as a yes, but not a guarantee."
+    register: softening
+    context:
+      - "Reply to a request where the speaker is genuinely taking it on."
+      - "Often used by Irish colleagues for tasks where 'I will do this' would sound presumptuously confident."
+    notes: |
+      Not a hedge — "I'll have a go" is a genuine commitment softened to
+      avoid sounding cocky. The understatement is cultural; the commitment
+      is real. Don't mistake the softening for non-commitment.
+
+  - phrase: "It's grand"
+    literal: "Context-dependent. Either 'this is acceptable, please move on' OR 'I am dismissing your concern without addressing it.' Disambiguate from surrounding context and the speaker's body language or punctuation."
+    register: dismissal
+    context:
+      - "Reply to a question, status update, or apology."
+      - "Email or Slack: a one-line 'it's grand' in response to a substantive query usually means the speaker is closing the topic rather than engaging with it."
+    notes: |
+      "Grand" is the workhorse Hiberno-English softener. It can mean
+      genuine approval ("the draft is grand, send it") or polite dismissal
+      ("it's grand, don't worry about it" = stop raising this). When in
+      doubt, ask a follow-up question that requires more than a one-word
+      answer.
+
+  - phrase: "I might do that"
+    literal: "I am politely declining without saying no. Treat as a soft no — do not expect this to happen."
+    register: soft-no
+    context:
+      - "Reply to an invitation, suggestion, or low-priority ask."
+      - "Often follows a sympathetic acknowledgement ('that's a good idea, I might do that')."
+    notes: |
+      Almost never an actual maybe. The phrase is a face-saving decline
+      that preserves the relationship and the option of revisiting if the
+      speaker changes their mind. If you need a real answer, ask a more
+      specific question with a deadline attached.
+
+  - phrase: "We'll see how we get on"
+    literal: "I am giving no commitment and may quietly drop this. Treat as 'no committed plan'; if you need movement, follow up explicitly."
+    register: hedging
+    context:
+      - "Reply to a proposal or plan that needs sign-off."
+      - "End-of-meeting closer when the next steps haven't been agreed."
+    notes: |
+      Not a roadmap. The phrase signals the speaker is not yet ready to
+      commit and doesn't want to be pinned to a position. If progress
+      matters to you, schedule the follow-up rather than waiting.
+
+  - phrase: "Ah, sure look"
+    literal: "I am closing this conversation thread. The topic is dismissed; we are moving on regardless of whether it was resolved."
+    register: closing-marker
+    context:
+      - "End of a Slack exchange or meeting tangent."
+      - "Often follows an uncomfortable topic the speaker doesn't want to dwell on."
+    notes: |
+      Pure register marker, not a commitment to anything. If the underlying
+      issue still matters to you, raise it again later in a different
+      framing — the speaker has flagged that this format won't progress it.
+
+  - phrase: "I'll come back to you"
+    literal: "I have no answer now and may or may not return. Treat as 'no answer this week'; set a follow-up reminder."
+    register: hedging
+    context:
+      - "Reply to a question the speaker isn't ready to answer."
+      - "End of a meeting where a decision was deferred without a date."
+    notes: |
+      "Come back to you" carries no deadline. A genuine commitment to
+      return tends to be more specific ("I'll have an answer by Thursday").
+      If your matter is time-sensitive, ask explicitly when to expect a
+      reply.
+
+  - phrase: "That's mighty"
+    literal: "I am expressing genuine approval. The understatement is the register; the praise is real."
+    register: enthusiasm-marker
+    context:
+      - "Response to good news, a delivered piece of work, or a colleague's update."
+      - "More common in casual Slack than in formal email."
+    notes: |
+      Hiberno-English understates positive reactions. "Mighty," "deadly,"
+      "savage," and "fair play" are real praise, not faint praise. Reading
+      them as lukewarm because they're not effusive is a calibration error.
+
+  - phrase: "Fair play to you"
+    literal: "I genuinely acknowledge the effort, achievement, or decision you just described. This is sincere recognition, not perfunctory politeness."
+    register: enthusiasm-marker
+    context:
+      - "Response to a colleague sharing a success or having handled a difficult situation."
+      - "Common in both Slack and verbal conversation; less common in formal email."
+    notes: |
+      Often misread by non-Irish speakers as sarcastic or backhanded
+      because of its compact form. It almost never is. Treat as a clear,
+      sincere "well done."
+
+  - phrase: "It's no bother"
+    literal: "I am sincerely happy to do this; please do not feel you are imposing. The phrase is reassurance, not resignation."
+    register: softening
+    context:
+      - "Reply to a thank-you or apology for asking."
+      - "Reply to a request the speaker is genuinely willing to take on."
+    notes: |
+      Not the same as "fine, I'll do it." The phrase actively reassures
+      the asker that the request was welcome. Reading it as grudging is
+      a calibration error.
+
+  - phrase: "Sure look it"
+    literal: "I am acknowledging what you said without committing to any action. Treat as conversational closure, not agreement."
+    register: closing-marker
+    context:
+      - "Mid-conversation, when the speaker wants to acknowledge a point and move on without engaging further."
+    notes: |
+      Pure conversational lubricant. Carries no semantic content of its
+      own. If a Slack reply to your substantive question is just "sure
+      look it," the speaker has not engaged with the substance.
+
+  - phrase: "I wouldn't be mad about it"
+    literal: "I am expressing notable opposition or dislike, phrased through understatement. Treat as 'I have a real objection.'"
+    register: understatement
+    context:
+      - "Reply to a proposal, decision, or change the speaker disagrees with."
+      - "Often the most direct disagreement an Irish colleague will offer in writing."
+    notes: |
+      The double-negative is the giveaway. "Wouldn't be mad about" is
+      stronger than "don't love." Treat as a real objection and surface
+      the underlying concern in your reply.
+
+  - phrase: "That'd be no harm"
+    literal: "I am suggesting we should do this. Treat as a soft recommendation, not a casual aside."
+    register: softening
+    context:
+      - "Senior colleague making a suggestion they expect to be acted on."
+      - "Often phrased as if optional but treated as advisory."
+    notes: |
+      The softening makes it sound optional. In practice, when a manager
+      or senior colleague says "that'd be no harm," they are nudging you
+      toward an action they want done. Ask "do you want me to do that?"
+      if you genuinely can't tell.
+
+  - phrase: "Are you alright there?"
+    literal: "Context-dependent. Either a genuine check-in ('are you OK?') OR a service-encounter prompt ('do you need anything from me?'). Disambiguate from setting."
+    register: softening
+    context:
+      - "Workplace: usually a genuine check-in if the colleague has noticed something off."
+      - "Service contexts: a prompt that the listener should ask for what they need."
+    notes: |
+      The "there" is distinctive. In a workplace, treat as a real
+      check-in worth engaging with rather than waving off. The phrase
+      offers an opening that the speaker has chosen carefully.
+
+  - phrase: "Would you not just..."
+    literal: "I am suggesting an alternative approach that I think is obvious. The framing implies you may have missed it. Treat as a real recommendation, possibly with mild frustration."
+    register: disagreement-via-question
+    context:
+      - "Mid-discussion when the speaker disagrees with the current direction."
+      - "Often heard in technical reviews and planning conversations."
+    notes: |
+      The negative interrogative is doing the work. It softens what would
+      otherwise be a direct "you should do X instead." Engage with the
+      substance — the speaker has a real alternative in mind.
+
+  - phrase: "I'll let you off"
+    literal: "I am closing this conversation so you can get back to your work. The phrase is a courtesy; it does not imply you were keeping me."
+    register: closing-marker
+    context:
+      - "End of a Slack or in-person exchange."
+      - "Often used by the person ending the conversation, not the one being released."
+    notes: |
+      Not a status judgement. The speaker is using a conventional courtesy
+      to end the chat without abruptness. Don't read it as an accusation
+      that you were wasting their time.
+
+  - phrase: "I'm only joking"
+    literal: "I made a remark that could be read as critical and I am softening it to preserve the relationship. The remark may still reflect a genuine view, but I do not want it taken as a formal complaint."
+    register: softening
+    context:
+      - "Following a comment that landed sharper than the speaker intended."
+      - "Common in meetings and Slack when the speaker wants to walk back a sharp aside."
+    notes: |
+      Often deployed when the underlying view IS held, but the speaker
+      doesn't want the remark escalated. Treat the substance as a real
+      data point worth noting privately, while accepting the softening
+      as the speaker's chosen face-saving move.
+
+  - phrase: "Now you're sucking diesel"
+    literal: "I am expressing strong, sincere approval of what you just did or said. Treat as 'you've got it' or 'now you're really making progress.'"
+    register: enthusiasm-marker
+    context:
+      - "Response to a colleague who has just figured something out or made a breakthrough."
+      - "More common in casual conversation than in formal channels."
+    notes: |
+      Idiomatic and very Irish. Almost never used sarcastically. Treat as
+      sincere encouragement — the speaker is genuinely pleased.

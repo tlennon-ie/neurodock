@@ -1,0 +1,235 @@
+# NeuroDock translation-pack — German workplace directness phrasebook
+#
+# Each entry maps a phrase commonly used in German-speaking workplaces
+# (email, meeting, code review) to a literal translation, a register
+# tag, and illustrative context.
+#
+# Conventions:
+#   - `phrase`:    the German phrase (and an English equivalent where the
+#                  same register exists in English).
+#   - `literal`:   plain-language translation of what the speaker
+#                  typically means. Surfaces the neutral reading where
+#                  outside readers tend to misread the tone as hostile.
+#   - `register`:  one tag from a small open vocabulary (see README).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear. Helps with disambiguation.
+#   - `notes`:     optional longer note (when context changes the reading
+#                  or when the phrase is commonly misread by outside
+#                  audiences).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  - phrase: "Das ist so nicht akzeptabel."
+    literal: "This specific aspect must change before approval; the rest may be acceptable. The critique is scoped to a particular item, not the whole work."
+    register: scoped-critique
+    context:
+      - "Code review or document review."
+      - "Manager response to a deliverable that has one or more specific issues."
+    notes: |
+      Often misread by Anglophone readers as a sweeping rejection of the
+      entire work. In the German workplace register, "so nicht" ("not in
+      this form") usually scopes the critique to a specific element; the
+      rest of the work is implicitly fine. Ask which element if it is
+      not obvious from context.
+
+  - phrase: "Ich finde das nicht so gut."
+    literal: "I object to this. Treat as a hard negative. The 'nicht so gut' phrasing is the conventional way to express clear disagreement, not a soft maybe."
+    register: direct-factual
+    context:
+      - "Meeting discussion on a proposed approach."
+      - "Code review where the reviewer disagrees with the chosen design."
+    notes: |
+      The "nicht so gut" phrasing sounds hedged in English ("not so good")
+      but in German workplace register it is a clear negative. Reading
+      it as "they're a bit unsure" misses the substantive disagreement
+      being communicated.
+
+  - phrase: "Können Sie das bitte präzisieren?"
+    literal: "Your statement was unclear or under-specified; please rephrase or provide more detail. No social offence is taken; this is a request for clarity, not a complaint."
+    register: direct-factual
+    context:
+      - "Meeting follow-up on an ambiguous statement."
+      - "Email reply to a vague proposal or status update."
+    notes: |
+      Asking for precision is a sign of engagement, not impatience. The
+      German workplace convention treats unspecified statements as
+      incomplete; the request to specify is the courtesy. Reading this
+      as a snub is a calibration error.
+
+  - phrase: "Im Prinzip ja, aber..."
+    literal: "Effectively no, but phrased as conditional. Treat as a soft no — the substantive answer will be in the part after the 'aber.'"
+    register: conditional-yes-as-soft-no
+    context:
+      - "Reply to a proposal the speaker disagrees with but does not want to reject outright."
+      - "Meeting response where the speaker wants to flag substantial issues without ending the discussion."
+    notes: |
+      The "Prinzip ja" is the face-saving framing; the "aber" is where
+      the real position lives. Listen carefully to what follows; the
+      conditions usually amount to a substantive no in practice.
+
+  - phrase: "Das gehört nicht zur Tagesordnung."
+    literal: "We will not discuss this now. Raise it via the proper channel (next meeting's agenda, a separate Termin, an email)."
+    register: agenda-discipline
+    context:
+      - "Mid-meeting interjection when a topic raised does not match the agenda."
+      - "Meeting chair redirecting discussion back to the planned items."
+    notes: |
+      Agenda discipline (Tagesordnung) is treated as a professional
+      courtesy in German workplace meetings — sticking to the agenda
+      respects everyone's time. Being told something is not on the
+      agenda is not dismissal of the issue; it is redirection to the
+      appropriate forum. Schedule a separate Termin or add it to the
+      next agenda.
+
+  - phrase: "Mit freundlichen Grüßen"
+    literal: "Standard formal email closure. The German equivalent of 'Yours sincerely / Best regards.' Reading this as cold is a calibration error — it is the conventional formal sign-off, full stop."
+    register: email-closure
+    context:
+      - "Sign-off on formal email correspondence."
+      - "Business emails between parties who use the Sie register."
+    notes: |
+      Often abbreviated as "MfG." Reading it as distant or unfriendly is
+      a register error; it is the default formal close. If a German
+      colleague switches from "Mit freundlichen Grüßen" to "Viele Grüße"
+      or "Liebe Grüße," that IS a register shift signalling warmer
+      relationship — but the formal version is not hostile; it is just
+      formal.
+
+  - phrase: "Wir hatten doch besprochen, dass..."
+    literal: "We already agreed on this previously. I am restating the agreed position because I need it back in the conversation. Not necessarily passive-aggressive; often just a record-keeping move."
+    register: direct-factual
+    context:
+      - "Reply to a question that was already discussed in an earlier meeting or email."
+      - "Follow-up on a commitment the recipient appears to have forgotten."
+    notes: |
+      The "doch" carries some weight — it signals the speaker considers
+      this to be a settled point. In Anglophone register the equivalent
+      "as we agreed" can read passive-aggressive; in German the framing
+      is usually closer to "let me reinstate the agreed position." If
+      your memory of the agreement differs, push back specifically.
+
+  - phrase: "Das machen wir so."
+    literal: "Decision made. This is now the agreed approach. Implementation can begin. Treat as a directive close, not a discussion-opener."
+    register: formal-imperative
+    context:
+      - "Meeting decision moment."
+      - "Manager closing a discussion with a commitment to a specific approach."
+    notes: |
+      "So" carries the decisional weight. After "das machen wir so" the
+      decision is conventionally settled; pushing back at this point
+      reads as not respecting the meeting's process. If you have a real
+      objection, raise it before this point or in a follow-up email,
+      not in the moment.
+
+  - phrase: "Sind Sie sicher?"
+    literal: "Are you certain? This is a genuine request for confidence-checking, not a challenge to your competence. Treat as an invitation to either confirm or revise — both are equally acceptable responses."
+    register: direct-factual
+    context:
+      - "Meeting follow-up after a confident statement."
+      - "Email response to a claim that has implications worth verifying."
+    notes: |
+      In the German workplace register, asking "are you sure?" is a
+      neutral fact-check. It does not imply the speaker thinks you are
+      wrong; it is a request to confirm or revise based on what you
+      actually know. Reading this as condescending is a calibration
+      error.
+
+  - phrase: "Bitte beachten Sie..."
+    literal: "Please note the following. Not optional — the following information is something you are expected to act on or factor in. The 'bitte' is politeness, not weakening."
+    register: formal-imperative
+    context:
+      - "Email or document drawing attention to a constraint, rule, or requirement."
+      - "Compliance, legal, or operational instructions."
+    notes: |
+      "Beachten" is stronger than "note" — closer to "take account of."
+      Treat the following text as a non-optional input. The polite
+      framing does not make the content optional.
+
+  - phrase: "Schönen Feierabend!"
+    literal: "Have a good evening / end of work. Conventional polite close used as the day ends. Sincere and warm; carries no hidden meaning."
+    register: email-closure
+    context:
+      - "End-of-day Slack or email close."
+      - "In-person goodbye as a colleague leaves the office."
+    notes: |
+      "Feierabend" carries cultural weight — the end of the workday is
+      treated as a real boundary. Wishing someone "schönen Feierabend"
+      is a small but sincere acknowledgement of that boundary. Reading
+      it as perfunctory misses the cultural respect being expressed.
+
+  - phrase: "Können wir das kurz halten?"
+    literal: "Please keep this brief. Often a time-respect signal rather than a dismissal — the speaker is acknowledging that both your time and theirs matter."
+    register: direct-factual
+    context:
+      - "Start of a meeting that wasn't originally planned to be short."
+      - "Slack message replying to a long thread."
+    notes: |
+      In Anglophone register this can read as impatient or dismissive.
+      In German workplace register it is closer to "let's not waste
+      either of our time" — a respect signal, not a critique. Match
+      the brevity in your reply.
+
+  - phrase: "Das ist eine andere Baustelle."
+    literal: "That is a separate issue. We will not address it in this conversation; it belongs to a different work-stream or discussion. Not dismissal of the issue; redirection to the right forum."
+    register: agenda-discipline
+    context:
+      - "Mid-discussion when a tangential topic comes up."
+      - "Code review when a comment relates to a different module than the one under review."
+    notes: |
+      "Baustelle" (construction site) is an idiomatic way to scope work.
+      Being told something is a different Baustelle is not the same as
+      being told it doesn't matter; it is being told it belongs in a
+      different ticket / meeting / thread. Raise it there.
+
+  - phrase: "Ich erwarte Ihre Rückmeldung bis [date]."
+    literal: "I expect your response by [date]. The deadline is firm. The 'erwarte' (expect) is the conventional way to set a deadline in formal email — no implication of distrust or impatience."
+    register: formal-imperative
+    context:
+      - "Formal email closure containing a deadline."
+      - "Manager or external counterpart setting a response window."
+    notes: |
+      "Ich erwarte" sounds heavy in English literal translation, but in
+      German formal-email register it is the standard way to name a
+      deadline. Treat the date as real and reply by then; do not read
+      a personal element into the phrasing.
+
+  - phrase: "Vielleicht denken Sie nochmal darüber nach."
+    literal: "I am asking you to reconsider your position. The 'vielleicht' (perhaps) is politeness padding around a firm request to revisit the decision. Treat as a real reconsideration request, not a casual aside."
+    register: direct-factual
+    context:
+      - "Reply to a decision the speaker disagrees with."
+      - "Manager response to a proposal they want revised before approval."
+    notes: |
+      The "vielleicht" is the only softener; the rest is direct. In
+      Anglophone register "maybe think about it again" would read as
+      casual; in German workplace register it is a polite but clear
+      instruction to revisit your position. Do the reconsideration in
+      good faith.
+
+  - phrase: "Ohne mich."
+    literal: "I do not support this and I am declining to be involved. Treat as a firm withdrawal from the proposal."
+    register: direct-factual
+    context:
+      - "Meeting response to a proposal the speaker objects to."
+      - "Often used by someone who would otherwise be expected to participate."
+    notes: |
+      Compact and direct. Two words doing substantial work: the speaker
+      is explicitly declining to lend their name, time, or signature to
+      the proposed course of action. Treat as a hard signal that this
+      colleague will not participate; the proposal needs rework or
+      another participant.
+
+  - phrase: "Das müssen wir uns nochmal anschauen."
+    literal: "We need to look at this again. Treat as 'this is not approved yet; expect another review pass.' Not a soft yes — the speaker is naming an outstanding piece of work."
+    register: direct-factual
+    context:
+      - "Review meeting where a decision is being deferred for further analysis."
+      - "Engineering or product review where the speaker has substantive concerns."
+    notes: |
+      "Uns nochmal anschauen" names another review pass as required.
+      Do not interpret as 'approved with minor caveats'; the review is
+      explicitly not yet complete. Schedule the next look explicitly.

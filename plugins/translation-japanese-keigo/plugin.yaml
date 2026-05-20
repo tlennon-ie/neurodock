@@ -1,0 +1,100 @@
+# NeuroDock Plugin — translation-japanese-keigo
+#
+# A translation-pack for Japanese workplace keigo (formal language) and its
+# three core registers: sonkeigo (respectful, raising the listener),
+# kenjougo (humble, lowering the speaker), and teineigo (polite, neutral).
+# Designed for neurodivergent professionals — and anyone working in or
+# with Japanese workplaces — who can miss the substantive content behind
+# soft refusals, omissions, and vertical-register choices.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-japanese-keigo"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for Japanese workplace keigo: decodes sonkeigo, kenjougo, and teineigo registers, surfaces soft refusals, and translates refusals-via-omission."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone working in or with Japanese
+# workplaces who experiences the register mismatch between keigo-based
+# indirection and more direct workplace defaults elsewhere. Avoiding a
+# clinical framing per ETHICS commitment 1.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. Keigo is the formal register of standard
+# Japanese (ja-JP); regional and casual variation are out of scope for
+# this workplace-focused pack.
+locale:
+  - "ja-JP"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+#
+# A translation-pack exposes one or more `translation-prompt` assets that
+# mcp-translation registers in its prompt library, plus the phrasebook.
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-japanese-keigo"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-japanese-keigo"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "japanese"
+  - "keigo"
+  - "sonkeigo"
+  - "kenjougo"
+  - "teineigo"
+  - "workplace"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

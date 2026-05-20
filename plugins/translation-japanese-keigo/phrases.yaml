@@ -1,0 +1,262 @@
+# NeuroDock translation-pack — Japanese workplace keigo phrasebook
+#
+# Each entry maps a phrase commonly used in Japanese workplace
+# communication (email, meeting, business-card exchange) to a literal
+# translation, a register tag, and illustrative context.
+#
+# Conventions:
+#   - `phrase`:    the Japanese phrase (kanji/kana as written).
+#   - `romaji`:    Hepburn romanisation, for non-readers of Japanese.
+#   - `literal`:   plain-language translation of what the speaker
+#                  typically means. Surfaces omitted content where
+#                  Japanese leaves substantive material unsaid.
+#   - `register`:  one tag from a small open vocabulary (see README).
+#                  Indicates which formal register the phrase belongs to
+#                  (sonkeigo / kenjougo / teineigo) or what conversational
+#                  move it performs (refusal-via-omission, soft-refusal,
+#                  meeting-deferral, group-decision-deferral).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear. Helps with disambiguation.
+#   - `notes`:     optional longer note (when context flips the reading,
+#                  or when the phrase is commonly misread by outside
+#                  audiences).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  - phrase: "検討させていただきます"
+    romaji: "kentou sasete itadakimasu"
+    literal: "I will consider this internally. Often a soft no, but not always; depends on stakeholder seniority, timeline, and whether the speaker offered a concrete next step. Treat as 'no answer this week without follow-up,' and recalibrate based on whether subsequent communication arrives."
+    register: soft-refusal
+    context:
+      - "Reply to a proposal where the speaker does not want to commit on the spot."
+      - "Meeting close when the decision involves consulting absent stakeholders."
+    notes: |
+      The "sasete itadakimasu" structure is kenjougo (humble), encoding
+      that the speaker takes the action humbly. The phrase is the
+      conventional polite hedge. Genuine "I will get back to you with
+      a decision" tends to come with a date attached; bare "kentou
+      sasete itadakimasu" usually means the speaker wants to close
+      the topic without saying no.
+
+  - phrase: "難しいかもしれません"
+    romaji: "muzukashii kamoshiremasen"
+    literal: "This is effectively impossible. The polite hedge ('kamoshiremasen' — 'might be') does not mean it's negotiable; it is the conventional way to communicate 'no' without saying it directly."
+    register: soft-refusal
+    context:
+      - "Reply to a request, deadline, or proposal that the speaker cannot fulfil."
+      - "Often follows an acknowledgement of the asker's position."
+    notes: |
+      A near-certain refusal in soft-hedge wrapping. "Difficult" is
+      doing the work; the "might be" is etiquette. Reading this as a
+      genuine maybe is a calibration error. If you need clarification,
+      ask what would have to be true for it to work — that may surface
+      whether the refusal is truly final or has a path to yes.
+
+  - phrase: "またご連絡いたします"
+    romaji: "mata go-renraku itashimasu"
+    literal: "I will contact you again. The time horizon is unspecified — could be tomorrow, could be never. Treat as 'no committed follow-up date'; set your own reminder if the matter is time-sensitive."
+    register: kenjougo
+    context:
+      - "End of an email or meeting where the speaker wants to keep the door open without committing to a next step."
+    notes: |
+      "Go-renraku" (honourable contact) is sonkeigo for the act of
+      contacting; "itashimasu" is the kenjougo (humble) verb form for
+      the speaker performing it. Standard formal-close; carries no
+      substantive commitment beyond "the door is not closed."
+
+  - phrase: "ちょっと..."
+    romaji: "chotto..."
+    literal: "I have a substantive objection that I will not state directly. The trailing-off is the refusal; the unfinished sentence is the message. Treat as a clear no."
+    register: refusal-via-omission
+    context:
+      - "Mid-conversation when the speaker is declining an invitation, proposal, or request."
+      - "Common in both formal and casual register; the trailing-off does the work in both."
+    notes: |
+      The classic refusal-via-omission. The literal "ちょっと" means
+      "a little" or "a bit"; the unfinished sentence implies the
+      speaker has a reason they do not want to state. Reading this as
+      "they're considering it" is a calibration error — the omission is
+      the refusal. Accept gracefully and offer an alternative if
+      appropriate.
+
+  - phrase: "前向きに検討します"
+    romaji: "maemuki ni kentou shimasu"
+    literal: "I will consider this favourably. More positive than bare 'kentou shimasu' — the 'maemuki' (forward-facing) genuinely signals likelihood of yes, though still without firm commitment. Treat as a soft yes pending follow-up."
+    register: soft-refusal
+    context:
+      - "Reply to a proposal the speaker actively likes but cannot approve unilaterally."
+      - "Meeting close where group-decision deferral applies but the speaker is signalling personal support."
+    notes: |
+      The "maemuki" is the crucial word that distinguishes this from
+      the standard soft-no shape. When you hear "maemuki ni kentou,"
+      the probability of yes is meaningfully higher — though still not
+      certain, because the group-decision step has yet to happen.
+      Schedule a follow-up to confirm.
+
+  - phrase: "社内で検討させていただきます"
+    romaji: "shanai de kentou sasete itadakimasu"
+    literal: "We will consider this internally within our organisation. Treat as 'this requires group consensus across multiple stakeholders'; the timeline is the time the internal consensus-building takes, not the speaker's individual deliberation."
+    register: group-decision-deferral
+    context:
+      - "Business meeting close where the speaker is one representative of a larger team."
+      - "Email reply involving a proposal that crosses team or department lines."
+    notes: |
+      The "shanai de" (within the company) names the consensus
+      requirement explicitly. The Japanese workplace convention of
+      ringi (formal consensus-building) means that even when an
+      individual is enthusiastic, group sign-off can take weeks. Plan
+      around the consensus timeline rather than the individual
+      response.
+
+  - phrase: "お世話になっております"
+    romaji: "o-sewa ni natte orimasu"
+    literal: "Thank you for your continued support / for taking care of us. Conventional formal-email opener used when there is any kind of existing relationship — business partners, suppliers, customers, even colleagues across companies in the same group. Carries warmth in target register; reading it as perfunctory is a calibration error."
+    register: teineigo
+    context:
+      - "Opening line of nearly every business email between organisations with an existing relationship."
+      - "Often abbreviated to 'osewa ni natte orimasu' in writing or 'osewa sama desu' in speech."
+    notes: |
+      The phrase performs real social work — it acknowledges the
+      relationship and the reciprocity that underpins business
+      communication. Omitting it in formal email register reads as
+      cold or transactional. Include it (and reply with it) when
+      writing in Japanese formal email.
+
+  - phrase: "申し訳ございません"
+    romaji: "moushiwake gozaimasen"
+    literal: "I am deeply sorry. The most formal apology register in business use. Used for genuine apology AND for softening a refusal, request, or interruption — the apology framing acknowledges the imposition rather than indicating fault."
+    register: kenjougo
+    context:
+      - "Genuine apology for a failure, delay, or mistake."
+      - "Soft preamble before a refusal ('moushiwake gozaimasen ga...') or a request ('moushiwake gozaimasen ga, oshiete kudasai')."
+    notes: |
+      Reading every "moushiwake gozaimasen" as confessing fault is a
+      calibration error. In context, it can be a polite preface to a
+      refusal or a request — the apology is for the imposition, not
+      for an error. Surrounding context usually disambiguates: a
+      following "ga" (but) signals soft-refusal preface; a following
+      account of a specific event signals genuine apology.
+
+  - phrase: "ご検討のほど、よろしくお願いいたします"
+    romaji: "go-kentou no hodo, yoroshiku onegai itashimasu"
+    literal: "Please give this your consideration. Conventional formal-email close used after presenting a proposal or request. Does not imply pressure for a quick reply; the formality is etiquette, not urgency."
+    register: sonkeigo
+    context:
+      - "Sign-off on a formal business email containing a proposal, request, or document."
+    notes: |
+      The "go-kentou" (honourable consideration) is sonkeigo, raising
+      the listener; the "itashimasu" is kenjougo, lowering the
+      speaker. The double-register move is the conventional formal-
+      request shape. Mirror the formality level in your reply.
+
+  - phrase: "いかがでしょうか"
+    romaji: "ikaga deshou ka"
+    literal: "How is it? / What do you think? Polite open question inviting the listener's view. The 'ikaga' is sonkeigo; the 'deshou ka' is teineigo polite-question form. Genuine invitation to respond, not a rhetorical question."
+    register: sonkeigo
+    context:
+      - "End of an email or meeting turn, inviting the listener's opinion or status."
+      - "After presenting a proposal, sample, or piece of work."
+    notes: |
+      Treat as a real ask for your view. The formality preserves the
+      vertical register but the substantive question is genuine. In
+      reply, give a substantive answer; "fine, thanks" reads as
+      under-engaged.
+
+  - phrase: "恐れ入りますが"
+    romaji: "osore irimasu ga"
+    literal: "I'm afraid that... / Excuse me but... Formal soft preface used before a request, refusal, or interruption. Acknowledges the imposition without confessing fault. Treat as politeness padding around what follows."
+    register: kenjougo
+    context:
+      - "Before asking a senior colleague or external party for a favour."
+      - "Before introducing a constraint, correction, or refusal."
+    notes: |
+      Functions like an extended "excuse me" in target register. The
+      substantive content is in what follows the "ga" (but/however).
+      Read past the preface to the substantive ask or constraint.
+
+  - phrase: "お疲れ様です"
+    romaji: "o-tsukare sama desu"
+    literal: "Thank you for your hard work / good to see you. Standard workplace greeting between colleagues, regardless of vertical relationship. Carries warmth in target register; the literal 'you must be tired' is conventional, not literal commentary on the listener's state."
+    register: teineigo
+    context:
+      - "Greeting colleagues at the office, in Slack, or in email."
+      - "Standard sign-off on internal email."
+    notes: |
+      Reading "you must be tired" literally and looking for hidden
+      meaning is a calibration error — the phrase has been
+      conventionalised into a workplace greeting with no remaining
+      literal content. Use it as the default polite greeting in
+      Japanese-workplace contexts.
+
+  - phrase: "後ほど確認してご連絡いたします"
+    romaji: "nochi-hodo kakunin shite go-renraku itashimasu"
+    literal: "I will check and contact you later. Genuine deferral with implicit commitment to follow up — the 'kakunin shite' (after checking) names the action that will produce the answer. More committed than bare 'mata go-renraku itashimasu.'"
+    register: kenjougo
+    context:
+      - "Reply when the speaker needs to look something up or consult before answering."
+      - "Common in customer-service and B2B contexts where the answer requires verification."
+    notes: |
+      The "kakunin" (check / verify) is the substantive commitment.
+      Treat as a real promise of follow-up with the substantive answer.
+      A reasonable follow-up window is one to two business days; if
+      nothing arrives by then, a polite reminder is appropriate.
+
+  - phrase: "貴重なご意見ありがとうございます"
+    romaji: "kichou na go-iken arigatou gozaimasu"
+    literal: "Thank you for your valuable input. Standard formal acknowledgement of a comment, suggestion, or critique. Does NOT necessarily indicate the suggestion will be acted on — often a polite close to the topic rather than a commitment to follow-through."
+    register: sonkeigo
+    context:
+      - "Reply to feedback in a formal meeting or email."
+      - "Standard acknowledgement before either accepting or politely declining a suggestion."
+    notes: |
+      Common acknowledgement that closes the receive-input phase of a
+      discussion without committing to action. If you want to track
+      whether your suggestion is being acted on, follow up
+      specifically — the acknowledgement alone does not commit the
+      organisation to anything.
+
+  - phrase: "持ち帰らせていただきます"
+    romaji: "mochi-kaerasete itadakimasu"
+    literal: "Let me take this back to my team. The 'mochi-kaeru' (take home) is the conventional way to name a group-decision deferral; the kenjougo framing humbles the speaker as one who must consult before deciding. Treat as 'no decision today; the consensus process now begins.'"
+    register: group-decision-deferral
+    context:
+      - "Meeting close when the speaker is one representative of a larger team."
+      - "Negotiation moment where the speaker cannot approve unilaterally."
+    notes: |
+      Names the consensus process explicitly. The speaker is not
+      stalling — they are signalling that their organisation's
+      decision shape requires the ringi (formal consensus-building)
+      process. Time-horizon expectations: anywhere from a few days to
+      several weeks depending on the organisation's size and the
+      decision's scope.
+
+  - phrase: "なるほど"
+    romaji: "naruhodo"
+    literal: "I see. / I understand what you are saying. Acknowledgement of comprehension; NOT agreement. The speaker has registered your point but has not committed to it."
+    register: teineigo
+    context:
+      - "Mid-conversation acknowledgement during a discussion."
+      - "Often used to maintain conversational rhythm without committing to a position."
+    notes: |
+      Frequently misread by non-Japanese speakers as agreement.
+      "Naruhodo" is comprehension, not concurrence. If you need to
+      know whether the listener actually agrees, ask explicitly — the
+      "naruhodo" itself does not tell you.
+
+  - phrase: "致しかねます"
+    romaji: "itashi-kanemasu"
+    literal: "I am unable to do this. Formal refusal in kenjougo register; the '-kanemasu' suffix specifically means 'unable to' in formal speech. Treat as a firm no; the formality is etiquette, not weakness."
+    register: kenjougo
+    context:
+      - "Customer-service reply declining a request that falls outside policy."
+      - "Formal business reply declining a request that the speaker's role does not permit them to fulfil."
+    notes: |
+      The "-kanemasu" construction is specifically formal-refusal
+      vocabulary. Reading the formality as hedging is a calibration
+      error — this is a firm decline. If you need a path forward,
+      ask what alternative options exist rather than pushing back on
+      the refusal itself.

@@ -1,0 +1,102 @@
+# NeuroDock Plugin — translation-hiberno-english
+#
+# A translation-pack for Hiberno-English workplace register. Decodes the
+# softening, hedging, and conversational closure patterns that are the
+# cultural default in Irish workplaces. Designed for neurodivergent
+# professionals — and anyone new to working with Irish colleagues — who
+# read "I might do that" as a maybe when it almost always means no.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-hiberno-english"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for Hiberno-English workplace register: softening, hedging, and the conversational closure patterns that are the cultural default in Irish offices."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone who can't read Hiberno-English
+# subtext — that includes ND professionals, new joiners to Irish offices,
+# remote colleagues working across Ireland and other markets, and Irish
+# diaspora returning to work in Ireland after years abroad. Avoiding a
+# clinical framing per ETHICS commitment 1.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. Hiberno-English is the spoken and written
+# register of the Republic of Ireland and (with notable variation) Northern
+# Ireland. The pack is targeted to en-IE; en-GB readers will recognise
+# many of the patterns but the calibration is specifically Irish.
+locale:
+  - "en-IE"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+#
+# A translation-pack exposes one or more `translation-prompt` assets that
+# mcp-translation registers in its prompt library, plus the phrasebook
+# (declared as a translation-prompt for forward-compat).
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-hiberno-english"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-hiberno-english"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "hiberno-english"
+  - "irish-english"
+  - "ireland"
+  - "workplace"
+  - "softening"
+  - "register"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

@@ -1,0 +1,103 @@
+# NeuroDock Plugin — translation-german-directness
+#
+# A translation-pack for German workplace directness. Decodes the cultural
+# convention that direct critique is neutral, factual, and not personally
+# hostile. Designed for neurodivergent professionals — and anyone working
+# across German-speaking workplaces — who keep reading aggression into
+# what is, in target register, simply clear communication.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-german-directness"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for German workplace directness: distinguishes neutral factual critique from personal hostility, decodes Sie/du register choices, and surfaces Termin-culture norms."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone working in or with German-speaking
+# workplaces who experiences the register mismatch between German workplace
+# directness and softer Anglophone/Latin/East-Asian defaults. Avoiding a
+# clinical framing per ETHICS commitment 1.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. Primary register is de-DE; the same
+# direct-critique convention is broadly recognised across de-AT (Austria)
+# and de-CH (Switzerland) though specific phrasing varies regionally.
+# Loaders treat all three as compatible; downstream readers should expect
+# regional variation in the exact phrasing.
+locale:
+  - "de-DE"
+  - "de-AT"
+  - "de-CH"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+#
+# A translation-pack exposes one or more `translation-prompt` assets that
+# mcp-translation registers in its prompt library, plus the phrasebook.
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-german-directness"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-german-directness"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "german"
+  - "deutsch"
+  - "directness"
+  - "workplace"
+  - "sie-du"
+  - "register"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}
