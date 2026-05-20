@@ -1,0 +1,102 @@
+# NeuroDock Plugin — translation-sales
+#
+# A translation-pack for sales, customer-success, and business-development
+# idiom. Decodes the commitment-avoidance, polite stalling, and stage-gated
+# language used by enterprise sales reps, CS managers, and procurement
+# counterparts. Designed for neurodivergent professionals (and anyone who
+# isn't quota-fluent) who can't tell whether "interesting" is enthusiasm or
+# a polite no.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-sales"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for sales and customer-success idiom: commitment-avoidance, polite stalling, deal-stage gatekeeping, and quota-driven hedging."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone who can't read sales-call subtext —
+# that includes ND professionals but also first-time founders learning to read
+# their own pipeline, technical staff dragged into customer calls, and
+# customers trying to figure out whether a vendor is actually going to deliver.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. The idiom in this pack is rooted in US
+# enterprise-sales register, which has become the default across most
+# English-speaking SaaS markets.
+locale:
+  - "en-US"
+  - "en-GB"
+  - "en-IE"
+  - "en-AU"
+  - "en-CA"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-sales"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-sales"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "sales"
+  - "customer-success"
+  - "business-development"
+  - "saas"
+  - "procurement"
+  - "deal-stage"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

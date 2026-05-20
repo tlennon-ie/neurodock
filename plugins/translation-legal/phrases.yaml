@@ -1,0 +1,220 @@
+# NeuroDock translation-pack — legal-profession phrasebook
+#
+# Each entry maps a phrase commonly used in legal correspondence (in-house,
+# BigLaw, British-firm) to a literal translation, a register tag, and
+# illustrative context.
+#
+# Conventions:
+#   - `phrase`:    the surface phrase the recipient encounters.
+#   - `literal`:   plain-language translation of what the speaker typically
+#                  means. Tries to be accurate, not cynical.
+#   - `register`:  one tag from a small open vocabulary (see README).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear. Helps with disambiguation.
+#   - `notes`:     optional longer note (when context matters more than
+#                  usual, or when the phrase has a legal term-of-art use).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  - phrase: "I'll circle back on this"
+    literal: "I am ending this conversation now. I may or may not return to it. Treat as 'no answer this week' and follow up if you need one."
+    register: hedged-commitment
+    context:
+      - "Email reply where the sender wants to close the thread without committing."
+      - "End of a call where someone hasn't decided but doesn't want to say so."
+    notes: |
+      "Circle back" almost never comes with a date. If your matter has one,
+      ask explicitly: "When should I expect to hear back?" The phrase itself
+      contains no commitment.
+
+  - phrase: "Happy to discuss further"
+    literal: "I'd rather not put my position in writing. If you want a decision, get me on a call."
+    register: british-firm-softening
+    context:
+      - "Outside counsel response to a question they want to walk back from."
+      - "Email reply where the sender will say more in person but less on email."
+    notes: |
+      Often combined with an ostensibly responsive paragraph that doesn't
+      actually answer the question. The "happy to discuss" tail is the
+      tell that the email body is incomplete on purpose.
+
+  - phrase: "Take this offline"
+    literal: "Stop CCing people on this thread. Move it to a direct message, a call, or a meeting."
+    register: formal
+    context:
+      - "Reply-all email where the sender wants the audience reduced."
+      - "Often follows a CC that included someone the sender doesn't want reading the next exchange."
+
+  - phrase: "We should align on this"
+    literal: "I disagree with you and I want to negotiate the position without it being adversarial. Expect me to push back when we talk."
+    register: passive-aggressive
+    context:
+      - "Internal email between counsel and business stakeholders."
+      - "Cross-firm correspondence on a deal where the lawyers disagree on a point."
+    notes: |
+      The phrase imports a deliberative frame ("align") onto what is actually
+      a disagreement. If you receive it, expect a negotiation, not a status
+      meeting.
+
+  - phrase: "Per my previous email"
+    literal: "I have already answered this question; the answer has not changed; please re-read the earlier email before I have to repeat myself."
+    register: passive-aggressive
+    context:
+      - "Reply to a question that was already covered in an earlier message in the same thread."
+    notes: |
+      Almost always carries low-grade exasperation. It is not, however,
+      hostile in the way it sounds to a literal reader — it's professional
+      shorthand for "the prior message was complete." Don't escalate; just
+      re-read the earlier mail.
+
+  - phrase: "Without prejudice"
+    literal: "What I am about to say cannot be used against me later in court or in formal proceedings. Treat the offer or admission as exploratory, not binding."
+    register: legal-term-of-art
+    context:
+      - "Settlement correspondence."
+      - "Pre-litigation offers."
+      - "Negotiations where one party makes a concession they wouldn't make in open correspondence."
+    notes: |
+      This is a real term of art with operational effect, not just hedging.
+      A "without prejudice" letter is protected from later disclosure in
+      most common-law jurisdictions. Treat it as a genuine signal that the
+      sender is exploring a deal, not stating a final position. The exact
+      protection varies by jurisdiction — when it matters, ask a lawyer.
+
+  - phrase: "As a matter of housekeeping"
+    literal: "I am about to raise something potentially adversarial under a friendly framing. Read the next paragraph carefully."
+    register: british-firm-softening
+    context:
+      - "Opening of a deal-stage email where the lawyer is about to ask for something the other side won't love."
+      - "Letter from outside counsel introducing a list of issues, the last of which is usually the real one."
+    notes: |
+      "Housekeeping" suggests "small admin items." In legal correspondence
+      it routinely flags the opposite: the sender is using a friendly frame
+      to introduce friction. The actual point is usually item 3 or 4 of the
+      list, after one or two genuinely administrative items.
+
+  - phrase: "Notwithstanding the foregoing"
+    literal: "Ignore everything I just said in the preceding clause. The next clause is what governs."
+    register: legal-term-of-art
+    context:
+      - "Contract drafting."
+      - "Memos summarising the legal position."
+    notes: |
+      This is a drafting convention, not a hedge. It signals an exception
+      or override to the prior clause. If you find it in correspondence
+      (not just in a contract), the writer is being precise about which
+      part of an argument controls.
+
+  - phrase: "I'd be grateful if you could revert by close of play"
+    literal: "I want this by end of business today. The 'I'd be grateful' framing is politeness; the deadline is real."
+    register: british-firm-softening
+    context:
+      - "End-of-day asks where the sender needs something before they leave but doesn't want to sound demanding."
+    notes: |
+      "Close of play" is the British equivalent of "end of business day."
+      The "I'd be grateful" softens the imperative; it does not soften the
+      deadline. If you need clarification, ask which timezone.
+
+  - phrase: "Subject to contract"
+    literal: "Nothing I am saying is binding yet. Treat the discussion as exploratory until a signed contract exists."
+    register: legal-term-of-art
+    context:
+      - "Heads of terms."
+      - "Pre-signing negotiation."
+      - "Property correspondence in England and Wales."
+    notes: |
+      Real term of art. Removes the risk that pre-contractual statements
+      get treated as enforceable promises. Often used in conjunction with
+      "without prejudice." When you see both, the sender is being careful.
+
+  - phrase: "I note your comments"
+    literal: "I have read what you wrote. I do not agree. I am not going to argue about it in this email."
+    register: passive-aggressive
+    context:
+      - "Reply to a markup or comment on a draft."
+      - "Response to feedback the sender intends to push back on later."
+    notes: |
+      Not the same as "I accept your comments." If a lawyer writes "I note
+      your comments and will revert," expect the next revert to disagree
+      with most of them.
+
+  - phrase: "I trust this is in order"
+    literal: "I have done what you asked. I am closing this thread. If you have an objection, raise it now; otherwise I am moving on."
+    register: british-firm-softening
+    context:
+      - "Closing line of a letter that delivers a document or response."
+      - "Often the final sentence before the signature block."
+    notes: |
+      A polite version of "is this fine?" but harder to push back on
+      because of the formal register. If something is *not* in order,
+      reply quickly with the specific issue.
+
+  - phrase: "For the avoidance of doubt"
+    literal: "I am restating a point because I want it on the record that this position was clearly communicated. If you later claim ambiguity, this sentence is my proof."
+    register: legal-term-of-art
+    context:
+      - "Contract clauses."
+      - "Memos where the writer wants no future confusion about a position."
+      - "Correspondence preserving a position before litigation."
+    notes: |
+      The phrase signals the writer is creating a record. Not necessarily
+      adversarial, but the writer expects the point to be re-examined later.
+
+  - phrase: "Pursuant to our prior discussion"
+    literal: "I am putting something in writing that we agreed verbally. This email is the record. If you remember the conversation differently, say so now."
+    register: formal
+    context:
+      - "First email after a call where commitments were made."
+      - "Recap of a meeting that the sender wants on the record."
+    notes: |
+      If you receive this and the summary doesn't match your memory of
+      the conversation, push back in writing immediately. Once unrebutted,
+      this email becomes the de facto record of the conversation.
+
+  - phrase: "We reserve all rights"
+    literal: "I am not giving up any legal position by responding to you. Don't infer that my silence on a particular point means I agree with you on it."
+    register: legal-term-of-art
+    context:
+      - "Pre-litigation correspondence."
+      - "Responses to demands where the sender wants to preserve options."
+    notes: |
+      Common at the end of letters where the writer doesn't want their
+      reply to be construed as a waiver. If you see it, the sender is
+      signalling that future legal action is possible and they're keeping
+      their options open.
+
+  - phrase: "I'm not sure that's quite right"
+    literal: "You are wrong. I am telling you so politely because we have to keep working together, but I disagree firmly."
+    register: british-firm-softening
+    context:
+      - "Reply to an analysis or position the writer disagrees with."
+      - "Often follows a more direct American writer's confident statement."
+    notes: |
+      In British-firm register, "not quite right" means "wrong." The
+      hedging is politeness, not uncertainty.
+
+  - phrase: "We're broadly comfortable with the position"
+    literal: "We agree with most of the position but have specific reservations we are about to list. The 'broadly' is the warning."
+    register: british-firm-softening
+    context:
+      - "Response to a proposed contract clause or deal structure."
+      - "Outside counsel reviewing a draft on behalf of a client."
+    notes: |
+      "Broadly comfortable" means "comfortable except where I'm not."
+      The substantive disagreements follow. The opening word is signalling
+      that approval is not unconditional.
+
+  - phrase: "Could you possibly clarify"
+    literal: "What you wrote was unclear or incomplete. Please rewrite it. The 'possibly' is not optional; it is politeness padding."
+    register: british-firm-softening
+    context:
+      - "Reply to a memo or analysis the sender found confusing."
+      - "Often used when the recipient is more junior and the writer wants to soften the implication that the original work was insufficient."
+    notes: |
+      Read as a direct request to redo work, with the politeness layer
+      preserved. The writer is not asking whether you *can* clarify;
+      they are asking you *to* clarify.

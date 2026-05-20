@@ -1,0 +1,87 @@
+# NeuroDock Plugin — skill-eng-manager-1on1
+#
+# A skill for engineering managers, tech leads, and staff+ ICs with mentees.
+# Three activation paths:
+#   1. Prep a recurring 1:1 from prior context recorded in the cognitive graph.
+#   2. Decompose unstructured sprint-review notes into atomic action items.
+#   3. Walk a blameless postmortem on an incident without naming a person.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# Optional MCP integrations (mcp-cognitive-graph, mcp-chronometric) are
+# declared soft in SKILL.md frontmatter so the skill degrades gracefully.
+# Only mcp-task-fractionator is a hard runtime requirement.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-eng-manager-1on1"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Engineering-manager skill: prep a 1:1 from prior context, decompose a sprint review into atomic items, or walk a blameless postmortem. Not a performance-management tool."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The work this skill helps with — running 1:1s, structuring
+# retros, walking postmortems — is profession-shaped, not neurotype-shaped.
+# Any engineering manager can use it. We do not claim it is "an ADHD skill"
+# or "an ASD skill". See README.md for the framing.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: the decompose tool is the load-bearing piece of the
+    # sprint-review path. Without it, that activation path cannot run.
+    - name: "neurodock-task-fractionator"
+      version: ">=0.0.1"
+    # Soft integrations (mcp-cognitive-graph for the 1:1 prep path,
+    # mcp-chronometric for optional session marking) are declared in
+    # SKILL.md frontmatter with optional: true. The skill degrades when
+    # they are absent — see SKILL.md "Operating instructions".
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-eng-manager-1on1"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-eng-manager-1on1"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-eng-manager-1on1"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "engineering-management"
+  - "1on1"
+  - "sprint-review"
+  - "postmortem"
+  - "blameless"
+  - "tech-lead"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

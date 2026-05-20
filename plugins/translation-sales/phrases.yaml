@@ -1,0 +1,231 @@
+# NeuroDock translation-pack — sales / customer-success / business-development phrasebook
+#
+# Each entry maps a phrase commonly used in sales conversations and
+# correspondence to a literal translation, a register tag, and illustrative
+# context. The goal is to translate the register, not to diagnose the
+# speakers.
+#
+# Conventions:
+#   - `phrase`:    the surface phrase the recipient encounters.
+#   - `literal`:   plain-language translation of what the speaker typically
+#                  means. Stage-dependent; see `context` and `notes`.
+#   - `register`:  one tag from a small open vocabulary (see README).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear and at which deal stage.
+#   - `notes`:     optional longer note (especially when the phrase means
+#                  different things at different deal stages).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  - phrase: "Interesting"
+    literal: "I'm not buying right now. Either change the angle or move on. On a discovery call, this is closer to 'polite acknowledgement' than 'I want to hear more.'"
+    register: soft-no
+    context:
+      - "Response to a pitched feature or value prop on a first call."
+      - "Reply in an email after a demo where the buyer doesn't follow up with a specific question."
+    notes: |
+      Stage-dependent. On a first call, "interesting" said once is often a
+      polite ack. "Interesting" said three times in twenty minutes is the
+      buyer telling you nothing they hear is changing their mind. Watch
+      for the absence of a follow-up question; that's the real signal.
+
+  - phrase: "We'll consider it"
+    literal: "I am not going to commit on this call. Whether 'consider' becomes 'decide' depends on whether this is still on my list next week."
+    register: polite-stall
+    context:
+      - "End of a call where the buyer wants to wrap up without saying no."
+      - "Reply to a pricing or scope ask the buyer doesn't want to negotiate live."
+    notes: |
+      Pair this with an explicit next-step ask: "What would help you
+      consider it?" or "When should we sync on this?" If the buyer
+      doesn't name a date, the deal is parked.
+
+  - phrase: "Send me a deck"
+    literal: "I'm done listening live. If the deck convinces me on its own, I'll come back. If it doesn't, this is over."
+    register: deal-stage-gatekeeping
+    context:
+      - "Mid-call when the rep is going deep on a topic the buyer didn't ask about."
+      - "Cold-outbound reply that wants to get the rep off email."
+    notes: |
+      The healthiest version of this is "send me a deck *for [specific
+      audience]*" — that's an internal-selling ask and a positive signal.
+      A flat "send me a deck" with no audience or context is usually a
+      polite exit.
+
+  - phrase: "Let's table this for now"
+    literal: "I am done with this topic on this call. Bring it up again only if you have new information or a new reason."
+    register: polite-stall
+    context:
+      - "Mid-call on a topic the buyer doesn't want to argue about."
+      - "Reply to a counter-proposal the buyer isn't going to accept."
+    notes: |
+      Note: in American English, "table" means "set aside." In British
+      parliamentary English it means the opposite (to put forward).
+      In sales register, the American meaning dominates regardless of
+      where the participants are from.
+
+  - phrase: "I'll loop in [name]"
+    literal: "You're now their problem, not mine. Whether [name] actually responds depends on whether I asked them to or just mentioned you in passing."
+    register: handoff
+    context:
+      - "Reply where the buyer wants someone else to evaluate."
+      - "End-of-call from a champion who has reached the limit of their authority."
+    notes: |
+      Look at what comes next. If [name] emails you within 24-48 hours,
+      the loop-in was real. If you don't hear from [name] in a week,
+      the loop-in was etiquette and the original contact has moved on.
+      You can de-risk this by replying-all and proposing a specific time.
+
+  - phrase: "We just need to get budget approved"
+    literal: "There is no budget yet. There may or may not be budget by the time we want to close. Treat the deal as soft until the buyer names a specific approval path."
+    register: budget-hedge
+    context:
+      - "Late-stage explanation for why a contract isn't moving."
+      - "Reply to a 'when can we close' question."
+    notes: |
+      The presence of "just" is the tell. "We need to get budget approved"
+      with a named approver and a date is a real procurement step.
+      "We just need to get budget approved" is a placeholder; ask
+      *who* approves and *when* and you'll find out which it is.
+
+  - phrase: "Pricing is flexible"
+    literal: "We will discount. How much depends on how hard you push. The opening price is not the floor."
+    register: discount-negotiation
+    context:
+      - "Late-stage negotiation."
+      - "Procurement-driven conversation where the buyer's side has signalled price sensitivity."
+    notes: |
+      Often paired with a specific structure: "flexible on annual vs
+      multi-year" or "flexible on volume tiers." Those are negotiating
+      handles. Bare "pricing is flexible" with no structure is a
+      generic discount-availability signal.
+
+  - phrase: "Touch base"
+    literal: "Schedule a low-stakes call so I can check whether you're still warm. No specific agenda; the call IS the agenda."
+    register: deal-stage-gatekeeping
+    context:
+      - "Mid-funnel rep keeping a stalled deal alive without forcing a decision."
+      - "Customer-success outreach to a renewal account."
+    notes: |
+      A "touch base" call without a specific agenda is a status check,
+      not progress. If you want the deal to move, propose a specific
+      topic for the call ("decision on the warranty cap", "sign-off on
+      the security review"). If the rep can't agree to a specific topic,
+      the deal is parked.
+
+  - phrase: "We love the product"
+    literal: "We are enthusiastic on the call. Enthusiasm is not yet a signed contract. Procurement, security review, and budget can all still kill this."
+    register: interest-signal
+    context:
+      - "Mid-funnel buyer expressing genuine engagement."
+      - "Champion communicating internal traction to the vendor."
+    notes: |
+      Almost always sincere — these calls really do happen with engaged
+      buyers. But "we love the product" without an articulated next step
+      (security review, contract review, exec sponsorship) is a feeling,
+      not a forecast. Reps who close on this signal alone tend to be
+      surprised by their close rate.
+
+  - phrase: "Let me know what you need from us"
+    literal: "I have no specific objection to give you. If you can name a thing that unblocks this on your side, I'll do it; if you can't, the deal sits."
+    register: polite-stall
+    context:
+      - "Late-stage buyer waiting for the vendor to move."
+      - "Reply to a status-check email when the buyer doesn't have an internal date."
+
+  - phrase: "I'll get back to you on that"
+    literal: "I don't have an answer right now. Whether you hear back depends on whether this deal is still alive on my side. Silence past 48 hours is itself a signal."
+    register: polite-stall
+    context:
+      - "Mid-call response to an unexpected question."
+      - "Email reply to a specific ask the rep doesn't want to commit to."
+    notes: |
+      On a healthy deal, the rep replies within 24-48 hours, even if
+      the reply is just "still working on it." Total silence is a
+      stronger signal than a polite stall.
+
+  - phrase: "We'd love to explore this further"
+    literal: "We are interested enough to keep the conversation alive but not enough to commit to a next step. The 'further' is doing a lot of work; it's the absence of a specific next step that matters."
+    register: polite-stall
+    context:
+      - "Reply to a pitch where the buyer is engaged but not ready."
+      - "Inbound response to outbound where the buyer is qualifying you, not yet bought-in."
+    notes: |
+      Watch for what follows "explore further." A specific date or
+      attendee turns this into real engagement. A vague "we'll be in
+      touch" turns it into a polite-stall.
+
+  - phrase: "Help me understand"
+    literal: "I disagree with what you just said. I am framing my disagreement as a question so we don't argue. Expect pushback."
+    register: commitment-avoidance
+    context:
+      - "Senior buyer pushing back on a value claim without saying 'I don't believe you.'"
+      - "Procurement challenging a pricing argument."
+    notes: |
+      Not the same as an actual question. A real "help me understand"
+      is followed by listening; a pushback "help me understand" is
+      followed by a counter-argument. Listen to the next sentence to
+      tell them apart.
+
+  - phrase: "We're rationalising our vendor stack"
+    literal: "We are cutting vendors. You may or may not be on the cut list. If you are not actively defending your account, assume you are at risk."
+    register: deal-stage-gatekeeping
+    context:
+      - "Existing customer in a renewal cycle."
+      - "Multi-vendor account doing a procurement review."
+    notes: |
+      A genuine signal — usually true and usually means the account
+      manager needs to engage actively. Pair with "what would keep us
+      on the stack?" to find out whether you have a real shot.
+
+  - phrase: "We'd want to start small"
+    literal: "We are open to a pilot or a reduced first contract. The full deal is not yet on the table. 'Small' often becomes the long-term size if you don't have a documented expansion path."
+    register: deal-stage-gatekeeping
+    context:
+      - "Mid-funnel buyer narrowing scope to get to a yes."
+      - "Procurement-driven scope reduction late in the deal."
+    notes: |
+      A real positive signal — buyers who want to "start small" are
+      usually buyers who want to buy. The risk is the small-start
+      becoming permanent. Negotiate expansion triggers in the initial
+      contract, not "in the next renewal."
+
+  - phrase: "We're aligned on the value"
+    literal: "We agree the problem is real and your solution addresses it. We have NOT yet agreed to buy, to the price, or to the timeline. Treat as a milestone, not as a close."
+    register: interest-signal
+    context:
+      - "Late-discovery / early-evaluation summary from a champion."
+      - "Recap email after a value-validation call."
+    notes: |
+      A healthy signal that lets you stop re-pitching value and start
+      working price, scope, and procurement. Be specific about what
+      comes next — "aligned on value" without a documented next step
+      drifts back into the funnel.
+
+  - phrase: "Can you sharpen the pencil?"
+    literal: "Discount more. I am not telling you how much; I want you to bid against yourself. The right move is to ask 'what specifically would help' rather than to drop price reflexively."
+    register: discount-negotiation
+    context:
+      - "Late-stage procurement-driven negotiation."
+      - "Renewal conversation where the buyer wants a price cut."
+    notes: |
+      The healthiest reply is a question, not a number: "What price
+      would get this signed this week?" If the buyer names a number,
+      you have a negotiation. If they refuse to name one, they are
+      fishing.
+
+  - phrase: "We just need to align internally"
+    literal: "There is internal disagreement we haven't resolved. The deal is on hold until we do. You can help by giving us materials that make the internal case, but you can't force the alignment to happen faster."
+    register: deal-stage-gatekeeping
+    context:
+      - "Mid-to-late deal where a champion needs to convince a stakeholder."
+      - "Renewal conversation where multiple internal teams have different views."
+    notes: |
+      A genuine signal of internal complexity rather than a polite
+      stall. Ask "who needs to align and what would help?" Specific
+      answers turn this into a multi-thread account-engagement plan;
+      vague answers mean the alignment problem may not get solved.

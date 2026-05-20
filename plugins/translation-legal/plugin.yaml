@@ -1,0 +1,107 @@
+# NeuroDock Plugin — translation-legal
+#
+# A translation-pack for legal-profession idiom. Decodes the hedged, indirect
+# register used by in-house counsel, BigLaw associates, paralegals, and the
+# British-firm correspondence style that has colonised most international legal
+# writing. Designed for neurodivergent professionals who can't read the subtext
+# of "happy to discuss further" or "as a matter of housekeeping" without help.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-legal"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for legal-profession idiom: hedge-speak, British-firm softening, and the terms of art that mean something specific in court."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone who can't read legal-profession
+# subtext — that includes ND professionals but also new joiners, non-native
+# speakers, and clients trying to parse correspondence from their own counsel.
+# Avoiding a clinical framing per ETHICS commitment 1.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. The idiom in this pack is rooted in
+# British-firm and US BigLaw register; both surface in en-IE/en-AU/en-CA
+# correspondence as well, because international legal writing has converged
+# on London-style hedging.
+locale:
+  - "en-GB"
+  - "en-US"
+  - "en-IE"
+  - "en-AU"
+  - "en-CA"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+#
+# A translation-pack exposes one or more `translation-prompt` assets that
+# mcp-translation registers in its prompt library, plus the phrasebook
+# (declared as a translation-prompt for forward-compat; loaders that don't
+# yet understand a dedicated phrasebook sub-type preserve the entry and the
+# pack still ships its prompt overrides).
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-legal"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-legal"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "legal"
+  - "law"
+  - "biglaw"
+  - "in-house-counsel"
+  - "paralegal"
+  - "correspondence"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}
