@@ -11,22 +11,25 @@ Local-first by default. No telemetry. AGPL-3.0-or-later.
 
 ## Install
 
-Two registries, three commands:
+Two registries, three commands. Works on macOS, Linux, and Windows.
 
-```bash
-# 1. Install the Python MCP servers (six of them — the runtime substrate)
-pip install \
-  neurodock-mcp-chronometric \
-  neurodock-mcp-cognitive-graph \
-  neurodock-mcp-task-fractionator \
-  neurodock-mcp-translation \
-  neurodock-mcp-guardrail \
-  neurodock-evals
+```sh
+# 1. Install the six Python MCP servers (the runtime substrate)
+pip install neurodock-mcp-chronometric neurodock-mcp-cognitive-graph neurodock-mcp-task-fractionator neurodock-mcp-translation neurodock-mcp-guardrail neurodock-evals
 
 # 2. Wire them into your MCP-aware client (Claude Desktop, Claude Code, Cursor)
 npx --yes @neurodock/cli init
 
 # 3. Restart Claude (full quit, not just close-window)
+```
+
+Prefer line breaks for readability? Use your shell's continuation character —
+backslash `\` on bash/zsh, backtick `` ` `` on PowerShell — or just use
+[`@neurodock/cli`](./packages/cli/README.md) which wraps the install + wire
+step in one command:
+
+```sh
+npx --yes @neurodock/cli install-all
 ```
 
 `init` detects your client(s), writes MCP server entries, copies a starter
