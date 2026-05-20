@@ -1,0 +1,17 @@
+# NeuroDock docs site — Cloudflare deploy config.
+#
+# The Astro Starlight site builds to `docs/dist/` from the repo root. This
+# file tells wrangler to deploy that directory as a static-assets Worker
+# instead of trying to auto-detect a Workers project inside the pnpm
+# workspace.
+#
+# Build is driven by Cloudflare's "Build command" setting (corepack enable
+# && pnpm install --frozen-lockfile && pnpm --filter @neurodock/docs build).
+# This file only governs the deploy step.
+
+name = "neurodock-docs"
+compatibility_date = "2025-05-01"
+
+[assets]
+directory = "./docs/dist"
+not_found_handling = "404-page"
