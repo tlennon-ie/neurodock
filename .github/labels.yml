@@ -1,0 +1,152 @@
+# NeuroDock issue + PR labels (declarative)
+#
+# Source of truth for the label set. Apply with crazy-max/ghaction-github-labeler
+# in a workflow, or seed manually:
+#
+#     gh label create --from-file .github/labels.yml   # not native; loop below works
+#
+#     while IFS= read -r line; do :; done < .github/labels.yml
+#
+# Colours: existing GitHub defaults are preserved where they overlap so we do
+# not churn the UI on existing issues. New NeuroDock-specific labels use a
+# disciplined neutral-accent palette (no gradient-y, near-duplicate hues).
+#
+# Conventions:
+#   area:*    — which surface the issue touches
+#   pillar:*  — which of the three substrate pillars (per MANIFESTO.md)
+#   nd:*      — neurodivergence-specific signals
+#   triage    — needs maintainer triage; the default for new issues
+#   wip       — author-marked; signals "not ready for review"
+#   blocked   — depends on an upstream issue / decision
+#   breaking-change — semver-major implications; reviewers must read carefully
+
+# -----------------------------------------------------------------------
+# GitHub defaults (kept for compatibility with existing automation)
+# -----------------------------------------------------------------------
+- name: bug
+  color: "d73a4a"
+  description: Something isn't working
+
+- name: documentation
+  color: "0075ca"
+  description: Improvements or additions to documentation
+
+- name: duplicate
+  color: "cfd3d7"
+  description: This issue or pull request already exists
+
+- name: enhancement
+  color: "a2eeef"
+  description: New feature or request
+
+- name: good first issue
+  color: "7057ff"
+  description: Good for newcomers
+
+- name: help wanted
+  color: "008672"
+  description: Extra attention is needed
+
+- name: invalid
+  color: "e4e669"
+  description: This doesn't seem right
+
+- name: question
+  color: "d876e3"
+  description: Further information is requested
+
+- name: wontfix
+  color: "ffffff"
+  description: This will not be worked on
+
+# -----------------------------------------------------------------------
+# Workflow state
+# -----------------------------------------------------------------------
+- name: triage
+  color: "fbca04"
+  description: Needs maintainer triage
+
+- name: wip
+  color: "ededed"
+  description: Work in progress — not ready for review
+
+- name: blocked
+  color: "b60205"
+  description: Blocked on an upstream issue, decision, or release
+
+- name: breaking-change
+  color: "b60205"
+  description: Introduces a breaking change; reviewers read carefully
+
+# -----------------------------------------------------------------------
+# Area: which surface the change touches
+# -----------------------------------------------------------------------
+- name: "area: mcp-chronometric"
+  color: "5319e7"
+  description: Time + session + break management MCP server
+
+- name: "area: mcp-cognitive-graph"
+  color: "5319e7"
+  description: Persistent memory + entity recall MCP server
+
+- name: "area: mcp-task-fractionator"
+  color: "5319e7"
+  description: Goal decomposition MCP server
+
+- name: "area: mcp-translation"
+  color: "5319e7"
+  description: Corporate-speak translator MCP server
+
+- name: "area: mcp-guardrail"
+  color: "5319e7"
+  description: Rumination + hyperfocus + sycophancy detectors
+
+- name: "area: cli"
+  color: "1d76db"
+  description: "@neurodock/cli — init, doctor, validate, host, profile"
+
+- name: "area: extension"
+  color: "1d76db"
+  description: Browser extension (WXT, Chrome/Firefox/Edge)
+
+- name: "area: docs"
+  color: "0075ca"
+  description: Astro Starlight docs site
+
+- name: "area: skills"
+  color: "0e8a16"
+  description: SKILL.md bundles (adhd-daily-planner, audhd-context-recovery, etc.)
+
+- name: "area: plugins"
+  color: "0e8a16"
+  description: Out-of-tree plugin protocol (ADR 0007)
+
+- name: "area: clinical"
+  color: "5319e7"
+  description: Guardrail heuristic library
+
+- name: "area: evals"
+  color: "0e8a16"
+  description: Eval harness + corpus contribution pipeline
+
+# -----------------------------------------------------------------------
+# Pillar: which of the three substrate pillars (per MANIFESTO.md)
+# -----------------------------------------------------------------------
+- name: "pillar: substrate"
+  color: "c5def5"
+  description: Cognitive substrate — time, memory, decomposition
+
+- name: "pillar: communication"
+  color: "c5def5"
+  description: Communication layer — translation, register, transcripts
+
+- name: "pillar: guardrails"
+  color: "c5def5"
+  description: Clinical guardrails — rumination, hyperfocus, sycophancy
+
+# -----------------------------------------------------------------------
+# Neurodivergence signals
+# -----------------------------------------------------------------------
+- name: "nd: lived-experience review needed"
+  color: "f9d0c4"
+  description: Needs review from a contributor with relevant lived experience

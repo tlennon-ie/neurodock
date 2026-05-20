@@ -1,0 +1,134 @@
+# NeuroDock pre-commit hooks
+#
+# Mirrors the checks CI runs in .github/workflows/ so contributors catch
+# problems locally before pushing. Install once per clone:
+#
+#     pipx install pre-commit         # or `pip install --user pre-commit`
+#     pre-commit install               # installs the git hook
+#     pre-commit install --hook-type commit-msg   # enables commitlint
+#
+# Run on the full tree any time:
+#
+#     pre-commit run --all-files
+#
+# Tool versions are pinned to released revs of each upstream hook repo. They
+# wrap the same tools declared in pyproject.toml (ruff, mypy) and package.json
+# (prettier, commitlint), so updating either side does not silently drift.
+#
+# If a hook bothers you locally and you are confident the CI gate is enough,
+# you can skip a single commit with `SKIP=<hook-id> git commit ...`.
+---
+default_language_version:
+  python: python3.11
+  node: "22.11.0"
+
+# Run hooks against changed files only by default; specific hooks below
+# override this with `always_run` or wider `files` patterns where the
+# tool needs the whole tree to be useful (mypy --strict, commitlint).
+default_stages: [pre-commit]
+
+repos:
+  # -----------------------------------------------------------------
+  # Generic hygiene
+  # -----------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        # Allow !reference / !!python tags used in some CI config dialects.
+        args: ["--unsafe"]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        # Markdown often uses two trailing spaces for hard line breaks.
+        args: ["--markdown-linebreak-ext=md"]
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+
+  # -----------------------------------------------------------------
+  # Python: ruff (lint + format) — versions tracked by pyproject.toml
+  # -----------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        name: ruff (lint)
+        args: ["--fix", "--exit-non-zero-on-fix"]
+        files: ^packages/(mcp-[^/]+|clinical|evals)/
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff (format)
+        files: ^packages/(mcp-[^/]+|clinical|evals)/
+        types_or: [python, pyi]
+
+  # -----------------------------------------------------------------
+  # Python: mypy --strict on each python package
+  # -----------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: mypy-strict
+        name: mypy --strict (python packages)
+        # Run via uv so the hook uses the workspace-pinned mypy + plugins
+        # rather than the global pre-commit virtualenv. uv resolves the
+        # workspace and respects pyproject.toml overrides.
+        entry: uv run mypy --strict
+        language: system
+        files: ^packages/(mcp-[^/]+|clinical|evals)/src/.*\.py$
+        # mypy needs to see the whole package, not just the changed file,
+        # to do strict checking — so always run against the configured paths.
+        pass_filenames: false
+        args:
+          - "packages/mcp-chronometric/src"
+          - "packages/mcp-cognitive-graph/src"
+          - "packages/mcp-task-fractionator/src"
+          - "packages/mcp-translation/src"
+          - "packages/mcp-guardrail/src"
+          - "packages/clinical/src"
+          - "packages/evals/src"
+
+  # -----------------------------------------------------------------
+  # Prettier — JS / TS / JSON / MD / YAML
+  # -----------------------------------------------------------------
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: prettier
+        # Prettier honours .prettierignore at the repo root.
+        types_or: [javascript, jsx, ts, tsx, json, markdown, yaml]
+        # Exclude generated artifacts and lockfiles.
+        exclude: |
+          (?x)^(
+            pnpm-lock\.yaml|
+            uv\.lock|
+            .*/dist/.*|
+            .*/build/.*|
+            .*/\.turbo/.*|
+            \.changeset/.*\.md
+          )$
+
+  # -----------------------------------------------------------------
+  # commitlint — uses .commitlintrc.json already in the repo
+  # -----------------------------------------------------------------
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.18.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies:
+          - "@commitlint/config-conventional@19.6.0"
+
+# -----------------------------------------------------------------
+# Notes on intentionally omitted hooks
+# -----------------------------------------------------------------
+# - ESLint: the TypeScript packages do not yet ship an ESLint config (their
+#   `lint` scripts are no-ops — see packages/cli/package.json). When the
+#   workspace adds a real ESLint flat config, add an `eslint` hook here that
+#   runs `pnpm exec eslint --max-warnings=0 --fix` scoped to:
+#     packages/(cli|core|native-host|extension-browser)/.*\.(ts|tsx|js|jsx)$
+# - vitest / pytest: kept out of pre-commit because they are slow. CI runs
+#   the full suite on every PR; use `make test` locally before pushing.
