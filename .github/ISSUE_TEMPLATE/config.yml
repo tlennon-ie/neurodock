@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or discussion
+    url: https://github.com/tlennon-ie/neurodock/discussions
+    about: Ask a question, share an idea, or chat with other users. Please don't open an issue for general questions.
+  - name: Security disclosure
+    url: https://github.com/tlennon-ie/neurodock/security/advisories/new
+    about: Report a security vulnerability privately. See SECURITY.md for the policy.
+  - name: Read the manifesto first
+    url: https://github.com/tlennon-ie/neurodock/blob/main/MANIFESTO.md
+    about: NeuroDock has strong opinions about scope. Read these before proposing features.
