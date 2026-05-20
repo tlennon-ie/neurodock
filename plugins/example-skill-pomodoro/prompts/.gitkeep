@@ -1,0 +1,14 @@
+# prompts/
+
+Empty in this reference plugin. The skill's instructions live entirely in
+SKILL.md; no separate prompt fragments are required.
+
+This directory is included so contributors copying the example as a template
+have an obvious place to drop skill-internal prompt fragments if their own
+skill needs them. Common reasons to use it:
+
+- Long static system-prompt blocks that would bloat SKILL.md.
+- Multi-language prompt variants where SKILL.md picks one based on locale.
+- Reusable preamble snippets shared across multiple skill modes.
+
+If you do not need any of those, delete this directory in your copy.

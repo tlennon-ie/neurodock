@@ -1,0 +1,82 @@
+# NeuroDock Plugin — example-skill-pomodoro
+#
+# This is a REFERENCE EXAMPLE plugin. Copy this directory as the starting
+# point for your own out-of-tree skill plugin. Everything that can be a
+# template default has been set to a template default; everything that
+# must change per plugin is flagged in README.md.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# Out-of-tree skill plugins require BOTH this plugin.yaml (so the substrate
+# can discover, trust-check, license-check) AND a SKILL.md (so the skill
+# loader can activate the skill). In-tree first-party skills under
+# packages/skills/<name>/ only need a SKILL.md.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "example-skill-pomodoro"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Reference example plugin: a 25-minute Pomodoro coach that wires mark_session_start, request_break_if_needed, and mark_session_end into a single skill flow. Copy this directory as a template for your own skill plugin."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. Pomodoro works for any neurotype; this plugin makes no
+# clinical claim that it is "an ADHD technique" or "an ASD technique". The
+# substrate will auto-activate this plugin for every user whose profile
+# allows community plugins. See README.md for the rationale.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-chronometric"
+      version: ">=0.1.0"
+  # Optional integration: see SKILL.md step 5. The skill degrades gracefully
+  # when mcp-cognitive-graph is not installed; we therefore declare it as a
+  # soft dependency in SKILL.md rather than a hard requires.mcp_servers entry.
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "example-skill-pomodoro"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/example-skill-pomodoro"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/example-skill-pomodoro"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "pomodoro"
+  - "focus"
+  - "example"
+  - "template"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}
