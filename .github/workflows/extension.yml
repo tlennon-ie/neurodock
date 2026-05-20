@@ -46,15 +46,15 @@ jobs:
 
       - name: Build Chrome bundle
         if: steps.probe.outputs.ready == 'true'
-        run: pnpm --filter @neurodock/extension-browser build --target chrome
+        run: pnpm --filter @neurodock/extension-browser run build:chrome
 
       - name: Build Firefox bundle
         if: steps.probe.outputs.ready == 'true'
-        run: pnpm --filter @neurodock/extension-browser build --target firefox
+        run: pnpm --filter @neurodock/extension-browser run build:firefox
 
       - name: Build Edge bundle
         if: steps.probe.outputs.ready == 'true'
-        run: pnpm --filter @neurodock/extension-browser build --target edge
+        run: pnpm --filter @neurodock/extension-browser run build:edge
 
       - name: Upload artefacts
         if: steps.probe.outputs.ready == 'true'
