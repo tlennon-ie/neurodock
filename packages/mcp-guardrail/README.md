@@ -3,23 +3,25 @@
 Clinical guardrails MCP server for NeuroDock. Detects three patterns that
 unmodified LLM interaction tends to amplify for neurodivergent users:
 rumination loops (OCD), unregulated hyperfocus (ADHD), and sycophancy /
-over-validation. See  and `ETHICS.md` for the full framework.
+over-validation. See `ETHICS.md` and `MANIFESTO.md` for the full framework.
 
 ## Status
 
-- **v0.0.1 (Phase 2):** `check_rumination` is implemented (word-overlap
-  Jaccard). `check_hyperfocus` and `check_sycophancy` ship as schema-only
-  stubs; their runtimes return `DETECTOR_NOT_YET_IMPLEMENTED` until the
-  Phase-3  endorses thresholds per
-  [`docs/decisions/0006-guardrail-tool-design.md`](../../docs/decisions/0006-guardrail-tool-design.md).
+- **v0.0.2:** All three detectors are live.
+  - `check_rumination` — word-overlap Jaccard heuristic.
+  - `check_hyperfocus` — elapsed-threshold-with-end-of-day heuristic.
+  - `check_sycophancy` — four-pattern overlap heuristic.
+
+  Heuristics are public and auditable; thresholds are defaults, not
+  prescriptions. See ADR 0006 for the rationale.
 
 ## Tools
 
 | Tool | Status | Heuristic | Default thresholds |
 |---|---|---|---|
-| `check_rumination` | live | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
-| `check_hyperfocus` | schema-only (Phase 3) | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
-| `check_sycophancy` | schema-only (Phase 3) | four reserved heuristic names | tbd by  |
+| `check_rumination` | live (v0.0.1) | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
+| `check_hyperfocus` | live (v0.0.2) | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
+| `check_sycophancy` | live (v0.0.2) | pattern overlap (4 patterns) | similarity 0.5 |
 
 ## Design invariants
 
@@ -56,9 +58,10 @@ Tests cover:
 - The `check_rumination` tool (empty history, in-window detection,
   out-of-window non-detection, threshold honour, override-token contract,
   history-ordering rejection, false-positive-feedback path).
-- The two schema-only stubs (`DETECTOR_NOT_YET_IMPLEMENTED` is raised with
-  `phase: "3"` metadata; input shape is validated against the locked
-  v0.1.0 schema).
+- `check_hyperfocus` (escalation level mapping, end-of-day strictness,
+  idle-signal handling, override-token contract, schema conformance).
+- `check_sycophancy` (each of the four patterns, counter-prompt
+  generation, override-token contract, schema conformance).
 - Protocol conformance: every tool response is validated against the
   schema files in `schemas/`.
 

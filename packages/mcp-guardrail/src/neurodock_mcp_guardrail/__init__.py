@@ -1,13 +1,16 @@
 """NeuroDock guardrail MCP server.
 
-Phase 2 deliverable: rumination detection via word-overlap Jaccard. The
-``check_hyperfocus`` and ``check_sycophancy`` schemas are locked but their
-runtimes return ``DETECTOR_NOT_YET_IMPLEMENTED`` until Phase 3 per
-``docs/decisions/0006-guardrail-tool-design.md``.
+All three detectors are live at v0.0.2:
+
+- ``check_rumination`` — word-overlap Jaccard heuristic.
+- ``check_hyperfocus`` — elapsed-threshold-with-end-of-day heuristic.
+- ``check_sycophancy`` — four-pattern overlap heuristic.
+
+Heuristics are public and auditable; thresholds are defaults, not
+prescriptions. See ``ETHICS.md`` and ADR 0006 for the contract.
 
 The server is intentionally stateless: it persists nothing, opens no network
-sockets, and never logs user content. See ``ETHICS.md`` and ADR 0006 for the
-full contract.
+sockets, and never logs user content.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
