@@ -170,6 +170,7 @@ $RECYCLE.BIN/
 .claude/history/
 .claude/sessions/
 .claude/local/
+.claude/worktrees/
 
 # Do keep: .claude/agents/, .claude/skills/, .claude/settings.json
 
