@@ -15,8 +15,13 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 200,
-          "description": "Display name, canonical id, or any known alias for the entity. Resolved server-side; the caller does not need to know which form is canonical.",
-          "examples": ["Roberto", "", "Phase 0 RFC"]
+          "description": "Single entity reference to look up: a display name, a canonical id (e.g. 'ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2'), or any known alias. Pass the verbatim string the user uttered — do NOT lowercase, strip punctuation, pluralise, or translate; the server runs a 4-rung cascade (exact case-sensitive → case-insensitive alias → rapidfuzz WRatio >= 75 → embedding cosine >= 0.82) that handles those variants. Pass exactly ONE entity per call — do not concatenate multiple names ('Roberto and Priya' will not match either); call the tool once per entity. Required, length 1..200 after trimming whitespace; longer inputs raise NAME_OR_ALIAS_TOO_LONG (long strings are almost always pasted prose, not an entity reference — extract the entity first). When nothing matches, the tool returns entity=null with resolution.method='none' — that is a successful response, not an error.",
+          "examples": [
+            "Roberto",
+            "kipi",
+            "Phase 0 RFC",
+            "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2"
+          ]
         }
       }
     },

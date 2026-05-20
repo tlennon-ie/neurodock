@@ -1,11 +1,20 @@
 ---
 name: hyperfocus-formatter
 version: 0.1.0
-description: Reformats responses to Answer-First when sessions run long; surfaces the user's own prior intent if past their break threshold.
+description: Reformats responses to Answer-First when sessions run long; surfaces the user's own prior intent if past their break threshold. Also activates on design-critique contexts (Figma reviews, comp reviews, prototype walk-throughs, spec reviews) so the verdict lands before the reasoning.
 neurotypes: ["adhd", "audhd"]
 status: stable
 triggers:
   - on_every_response: true # passive activation — applies a formatting transform
+  # Design-critique surfaces: the verdict must land first, then the reasoning.
+  # These phrase triggers force aggressive Answer-First (Tier B) shaping regardless
+  # of session length, because critique without a top-line verdict is unusable.
+  - phrase: "give me crit on this design"
+  - phrase: "review the comps I just sent"
+  - phrase: "Figma review please"
+  - phrase: "let me get spec review feedback"
+  - phrase: "design critique on the new flow"
+  - phrase: "walk through the prototype"
 mcp_dependencies:
   - server: mcp-chronometric
     tools: [get_time_context, request_break_if_needed]
@@ -26,7 +35,8 @@ A passive output transform. After the LLM has decided what to say, this skill re
 
 - **Every response.** This skill runs passively on every LLM turn. It is a transform, not a generator.
 - **Opt-out via profile.** If `preferences.output_format == "conventional"`, skip this skill entirely and emit the response unchanged.
-- **No phrase triggers.** There is no user-facing command. The user opts in once via profile and the transform stays on.
+- **Design-critique phrase triggers.** When the user's prompt contains any of the design-critique phrases listed in frontmatter (e.g. "give me crit on this design", "Figma review please", "walk through the prototype"), force Tier B shaping for this turn regardless of session length. The verdict line must precede the reasoning — critique that buries the call is unusable on a deadline.
+- **No other phrase triggers.** Outside the design-critique set, there is no user-facing command. The user opts in once via profile and the transform stays on.
 
 ## Operating instructions
 
@@ -36,11 +46,12 @@ A passive output transform. After the LLM has decided what to say, this skill re
 2. Call `get_time_context()`. Parse `current_session_length` (ISO 8601 duration) into minutes.
 3. Read `chronometric.hyperfocus_break_minutes` from profile. Default to 90 if absent.
 4. Read `preferences.max_chunk_size` from profile. Default to 5 if absent. Clamp to range [1, 7].
-5. Pick the tier based on `current_session_length`:
+5. **Design-critique override.** If the user's prompt matches any of the design-critique phrase triggers in frontmatter (case-insensitive, substring match), skip the session-length tier selection in step 6 and apply Tier B directly. The verdict (the answer line) must be the design call — ship/don't-ship/iterate/blocker — not a preamble. Reasoning bullets follow.
+6. Otherwise, pick the tier based on `current_session_length`:
    - **Tier A — under 30 minutes.** Apply light Answer-First: one summary sentence (≤ 80 characters) as the first line. Blank line. Then the full original response unchanged.
    - **Tier B — 30 minutes up to `hyperfocus_break_minutes`.** Apply aggressive Answer-First: first line is the answer (≤ 80 characters). Next N lines are supporting bullets where `N == max_chunk_size`. Anything that would not fit goes into a single `<details><summary>More detail</summary>…</details>` block. Never exceed the chunk limit in the visible (non-collapsed) section.
    - **Tier C — at or above `hyperfocus_break_minutes`.** Call `request_break_if_needed(threshold_minutes = hyperfocus_break_minutes)`. If it returns `null`, fall back to Tier B. If it returns an object, prepend exactly ONE line to the Tier-B output that quotes `prior_intent` verbatim and names the `suggested_action`. Format: `Session length: <M> minutes. You set the threshold at <T>. Your stated intent: "<prior_intent>". Suggested next action: <suggested_action>.` Then a blank line, then the Tier-B response. Do not block. Do not repeat the line on subsequent responses unless the session length crosses another full threshold multiple.
-6. Emit the transformed response.
+7. Emit the transformed response.
 
 ## Outputs
 
@@ -75,3 +86,4 @@ See `tests/`:
 - `01-short-session-no-change.md` — Tier A: light Answer-First on a 12-minute session.
 - `02-long-session-answer-first.md` — Tier B: aggressive Answer-First on a 75-minute session.
 - `03-past-threshold-soft-nudge.md` — Tier C: one verbatim-intent line on a 102-minute session past the 90-minute threshold.
+- `04-design-critique.md` — Tier B forced by a design-critique phrase trigger on an 8-minute session; verdict line precedes the reasoning bullets.

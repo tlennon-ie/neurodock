@@ -1,0 +1,115 @@
+# NeuroDock Plugin — translation-healthcare
+#
+# A translation-pack for clinical-team communication register. Decodes the
+# hedged, compressed, euphemism-laden language used between clinicians on
+# SBAR handovers, MDT discussions, ED triage, ward rounds, and GP-to-
+# specialist correspondence. Designed for neurodivergent clinicians,
+# paralegals reading medical records, social workers in case conferences,
+# and any team member who can't tell whether "patient is stable" means
+# "patient is fine" (it doesn't) or whether "goals of care discussion"
+# is a routine update (it isn't).
+#
+# IMPORTANT: This pack translates the *register* clinicians use with each
+# other. It is NOT a diagnostic tool, NOT for patient-facing materials,
+# and NOT a substitute for clinical training or clinical judgment.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-healthcare"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for clinical-team idiom: SBAR handover compression, severity euphemisms, differential-diagnosis language, and the hedged register used between clinicians."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone who can't read clinical-team
+# subtext — ND clinicians (the primary intended audience), but also new
+# joiners, allied-health staff entering a medical conversation, paralegals
+# reading hospital records, and social workers attending MDT meetings.
+# Avoiding a clinical framing per ETHICS commitment 1.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. Clinical communication idiom is broadly
+# English-language but the *specific* abbreviations and severity euphemisms
+# vary significantly by region: NAD, SBAR, MDT, "for review" and similar
+# tokens land differently in NHS, HSE, Medicare, NHS-Australia and Canadian
+# health-system registers. The pack ships as locale-`en` (generic English)
+# rather than enumerating regions; the phrasebook flags regional variance
+# in `notes` where it matters. Forks targeting a single health system
+# SHOULD narrow this to their BCP 47 tag (e.g. `en-GB`, `en-IE`, `en-US`)
+# and add jurisdiction-specific entries.
+locale:
+  - "en"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+#
+# A translation-pack exposes one or more `translation-prompt` assets that
+# mcp-translation registers in its prompt library, plus the phrasebook
+# (declared as a translation-prompt for forward-compat).
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-healthcare"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-healthcare"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "healthcare"
+  - "clinical"
+  - "sbar"
+  - "mdt"
+  - "handover"
+  - "triage"
+  - "differential-diagnosis"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

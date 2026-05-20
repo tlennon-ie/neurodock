@@ -9,6 +9,10 @@ triggers:
   - command: "/diagram"
   - phrase: "draw this out"
   - phrase: "make a diagram"
+  - phrase: "i can't see the structure"
+  - phrase: "make a mermaid chart of this"
+  - phrase: "show me the flow visually"
+  - phrase: "map out the relationships"
 mcp_dependencies: []
 profile_dependencies:
   - preferences.motion # if "reduced", the diagram MUST have animation: false
@@ -24,8 +28,9 @@ Turns a wall of related ideas into a Mermaid diagram so the user can see structu
 Activate when any of the following holds:
 
 1. The user invokes `/visualize` or `/diagram`.
-2. The user says "draw this out" or "make a diagram" (case-insensitive).
-3. The user has just pasted a wall of interlinked items (≥ 6 distinct concepts, references between them) and a structural view would help. Use judgement; the prose answer still goes first. Offer the diagram, don't impose it.
+2. The user says any of these (case-insensitive): "draw this out", "make a diagram", "make a mermaid chart of this", "show me the flow visually", "map out the relationships".
+3. The user says they can't see the structure, can't hold it all in their head, or otherwise signals that prose isn't loading — e.g. "I can't see the structure", "I've lost the thread of this", "I can't picture how these connect". Treat these as a request for a structural view alongside the prose answer.
+4. The user has just pasted a wall of interlinked items (≥ 6 distinct concepts, references between them) and a structural view would help. Use judgement; the prose answer still goes first. Offer the diagram, don't impose it.
 
 The user picked the trigger. Respect it. Do not editorialise their state.
 
@@ -86,4 +91,4 @@ In this order, every time:
 
 ## Examples
 
-See `tests/01-flowchart-from-prose.md`, `tests/02-sequence-from-meeting-notes.md`, and `tests/03-mindmap-from-overwhelm-dump.md` for full input → output pairs that the CI replays against a reference client.
+See `tests/01-flowchart-from-prose.md`, `tests/02-sequence-from-meeting-notes.md`, `tests/03-mindmap-from-overwhelm-dump.md`, and `tests/04-flowchart-from-cant-see-structure.md` for full input → output pairs that the CI replays against a reference client.

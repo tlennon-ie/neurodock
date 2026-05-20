@@ -1,0 +1,100 @@
+# NeuroDock Plugin — skill-researcher-litreview
+#
+# A skill for academic researchers, PhD students, and lit-heavy industry
+# researchers doing literature surveys. Three activation paths:
+#   1. Start a lit review on <topic>: decompose into atomic reading and
+#      synthesis tasks via mcp-task-fractionator.
+#   2. Add a paper: record the paper entity, its authors, and the
+#      authorship relationship via mcp-cognitive-graph.
+#   3. Recall papers by <author>: look up the author entity and render
+#      a bibliography of the recorded papers.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# Both MCP servers are HARD requirements. Decomposition is the load-bearing
+# piece of flow 1, and cognitive-graph recall/record is the load-bearing
+# piece of flows 2 and 3. There is no useful degraded mode for either side,
+# so neither is declared optional — the skill refuses to activate when
+# either server is unavailable.
+#
+# This skill is NOT a citation manager. Use Zotero (or similar) for BibTeX
+# export, PDF storage, deduplication, and integration with word processors.
+# See README.md for the framing.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-researcher-litreview"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Researcher skill: start a literature review by decomposing it into atomic reading and synthesis tasks, record papers and authors as graph facts, and recall what an author has written. Not a citation manager."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The work this skill helps with — reading deeply,
+# synthesising across papers, keeping track of who said what — is
+# profession-shaped, not neurotype-shaped. Any researcher can use it.
+# We do not claim it is "an ADHD reading aid" or "an ASD synthesis tool".
+# See README.md for the framing.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: decomposition is the load-bearing tool for flow 1.
+    # Without it, a lit-review topic cannot be broken into atomic tasks.
+    - name: "neurodock-task-fractionator"
+      version: ">=0.0.1"
+    # Hard requirement: the cognitive graph is the load-bearing tool for
+    # flows 2 and 3. Recording a paper or recalling papers by author
+    # without persistent entity memory would either be a no-op or a
+    # hallucination risk. We refuse to run in degraded mode for these
+    # flows; the requirement is hard.
+    - name: "neurodock-cognitive-graph"
+      version: ">=0.0.1"
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-researcher-litreview"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-researcher-litreview"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-researcher-litreview"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "research"
+  - "literature-review"
+  - "academic"
+  - "phd"
+  - "bibliography"
+  - "synthesis"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

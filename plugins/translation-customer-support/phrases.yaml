@@ -1,0 +1,316 @@
+# NeuroDock translation-pack — customer-support correspondence phrasebook
+#
+# Customer-support register runs in two directions, and the pack tracks both:
+#
+#   - INBOUND  = customer → support. Often written under frustration,
+#                time pressure, or after a failed self-serve attempt. The
+#                literal field describes what the agent should HEAR
+#                (the underlying need or risk), not a re-quoting of the
+#                customer's words.
+#
+#   - OUTBOUND = support → customer. Scripted softening language with a
+#                long history. Some of it is genuinely useful; some has
+#                been over-used to the point of eroding trust. The literal
+#                field describes what the agent is actually doing (or
+#                signalling) when they reach for the phrase.
+#
+# Each entry maps a phrase to a literal translation, a `direction` tag
+# (`inbound` or `outbound`), a `register` tag from a small open vocabulary,
+# and short context bullets. Conventions:
+#
+#   - `phrase`:    the surface phrase as it appears in a message or ticket.
+#   - `direction`: `inbound` or `outbound`.
+#   - `literal`:   plain-language translation. For inbound, what the
+#                  customer needs the agent to understand. For outbound,
+#                  what the agent is actually doing.
+#   - `register`:  one tag from the small open vocabulary (see README).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear in a support workflow.
+#   - `notes`:     optional longer note (especially when use of the phrase
+#                  is conditionally appropriate or actively harmful).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  # --- INBOUND --------------------------------------------------------------
+
+  - phrase: "This is completely unacceptable!"
+    direction: inbound
+    literal: "Customer is escalated. Validate feelings before action. Do not match intensity. The exclamation point is doing the work the customer wishes their evidence were doing; respond to the need underneath, not the volume on top."
+    register: de-escalation
+    context:
+      - "Opening line of a complaint email after a failed self-serve attempt."
+      - "Mid-thread escalation after the customer feels unheard by a previous reply."
+    notes: |
+      The phrase signals frustration peak, not necessarily a tier-2
+      escalation. Acknowledge the impact first ("I can see how disruptive
+      this has been"), then offer a concrete next step. Apologising for
+      the situation is not the same as admitting fault; agents new to
+      support often conflate the two and either over-apologise or refuse
+      to acknowledge anything.
+
+  - phrase: "I've been a customer for X years"
+    direction: inbound
+    literal: "Customer signalling churn risk if not satisfied. The tenure claim is a request to be treated as a known good account, not a stranger. Note tenure in CRM and escalate if the resolution path is unclear."
+    register: churn-risk-signal
+    context:
+      - "Opening line of a ticket where the customer is leveraging history."
+      - "Reply to a denial or a policy citation, asking to be treated as an exception."
+    notes: |
+      The X is doing the rhetorical work; the agent should verify the
+      claim against the CRM rather than accepting or dismissing it. Long
+      tenure with low complaint history = high churn risk if mishandled.
+      Long tenure with frequent complaint history = a different pattern
+      (chronic dissatisfaction; rarely solved by one good interaction).
+
+  - phrase: "Just cancel my account"
+    direction: inbound
+    literal: "Frustration peak. The customer is not necessarily ready to cancel; they are signalling that the cost of continuing this conversation has exceeded the value of the service. Offer a human escalation BEFORE processing the cancellation."
+    register: churn-risk-signal
+    context:
+      - "Late-thread message after multiple back-and-forths."
+      - "Reply to a policy citation that the customer experienced as a wall."
+    notes: |
+      A genuine cancellation request that follows a calm explanation reads
+      differently from "just cancel my account" written in anger. When the
+      message tone is angry, the agent should confirm intent and route to
+      retention rather than auto-processing. Auto-processing an angry
+      cancellation almost always becomes a public-complaint thread later.
+
+  - phrase: "I want to speak to a manager"
+    direction: inbound
+    literal: "Customer has lost confidence that this tier can resolve their issue. Treat as a process-escalation request, not a personal attack on the agent. Route per the escalation matrix; document why."
+    register: escalation-request
+    context:
+      - "Mid-thread after the customer perceives a refusal."
+      - "Opening line in a thread the customer has decided will be escalated."
+    notes: |
+      The instinct to defend ("I CAN help you with that") often makes
+      this worse. Acknowledging the request first ("I can connect you
+      with a senior agent — let me make sure they have the full
+      context") tends to lower the temperature even when the customer
+      still wants the escalation.
+
+  - phrase: "I've already explained this three times"
+    direction: inbound
+    literal: "Customer has repeated context across handoffs. They are signalling that the support process has failed them, separately from whether the issue is solved. Do NOT ask them to repeat themselves; read the thread first."
+    register: process-failure-signal
+    context:
+      - "Reply to an agent who opens with a generic 'can you tell me more about the issue?' question."
+      - "Mid-ticket after one or more transfers between tiers or teams."
+    notes: |
+      The first repair is to acknowledge the repetition ("I see you've
+      walked through this with two colleagues already — let me pick up
+      where they left off"). The substantive repair is to ensure the
+      next handoff carries forward the context. The frustration is
+      structurally caused; the customer is reporting it accurately.
+
+  - phrase: "I'll be telling everyone about this"
+    direction: inbound
+    literal: "Customer is threatening reputational consequences. May be hyperbole; may be a real intent to post to social or review sites. Either way, the underlying message is 'the resolution offered did not match the harm I experienced.' Treat as a high-priority de-escalation."
+    register: reputational-risk-signal
+    context:
+      - "Late-thread message after a refused refund, denied warranty claim, or perceived dismissal."
+      - "Reply to a policy citation that the customer experienced as unjust."
+    notes: |
+      Do not engage the threat directly ("we'd appreciate if you didn't"
+      escalates; "we cannot stop you from sharing your experience" sounds
+      defensive). Engage the underlying gap: "I want to make sure we get
+      this resolved so you don't feel you have to. What would a fair
+      outcome look like from your side?" — and have the latitude to
+      actually deliver it, or escalate to someone who does.
+
+  - phrase: "Refund please."
+    direction: inbound
+    literal: "Customer wants money back. Brevity is itself a signal: either the customer is calm and confident this is the right outcome, or they are exhausted past the point of explaining. The thread history usually disambiguates."
+    register: refund-request
+    context:
+      - "Opening line of a ticket attached to a clearly cancelled / failed transaction."
+      - "Late-thread reply after a long back-and-forth where the customer is done negotiating."
+    notes: |
+      Do not lead with policy. Lead with "let me see what we can do" and
+      check eligibility BEFORE quoting the refund window. Quoting a
+      30-day window to a customer who is 31 days out almost always
+      becomes a complaint thread; quoting the same window to a customer
+      who is 90 days out is a different conversation and may be
+      legitimate. The customer's tone tells you which.
+
+  - phrase: "Your system is broken"
+    direction: inbound
+    literal: "Customer attributes the problem to the product, not their use of it. May be accurate (real bug) or inaccurate (config error, edge case). Either way, the customer is signalling that they have stopped self-blaming, which usually means they have already tried the obvious fixes."
+    register: bug-report-signal
+    context:
+      - "Reply after the customer has gone through documented troubleshooting steps."
+      - "Opening line of a ticket from a customer who has tried to self-serve."
+    notes: |
+      Avoid 'have you tried turning it off and on again' as the first
+      response. The customer is signalling they are past that. The
+      product-team handoff value is high here: a customer who attributes
+      the issue to the system, with specifics, is reporting a likely bug.
+      Capture the reproduction steps before resolving the ticket.
+
+  # --- OUTBOUND -------------------------------------------------------------
+
+  - phrase: "Thanks for your patience"
+    direction: outbound
+    literal: "Acknowledging the wait was real. Frame the next step concretely with a time estimate. Used alone, this reads as filler; paired with a specific next-step commitment, it lands as respect."
+    register: de-escalation
+    context:
+      - "Opening line of a reply to a customer who has been waiting on a queued ticket."
+      - "Mid-thread acknowledgement after a research-required interruption."
+    notes: |
+      The phrase fails when 'patience' is fictional. A customer who has
+      sent three escalating messages does not have patience to thank; what
+      they have is fatigue. In that case, drop the phrase and acknowledge
+      the wait directly ("I'm sorry it's taken this long to get back to
+      you — here's where we are.").
+
+  - phrase: "I understand how frustrating this must be"
+    direction: outbound
+    literal: "Validation phrase. Only use if the frustration IS understandable from the agent's side; empty use erodes trust and reads as scripted. When in doubt, name the specific frustration ('I understand it's frustrating to have to repeat the troubleshooting steps')."
+    register: validation-phrase
+    context:
+      - "Reply to a customer who has expressed frustration directly."
+      - "Mid-thread on a long-running issue where the agent wants to acknowledge the cumulative cost."
+    notes: |
+      Empty validation is the single most-flagged complaint in customer
+      satisfaction (CSAT) surveys. The fix is specificity: "I understand
+      how frustrating it must be to lose your work after the auto-save
+      failed" lands; "I understand how frustrating this must be" alone
+      reads as a script the agent is reading off a wall.
+
+  - phrase: "I'll have to escalate this"
+    direction: outbound
+    literal: "Honest: 'I cannot solve this at this tier.' Set expectations on response time. Avoids reading as deflection by naming WHO is being looped in and WHEN the customer should expect to hear back."
+    register: escalation-handoff
+    context:
+      - "Reply after the customer asks for a refund / cancellation outside policy."
+      - "Reply on a technical issue the agent has confirmed requires engineering attention."
+    notes: |
+      'I'll escalate' on its own often reads as deflection. The pattern
+      that works: 'I'll escalate this to our [team] — they typically reply
+      within [timeframe]. I'll stay on the thread so you have a contact
+      point if you don't hear back.' The 'I'll stay on the thread' clause
+      is what distinguishes a real handoff from a polite exit.
+
+  - phrase: "Per our terms of service"
+    direction: outbound
+    literal: "Citing policy. Usually a 'no' with a justification. Soften by acknowledging what the customer WANTED first, before introducing the policy that prevents it. Bare citation reads as a wall; acknowledged citation reads as a constraint the agent regrets."
+    register: policy-citation
+    context:
+      - "Reply denying a refund, warranty claim, or out-of-scope request."
+      - "Reply explaining why a feature, account, or action is not available."
+    notes: |
+      The harshest version: 'Per our terms of service, we are unable to
+      refund this transaction.' The softer (and more effective) version:
+      'I can see why you'd want a refund here, and I'm sorry I can't make
+      that happen — our terms of service limit refunds to [window], and
+      this transaction is [outside that window]. Here's what I CAN do:
+      [alternative].' Naming the alternative is what stops the citation
+      from becoming an escalation.
+
+  - phrase: "We are unable to..."
+    direction: outbound
+    literal: "Soft 'no.' Customer hears this as policy refusal regardless of agent intent. When possible, replace with the affirmative ('Here's what we can do instead') BEFORE the limitation, not after."
+    register: policy-citation
+    context:
+      - "Reply denying a request the agent does not have authority to grant."
+      - "Reply explaining a product limitation the customer is asking the agent to bypass."
+    notes: |
+      The "we are unable to" / "I'm unable to" construction is one of the
+      most-flagged phrases in support-CSAT analysis. Customers report it
+      as feeling impersonal and stonewalling. The pattern that performs
+      better: state what IS available first, then describe the limit if
+      relevant. "I can refund the most recent two transactions; the older
+      one is outside our refund window."
+
+  - phrase: "Looping in [team] on this thread"
+    direction: outbound
+    literal: "Handoff to another team. Honest when paired with a SLA-aware timing expectation ('they typically respond within X'). Reads as deflection when the handoff team is not named, no timing is given, and the original agent drops off the thread."
+    register: team-handoff
+    context:
+      - "Tier-1 → Tier-2 escalation."
+      - "Support → product / engineering handoff for confirmed bug reports."
+      - "Support → billing for invoice / refund disputes."
+    notes: |
+      The honest pattern: name the team, name a typical response time,
+      and stay on the thread as a contact point. The dishonest pattern:
+      drop the customer into a new queue and never confirm receipt at
+      the other end. Internal SLA awareness is the variable; without it,
+      the handoff is a hot-potato pass.
+
+  - phrase: "I've gone ahead and..."
+    direction: outbound
+    literal: "Agent has taken an irreversible action without confirming with the customer first. Use ONLY when the action is unambiguously beneficial and reversible, or the customer explicitly requested it. Otherwise reads as the agent making decisions over the customer's head."
+    register: action-confirmation
+    context:
+      - "Reply confirming a refund has been processed."
+      - "Reply confirming an account change the customer requested."
+    notes: |
+      The phrase fails when the 'going ahead' is a unilateral choice the
+      customer didn't authorise. "I've gone ahead and closed your ticket"
+      to a customer whose issue isn't resolved becomes a complaint thread
+      within a day. The fix: confirm before acting ("Are you happy for me
+      to close this ticket now?"), not after.
+
+  - phrase: "Is there anything else I can help you with today?"
+    direction: outbound
+    literal: "Closing-line script. Honest when the original issue is resolved; reads as a brush-off when the original issue is NOT resolved. Treat as a check on whether the customer agrees the case is closed, not a polite formality."
+    register: case-closure
+    context:
+      - "End of a resolved chat or email thread."
+      - "Closing line of a phone-call transcript."
+    notes: |
+      The phrase performs well when it is a real question and the agent
+      is prepared to handle a 'yes.' It performs badly when it is a
+      pre-typed closer that the agent sends before confirming the
+      original issue is fixed. CSAT scoring usually penalises the latter;
+      customers report feeling rushed off the line.
+
+  - phrase: "Thank you for bringing this to our attention"
+    direction: outbound
+    literal: "Acknowledgement of a bug report, complaint, or feedback. Honest when paired with a concrete next step (ticket filed, escalation routed, fix scheduled); reads as scripted dismissal when used alone with no follow-up commitment."
+    register: feedback-acknowledgement
+    context:
+      - "Reply to a customer who has reported a bug."
+      - "Reply to a customer who has shared a complaint about service quality."
+    notes: |
+      The reflexive use of this phrase as a thread-closer is one of the
+      most-criticised patterns in support correspondence. Customers
+      report that 'thanks for letting us know' followed by no action
+      feels worse than no reply at all. The fix: pair the
+      acknowledgement with an artefact the customer can verify (a
+      ticket ID, a named owner, a follow-up date).
+
+  - phrase: "Per my last email,"
+    direction: outbound
+    literal: "Pointed: 'I already told you this and you didn't read it.' Reads as defensive even when factually accurate. The customer hears the subtext; the agent often does not realise they sent it."
+    register: defensive-marker
+    context:
+      - "Reply to a customer who has asked a question the agent feels was already answered."
+      - "Mid-thread reply when the agent is frustrated by the customer's apparent inattention."
+    notes: |
+      Almost always avoidable. The customer may have missed the previous
+      message; they may have read it and not understood; they may have
+      understood it and wanted a clearer answer. Re-state the relevant
+      point without the pointed framing: "To recap, the refund window
+      closes at [date], so [implication]." Drop the 'per my last email'
+      entirely.
+
+  - phrase: "I'll need to check with the team and get back to you"
+    direction: outbound
+    literal: "Honest deferral when the agent doesn't have the authority or information to answer. Reads as a polite stall when no timeframe is given. Always pair with a specific timing commitment ('by end of day,' 'within 24 hours') AND a fallback if the timing slips."
+    register: deferral
+    context:
+      - "Reply to a customer asking about a feature, refund, or exception the agent can't approve."
+      - "Reply to a technical question the agent needs engineering input on."
+    notes: |
+      The pattern that works: name the timing AND name what happens if
+      the timing slips. "I'll check with the team and get back to you by
+      end of business tomorrow. If I don't have a full answer by then,
+      I'll still update you so you're not waiting in the dark." The
+      'still update you' clause is what distinguishes a real deferral
+      from a polite stall.

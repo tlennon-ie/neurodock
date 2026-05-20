@@ -1,0 +1,103 @@
+# NeuroDock Plugin — translation-customer-support
+#
+# A translation-pack for customer-support correspondence — the bidirectional
+# register that runs between a customer in distress and a support agent doing
+# emotional labour. Decodes inbound escalation, churn-risk signalling, and
+# frustration-peak phrasing; tunes outbound replies toward de-escalation,
+# policy citation, and honest expectation-setting. Designed for neurodivergent
+# professionals (and anyone new to support work) who can't yet tell whether
+# "this is unacceptable" wants an apology, an escalation, or a refund.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+# Pack-type docs:    ../../docs/src/content/docs/contribute/plugin-types/translation-pack.mdx
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "translation-customer-support"
+
+type: "translation-pack"
+
+version: "0.1.0"
+
+description: "Translation prompts for customer-support correspondence: inbound de-escalation reading, churn-risk signal detection, and outbound register-softening for support agents."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The pack helps anyone who can't read support-channel
+# subtext — that includes ND professionals (autistic and ADHD readers in
+# particular often report difficulty separating the customer's affect from
+# the customer's actual need) but also new support hires, engineers pulled
+# into Tier-2 escalations, founders staffing their own support inbox, and
+# product-team members reading verbatims in research.
+neurotypes: []
+
+# --- Locale targeting -------------------------------------------------------
+#
+# REQUIRED for translation-pack. The phrasebook is rooted in English
+# support-channel register — broadly portable across the en- variants, so
+# the pack declares the base 'en' tag and lets the substrate prefer it over
+# locale-agnostic packs for any English-speaking user.
+locale:
+  - "en"
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    - name: "mcp-translation"
+      version: ">=0.1.0"
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "translation-prompt"
+    id: "phrasebook"
+    path: "./phrases.yaml"
+
+  - type: "translation-prompt"
+    id: "literal-meaning"
+    path: "./prompts/literal_meaning.md"
+
+  - type: "translation-prompt"
+    id: "subtext"
+    path: "./prompts/subtext.md"
+
+  - type: "translation-prompt"
+    id: "tone"
+    path: "./prompts/tone.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-customer-support"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-customer-support"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "translation"
+  - "customer-support"
+  - "support"
+  - "de-escalation"
+  - "churn-risk"
+  - "escalation"
+  - "csat"
+  - "service"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

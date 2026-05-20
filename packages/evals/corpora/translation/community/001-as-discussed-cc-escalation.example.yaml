@@ -1,0 +1,39 @@
+id: "translation.community.001.as-discussed-cc-escalation"
+slice: "translation/community"
+created_at: "2026-05-20"
+consent:
+  contributor: "anon-community-001"
+  consent_token: "sha256:community-contrib-2026-05-20-as-discussed"
+  anonymisation_pass: 1
+status: "contributed"
+license: "AGPL-3.0-or-later"
+input:
+  text: "+Manager for visibility — as discussed, the auth refactor was meant to land this week. Can you confirm where we are?"
+  channel: "email"
+  thread_context:
+    - "Floated possibly slotting the auth refactor in this week if capacity allowed."
+    - "(no explicit commitment given)"
+expected:
+  ambiguity:
+    detected: true
+  recommended_next_action:
+    action: "clarify"
+ratings:
+  - rater_id: "rater-community-A"
+    rater_neurotypes: ["adhd", "asd"]
+    agreement_with_expected: 0.9
+    notes: |
+      Two layered pressure tactics: cc-escalation ("+Manager for visibility")
+      manufactures an audience, and "as discussed" retroactively upgrades a
+      tentative float into a firm commitment. The thread_context shows no
+      explicit agreement was ever given. The baseline should flag this as
+      ambiguous and recommend clarifying the actual prior agreement before
+      reporting status — answering "where we are" would tacitly accept the
+      false premise.
+notes: |
+  Anonymised community example demonstrating the "manufactured-accountability"
+  pattern: a soft suggestion is later reframed as a binding commitment, with
+  a manager cc'd to add social pressure. This trips ND readers who default to
+  trusting that "as discussed" refers to a real, mutual agreement. The
+  recommended action is `clarify` (re-establish what was actually agreed),
+  not `reply` (do not answer the loaded question on its own terms).

@@ -1,0 +1,140 @@
+# NeuroDock Profile preset — educator-semester
+#
+# Who it's for:
+#   Teachers, lecturers, TAs, tutors, instructional designers, and anyone
+#   working on a semester cadence: long block-scheduled days, hundreds of
+#   small triage decisions, marking surges that arrive in waves, and a
+#   hard need to defend non-work hours so the term is survivable end-to-
+#   end. This preset is PROFESSION-SHAPED, not neurotype-shaped — it
+#   declares no neurotype and is designed to be overlaid on top of an
+#   adhd / audhd / ocd / dyslexic / low-stimulation preset by copying the
+#   chronometric and preferences blocks across, or by `extends`-ing once
+#   the loader's preset-extension story lands (see schema $comment on
+#   'extends').
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = []   empty array is valid per the schema
+#       and opts out of any neurotype-tagged skill activation. This
+#       preset is a working posture, not an identity. Pair it with your
+#       neurotype preset of choice.
+#     - preferences.output_format = answer_first   educators triage many
+#       messages a day (student email, admin email, parent email, LMS
+#       notifications). The headline-first shape minimises re-reading.
+#     - preferences.max_chunk_size = 5   tighter than the schema default
+#       of 7. During marking weeks the working-memory budget is already
+#       spent on rubric application; lists longer than 5 spill.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default; chosen for legibility under fatigue (and there is a lot
+#       of fatigue in week 11).
+#     - preferences.motion = reduced   no animation, no transitions; LMS
+#       and admin tools already produce enough motion churn.
+#     - chronometric.hyperfocus_break_minutes = 75   matches the typical
+#       lecture / marking-block length. The structured nudge surfaces at
+#       the natural seam between blocks rather than mid-lecture.
+#     - chronometric.end_of_day_local = "17:00"   firmer EOD than the
+#       schema default (the AuDHD founder example uses 18:30). Educators
+#       routinely lose evenings to "just one more pile" — honour the
+#       boundary. The after-EOD nudge fires once 17:00 passes so the
+#       hyperfocus monitor can interrupt the spiral.
+#     - guardrails.sycophancy_check = warn   schema default. The anti-
+#       validation guard surfaces a counter-prompt without refusing; this
+#       matters when drafting feedback that should challenge rather than
+#       only affirm.
+#   USER-TUNABLE (edit freely after copying):
+#     - identity.display_name       set to your preferred handle.
+#     - chronometric.hyperfocus_break_minutes
+#       MARKING WEEKS: consider lowering `hyperfocus_break_minutes` to 60
+#       to prevent grade-fatigue spirals. The accuracy of rubric
+#       application drops measurably after ~60 min of continuous marking;
+#       surfacing the nudge earlier protects both the cohort and you.
+#     - chronometric.end_of_day_local
+#       OFFICE HOURS: if you hold late office hours one day a week (a
+#       common pattern), bump this to "18:30" on that day only by
+#       swapping in a day-specific override profile, or accept the early
+#       nudge as a reminder to wrap. The schema does not currently model
+#       per-weekday EOD — see the candidate-fields note in
+#       profiles/README.md.
+#       WEDNESDAY-AFTERNOON-CLASS PATTERN: a Wednesday afternoon teaching
+#       block that runs past 17:00 will trigger the EOD nudge mid-class.
+#       That's working as intended — the nudge is a signal to protect
+#       Wednesday evening from spillover admin, not to leave the room.
+#     - guardrails.rumination_threshold / rumination_window_minutes
+#       schema defaults (3 queries / 90 min). Marking and feedback work
+#       involves legitimate iteration on phrasing; raise the threshold
+#       (e.g. to 5) during marking weeks if the rumination signal fires
+#       too often on genuine wording revision.
+#     - privacy.os_idle_consent   off by default; enable only if you
+#       want chronometric.idle_status to read OS idle time (useful for
+#       distinguishing "in a lecture" from "stuck on a sentence").
+#
+# Semester cadence — fields the schema does NOT yet model:
+#   This preset would benefit from explicit semester-aware fields. They
+#   are NOT in profile.schema.json v0.1.0 and are tracked as candidate
+#   schema-bump fields in profiles/README.md:
+#     - chronometric.calendar_phase
+#         enum-ish: "teaching" | "marking" | "exam" | "break"
+#         lets skills shift defaults (e.g. tighter break cadence during
+#         marking, looser during break).
+#     - chronometric.weekday_overrides
+#         map of weekday -> { end_of_day_local, hyperfocus_break_minutes }
+#         covers the Wednesday-afternoon-class and late-office-hours
+#         patterns without forcing a profile swap.
+#     - chronometric.protected_windows
+#         list of local-time ranges where the hyperfocus monitor should
+#         hard-surface (e.g. 12:00-12:30 lunch, post-17:00 evening).
+#   Until those land in a schema bump, encode the intent in this
+#   comment block and in the user-tunable notes above.
+#
+# Install (as your default educator profile):
+#   cp profiles/educator-semester.yaml ~/.neurodock/profile.yaml
+#
+# Install (composed on top of a neurotype preset — manual merge for now):
+#   # 1. start from your neurotype preset
+#   cp profiles/adhd.yaml ~/.neurodock/profile.yaml
+#   # 2. copy the chronometric + preferences blocks from this file over
+#   #    the top, keeping identity.neurotypes from the neurotype preset.
+#
+# This preset is an opinionated working-posture default for an educator's
+# semester. It is not a clinical claim, not a neurotype claim, and not a
+# rulebook. Change anything below at any time — you are the authority on
+# what your term needs.
+
+schema_version: "0.1.0"
+
+identity:
+  # Placeholder. Edit to your preferred handle (single letter, nickname,
+  # or full name — all valid).
+  display_name: "Educator"
+  # Empty list is valid. This preset is profession-shaped, not
+  # neurotype-shaped; overlay another preset for neurotype-specific
+  # skill activation.
+  neurotypes: []
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  # 75 minutes matches a typical lecture or marking-block length; the
+  # structured nudge surfaces at the natural seam between blocks rather
+  # than mid-delivery. MARKING WEEKS: drop to 60 to prevent grade-
+  # fatigue spirals (see header comment).
+  hyperfocus_break_minutes: 75
+  # Firmer EOD than the schema default. Educators routinely lose
+  # evenings to "just one more pile" — the after-EOD nudge is the
+  # interruption that protects the boundary.
+  end_of_day_local: "17:00"
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

@@ -12,13 +12,14 @@ serve you.
 
 ## Available presets
 
-| Preset                                         | Distinctive tuning                                                                                                                                                                                                         |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`adhd.yaml`](adhd.yaml)                       | `max_chunk_size: 5`, `hyperfocus_break_minutes: 75`, `reading_font_hint: lexend`. Activates `adhd-daily-planner`, `hyperfocus-formatter`, `audhd-context-recovery`, `visual-organizer`.                                    |
-| [`audhd.yaml`](audhd.yaml)                     | `neurotypes: ["audhd"]` (first-class, not a sum). 75-minute break cadence + `end_of_day_local` pre-set. Activates `audhd-context-recovery` (primary), plus ADHD- and ASD-tagged skills including `asd-meeting-translator`. |
-| [`ocd.yaml`](ocd.yaml)                         | Strictest guardrail config: `rumination_threshold: 2` over a 60-minute window, `sycophancy_check: refuse`. Activates `ocd-decision-finalizer`.                                                                             |
-| [`dyslexic.yaml`](dyslexic.yaml)               | `reading_font_hint: atkinson_hyperlegible`, `max_chunk_size: 4`, `output_format: answer_first` for fast scanning.                                                                                                          |
-| [`low-stimulation.yaml`](low-stimulation.yaml) | Temporary-override shape. `neurotypes: []` (no identity claim), `max_chunk_size: 3`, `hyperfocus_break_minutes: 60`, all guardrails at most-protective values.                                                             |
+| Preset                                             | Distinctive tuning                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`adhd.yaml`](adhd.yaml)                           | `max_chunk_size: 5`, `hyperfocus_break_minutes: 75`, `reading_font_hint: lexend`. Activates `adhd-daily-planner`, `hyperfocus-formatter`, `audhd-context-recovery`, `visual-organizer`.                                                                                                                      |
+| [`audhd.yaml`](audhd.yaml)                         | `neurotypes: ["audhd"]` (first-class, not a sum). 75-minute break cadence + `end_of_day_local` pre-set. Activates `audhd-context-recovery` (primary), plus ADHD- and ASD-tagged skills including `asd-meeting-translator`.                                                                                   |
+| [`ocd.yaml`](ocd.yaml)                             | Strictest guardrail config: `rumination_threshold: 2` over a 60-minute window, `sycophancy_check: refuse`. Activates `ocd-decision-finalizer`.                                                                                                                                                               |
+| [`dyslexic.yaml`](dyslexic.yaml)                   | `reading_font_hint: atkinson_hyperlegible`, `max_chunk_size: 4`, `output_format: answer_first` for fast scanning.                                                                                                                                                                                            |
+| [`low-stimulation.yaml`](low-stimulation.yaml)     | Temporary-override shape. `neurotypes: []` (no identity claim), `max_chunk_size: 3`, `hyperfocus_break_minutes: 60`, all guardrails at most-protective values.                                                                                                                                               |
+| [`educator-semester.yaml`](educator-semester.yaml) | Profession-shaped, not neurotype-shaped. `neurotypes: []` (overlay a neurotype preset), `output_format: answer_first` for triage, `hyperfocus_break_minutes: 75` (lecture/marking blocks), `end_of_day_local: "17:00"` (firmer EOD to defend non-work hours). Drop break cadence to 60 during marking weeks. |
 
 ## How to use a preset
 
@@ -63,3 +64,17 @@ profile schema version:
   no schema-level way to declare "always show the override path
   prominently in finality-mode output" — the skill copy carries that
   contract instead.
+- **Semester / calendar-phase awareness.** `educator-semester.yaml`
+  surfaced three semester-cadence knobs that v0.1.0 cannot model:
+  - `chronometric.calendar_phase` — `"teaching" | "marking" | "exam" |
+"break"` so skills can shift defaults across the term (e.g. tighter
+    break cadence during marking weeks, looser during break).
+  - `chronometric.weekday_overrides` — per-weekday overrides for
+    `end_of_day_local` and `hyperfocus_break_minutes` to cover the
+    late-office-hours and Wednesday-afternoon-class patterns without
+    forcing a whole-profile swap.
+  - `chronometric.protected_windows` — list of local-time ranges
+    (lunch, post-EOD evening) where the hyperfocus monitor should
+    hard-surface rather than nudge.
+    The educator preset encodes the intent in its header comment and in
+    user-tunable notes until these land in a schema bump.

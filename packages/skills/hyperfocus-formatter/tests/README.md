@@ -1,12 +1,13 @@
 # hyperfocus-formatter tests
 
-Three replayable scenarios cover the skill's three tiers.
+Four replayable scenarios cover the skill's three tiers plus the design-critique phrase override.
 
-| Test                              | Tier | Session length | Threshold | Expected behaviour                                                                          |
-| --------------------------------- | ---- | -------------- | --------- | ------------------------------------------------------------------------------------------- |
-| `01-short-session-no-change.md`   | A    | 12 min         | 90 min    | Light Answer-First: one summary sentence, then full response. No threshold mention.         |
-| `02-long-session-answer-first.md` | B    | 75 min         | 90 min    | Aggressive Answer-First: answer line, ≤ 5 bullets, collapsed details. No threshold mention. |
-| `03-past-threshold-soft-nudge.md` | C    | 102 min        | 90 min    | One verbatim-intent line prepended to the Tier-B response. Response not blocked.            |
+| Test                              | Tier              | Session length | Threshold | Expected behaviour                                                                          |
+| --------------------------------- | ----------------- | -------------- | --------- | ------------------------------------------------------------------------------------------- |
+| `01-short-session-no-change.md`   | A                 | 12 min         | 90 min    | Light Answer-First: one summary sentence, then full response. No threshold mention.         |
+| `02-long-session-answer-first.md` | B                 | 75 min         | 90 min    | Aggressive Answer-First: answer line, ≤ 5 bullets, collapsed details. No threshold mention. |
+| `03-past-threshold-soft-nudge.md` | C                 | 102 min        | 90 min    | One verbatim-intent line prepended to the Tier-B response. Response not blocked.            |
+| `04-design-critique.md`           | B (phrase-forced) | 8 min          | 90 min    | Design-critique phrase trigger forces Tier B; verdict line precedes the reasoning bullets.  |
 
 ## Universal pass criteria
 

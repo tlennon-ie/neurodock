@@ -1,0 +1,295 @@
+# NeuroDock translation-pack — clinical-team phrasebook
+#
+# Each entry maps a phrase used in inter-clinician communication (SBAR
+# handovers, MDT discussions, ED triage, ward rounds, GP-to-specialist
+# letters, consultant-to-junior teaching register) to a literal
+# translation, a register tag, and illustrative context.
+#
+# IMPORTANT scope notes:
+#   - These entries describe the INTERNAL clinical register — how
+#     clinicians talk *to each other*. They are NOT patient-facing
+#     copy and NOT diagnostic guidance.
+#   - Regional variance is real. "NAD" reads slightly differently
+#     across NHS, HSE, US health systems, and Australian/Canadian
+#     equivalents. Entries flag this in `notes` where it matters.
+#   - Severity euphemisms are part of the register because the
+#     register is record-aware (medical notes are discoverable)
+#     and team-aware (handover is a shared cognitive surface).
+#     The pack translates the register; it does NOT judge it.
+#
+# Conventions:
+#   - `phrase`:    the surface phrase the recipient encounters.
+#   - `literal`:   plain-language translation of what the speaker
+#                  typically means in clinical-team context.
+#   - `register`:  one tag from a small open vocabulary (see README).
+#   - `context`:   short bullets describing where this phrase tends to
+#                  appear.
+#   - `notes`:     optional longer note (regional variance, common
+#                  misreadings by allied-health or non-clinical readers).
+#
+# Forward-compat: new fields and new register tags are additive. Loaders
+# preserve unknown keys.
+
+schema_version: "0.1.0"
+
+phrases:
+  - phrase: "Patient is stable"
+    literal: "No acute deterioration in the last assessment window. Not a long-term prognosis. Re-assess per protocol."
+    register: severity-euphemism
+    context:
+      - "SBAR handover, 'Situation' or 'Assessment' line."
+      - "Ward round summary to the consultant."
+      - "Phone update to a relative or covering team."
+    notes: |
+      "Stable" does not mean "fine," "improving," or "out of danger." It
+      means the patient has not crashed since you last looked. A stable
+      patient can still die. Treat it as a point-in-time status, not a
+      prognosis. When the next clinician asks "stable on what?" they are
+      asking about the support (oxygen, pressors, monitoring) that is
+      keeping the status stable.
+
+  - phrase: "Rule out X"
+    literal: "Eliminate this differential diagnosis before treating; if testing comes back negative, X is excluded."
+    register: differential-language
+    context:
+      - "ED triage notes."
+      - "Referral letter from GP to specialist."
+      - "Admission orders specifying which workup to complete."
+    notes: |
+      "Rule out PE", "rule out sepsis", "rule out MI" each name a
+      differential the team must exclude (typically with a specific
+      test) before settling on another diagnosis. The phrase does NOT
+      mean the clinician thinks the patient has X; it means X is
+      serious enough that they need to be sure it isn't X. Often the
+      most-feared differential is named first.
+
+  - phrase: "Pleasant patient in NAD"
+    literal: "Patient cooperative, no apparent distress on initial observation. Note: NAD = no acute distress."
+    register: sbar-handoff
+    context:
+      - "Opening line of a clerking note or admission summary."
+      - "Hand-off note from ED to ward team."
+    notes: |
+      "Pleasant" is register, not character assessment — it signals
+      the patient is cooperative with examination and history-taking.
+      "NAD" (no acute distress) is a visual gestalt: the patient is
+      not gasping, writhing, or in obvious pain at rest. Neither word
+      rules out serious pathology. A patient can be pleasant, in NAD,
+      and have a ruptured aneurysm.
+
+  - phrase: "Conservative management"
+    literal: "Non-surgical, watchful waiting with symptom control."
+    register: clinical-plan
+    context:
+      - "Ward round plan."
+      - "Discussion of treatment options with another team."
+      - "Discharge summary outlining ongoing approach."
+    notes: |
+      "Conservative" does not mean "cautious" in the colloquial sense
+      and is not a comment on the patient's preferences. It is the
+      clinical-decision term for declining (or deferring) invasive
+      intervention. Often the alternative is explicitly named:
+      "conservative management vs. surgical fixation."
+
+  - phrase: "Likely viral"
+    literal: "Probably self-limiting; antibiotics not indicated; symptomatic care plus return precautions."
+    register: differential-language
+    context:
+      - "ED discharge note for an URTI, gastroenteritis, or non-specific febrile illness."
+      - "GP consultation note."
+    notes: |
+      Carries an implicit antibiotic-stewardship message: the clinician
+      considered bacterial causes and concluded against treating
+      empirically. The phrase often pairs with "return precautions" or
+      "safety-net advice" — instructions about which symptoms should
+      bring the patient back. The combination is the actual plan.
+
+  - phrase: "Goals of care discussion"
+    literal: "Conversation about scope of treatment escalation; often used when the team is leaning toward palliation."
+    register: severity-euphemism
+    context:
+      - "MDT discussion of a patient with advanced disease."
+      - "Ward round plan when the team is reconsidering invasive escalation."
+      - "Note prior to family meeting."
+    notes: |
+      Not a routine update. The phrase signals the team is thinking
+      about ceilings of treatment, resuscitation status, and whether
+      to continue active disease-directed therapy. If a colleague
+      mentions a "goals of care discussion" is planned, expect the
+      conversation to cover palliative options, not just preferences
+      about routine care.
+
+  - phrase: "Comfort measures only"
+    literal: "Active treatment of underlying disease has stopped; care focus is symptom relief."
+    register: severity-euphemism
+    context:
+      - "End-of-life pathway documentation."
+      - "Handover indicating the treatment plan has been de-escalated."
+    notes: |
+      An explicit clinical-plan term, not a hedge. The patient is
+      receiving care; the care is now oriented to comfort (analgesia,
+      anti-emetics, mouth care, anxiety relief) rather than cure.
+      The decision is typically documented after a goals-of-care
+      discussion with the patient or family. Reading this in a chart
+      means the team is no longer pursuing reversal of the underlying
+      condition.
+
+  - phrase: "Failed conservative therapy"
+    literal: "Tried non-invasive options without success; escalation to procedure or surgery is now warranted."
+    register: clinical-plan
+    context:
+      - "Referral letter from a primary or medical team to a surgical service."
+      - "MDT recommendation for surgical management."
+    notes: |
+      "Failed" is descriptive, not blame. It documents that the
+      conservative trial ran its course and the patient did not
+      improve enough. The phrase typically functions as the
+      justification clause in a referral: it tells the receiving
+      surgical team that the medical pathway has been exhausted.
+
+  - phrase: "SOB on exertion"
+    literal: "Shortness of breath when active. Quantify with stairs or blocks if possible."
+    register: sbar-handoff
+    context:
+      - "History-of-presenting-complaint summary."
+      - "Cardiology or respiratory referral letter."
+      - "Pre-operative assessment note."
+    notes: |
+      Always more useful when quantified ("SOB after one flight of
+      stairs," "SOB after 50 metres on the flat"). Unquantified, the
+      phrase tells you symptom domain but not severity. When you see
+      it in a handover, ask for the functional baseline if it isn't
+      already documented.
+
+  - phrase: "For review"
+    literal: "Action item assigned to the next team or shift; not yet decided. The owner is whoever holds the bleep on that round."
+    register: sbar-handoff
+    context:
+      - "Ward-round plan documenting outstanding decisions."
+      - "Handover sheet listing pending workup."
+    notes: |
+      A frequent source of dropped tasks. "For review" without a named
+      reviewer and a named timeframe drifts. Best practice (and
+      increasingly local policy in many trusts and hospital groups)
+      is to attach "for review by [team / role / date]." If you
+      receive a handover that says only "for review," ask who.
+
+  - phrase: "Soft signs"
+    literal: "Subtle clinical findings that don't trigger an alarm individually but together suggest the patient is deteriorating. Lower the threshold for escalation."
+    register: differential-language
+    context:
+      - "MDT or ward-round discussion of a patient whose obs are borderline."
+      - "Mentoring register: consultant flagging concern to a junior."
+    notes: |
+      Not a documented score; a gestalt. When an experienced clinician
+      mentions soft signs, they are saying their pattern-matching is
+      uneasy even though the formal early-warning score is not yet
+      triggering. Treat it as an instruction to increase observation
+      frequency and to re-examine.
+
+  - phrase: "Patient is not for escalation"
+    literal: "Decision recorded that the patient will not be transferred to a higher level of care (HDU/ICU) or receive resuscitation; ceiling of treatment defined."
+    register: severity-euphemism
+    context:
+      - "Resuscitation status documentation."
+      - "Handover to a covering team overnight."
+    notes: |
+      A specific clinical-decision term, not vagueness. It refers to a
+      documented ceiling-of-treatment decision and typically follows a
+      conversation with the patient or family. The exact scope (e.g.
+      'not for ICU but for ward-based NIV') is meant to be specified
+      alongside; if the scope is missing, ask before the next
+      deterioration.
+
+  - phrase: "Acopia"
+    literal: "Patient is medically fit for discharge but cannot manage at home without additional support; this is a social or functional problem, not an acute medical one."
+    register: severity-euphemism
+    context:
+      - "Discharge-planning notes."
+      - "MDT discussion of bed pressure."
+    notes: |
+      Controversial term — increasingly discouraged because it can
+      obscure unrecognised medical causes (delirium, occult infection,
+      pain). When you see "acopia" in a note, treat it as a prompt to
+      check whether a medical workup is genuinely complete. Many
+      services have replaced the term with "complex discharge" or a
+      specific functional description.
+
+  - phrase: "Query X / ?X"
+    literal: "Differential diagnosis under active consideration; not yet confirmed. Workup is in progress."
+    register: differential-language
+    context:
+      - "ED triage note (e.g. '?PE', '?sepsis')."
+      - "Admission diagnosis pending workup."
+    notes: |
+      The leading question mark is shorthand for "I am considering
+      this, I have not confirmed it, and I want the next clinician
+      to keep it on the differential." When you receive a handover
+      with multiple '?' diagnoses, the order is often (but not
+      always) by clinician concern, not by likelihood.
+
+  - phrase: "Plan as per X"
+    literal: "Decision is owned by another team or named clinician; this team is documenting, not deciding."
+    register: clinical-plan
+    context:
+      - "Note from a covering team when a specialty has the lead."
+      - "Ward note when a consultant ward round set the direction."
+    notes: |
+      Names the owner. If you find "plan as per cardiology" in a chart
+      and cardiology has not actually written a plan, the documenting
+      clinician is implicitly waiting on the named team. Useful for
+      tracing accountability: the owner is the one named, not the one
+      documenting.
+
+  - phrase: "Discussed with [senior]"
+    literal: "I (the documenting clinician) am recording that a more senior decision-maker agreed with the plan. This shares accountability and is often required by local policy for specific decisions."
+    register: sbar-handoff
+    context:
+      - "Junior-clinician notes for decisions above their pay grade (e.g. controlled-drug dosing, discharge against advice, escalation decisions)."
+      - "Out-of-hours documentation."
+    notes: |
+      Not a hedge — a governance signal. The phrase documents that the
+      decision was escalated and approved. When auditing a chart, the
+      named senior is the accountable decision-maker, not the writer.
+      If "discussed with [senior]" appears without a name, the
+      documentation is incomplete.
+
+  - phrase: "Reassuring exam"
+    literal: "Examination did not reveal red-flag findings; does not rule out occult disease. Re-examine if symptoms persist."
+    register: differential-language
+    context:
+      - "ED discharge note for a low-acuity presentation."
+      - "GP follow-up after a worrying symptom."
+    notes: |
+      A common phrasing trap: "reassuring" is calibrated against
+      red-flag absence, not against "the patient is fine." A
+      reassuring exam paired with persistent symptoms still warrants
+      re-examination. The phrase frequently accompanies safety-net
+      advice and a planned review.
+
+  - phrase: "Failed extubation / Failed wean"
+    literal: "Patient could not maintain adequate respiratory or organ function without the support being weaned; the support has been reinstated."
+    register: clinical-plan
+    context:
+      - "ICU progress notes."
+      - "MDT discussion of trajectory."
+    notes: |
+      Descriptive, not blame. The patient did not 'fail'; the trial
+      did. The phrase signals the team will need to identify the
+      reason (sedation, secretions, weakness, underlying disease) and
+      plan a different approach. When you see this in a handover,
+      expect the next plan to address the cause, not just retry the
+      same wean.
+
+  - phrase: "Background of"
+    literal: "Pre-existing diagnoses or conditions that frame the current presentation. Often listed in shorthand."
+    register: sbar-handoff
+    context:
+      - "Opening of a referral, admission note, or MDT presentation."
+      - "GP-to-specialist letter."
+    notes: |
+      The list that follows "on a background of" is rarely complete —
+      it is the relevant subset the documenting clinician thinks the
+      reader needs. If a critical comorbidity is missing, it may not
+      be missing from the chart, just from this summary. Check the
+      problem list before assuming.

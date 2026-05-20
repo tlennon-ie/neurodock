@@ -20,11 +20,24 @@ MAX_INPUT_LENGTH = 200
 
 
 def recall_entity(storage: Storage, name_or_alias: str) -> RecallEntityResult:
-    """Resolve a name and return the entity + facts + neighbours.
+    """Resolve a single entity reference and return entity + facts + neighbours.
 
-    Raises :class:`ToolError` with code ``NAME_OR_ALIAS_REQUIRED`` if the input
-    is empty after stripping and ``NAME_OR_ALIAS_TOO_LONG`` if it exceeds 200
-    characters.
+    ``name_or_alias`` is a single entity reference: a display name, a canonical
+    id (e.g. ``ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2``), or any known alias. Pass the
+    verbatim string the user uttered — do not lowercase, strip punctuation, or
+    pluralise; the 4-rung cascade (exact → case-insensitive alias →
+    rapidfuzz WRatio >= 75 → embedding cosine >= 0.82) handles those variants.
+    Pass exactly one entity per call; concatenated phrases like
+    ``"Roberto and Priya"`` will not match either — call the tool once per
+    entity. Required, length 1..200 after trimming.
+
+    A no-match outcome returns ``entity=None`` with
+    ``resolution.method='none'`` — that is a successful response, not an
+    error. Raises :class:`ToolError`:
+
+    * ``NAME_OR_ALIAS_REQUIRED`` — input was missing or empty after trimming.
+    * ``NAME_OR_ALIAS_TOO_LONG`` — input exceeded 200 characters (long
+      strings are almost always pasted prose; extract the entity first).
     """
     if not isinstance(name_or_alias, str):
         raise ToolError("NAME_OR_ALIAS_REQUIRED", "name_or_alias must be a string.")
