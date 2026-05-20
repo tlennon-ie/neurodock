@@ -19,8 +19,8 @@ describe("ollama provider", () => {
           JSON.stringify({ response: "{", done: false }),
           JSON.stringify({ response: '"ok":', done: false }),
           JSON.stringify({ response: "true}", done: true }),
-        ].join("\n")
-      )
+        ].join("\n"),
+      ),
     );
     const provider = createOllamaProvider({
       endpoint: "http://localhost:11434",
@@ -50,13 +50,17 @@ describe("ollama provider", () => {
       endpoint: "http://localhost:11434",
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
-    await expect(
-      provider.complete({
+    let err: unknown;
+    try {
+      await provider.complete({
         tool: "translate_incoming",
         prompt: "test",
         model: "llama3.2:3b",
-      })
-    ).rejects.toThrow(/OLLAMA_UNREACHABLE/);
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/OLLAMA_UNREACHABLE/);
   });
 
   it("throws OLLAMA_HTTP_<status> on non-2xx responses", async () => {
@@ -65,18 +69,22 @@ describe("ollama provider", () => {
         new Response("Internal Server Error", {
           status: 500,
           statusText: "Internal Server Error",
-        })
+        }),
     );
     const provider = createOllamaProvider({
       endpoint: "http://localhost:11434",
       fetchImpl: fetchImpl as unknown as typeof fetch,
     });
-    await expect(
-      provider.complete({
+    let err: unknown;
+    try {
+      await provider.complete({
         tool: "translate_incoming",
         prompt: "test",
         model: "llama3.2:3b",
-      })
-    ).rejects.toThrow(/OLLAMA_HTTP_500/);
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/OLLAMA_HTTP_500/);
   });
 });

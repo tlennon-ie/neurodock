@@ -1,7 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { createOpenAIProvider } from "../../../src/lib/providers/openai.js";
 
-interface FakeChunk { choices: { delta: { content: string } }[]; }
+interface FakeChunk {
+  choices: { delta: { content: string } }[];
+}
 
 function buildStreamingClient(opts: {
   chunks: string[];
@@ -19,7 +21,9 @@ function buildStreamingClient(opts: {
               choices: [{ delta: { content: c } }],
             }));
             return {
-              async *[Symbol.asyncIterator]() { for (const c of chunks) yield c; },
+              async *[Symbol.asyncIterator]() {
+                for (const c of chunks) yield c;
+              },
             };
           }
           return { choices: [{ message: { content: opts.chunks.join("") } }] };
@@ -32,7 +36,7 @@ function buildStreamingClient(opts: {
 describe("openai provider", () => {
   it("streams deltas and aggregates text", async () => {
     const fakeClient = buildStreamingClient({
-      chunks: ['{"o', "k\":", "true}"],
+      chunks: ['{"o', 'k":', "true}"],
     });
     const provider = createOpenAIProvider({
       apiKey: "sk-test",
@@ -58,18 +62,22 @@ describe("openai provider", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       clientFactory: () => fakeClient as any,
     });
-    await expect(
-      provider.complete({
+    let err: unknown;
+    try {
+      await provider.complete({
         tool: "translate_incoming",
         prompt: "ping",
         model: "gpt-4o-mini",
-      })
-    ).rejects.toThrow(/OPENAI_AUTH_FAILED/);
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/OPENAI_AUTH_FAILED/);
   });
 
   it("refuses construction when apiKey is empty", () => {
     expect(() => createOpenAIProvider({ apiKey: "" })).toThrow(
-      /OPENAI_API_KEY_MISSING/
+      /OPENAI_API_KEY_MISSING/,
     );
   });
 });

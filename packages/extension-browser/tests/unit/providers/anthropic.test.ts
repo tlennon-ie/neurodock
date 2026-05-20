@@ -66,18 +66,22 @@ describe("anthropic provider", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       clientFactory: () => fakeClient as any,
     });
-    await expect(
-      provider.complete({
+    let err: unknown;
+    try {
+      await provider.complete({
         tool: "translate_incoming",
         prompt: "ping",
         model: "claude-haiku-4-5",
-      })
-    ).rejects.toThrow(/ANTHROPIC_AUTH_FAILED/);
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/ANTHROPIC_AUTH_FAILED/);
   });
 
   it("refuses construction when apiKey is empty", () => {
     expect(() => createAnthropicProvider({ apiKey: "" })).toThrow(
-      /ANTHROPIC_API_KEY_MISSING/
+      /ANTHROPIC_API_KEY_MISSING/,
     );
   });
 });
