@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NeuroDock — Chrome small promo tile.
+  Spec: 440 x 280 (Chrome Web Store small promo tile).
+  Visual language matches docs/public/og-image.svg:
+    * Body: Atkinson Hyperlegible (system fallback).
+    * Heading: Lexend (system fallback).
+    * Single neutral accent (#5a6a8f).
+    * No gradients, no animation, no remote fonts.
+  Rasterise to PNG at 440x280 before upload; Chrome accepts PNG/JPEG, not SVG.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 440 280"
+  width="440"
+  height="280"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">NeuroDock — Translate</title>
+  <desc id="desc">
+    NeuroDock, a translator for workplace messages for neurodivergent
+    professionals. Local-first by default.
+  </desc>
+
+  <rect width="440" height="280" fill="#f8f7f2" />
+  <rect x="16" y="16" width="408" height="248" fill="none" stroke="#d8d6cf" stroke-width="1" />
+
+  <text
+    x="40"
+    y="120"
+    font-family="'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="40"
+    font-weight="600"
+    letter-spacing="-1"
+    fill="#1d2030"
+  >
+    NeuroDock
+  </text>
+
+  <rect x="40" y="138" width="60" height="3" fill="#5a6a8f" />
+
+  <text
+    x="40"
+    y="180"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="16"
+    font-weight="400"
+    fill="#33384a"
+  >
+    Translate workplace messages.
+  </text>
+  <text
+    x="40"
+    y="204"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="16"
+    font-weight="400"
+    fill="#33384a"
+  >
+    Local-first by default.
+  </text>
+
+  <text
+    x="40"
+    y="248"
+    font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    font-size="11"
+    font-weight="400"
+    fill="#5a6075"
+    letter-spacing="0.5"
+  >
+    open source · AGPL-3.0
+  </text>
+</svg>

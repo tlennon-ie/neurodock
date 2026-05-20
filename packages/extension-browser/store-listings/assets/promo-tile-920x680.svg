@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NeuroDock — Chrome medium promo tile.
+  Spec: 920 x 680 (Chrome Web Store medium promo tile).
+  Visual language matches docs/public/og-image.svg.
+  Rasterise to PNG at 920x680 before upload.
+-->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 920 680"
+  width="920"
+  height="680"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">NeuroDock — Translate</title>
+  <desc id="desc">
+    NeuroDock, a translator for workplace messages for neurodivergent
+    professionals. Local-first by default.
+  </desc>
+
+  <rect width="920" height="680" fill="#f8f7f2" />
+  <rect x="32" y="32" width="856" height="616" fill="none" stroke="#d8d6cf" stroke-width="1" />
+
+  <text
+    x="80"
+    y="260"
+    font-family="'Lexend', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="96"
+    font-weight="600"
+    letter-spacing="-2"
+    fill="#1d2030"
+  >
+    NeuroDock
+  </text>
+
+  <rect x="80" y="294" width="100" height="4" fill="#5a6a8f" />
+
+  <text
+    x="80"
+    y="376"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="34"
+    font-weight="400"
+    fill="#33384a"
+  >
+    Translate workplace messages.
+  </text>
+  <text
+    x="80"
+    y="424"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="34"
+    font-weight="400"
+    fill="#33384a"
+  >
+    Check tone before you send.
+  </text>
+  <text
+    x="80"
+    y="472"
+    font-family="'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="34"
+    font-weight="400"
+    fill="#33384a"
+  >
+    Local-first by default.
+  </text>
+
+  <text
+    x="80"
+    y="596"
+    font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    font-size="18"
+    font-weight="400"
+    fill="#5a6075"
+    letter-spacing="0.5"
+  >
+    open source · AGPL-3.0
+  </text>
+
+  <text
+    x="840"
+    y="596"
+    text-anchor="end"
+    font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+    font-size="18"
+    font-weight="400"
+    fill="#5a6075"
+  >
+    github.com/tlennon-ie/neurodock
+  </text>
+</svg>
