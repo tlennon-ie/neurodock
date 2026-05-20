@@ -36,7 +36,13 @@ describe("profile", () => {
   });
 
   it("refuses cloud mode without a configured provider", async () => {
-    await expect(setMode("cloud")).rejects.toThrow(
+    let err: unknown;
+    try {
+      await setMode("cloud");
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(
       /Cloud mode requires a configured provider/,
     );
   });

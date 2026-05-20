@@ -9,7 +9,25 @@
  * translation-client.ts so we never trust a model response unchecked.
  */
 
-export type ExtensionMode = "local" | "cloud";
+export type ExtensionMode = "local" | "cloud" | "mock";
+
+/**
+ * Concrete provider identifier. Used in the Settings tab and stored in
+ * `chrome.storage.local` (never `sync` — credentials are device-local).
+ *
+ * - `ollama`     : local-mode HTTP provider (default).
+ * - `anthropic`  : cloud-mode provider via @anthropic-ai/sdk.
+ * - `openai`     : cloud-mode provider via the official `openai` package.
+ * - `openrouter` : cloud-mode provider via OpenRouter's OpenAI-compatible
+ *                  API. Default model is `openrouter/auto` (auto-router).
+ * - `mock`       : developer-only deterministic provider.
+ */
+export type ProviderId =
+  | "ollama"
+  | "anthropic"
+  | "openai"
+  | "openrouter"
+  | "mock";
 
 export type TranslationTool =
   | "translate_incoming"
@@ -40,6 +58,15 @@ export interface ExtensionProfile {
   readonly localModel: string;
   readonly cloudProvider: string | null;
   readonly cloudModel: string | null;
+  /**
+   * Cloud-provider API key. Stored in `chrome.storage.local` only — never
+   * `chrome.storage.sync` (no cross-device credential sync).
+   *
+   * The Settings tab masks the field after save: once a key is stored the
+   * popup shows a redacted preview ("••••last4") and offers "Replace" /
+   * "Clear" controls. The plaintext key is never rendered back to the DOM.
+   */
+  readonly cloudApiKey: string | null;
   readonly historyEnabled: boolean;
   readonly displayName: string;
 }
@@ -103,9 +130,6 @@ export interface HistoryEntry {
   readonly timestamp: string;
   readonly mode: ExtensionMode;
   readonly mockMode: boolean;
-  // We never persist the input text or output text to history unless the user
-  // has explicitly enabled detailed history. v0.0.1 stores only the metadata
-  // shape so the local index is useful but air-gap-safe.
   readonly inputPreview: string;
   readonly outputSummary: string;
 }

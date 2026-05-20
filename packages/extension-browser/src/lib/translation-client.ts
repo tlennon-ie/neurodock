@@ -2,31 +2,35 @@
  * translation-client.ts
  *
  * The single orchestration entry point for translation requests. Routes
- * between three lanes:
+ * between four lanes:
  *
- *   1. MOCK mode — when in local mode and the user has not configured a
- *      reachable Ollama endpoint. Returns a deterministic canned response
- *      with `mockMode: true` and `model_provenance.mode: "local"`,
- *      `provider: "mock"`. Used so v0.0.1 demos end-to-end without any
- *      LLM running.
+ *   1. MOCK mode — explicit developer mode (profile.mode === "mock").
+ *      Used so the extension works end-to-end without any LLM running,
+ *      but always self-labels via `model_provenance.provider = "mock"`
+ *      and `mockMode: true`. v0.0.1 used this as the default; v0.0.2
+ *      makes local Ollama the default.
  *
- *   2. LOCAL mode — calls the user's Ollama endpoint with the prompt
- *      assembled from the synced prompt library. v0.0.1 ships this lane
- *      behind an explicit opt-in (the popup must show the user that we'll
- *      try the local endpoint). When the endpoint is unreachable we fall
- *      through to MOCK with a banner explaining why.
+ *   2. LOCAL mode — POSTs to the user's Ollama endpoint (default
+ *      http://localhost:11434) and streams the NDJSON response. Falls
+ *      back to a labelled mock with reason "endpoint_unreachable" when
+ *      Ollama is not reachable so the extension never silently fails.
  *
- *   3. CLOUD mode — calls the configured cloud provider. Requires an API
- *      key in extension storage. v0.0.1 documents the contract and errors
- *      loudly with `MISSING_CLOUD_KEY`; v0.0.2 wires the actual provider
- *      calls. The persistent cloud-mode banner is always shown when this
- *      lane is selected.
+ *   3. CLOUD-ANTHROPIC mode — uses the official @anthropic-ai/sdk
+ *      against api.anthropic.com. Streams via the SDK's stream()
+ *      helper. The persistent cloud-mode banner is always shown when
+ *      this lane is selected.
  *
- * Per ADR 0005 the substrate server itself does NOT call any LLM. In the
- * browser extension the equivalent boundary is: this module is the ONLY
- * place that talks to a model. Content scripts and the popup MUST go
- * through the service worker's runtime.onMessage handler so the model
- * boundary is single, auditable, and easy to swap.
+ *   4. CLOUD-OPENAI mode — uses the official `openai` SDK against
+ *      api.openai.com. Streams via `stream: true` chat completions.
+ *
+ * Per ADR 0005 this module is the ONLY place that talks to a model.
+ * Content scripts and the popup MUST go through the service worker's
+ * runtime.onMessage handler so the boundary is single + auditable.
+ *
+ * Every response is parsed + validated against the MCP output schema
+ * for the tool. Validation failures surface as
+ * `LLM_OUTPUT_VALIDATION_FAILED` with the validation error list in
+ * `error`; the UI shows a Retry button.
  */
 import type {
   Channel,
@@ -36,15 +40,33 @@ import type {
   TranslationResponse,
   TranslationTool,
 } from "./types.js";
+import { buildPrompt } from "./prompt-builder.js";
+import { parseAndValidate } from "./validation.js";
+import type { Provider, ProviderRequest } from "./providers/provider.js";
+import { createOllamaProvider } from "./providers/ollama.js";
+import { createAnthropicProvider } from "./providers/anthropic.js";
+import { createOpenAIProvider } from "./providers/openai.js";
+import { createOpenRouterProvider } from "./providers/openrouter.js";
+import { createMockProvider, buildMockData } from "./providers/mock.js";
 
 const SCHEMA_VERSION = "0.1.0";
 
+const DEFAULT_MODELS = {
+  ollama: "llama3.2:3b",
+  anthropic: "claude-haiku-4-5",
+  openai: "gpt-4o-mini",
+  // OpenRouter's auto-router picks the best model per query; users can
+  // override with any OpenRouter slug (e.g. `anthropic/claude-3-5-sonnet`).
+  // https://openrouter.ai/docs/guides/routing/routers/auto-router
+  openrouter: "openrouter/auto",
+} as const;
+
 export interface TranslationClientOptions {
   readonly profile: ExtensionProfile;
-  /** Override the fetch implementation (tests inject a stub). */
-  readonly fetchImpl?: typeof fetch;
-  /** Force mock mode regardless of profile/endpoint. Used by tests. */
+  readonly providerOverride?: Provider;
   readonly forceMock?: boolean;
+  readonly onToken?: (delta: string) => void;
+  readonly signal?: AbortSignal;
 }
 
 export async function translate<T = unknown>(
@@ -54,167 +76,195 @@ export async function translate<T = unknown>(
   const { profile, forceMock } = options;
   const timestamp = new Date().toISOString();
 
-  if (profile.mode === "cloud") {
-    return translateCloud<T>(request, options, timestamp);
+  if (forceMock === true || profile.mode === "mock") {
+    return mockResponseFromData<T>(request, timestamp, "force_mock");
   }
 
-  if (forceMock === true) {
-    return mockResponse<T>(request, timestamp, "force_mock");
+  let provider: Provider;
+  let model: string;
+  let fallbackOnError: "endpoint_unreachable" | null = null;
+
+  if (options.providerOverride) {
+    provider = options.providerOverride;
+    model = profile.cloudModel ?? profile.localModel;
+  } else if (profile.mode === "cloud") {
+    const cloud = resolveCloudProvider(profile);
+    if (typeof cloud === "string") {
+      return cloudConfigError<T>(request, profile, timestamp, cloud);
+    }
+    provider = cloud.provider;
+    model = cloud.model;
+  } else {
+    provider = createOllamaProvider({ endpoint: profile.localEndpoint });
+    model =
+      profile.localModel.length > 0
+        ? profile.localModel
+        : DEFAULT_MODELS.ollama;
+    fallbackOnError = "endpoint_unreachable";
   }
 
-  // Local mode. v0.0.1 always returns the labelled MOCK response unless
-  // an Ollama endpoint is reachable. Real local wiring is deferred to
-  // v0.0.2 because per-user provider configuration is required to do it
-  // safely (requesting optional_host_permissions at runtime).
-  return mockResponse<T>(request, timestamp, "local_default");
-}
+  let providerResult;
+  try {
+    const providerRequest: ProviderRequest = {
+      tool: request.tool,
+      prompt: buildPrompt({ tool: request.tool, input: request.input }),
+      model,
+      ...(options.signal ? { signal: options.signal } : {}),
+      ...(options.onToken ? { onToken: options.onToken } : {}),
+    };
+    providerResult = await provider.complete(providerRequest);
+  } catch (cause: unknown) {
+    if (fallbackOnError === "endpoint_unreachable") {
+      return mockResponseFromData<T>(
+        request,
+        timestamp,
+        "endpoint_unreachable",
+        getErrorMessage(cause),
+      );
+    }
+    return {
+      ok: false,
+      tool: request.tool,
+      data: null,
+      error: getErrorMessage(cause),
+      mockMode: false,
+      provenance: {
+        mode: profile.mode === "cloud" ? "cloud" : "local",
+        provider:
+          profile.mode === "cloud"
+            ? profile.cloudProvider ?? "unknown"
+            : "ollama",
+        model,
+      },
+      timestamp,
+    };
+  }
 
-function translateCloud<T>(
-  request: TranslationRequest,
-  options: TranslationClientOptions,
-  timestamp: string,
-): TranslationResponse<T> {
-  const { profile } = options;
-  if (!profile.cloudProvider || !profile.cloudModel) {
+  const validated = parseAndValidate<T>(request.tool, providerResult.text);
+  if (!validated.ok) {
     return {
       ok: false,
       tool: request.tool,
       data: null,
       error:
-        "MISSING_CLOUD_PROVIDER: Cloud mode is enabled but no provider is " +
-        "configured. Open the popup and pick a provider, or switch back " +
-        "to local mode.",
+        "LLM_OUTPUT_VALIDATION_FAILED: model response did not match the " +
+        "expected schema. Retry to try again. " +
+        `(${validated.errors.slice(0, 3).join("; ")})`,
       mockMode: false,
-      provenance: {
-        mode: "cloud",
-        provider: profile.cloudProvider ?? "unknown",
-        model: profile.cloudModel ?? "unknown",
-      },
+      provenance: providerResult.provenance,
       timestamp,
     };
   }
+
+  return {
+    ok: true,
+    tool: request.tool,
+    data: validated.data,
+    error: null,
+    mockMode: providerResult.provenance.provider === "mock",
+    provenance: providerResult.provenance,
+    timestamp,
+  };
+}
+
+type CloudResolveError =
+  | "MISSING_CLOUD_PROVIDER"
+  | "MISSING_CLOUD_KEY"
+  | "UNSUPPORTED_CLOUD_PROVIDER";
+
+interface CloudResolution {
+  readonly provider: Provider;
+  readonly model: string;
+}
+
+function resolveCloudProvider(
+  profile: ExtensionProfile,
+): CloudResolution | CloudResolveError {
+  if (!profile.cloudProvider) return "MISSING_CLOUD_PROVIDER";
+  if (!profile.cloudApiKey) return "MISSING_CLOUD_KEY";
+
+  if (profile.cloudProvider === "anthropic") {
+    const model = profile.cloudModel ?? DEFAULT_MODELS.anthropic;
+    return {
+      provider: createAnthropicProvider({ apiKey: profile.cloudApiKey }),
+      model,
+    };
+  }
+  if (profile.cloudProvider === "openai") {
+    const model = profile.cloudModel ?? DEFAULT_MODELS.openai;
+    return {
+      provider: createOpenAIProvider({ apiKey: profile.cloudApiKey }),
+      model,
+    };
+  }
+  if (profile.cloudProvider === "openrouter") {
+    const model = profile.cloudModel ?? DEFAULT_MODELS.openrouter;
+    return {
+      provider: createOpenRouterProvider({ apiKey: profile.cloudApiKey }),
+      model,
+    };
+  }
+  return "UNSUPPORTED_CLOUD_PROVIDER";
+}
+
+function cloudConfigError<T>(
+  request: TranslationRequest,
+  profile: ExtensionProfile,
+  timestamp: string,
+  err: CloudResolveError,
+): TranslationResponse<T> {
+  const messages: Record<CloudResolveError, string> = {
+    MISSING_CLOUD_PROVIDER:
+      "MISSING_CLOUD_PROVIDER: Cloud mode is enabled but no provider is " +
+      "configured. Open the popup Settings tab and pick Anthropic or " +
+      "OpenAI, or switch back to local mode.",
+    MISSING_CLOUD_KEY:
+      "MISSING_CLOUD_KEY: Cloud mode is enabled but no API key is " +
+      "stored. Open the popup Settings tab and paste your key.",
+    UNSUPPORTED_CLOUD_PROVIDER:
+      "UNSUPPORTED_CLOUD_PROVIDER: Only 'anthropic', 'openai', and " +
+      "'openrouter' are supported in v0.0.2. Update Settings.",
+  };
   return {
     ok: false,
     tool: request.tool,
     data: null,
-    error:
-      "CLOUD_NOT_WIRED: v0.0.1 does not call cloud providers. The " +
-      "wire format and persistent banner are in place; provider " +
-      "integration lands in v0.0.2.",
+    error: messages[err],
     mockMode: false,
     provenance: {
       mode: "cloud",
-      provider: profile.cloudProvider,
-      model: profile.cloudModel,
+      provider: profile.cloudProvider ?? "unknown",
+      model: profile.cloudModel ?? "unknown",
     },
     timestamp,
   };
 }
 
-function mockResponse<T>(
+function mockResponseFromData<T>(
   request: TranslationRequest,
   timestamp: string,
-  reason: "force_mock" | "local_default",
+  reason: "force_mock" | "local_default" | "endpoint_unreachable",
+  detail?: string,
 ): TranslationResponse<T> {
   const provenance: ModelProvenance = {
     mode: "local",
     provider: "mock",
     model: `neurodock-mock-${SCHEMA_VERSION}`,
   };
-
-  const data = buildMockData(request.tool, request.input, reason);
+  const data = buildMockData(request.tool, reason) as T;
+  const detailSuffix = detail ? ` (${detail})` : "";
   return {
     ok: true,
     tool: request.tool,
-    data: data as T,
-    error: null,
+    data,
+    error:
+      reason === "endpoint_unreachable"
+        ? `MODEL_UNAVAILABLE: Local Ollama endpoint did not respond. ` +
+          `Returning a labelled mock so the UI is not blank.${detailSuffix}`
+        : null,
     mockMode: true,
     provenance,
     timestamp,
-  };
-}
-
-function buildMockData(
-  tool: TranslationTool,
-  input: Record<string, unknown>,
-  reason: string,
-): Record<string, unknown> {
-  const noteHeader =
-    "[MOCK] This response is a deterministic placeholder. v0.0.1 does not " +
-    "call any LLM. Configure local Ollama or cloud mode in the popup to " +
-    `enable real translation. (reason: ${reason})`;
-
-  const evalSlice = `packages/evals/corpora/translation/${tool.replace(
-    "_",
-    "/",
-  )}/v0.1.0/mock.jsonl`;
-
-  const provenance = {
-    mode: "local",
-    provider: "mock",
-    model: `neurodock-mock-${SCHEMA_VERSION}`,
-  };
-
-  if (tool === "translate_incoming") {
-    const text = typeof input.text === "string" ? input.text : "";
-    return {
-      explicit_ask:
-        text.length > 0
-          ? `${noteHeader}\n\nLiteral surface: "${text.slice(0, 200)}"`
-          : null,
-      likely_subtext: [
-        {
-          text:
-            "[MOCK] Subtext analysis stub. The real model would rank likely " +
-            "implicit meanings here.",
-          confidence: 0.5,
-        },
-      ],
-      ambiguity: { detected: false, spans: [] },
-      recommended_next_action: {
-        action: "clarify",
-        reason:
-          "[MOCK] Recommendation placeholder. Configure a model to receive " +
-          "a real next-action suggestion.",
-        draft_reply: null,
-      },
-      eval_corpus_slice: evalSlice,
-      model_provenance: provenance,
-    };
-  }
-
-  if (tool === "check_tone") {
-    return {
-      axes: { directness: 50, warmth: 50, urgency: 50 },
-      axes_target: null,
-      baseline_delta: null,
-      flagged_phrases: [],
-      suggested_rewrite_hint: `${noteHeader}\n\nNo rewrite hint in mock mode.`,
-      eval_corpus_slice: evalSlice,
-      model_provenance: provenance,
-    };
-  }
-
-  if (tool === "rewrite_outgoing") {
-    const text = typeof input.text === "string" ? input.text : "";
-    return {
-      rewritten: `${noteHeader}\n\n${text}`,
-      preserved_terms: [],
-      unpreserved_terms: [],
-      diff_summary: "[MOCK] No rewrite performed.",
-      eval_corpus_slice: evalSlice,
-      model_provenance: provenance,
-    };
-  }
-
-  // brief_meeting
-  return {
-    my_asks: [],
-    others_asks: [],
-    decisions: [],
-    ambiguous_items: [],
-    eval_corpus_slice: evalSlice,
-    model_provenance: provenance,
   };
 }
 
@@ -232,3 +282,32 @@ export function detectChannelFromUrl(url: string): Channel {
   if (url.includes("docs.google.com")) return "gdocs";
   return "generic";
 }
+
+export function buildProviderFromProfile(
+  profile: ExtensionProfile,
+): { provider: Provider; model: string } | { error: string } {
+  if (profile.mode === "mock") {
+    return {
+      provider: createMockProvider({ reason: "force_mock" }),
+      model: `neurodock-mock-${SCHEMA_VERSION}`,
+    };
+  }
+  if (profile.mode === "cloud") {
+    const resolved = resolveCloudProvider(profile);
+    if (typeof resolved === "string") return { error: resolved };
+    return { provider: resolved.provider, model: resolved.model };
+  }
+  return {
+    provider: createOllamaProvider({ endpoint: profile.localEndpoint }),
+    model: profile.localModel || DEFAULT_MODELS.ollama,
+  };
+}
+
+function getErrorMessage(cause: unknown): string {
+  if (cause instanceof Error) return cause.message;
+  return "Unexpected error";
+}
+
+export const DEFAULTS = DEFAULT_MODELS;
+
+export type { TranslationRequest, TranslationResponse, TranslationTool };

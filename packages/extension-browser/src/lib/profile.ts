@@ -12,6 +12,16 @@
  *
  * Defaults are derived to honour plan.md §1: "Local-first by default;
  * cloud is opt-in." If a user has never opened the popup, mode is "local".
+ *
+ * v0.0.2 additions:
+ *  - The default `localModel` is `llama3.2:3b` (small, fast, broadly
+ *    available on consumer hardware). Users can override in Settings.
+ *  - Profiles carry `cloudApiKey`. It is persisted to
+ *    `chrome.storage.local` ONLY. We never write it to
+ *    `chrome.storage.sync` so the credential never leaves the user's
+ *    device.
+ *  - A third mode value `mock` lets users explicitly request the
+ *    deterministic developer-only provider.
  */
 import type { ExtensionMode, ExtensionProfile } from "./types.js";
 import {
@@ -26,9 +36,10 @@ const STORAGE_KEY = "neurodock.profile.v1";
 const DEFAULT_PROFILE: ExtensionProfile = Object.freeze({
   mode: "local",
   localEndpoint: "http://localhost:11434",
-  localModel: "llama3.1:8b-instruct",
+  localModel: "llama3.2:3b",
   cloudProvider: null,
   cloudModel: null,
+  cloudApiKey: null,
   historyEnabled: false,
   displayName: "you",
 });
@@ -216,10 +227,15 @@ export async function getSyncStatus(): Promise<ProfileSyncStatus> {
   };
 }
 
+function normaliseMode(input: Partial<ExtensionProfile>): ExtensionMode {
+  if (input.mode === "cloud") return "cloud";
+  if (input.mode === "mock") return "mock";
+  return "local";
+}
+
 function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
-  const mode: ExtensionMode = input.mode === "cloud" ? "cloud" : "local";
   return {
-    mode,
+    mode: normaliseMode(input),
     localEndpoint:
       typeof input.localEndpoint === "string" && input.localEndpoint.length > 0
         ? input.localEndpoint
@@ -235,6 +251,10 @@ function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
     cloudModel:
       typeof input.cloudModel === "string" && input.cloudModel.length > 0
         ? input.cloudModel
+        : null,
+    cloudApiKey:
+      typeof input.cloudApiKey === "string" && input.cloudApiKey.length > 0
+        ? input.cloudApiKey
         : null,
     historyEnabled: input.historyEnabled === true,
     displayName:

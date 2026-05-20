@@ -9,17 +9,19 @@ import type {
   ExtensionProfile,
   TranslationRequest,
 } from "../../src/lib/types.js";
+import type { Provider } from "../../src/lib/providers/provider.js";
 
 const baseProfile: ExtensionProfile = defaultProfile();
 
 describe("translation-client", () => {
-  it("returns a labelled mock response in local mode by default", async () => {
+  it("returns a labelled mock response when profile.mode === 'mock'", async () => {
+    const mockProfile: ExtensionProfile = { ...baseProfile, mode: "mock" };
     const req: TranslationRequest = {
       tool: "translate_incoming",
       input: { text: "Hey — can we revisit the rollout timeline?" },
       channel: "slack",
     };
-    const res = await translate(req, { profile: baseProfile });
+    const res = await translate(req, { profile: mockProfile });
     expect(res.ok).toBe(true);
     expect(res.mockMode).toBe(true);
     expect(res.provenance.provider).toBe("mock");
@@ -27,32 +29,14 @@ describe("translation-client", () => {
     expect(res.data).toBeTruthy();
   });
 
-  it("produces deterministic mock shapes for every tool", async () => {
-    const tools = [
-      "translate_incoming",
-      "check_tone",
-      "rewrite_outgoing",
-      "brief_meeting",
-    ] as const;
-    for (const tool of tools) {
-      const res = await translate(
-        {
-          tool,
-          input: {
-            text: "hi",
-            transcript: "hi",
-            target_register: "direct",
-            me: "T",
-          },
-        },
-        { profile: baseProfile },
-      );
-      expect(res.tool).toBe(tool);
-      expect(res.mockMode).toBe(true);
-      expect(res.data).toMatchObject({
-        model_provenance: { provider: "mock" },
-      });
-    }
+  it("falls back to a labelled mock when local Ollama is unreachable", async () => {
+    const res = await translate(
+      { tool: "check_tone", input: { text: "ok" } },
+      { profile: baseProfile }
+    );
+    expect(res.ok).toBe(true);
+    expect(res.mockMode).toBe(true);
+    expect(res.error).toMatch(/MODEL_UNAVAILABLE/);
   });
 
   it("rejects cloud-mode calls without a configured provider", async () => {
@@ -67,19 +51,93 @@ describe("translation-client", () => {
     expect(res.provenance.mode).toBe("cloud");
   });
 
-  it("reports CLOUD_NOT_WIRED when cloud is fully configured (v0.0.1 stub)", async () => {
+  it("reports MISSING_CLOUD_KEY when cloud provider is set but no key", async () => {
     const profile: ExtensionProfile = {
       ...baseProfile,
       mode: "cloud",
       cloudProvider: "anthropic",
-      cloudModel: "claude-sonnet-4.6",
+      cloudModel: "claude-haiku-4-5",
+      cloudApiKey: null,
     };
     const res = await translate(
       { tool: "check_tone", input: { text: "ok" } },
       { profile },
     );
     expect(res.ok).toBe(false);
-    expect(res.error).toMatch(/CLOUD_NOT_WIRED/);
+    expect(res.error).toMatch(/MISSING_CLOUD_KEY/);
+  });
+
+  it("dispatches to providerOverride and parses+validates the response", async () => {
+    const validToneOutput = {
+      axes: { directness: 60, warmth: 40, urgency: 30 },
+      axes_target: null,
+      baseline_delta: null,
+      flagged_phrases: [],
+      suggested_rewrite_hint: null,
+      eval_corpus_slice:
+        "packages/evals/corpora/translation/check/tone/v0.1.0/general.jsonl",
+      model_provenance: {
+        mode: "cloud",
+        provider: "openai",
+        model: "gpt-4o-mini",
+      },
+    };
+    const fakeProvider: Provider = {
+      id: "fake",
+      async complete() {
+        return {
+          text: JSON.stringify(validToneOutput),
+          provenance: {
+            mode: "cloud",
+            provider: "openai",
+            model: "gpt-4o-mini",
+          },
+        };
+      },
+    };
+    const profile: ExtensionProfile = {
+      ...baseProfile,
+      mode: "cloud",
+      cloudProvider: "openai",
+      cloudModel: "gpt-4o-mini",
+      cloudApiKey: "sk-test",
+    };
+    const res = await translate(
+      { tool: "check_tone", input: { text: "Fix it now." } },
+      { profile, providerOverride: fakeProvider }
+    );
+    expect(res.ok).toBe(true);
+    expect(res.error).toBeNull();
+    expect(res.provenance.provider).toBe("openai");
+  });
+
+  it("surfaces LLM_OUTPUT_VALIDATION_FAILED when the provider returns garbage", async () => {
+    const fakeProvider: Provider = {
+      id: "fake",
+      async complete() {
+        return {
+          text: '{"explicit_ask": 123}',
+          provenance: {
+            mode: "cloud",
+            provider: "openai",
+            model: "gpt-4o-mini",
+          },
+        };
+      },
+    };
+    const profile: ExtensionProfile = {
+      ...baseProfile,
+      mode: "cloud",
+      cloudProvider: "openai",
+      cloudModel: "gpt-4o-mini",
+      cloudApiKey: "sk-test",
+    };
+    const res = await translate(
+      { tool: "translate_incoming", input: { text: "hi" } },
+      { profile, providerOverride: fakeProvider }
+    );
+    expect(res.ok).toBe(false);
+    expect(res.error).toMatch(/LLM_OUTPUT_VALIDATION_FAILED/);
   });
 
   it("identifies cloud mode via isCloudMode", () => {

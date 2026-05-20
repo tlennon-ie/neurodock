@@ -1,12 +1,11 @@
 /**
  * Popup root component.
  *
- * Three sections, top to bottom:
- *   1. Cloud-mode banner (when mode === "cloud"). Persistent. Plan.md §7.
- *   2. Mode toggle — local / cloud. Cloud requires a provider id; we surface
- *      the consent text inline and require an explicit checkbox before the
- *      mode switch sticks.
- *   3. Local-only history list (off by default; toggle to enable).
+ * Tabs (v0.0.2):
+ *   1. Home — cloud-mode banner, mode summary, history list.
+ *   2. Settings — provider selection (Local Ollama / Cloud Anthropic /
+ *      Cloud OpenAI / Cloud OpenRouter / Mock), endpoint URL, model
+ *      name, API key entry, and a Test button. See SettingsTab.tsx.
  *
  * Voice (plan.md §2): direct, plain, non-clinical. No "superpower" copy.
  * No diagnosis-gated language.
@@ -22,12 +21,16 @@ import {
 import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
 import { listHistory } from "../../src/lib/storage.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
+import { SettingsTab } from "./SettingsTab.js";
+
+type TabId = "home" | "settings";
 
 export function App(): React.ReactElement {
   const [profile, setProfile] = useState<ExtensionProfile>(defaultProfile());
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<ProfileSyncStatus | null>(null);
+  const [tab, setTab] = useState<TabId>("home");
 
   useEffect(() => {
     void (async () => {
@@ -69,32 +72,17 @@ export function App(): React.ReactElement {
 
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />
 
-      <section aria-labelledby="mode-heading" className="flex flex-col gap-2">
-        <h2
-          id="mode-heading"
-          className="font-heading m-0 text-base font-medium"
-        >
-          Mode
-        </h2>
-        <ModeToggle profile={profile} onChange={update} />
-      </section>
+      <TabBar current={tab} onChange={setTab} />
 
-      <section
-        aria-labelledby="history-heading"
-        className="flex flex-col gap-2"
-      >
-        <h2
-          id="history-heading"
-          className="font-heading m-0 text-base font-medium"
-        >
-          History
-        </h2>
-        <HistoryPanel
+      {tab === "home" ? (
+        <HomeTab
           profile={profile}
           history={history}
-          onToggle={(enabled) => update({ historyEnabled: enabled })}
+          onToggleHistory={(enabled) => update({ historyEnabled: enabled })}
         />
-      </section>
+      ) : (
+        <SettingsTab profile={profile} onChange={update} />
+      )}
 
       <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
         <h2
@@ -151,69 +139,109 @@ function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   );
 }
 
-interface ModeToggleProps {
-  readonly profile: ExtensionProfile;
-  readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void>;
+interface TabBarProps {
+  readonly current: TabId;
+  readonly onChange: (next: TabId) => void;
 }
 
-function ModeToggle({
-  profile,
-  onChange,
-}: ModeToggleProps): React.ReactElement {
+function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
+  const tabs: { id: TabId; label: string }[] = [
+    { id: "home", label: "Home" },
+    { id: "settings", label: "Settings" },
+  ];
   return (
-    <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
-        Where translation runs
-      </legend>
-      <label className="flex items-center gap-2">
-        <input
-          type="radio"
-          name="mode"
-          value="local"
-          checked={profile.mode === "local"}
-          onChange={() => void onChange({ mode: "local" })}
-        />
-        <span>Local (default). No text leaves your device.</span>
-      </label>
-      <label className="flex items-center gap-2">
-        <input
-          type="radio"
-          name="mode"
-          value="cloud"
-          checked={profile.mode === "cloud"}
-          onChange={() => {
-            if (!profile.cloudProvider) {
-              alert(
-                "Set a cloud provider id below before enabling cloud mode. " +
-                  "Cloud mode requires explicit consent per call.",
-              );
-              return;
-            }
-            void onChange({ mode: "cloud" });
-          }}
-        />
-        <span>
-          Cloud (opt-in). Text leaves your device for the configured provider.
-        </span>
-      </label>
-      <label className="mt-2 flex flex-col gap-1 text-sm">
-        <span className="text-xs uppercase tracking-wide text-neutral-500">
-          Cloud provider id
-        </span>
-        <input
-          type="text"
-          value={profile.cloudProvider ?? ""}
-          placeholder="anthropic, openai, …"
-          onChange={(e) =>
-            void onChange({
-              cloudProvider:
-                e.target.value.length === 0 ? null : e.target.value,
-            })
+    <nav
+      aria-label="Popup sections"
+      className="flex gap-1 border-b border-neutral-200 dark:border-neutral-800"
+    >
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          role="tab"
+          aria-selected={current === t.id}
+          onClick={() => onChange(t.id)}
+          className={
+            "border-b-2 px-3 py-1 text-sm " +
+            (current === t.id
+              ? "border-neutral-900 dark:border-neutral-100"
+              : "border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100")
           }
-          className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+          data-testid={`tab-${t.id}`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+interface HomeTabProps {
+  readonly profile: ExtensionProfile;
+  readonly history: readonly HistoryEntry[];
+  readonly onToggleHistory: (enabled: boolean) => void;
+}
+
+function HomeTab({
+  profile,
+  history,
+  onToggleHistory,
+}: HomeTabProps): React.ReactElement {
+  return (
+    <>
+      <section
+        aria-labelledby="status-heading"
+        className="flex flex-col gap-2"
+      >
+        <h2
+          id="status-heading"
+          className="font-heading m-0 text-base font-medium"
+        >
+          Status
+        </h2>
+        <ModeSummary profile={profile} />
+      </section>
+
+      <section
+        aria-labelledby="history-heading"
+        className="flex flex-col gap-2"
+      >
+        <h2
+          id="history-heading"
+          className="font-heading m-0 text-base font-medium"
+        >
+          History
+        </h2>
+        <HistoryPanel
+          profile={profile}
+          history={history}
+          onToggle={onToggleHistory}
         />
-      </label>
-    </fieldset>
+      </section>
+    </>
+  );
+}
+
+interface ModeSummaryProps {
+  readonly profile: ExtensionProfile;
+}
+
+function ModeSummary({ profile }: ModeSummaryProps): React.ReactElement {
+  let label: string;
+  if (profile.mode === "mock") {
+    label = "Mock (developer-only). No model is called.";
+  } else if (profile.mode === "cloud") {
+    label =
+      `Cloud (${profile.cloudProvider ?? "unconfigured"} · ` +
+      `${profile.cloudModel ?? "no model"}). ` +
+      "Text leaves your device.";
+  } else {
+    label = `Local Ollama (${profile.localModel}). Text stays on your device.`;
+  }
+  return (
+    <p className="m-0 text-sm text-neutral-700 dark:text-neutral-300">
+      {label}
+    </p>
   );
 }
 
@@ -243,8 +271,8 @@ function HistoryPanel({
       </label>
       {profile.historyEnabled && history.length === 0 ? (
         <p className="text-xs text-neutral-500">
-          No translations yet. Right-click selected text on a supported site to
-          start.
+          No translations yet. Right-click selected text on a supported site
+          to start.
         </p>
       ) : null}
       {profile.historyEnabled && history.length > 0 ? (
