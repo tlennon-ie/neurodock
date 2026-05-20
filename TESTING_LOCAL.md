@@ -125,13 +125,14 @@ Open `~/.neurodock/profile.yaml` and set:
 
 ```yaml
 identity:
- display_name: "Thomas" # your name
- neurotypes: ["adhd"] # whatever applies; self-ID only
-pReferences: project ADRs and CHANGELOGs. output_format: "answer_first"
- motion: "reduced"
+  display_name: "Thomas"          # your name
+  neurotypes: ["adhd"]            # whatever applies; self-ID only
+preferences:
+  output_format: "answer_first"
+  motion: "reduced"
 chronometric:
- hyperfocus_break_minutes: 90
- end_of_day_local: "18:30"
+  hyperfocus_break_minutes: 90
+  end_of_day_local: "18:30"
 ```
 
 The skills read this. After editing, ask Claude:
