@@ -7,7 +7,7 @@ import type { ExtensionProfile } from "../../src/lib/types.js";
 describe("CloudModeBanner", () => {
   it("renders nothing in local mode", () => {
     const { container } = render(
-      <CloudModeBanner profile={defaultProfile()} onSwitchToLocal={() => {}} />
+      <CloudModeBanner profile={defaultProfile()} onSwitchToLocal={() => {}} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -19,7 +19,9 @@ describe("CloudModeBanner", () => {
       cloudProvider: "anthropic",
       cloudModel: "claude-sonnet-4.6",
     };
-    render(<CloudModeBanner profile={cloudProfile} onSwitchToLocal={() => {}} />);
+    render(
+      <CloudModeBanner profile={cloudProfile} onSwitchToLocal={() => {}} />,
+    );
     expect(screen.getByTestId("cloud-mode-banner")).toBeInTheDocument();
     expect(screen.getByText(/anthropic/)).toBeInTheDocument();
   });
@@ -32,7 +34,9 @@ describe("CloudModeBanner", () => {
       cloudProvider: "openai",
       cloudModel: "gpt-x",
     };
-    render(<CloudModeBanner profile={cloudProfile} onSwitchToLocal={onSwitch} />);
+    render(
+      <CloudModeBanner profile={cloudProfile} onSwitchToLocal={onSwitch} />,
+    );
     screen.getByRole("button", { name: /switch back to local/i }).click();
     expect(onSwitch).toHaveBeenCalledOnce();
   });

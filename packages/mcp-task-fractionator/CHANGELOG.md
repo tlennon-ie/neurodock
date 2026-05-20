@@ -7,8 +7,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [0.0.1] — 2026-05-15
 
 ### Added
+
 - FastMCP server (`neurodock-mcp-task-fractionator`) registering the two tools
-  specified in  and the schemas at `schemas/decompose.schema.json`
+  specified in and the schemas at `schemas/decompose.schema.json`
   and `schemas/next_one.schema.json`:
   - `decompose(goal, time_budget?)` — local-heuristic decomposition into
     atomic 5–90 minute tasks with required acceptance criteria, a total
@@ -39,6 +40,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     both tools' responses against the JSON Schemas.
 
 ### Deferred to later releases
+
 - **`next_one` cognitive-graph integration.** The graph source is a stub.
   Production callers must use `NEURODOCK_TASK_SOURCE=memory` and pass a
   pre-populated `InMemoryPendingTaskSource` until the cognitive-graph
@@ -51,6 +53,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   v0.0.1 (the server is stateless).
 
 ### ADR 0003 resolutions applied
+
 - **§1 statelessness:** `decompose` returns the task list and never persists.
   Persistence is the caller's responsibility via `mcp-cognitive-graph`.
 - **§2 no LLM in server:** v0.0.1 uses a verb / noun / time-marker
@@ -75,6 +78,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   partial draft.
 
 ### Known limitations
+
 - Decomposition quality is bounded by the heuristic vocabulary. Goals that
   use uncommon verbs (`benchmark`, `instrument`, `prototype`) currently
   produce a single scope task plus a generic close-out step. ADR 0003's

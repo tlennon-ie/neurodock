@@ -9,7 +9,12 @@ import { dirname, join } from "node:path";
 import prompts from "prompts";
 import type { ClientId } from "../types.js";
 import { readEnv } from "../lib/env.js";
-import { detectClients, profileDir, profilePath, type DetectionResult } from "../lib/paths.js";
+import {
+  detectClients,
+  profileDir,
+  profilePath,
+  type DetectionResult,
+} from "../lib/paths.js";
 import { adapterFor } from "../clients/index.js";
 import { parseJsonSafely } from "../lib/json-patch.js";
 
@@ -47,7 +52,10 @@ export interface UninstallRunResult {
 
 export interface UninstallDependencies {
   readonly envOverrides?: Parameters<typeof readEnv>[0];
-  readonly confirmDelete?: (target: "profile" | "graph", path: string) => Promise<boolean>;
+  readonly confirmDelete?: (
+    target: "profile" | "graph",
+    path: string,
+  ) => Promise<boolean>;
 }
 
 const NEURODOCK_PREFIX = "neurodock-";
@@ -60,7 +68,9 @@ export async function runUninstall(
   const messages: string[] = [];
 
   const detections = detectClients(env);
-  const targets = pickTargets(detections, options.client).filter((t) => t.exists);
+  const targets = pickTargets(detections, options.client).filter(
+    (t) => t.exists,
+  );
 
   const clientDiffs: UninstallClientDiff[] = [];
   for (const target of targets) {
@@ -111,9 +121,13 @@ export async function runUninstall(
       applyClientDiff(d);
       messages.push(`Removed NeuroDock entries from ${d.client} at ${d.path}.`);
     } else if (d.action === "untouched") {
-      messages.push(`${d.client} at ${d.path}: no NeuroDock entries to remove.`);
+      messages.push(
+        `${d.client} at ${d.path}: no NeuroDock entries to remove.`,
+      );
     } else if (d.action === "skip") {
-      messages.push(`Skipped ${d.client} at ${d.path}: ${d.reason ?? "parse error"}.`);
+      messages.push(
+        `Skipped ${d.client} at ${d.path}: ${d.reason ?? "parse error"}.`,
+      );
     }
   }
 
@@ -123,7 +137,9 @@ export async function runUninstall(
       messages.push(`Deleted ${pPath}.`);
     } catch (err: unknown) {
       messages.push(
-        `Failed to delete ${pPath}: ${err instanceof Error ? err.message : String(err)}`,
+        `Failed to delete ${pPath}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
       );
     }
   } else if (profileExists) {
@@ -136,7 +152,9 @@ export async function runUninstall(
       messages.push(`Deleted ${gPath}.`);
     } catch (err: unknown) {
       messages.push(
-        `Failed to delete ${gPath}: ${err instanceof Error ? err.message : String(err)}`,
+        `Failed to delete ${gPath}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
       );
     }
   } else if (graphExists) {
@@ -167,10 +185,16 @@ function diffClient(target: DetectionResult): UninstallClientDiff {
       reason: `existing config is not valid JSON: ${parsed.error}`,
     };
   }
-  const existing = (parsed.value ?? {}) as { mcpServers?: Record<string, unknown> };
+  const existing = (parsed.value ?? {}) as {
+    mcpServers?: Record<string, unknown>;
+  };
   const servers = existing.mcpServers ?? {};
-  const removedKeys = Object.keys(servers).filter((k) => k.startsWith(NEURODOCK_PREFIX));
-  const preservedKeys = Object.keys(servers).filter((k) => !k.startsWith(NEURODOCK_PREFIX));
+  const removedKeys = Object.keys(servers).filter((k) =>
+    k.startsWith(NEURODOCK_PREFIX),
+  );
+  const preservedKeys = Object.keys(servers).filter(
+    (k) => !k.startsWith(NEURODOCK_PREFIX),
+  );
   if (removedKeys.length === 0) {
     return {
       client: target.id,
@@ -240,15 +264,28 @@ function formatDiff(
   for (const d of clients) {
     out.push(`Client ${d.client} (${d.action}): ${d.path}`);
     for (const k of d.removedKeys) out.push(`  - mcpServers.${k}`);
-    for (const k of d.preservedKeys) out.push(`  = mcpServers.${k} (preserved)`);
+    for (const k of d.preservedKeys)
+      out.push(`  = mcpServers.${k} (preserved)`);
     if (d.reason) out.push(`  reason: ${d.reason}`);
   }
   out.push("Data files:");
   out.push(
-    `  profile: ${data.profilePath} (${data.profileExists ? (data.profileWillDelete ? "will delete" : "preserve") : "absent"})`,
+    `  profile: ${data.profilePath} (${
+      data.profileExists
+        ? data.profileWillDelete
+          ? "will delete"
+          : "preserve"
+        : "absent"
+    })`,
   );
   out.push(
-    `  graph:   ${data.graphPath} (${data.graphExists ? (data.graphWillDelete ? "will delete" : "preserve") : "absent"})`,
+    `  graph:   ${data.graphPath} (${
+      data.graphExists
+        ? data.graphWillDelete
+          ? "will delete"
+          : "preserve"
+        : "absent"
+    })`,
   );
   return out;
 }

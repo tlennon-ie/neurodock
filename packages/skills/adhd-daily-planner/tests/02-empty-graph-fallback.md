@@ -20,7 +20,7 @@ It is Tuesday, 2026-05-19, 09:05 local time. The user has just completed `npx ne
    ```json
    {
      "project": null,
-     "period": {"start": "2026-05-12", "end": "2026-05-19"},
+     "period": { "start": "2026-05-12", "end": "2026-05-19" },
      "summary": "This week across all projects: 0 decisions recorded, 0 blockers noted, 0 candidate next actions.",
      "decisions": [],
      "blockers": [],

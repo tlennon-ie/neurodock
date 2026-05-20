@@ -6,6 +6,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 preferences:
   output_format: "answer_first"
@@ -15,6 +16,7 @@ chronometric:
 ```
 
 Mocked `get_time_context()` returns:
+
 ```json
 {
   "now": "2026-05-15T14:42:00+01:00",
@@ -26,6 +28,7 @@ Mocked `get_time_context()` returns:
 ```
 
 Mocked `request_break_if_needed({ "threshold_minutes": 90 })` returns:
+
 ```json
 {
   "elapsed": "PT1H42M",

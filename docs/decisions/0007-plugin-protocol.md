@@ -3,12 +3,12 @@
 - **Status:** proposed
 - **Date:** 2026-05-16
 - **Deciders:** maintainer (TBD), `mcp-architect`
-- **Consulted:** `mcp-server-builder` (will implement plugin discovery in `packages/core`), `skill-author` (out-of-tree skills follow this manifest plus the SKILL.md convention), `design-system-keeper` (owns `theme` plugins), `governance-author` (ETHICS + license alignment),  (clinical-claim prohibition in `description`), `community-triage` (contributor on-ramp)
+- **Consulted:** `mcp-server-builder` (will implement plugin discovery in `packages/core`), `skill-author` (out-of-tree skills follow this manifest plus the SKILL.md convention), `design-system-keeper` (owns `theme` plugins), `governance-author` (ETHICS + license alignment), (clinical-claim prohibition in `description`), `community-triage` (contributor on-ramp)
 - **Informed:** `accessibility-auditor`, `doc-writer`, `release-pilot`, `changelog-keeper`, `eval-curator` (language-pack overrides shadow translation-prompt slices)
 
 ## Context
 
- defines the plugin protocol in one paragraph: every directory under `plugins/` ships a `plugin.yaml` manifest declaring "name, type (`skill | mcp-server | profile | translation-pack | language-pack`), version, neurotype tags, and trust level," and the substrate auto-discovers plugins matching the user's profile. §11 Phase 3 promises a federated registry at `plugins.neurodock.org` and language packs for ≥ 3 locales. ADR 0005 (translation tools, open question 3) flagged that the language-pack manifest schema would need its own ADR before external contributors could land packs. This ADR is that schema.
+defines the plugin protocol in one paragraph: every directory under `plugins/` ships a `plugin.yaml` manifest declaring "name, type (`skill | mcp-server | profile | translation-pack | language-pack`), version, neurotype tags, and trust level," and the substrate auto-discovers plugins matching the user's profile. §11 Phase 3 promises a federated registry at `plugins.neurodock.org` and language packs for ≥ 3 locales. ADR 0005 (translation tools, open question 3) flagged that the language-pack manifest schema would need its own ADR before external contributors could land packs. This ADR is that schema.
 
 Three properties make this contract load-bearing:
 
@@ -77,6 +77,7 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
 1. **Forward-compatibility is paramount.** Mirrors ADR 0004. `additionalProperties: true` at every nesting level. Loaders preserve unknown keys on round-trip. Adding a new plugin type, a new asset sub-type, a new optional field, or a new trust level is an additive change — no major bump required. Removing a value or renaming a field is a major bump.
 
 2. **Four-tier trust ladder.**
+
    - `official` — published by the NeuroDock Maintainer. Installs without prompting.
    - `verified` — signed by a contributor whose key is in the maintainer-maintained keyring. Installs without prompting.
    - `community` — signed by the author's own key. Provenance recorded but not vouched. Prompts the user per profile preference; default profile setting is "prompt once, remember per plugin."
@@ -87,12 +88,14 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
 3. **Six plugin types (extends plan.md's five).** `skill | mcp-server | profile | translation-pack | language-pack | theme`. `theme` is added in v0.1.0 because `design-system-keeper` already needs a delivery format for opt-in visual variants (high-contrast, dyslexia-tuned, dim-dark variants); shipping themes through the same protocol avoids inventing a second one in three months. Adding a new type later is forward-compat: v0.1.0 loaders encountering an unknown `type` MUST skip the plugin with a structured `unknown_plugin_type` warning rather than erroring.
 
 4. **Discovery via filesystem scan.** v0.1.0 substrate walks two roots at init:
+
    - `<repo>/plugins/*/plugin.yaml` (in-repo plugins)
    - `$XDG_DATA_HOME/neurodock/plugins/*/plugin.yaml` (per-user plugins; falls back to `~/.local/share/neurodock/plugins` on Linux, `%APPDATA%\neurodock\plugins` on Windows, `~/Library/Application Support/neurodock/plugins` on macOS).
 
    No central registry is required. The federated registry at `plugins.neurodock.org` (Phase 3) is opt-in: it indexes signed manifests, provides search, and offers a `neurodock plugin install <name>` shortcut that fetches a plugin into the per-user root. The protocol does NOT depend on the registry; an air-gapped install works identically.
 
 5. **`requires` is hard but acyclic.** Plugin A may not declare `requires.plugins` containing B if B requires A. Substrate detects cycles via topological-sort at load time. Validation algorithm:
+
    1. Build a directed graph: nodes are plugin names; edges are `requires.plugins[*].name`.
    2. Run Tarjan's strongly-connected-components.
    3. Any SCC with size ≥ 2 is a cycle. Loader logs `plugin_requirement_cycle` listing every plugin in the SCC and refuses to activate any of them. Other plugins outside the SCC load normally.
@@ -100,6 +103,7 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
    Unmet requirements (a required MCP server is not installed, a required substrate version is out of range) result in the plugin being installed-but-not-activated, with a structured warning. Refusal is loud, never silent.
 
 6. **`provides[].path` paths are sandboxed.** All asset paths and hook script paths are relative to the plugin's directory. Loader normalisation rule:
+
    1. Resolve the path against the plugin's absolute directory.
    2. Reject if the resolved absolute path does not have the plugin directory as a prefix (handles `..` traversal).
    3. Reject if any path segment is a symlink pointing outside the plugin directory (handles symlink escape).
@@ -112,6 +116,7 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
 8. **Signature mechanism is reserved in v0.1.0; verified in Phase 3.** The schema reserves `trust.signature` and `trust.keyring_fingerprint`. The signature is computed over `sha256(plugin.yaml + concatenation of provides[].path file contents in declaration order)`. v0.1.0 loaders store the signature on round-trip but do NOT verify it; the user's effective trust level for an `official` or `verified` plugin in v0.1.0 is "trust the maintainer-curated repo where this plugin lives." Signature verification ships in `packages/core` in Phase 3 alongside the federated registry. Until verification ships, `verified` is operationally equivalent to `community` for user-experience purposes; the schema field is in place so we don't have to re-architect when verification lands.
 
 9. **Hooks are optional and refuse-by-default in v0.1.0.** `on_install` and `on_uninstall` are paths to shell scripts inside the plugin directory. The hook executor:
+
    - Refuses to run hooks unless `trust.level in {official, verified}` in v0.1.0 (closed by default).
    - Sandbox allow-list (Phase 3): read-only filesystem access inside the plugin directory; NO network; NO writes outside the plugin directory; NO privilege escalation; NO fork/exec of binaries not listed in a substrate-maintained allow-list (`sh`, `bash`, `python`, `node`, `cp`, `mv`, `mkdir`, `chmod` — to be ratified before Phase 3 ship).
    - On any sandbox violation: abort the hook, log `hook_sandbox_violation`, surface a one-line stderr notice. The plugin is otherwise installed (hooks are advisory, not load-gating).
@@ -119,6 +124,7 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
    This stance — declare hooks freely; defer execution to Phase 3 — lets language-pack authors ship `on_install` for prompt-cache pre-warming today without us building the sandbox prematurely.
 
 10. **Profile composability decides auto-activation.** A plugin's `neurotypes` array intersects with `profile.identity.neurotypes`:
+
     - Empty plugin `neurotypes` (or omitted) = neurotype-agnostic → auto-activate.
     - Non-empty intersection = neurotype-targeted match → auto-activate.
     - Empty intersection = installed-but-not-activated; the user can enable it manually via `neurodock plugin enable <name>`.
@@ -155,12 +161,14 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
 ## Open questions
 
 1. **Signing key management for `verified` plugins.** Two clean positions:
+
    - **Maintainer-issued keys.** the maintainer generates keys for verified contributors; revocation is centralised.
    - **Per-author keys, Maintainer-curated keyring.** Authors generate their own keys; the maintainer keyring lists fingerprints; revocation is by removing the fingerprint.
 
    Recommended: **per-author keys with Maintainer-curated keyring** because it scales without the maintainer holding signing material. Maintainer to ratify before Phase 3.
 
 2. **Plugin update mechanics.** Three credible positions:
+
    - **User-driven.** `neurodock plugin update <name>` fetches the new version.
    - **Substrate-driven, opt-in.** A background check on substrate start; user prompted to update.
    - **Substrate-driven, automatic for `official`/`verified`.** Auto-update without prompt for Maintainer-published plugins.
@@ -170,6 +178,7 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
 3. **Marketplace governance.** Who reviews submissions to `plugins.neurodock.org`? The federated-registry design implies decentralisation, but in practice the registry is operated by the project. Position to confirm: registry indexing is opt-in for plugin authors and curation-free at v0.1.0; the registry surfaces every signed `community` plugin but does not vouch for them.
 
 4. **Should `theme` ship in v0.1.0 or defer?** Plan.md §5 lists five types; this ADR adds a sixth. Two positions:
+
    - **Ship `theme` in v0.1.0** (current decision): `design-system-keeper` already needs the format; we lose nothing by reserving it.
    - **Defer to v0.2.0**: keep v0.1.0 to plan.md's five types; add `theme` when `design-system-keeper` actually needs it.
 
@@ -208,4 +217,4 @@ We adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validatio
 
 - The contributor-facing README at `plugins/README.md` (updated in the same PR as this ADR) is the entry-point doc; it covers the minimal manifest, the trust ladder, the license whitelist, and the path sandbox.
 - The long-form contributor guide (the "how to author each of the six plugin types" walk-through) is `doc-writer`'s scope and is scheduled for a later wave.
-- Community-triage's plugin-PR triage checklist should include: schema validation pass, license-whitelist hit, `description` does not make clinical claims,  assigned when `neurotypes` is non-empty.
+- Community-triage's plugin-PR triage checklist should include: schema validation pass, license-whitelist hit, `description` does not make clinical claims, assigned when `neurotypes` is non-empty.

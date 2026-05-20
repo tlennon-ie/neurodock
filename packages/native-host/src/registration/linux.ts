@@ -25,26 +25,46 @@ function configRoot(home: string, env: NodeJS.ProcessEnv): string {
   return xdg && xdg.trim().length > 0 ? xdg : join(home, ".config");
 }
 
-function targets(home: string, env: NodeJS.ProcessEnv): ReadonlyArray<BrowserTarget> {
+function targets(
+  home: string,
+  env: NodeJS.ProcessEnv,
+): ReadonlyArray<BrowserTarget> {
   const cfg = configRoot(home, env);
   return [
-    { browser: "chrome", dir: join(cfg, "google-chrome", "NativeMessagingHosts") },
+    {
+      browser: "chrome",
+      dir: join(cfg, "google-chrome", "NativeMessagingHosts"),
+    },
     { browser: "chromium", dir: join(cfg, "chromium", "NativeMessagingHosts") },
-    { browser: "brave", dir: join(cfg, "BraveSoftware", "Brave-Browser", "NativeMessagingHosts") },
-    { browser: "edge", dir: join(cfg, "microsoft-edge", "NativeMessagingHosts") },
+    {
+      browser: "brave",
+      dir: join(cfg, "BraveSoftware", "Brave-Browser", "NativeMessagingHosts"),
+    },
+    {
+      browser: "edge",
+      dir: join(cfg, "microsoft-edge", "NativeMessagingHosts"),
+    },
     { browser: "vivaldi", dir: join(cfg, "vivaldi", "NativeMessagingHosts") },
-    { browser: "firefox", dir: join(home, ".mozilla", "native-messaging-hosts"), firefox: true },
+    {
+      browser: "firefox",
+      dir: join(home, ".mozilla", "native-messaging-hosts"),
+      firefox: true,
+    },
   ];
 }
 
-export function registerLinux(opts: RegistrationOptions): ReadonlyArray<RegistrationOutcome> {
+export function registerLinux(
+  opts: RegistrationOptions,
+): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
   const out: RegistrationOutcome[] = [];
   for (const t of targets(home, process.env)) {
     const manifestPath = join(t.dir, `${HOST_NAME}.json`);
     try {
       mkdirSync(t.dir, { recursive: true });
-      const manifest = t.firefox ? buildFirefoxManifest(opts) : buildManifest(opts);
+      const manifest = t.firefox
+        ? buildFirefoxManifest(opts)
+        : buildManifest(opts);
       const action = existsSync(manifestPath) ? "update" : "create";
       writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
       out.push({ browser: t.browser, manifestPath, action });
@@ -60,13 +80,20 @@ export function registerLinux(opts: RegistrationOptions): ReadonlyArray<Registra
   return out;
 }
 
-export function unregisterLinux(opts: UnregisterOptions = {}): ReadonlyArray<RegistrationOutcome> {
+export function unregisterLinux(
+  opts: UnregisterOptions = {},
+): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
   const out: RegistrationOutcome[] = [];
   for (const t of targets(home, process.env)) {
     const manifestPath = join(t.dir, `${HOST_NAME}.json`);
     if (!existsSync(manifestPath)) {
-      out.push({ browser: t.browser, manifestPath, action: "skip", detail: "manifest not present" });
+      out.push({
+        browser: t.browser,
+        manifestPath,
+        action: "skip",
+        detail: "manifest not present",
+      });
       continue;
     }
     try {

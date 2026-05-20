@@ -46,7 +46,7 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
   void requestProfile();
 
   const requestTranslate = async (
-    request: TranslationRequest
+    request: TranslationRequest,
   ): Promise<TranslationResponse | null> => {
     try {
       const env = await chrome.runtime.sendMessage<
@@ -69,7 +69,7 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
         channel={options.channel}
         profile={profile}
         requestTranslate={requestTranslate}
-      />
+      />,
     );
   };
 

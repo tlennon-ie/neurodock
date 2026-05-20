@@ -49,11 +49,11 @@ This package follows semantic versioning.
 
 ### Heuristic versions shipped
 
-| Detector | Heuristic name | Version |
-|----------|----------------|---------|
-| `check_rumination` | `word_overlap_jaccard` | `0.1.0` (unchanged) |
-| `check_hyperfocus` | `elapsed_threshold_with_eod` | `0.2.0` (new) |
-| `check_sycophancy` | (5 heuristics, see schema enum) | `0.2.0` (new) |
+| Detector           | Heuristic name                  | Version             |
+| ------------------ | ------------------------------- | ------------------- |
+| `check_rumination` | `word_overlap_jaccard`          | `0.1.0` (unchanged) |
+| `check_hyperfocus` | `elapsed_threshold_with_eod`    | `0.2.0` (new)       |
+| `check_sycophancy` | (5 heuristics, see schema enum) | `0.2.0` (new)       |
 
 ### Server invariants (unchanged from v0.0.1)
 

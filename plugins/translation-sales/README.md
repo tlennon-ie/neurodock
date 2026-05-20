@@ -13,7 +13,7 @@ A NeuroDock `translation-pack` plugin that tunes [`mcp-translation`](../../packa
 - **Technical staff** dragged into customer calls who don't yet have the sales-fluency to read what the call actually means.
 - **Neurodivergent professionals** — particularly autistic and ADHD readers — who find that "we'll consider it" and "yes" sound the same in writing but seem to mean very different things to their sales colleagues.
 
-This is not a way to feel cynical about sales conversations. It's a reading aid. The literal translations describe what a phrase *typically* signals; context still matters, and the same phrase can mean different things at different deal stages.
+This is not a way to feel cynical about sales conversations. It's a reading aid. The literal translations describe what a phrase _typically_ signals; context still matters, and the same phrase can mean different things at different deal stages.
 
 ## What it covers
 

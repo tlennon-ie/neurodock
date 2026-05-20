@@ -67,20 +67,20 @@ To migrate: update callers to use `result.facts[]` instead of parsing `result.te
 
 ## What counts as user-facing
 
-| Change | User-facing? | Entry required? |
-|---|---|---|
-| New public API | Yes | Yes |
-| New MCP tool | Yes | Yes |
-| Tool input/output change | Yes | Yes |
-| Default behaviour change | Yes | Yes |
-| Bug fix in user-visible behaviour | Yes | Yes |
-| Performance improvement | Yes (if noticeable) | Yes |
-| Internal refactor | No | No |
-| Test-only change | No | No |
-| Dependency bump (security) | Yes | Yes |
-| Dependency bump (routine) | No | No (covered in next minor) |
-| Docs typo fix | No | No |
-| Docs adding new tutorial | Yes | Yes |
+| Change                            | User-facing?        | Entry required?            |
+| --------------------------------- | ------------------- | -------------------------- |
+| New public API                    | Yes                 | Yes                        |
+| New MCP tool                      | Yes                 | Yes                        |
+| Tool input/output change          | Yes                 | Yes                        |
+| Default behaviour change          | Yes                 | Yes                        |
+| Bug fix in user-visible behaviour | Yes                 | Yes                        |
+| Performance improvement           | Yes (if noticeable) | Yes                        |
+| Internal refactor                 | No                  | No                         |
+| Test-only change                  | No                  | No                         |
+| Dependency bump (security)        | Yes                 | Yes                        |
+| Dependency bump (routine)         | No                  | No (covered in next minor) |
+| Docs typo fix                     | No                  | No                         |
+| Docs adding new tutorial          | Yes                 | Yes                        |
 
 When in doubt, generate the entry. False positives are cheap; false negatives leave users in the dark.
 
@@ -123,6 +123,7 @@ A top-level `CHANGELOG.md` summarises releases across all packages by date. You 
 - `@neurodock/extension-browser` v0.1.2 — Fixed popup focus trap in dark mode
 
 ## 2026-07
+
 ...
 ```
 

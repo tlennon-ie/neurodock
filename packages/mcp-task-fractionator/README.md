@@ -8,7 +8,7 @@ an MCP server.
 - **License:** AGPL-3.0-or-later.
 - **Design:** see [`docs/decisions/0003-task-fractionator-tool-design.md`](../../docs/decisions/0003-task-fractionator-tool-design.md).
 - **Schemas (the contract):** [`schemas/decompose.schema.json`](./schemas/decompose.schema.json) and [`schemas/next_one.schema.json`](./schemas/next_one.schema.json).
-- **User stories driving this server:**  ("Director with ADHD" — voice-dump a vague initiative, get 5–12 atomic tasks plus the single next one).
+- **User stories driving this server:** ("Director with ADHD" — voice-dump a vague initiative, get 5–12 atomic tasks plus the single next one).
 
 ## Tools
 

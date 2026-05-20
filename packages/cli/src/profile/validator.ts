@@ -25,7 +25,16 @@ function resolveSchemaPath(): string {
   // Try the compiled location first (dist/profile/) and fall back to src/profile/
   const candidates = [
     resolve(here, "..", "..", "..", "core", "schemas", "profile.schema.json"),
-    resolve(here, "..", "..", "..", "..", "core", "schemas", "profile.schema.json"),
+    resolve(
+      here,
+      "..",
+      "..",
+      "..",
+      "..",
+      "core",
+      "schemas",
+      "profile.schema.json",
+    ),
     resolve(here, "..", "..", "core", "schemas", "profile.schema.json"),
   ];
   for (const c of candidates) {
@@ -37,7 +46,13 @@ function resolveSchemaPath(): string {
     }
   }
   // Last resort: workspace root from cwd.
-  return join(process.cwd(), "packages", "core", "schemas", "profile.schema.json");
+  return join(
+    process.cwd(),
+    "packages",
+    "core",
+    "schemas",
+    "profile.schema.json",
+  );
 }
 
 export function loadSchema(): object {
@@ -50,9 +65,14 @@ export function loadSchema(): object {
 
 function getValidator(): ReturnType<Ajv2020["compile"]> {
   if (cachedValidator) return cachedValidator;
-  const ajv = new Ajv2020({ allErrors: true, strict: false, allowUnionTypes: true });
+  const ajv = new Ajv2020({
+    allErrors: true,
+    strict: false,
+    allowUnionTypes: true,
+  });
   // ajv-formats default export typing varies between ESM/CJS interop.
-  const addFormatsFn = (addFormats as unknown as (a: Ajv2020) => Ajv2020) ?? addFormats;
+  const addFormatsFn =
+    (addFormats as unknown as (a: Ajv2020) => Ajv2020) ?? addFormats;
   addFormatsFn(ajv);
   cachedValidator = ajv.compile(loadSchema());
   return cachedValidator;

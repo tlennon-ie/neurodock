@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  rmSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -54,9 +61,15 @@ function makeFakeSpawn(opts: FakeSpawnOptions = {}): {
     status: null,
     stdout: "",
     stderr: "",
-    error: Object.assign(new Error("ENOENT"), { code: "ENOENT" }) as NodeJS.ErrnoException,
+    error: Object.assign(new Error("ENOENT"), {
+      code: "ENOENT",
+    }) as NodeJS.ErrnoException,
   };
-  const failNonZero: SpawnResult = { status: 1, stdout: "", stderr: "install failed\n" };
+  const failNonZero: SpawnResult = {
+    status: 1,
+    stdout: "",
+    stderr: "install failed\n",
+  };
 
   const spawn: SpawnFn = (command, args) => {
     calls.push({ command, args: [...args] });
@@ -97,7 +110,10 @@ describe("neurodock install-all", () => {
   beforeEach(() => {
     sandbox = makeSandbox();
     // Seed a Claude Code project config so init has somewhere to act.
-    writeFileSync(join(sandbox.cwd, ".mcp.json"), JSON.stringify({ mcpServers: {} }, null, 2));
+    writeFileSync(
+      join(sandbox.cwd, ".mcp.json"),
+      JSON.stringify({ mcpServers: {} }, null, 2),
+    );
   });
 
   afterEach(() => sandbox.cleanup());
@@ -136,8 +152,13 @@ describe("neurodock install-all", () => {
     // No install or PATH calls should have run beyond the installer probe.
     const installCalls = calls.filter(
       (c) =>
-        (c.command === "uv" && c.args[0] === "tool" && c.args[1] === "install") ||
-        (c.command.startsWith("python") && c.args[0] === "-m" && c.args[1] === "pip" && c.args[2] === "install"),
+        (c.command === "uv" &&
+          c.args[0] === "tool" &&
+          c.args[1] === "install") ||
+        (c.command.startsWith("python") &&
+          c.args[0] === "-m" &&
+          c.args[1] === "pip" &&
+          c.args[2] === "install"),
     );
     expect(installCalls).toHaveLength(0);
     // Profile and client config left untouched.
@@ -147,7 +168,10 @@ describe("neurodock install-all", () => {
   });
 
   it("prefers uv when available", async () => {
-    const { spawn, calls } = makeFakeSpawn({ uvAvailable: true, pipAvailable: true });
+    const { spawn, calls } = makeFakeSpawn({
+      uvAvailable: true,
+      pipAvailable: true,
+    });
 
     const r = await runInstallAll(
       {
@@ -165,7 +189,9 @@ describe("neurodock install-all", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -173,7 +199,8 @@ describe("neurodock install-all", () => {
     expect(r.installer).toBe("uv");
     expect(r.exitCode).toBe(0);
     const uvInstallCalls = calls.filter(
-      (c) => c.command === "uv" && c.args[0] === "tool" && c.args[1] === "install",
+      (c) =>
+        c.command === "uv" && c.args[0] === "tool" && c.args[1] === "install",
     );
     expect(uvInstallCalls).toHaveLength(6);
     expect(uvInstallCalls.map((c) => c.args[2])).toEqual([
@@ -189,7 +216,10 @@ describe("neurodock install-all", () => {
   });
 
   it("falls back to pip when uv is missing", async () => {
-    const { spawn, calls } = makeFakeSpawn({ uvAvailable: false, pipAvailable: true });
+    const { spawn, calls } = makeFakeSpawn({
+      uvAvailable: false,
+      pipAvailable: true,
+    });
 
     const r = await runInstallAll(
       {
@@ -207,7 +237,9 @@ describe("neurodock install-all", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -223,7 +255,8 @@ describe("neurodock install-all", () => {
     );
     expect(pipInstallCalls).toHaveLength(6);
     const uvInstallCalls = calls.filter(
-      (c) => c.command === "uv" && c.args[0] === "tool" && c.args[1] === "install",
+      (c) =>
+        c.command === "uv" && c.args[0] === "tool" && c.args[1] === "install",
     );
     expect(uvInstallCalls).toHaveLength(0);
   });
@@ -247,7 +280,9 @@ describe("neurodock install-all", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -255,8 +290,13 @@ describe("neurodock install-all", () => {
     expect(r.installer).toBe("skipped");
     const installCalls = calls.filter(
       (c) =>
-        (c.command === "uv" && c.args[0] === "tool" && c.args[1] === "install") ||
-        (c.command.startsWith("python") && c.args[0] === "-m" && c.args[1] === "pip" && c.args[2] === "install"),
+        (c.command === "uv" &&
+          c.args[0] === "tool" &&
+          c.args[1] === "install") ||
+        (c.command.startsWith("python") &&
+          c.args[0] === "-m" &&
+          c.args[1] === "pip" &&
+          c.args[2] === "install"),
     );
     expect(installCalls).toHaveLength(0);
     // Init still ran — profile + client config should exist.
@@ -288,7 +328,9 @@ describe("neurodock install-all", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -318,7 +360,9 @@ describe("neurodock install-all", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -348,7 +392,9 @@ describe("neurodock install-all", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );

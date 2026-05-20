@@ -161,7 +161,12 @@ export async function saveProfileWithOutcome(
     ...(options.confirmOverwrite === true ? { confirmOverwrite: true } : {}),
   });
   if (result.ok) {
-    return { profile: merged, source: "native-host", confirmRequired: false, error: null };
+    return {
+      profile: merged,
+      source: "native-host",
+      confirmRequired: false,
+      error: null,
+    };
   }
   return {
     profile: merged,
@@ -255,7 +260,8 @@ function mapOnDiskProfileToExtension(
 ): ExtensionProfile {
   const identity = isRecord(onDisk["identity"]) ? onDisk["identity"] : {};
   const displayName =
-    typeof identity["display_name"] === "string" && identity["display_name"].length > 0
+    typeof identity["display_name"] === "string" &&
+    identity["display_name"].length > 0
       ? identity["display_name"]
       : baseline.displayName;
   return normaliseProfile({ ...baseline, displayName });

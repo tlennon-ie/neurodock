@@ -39,10 +39,19 @@ function dirOf(filePath: string): string {
 export function claudeDesktopConfigPath(env: EnvSnapshot = readEnv()): string {
   switch (env.platform) {
     case "darwin":
-      return join(env.home, "Library", "Application Support", "Claude", "claude_desktop_config.json");
+      return join(
+        env.home,
+        "Library",
+        "Application Support",
+        "Claude",
+        "claude_desktop_config.json",
+      );
     case "win32": {
       const appdata = env.env["APPDATA"];
-      const root = appdata && appdata.trim().length > 0 ? appdata : join(env.home, "AppData", "Roaming");
+      const root =
+        appdata && appdata.trim().length > 0
+          ? appdata
+          : join(env.home, "AppData", "Roaming");
       return join(root, "Claude", "claude_desktop_config.json");
     }
     default:
@@ -55,7 +64,9 @@ export interface ClaudeCodePaths {
   readonly project: string;
 }
 
-export function claudeCodeConfigPaths(env: EnvSnapshot = readEnv()): ClaudeCodePaths {
+export function claudeCodeConfigPaths(
+  env: EnvSnapshot = readEnv(),
+): ClaudeCodePaths {
   // Claude Code reads MCP server config from ~/.claude.json (flat file in
   // $HOME, dot prefix). The ~/.claude/settings.json file is for plugins +
   // marketplace state — NOT MCP servers. Project-scoped MCP config lives
@@ -78,7 +89,9 @@ export function cursorConfigPaths(env: EnvSnapshot = readEnv()): CursorPaths {
   };
 }
 
-export function clientLocations(env: EnvSnapshot = readEnv()): ReadonlyArray<ClientLocation> {
+export function clientLocations(
+  env: EnvSnapshot = readEnv(),
+): ReadonlyArray<ClientLocation> {
   const cc = claudeCodeConfigPaths(env);
   const cu = cursorConfigPaths(env);
   return [
@@ -94,8 +107,13 @@ export interface DetectionResult extends ClientLocation {
   readonly exists: boolean;
 }
 
-export function detectClients(env: EnvSnapshot = readEnv()): ReadonlyArray<DetectionResult> {
-  return clientLocations(env).map((loc) => ({ ...loc, exists: pathExists(loc.path) }));
+export function detectClients(
+  env: EnvSnapshot = readEnv(),
+): ReadonlyArray<DetectionResult> {
+  return clientLocations(env).map((loc) => ({
+    ...loc,
+    exists: pathExists(loc.path),
+  }));
 }
 
 export function pickClient(

@@ -90,7 +90,10 @@ export function tryDecodeMessage(buffer: Buffer): DecodeStep | null {
     parsed = JSON.parse(payload);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    throw new ProtocolError("INVALID_JSON", `Frame body is not valid JSON: ${message}`);
+    throw new ProtocolError(
+      "INVALID_JSON",
+      `Frame body is not valid JSON: ${message}`,
+    );
   }
   return { message: parsed, rest };
 }
@@ -99,9 +102,13 @@ export function isHostRequest(value: unknown): value is HostRequest {
   if (value === null || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   if (typeof v["op"] !== "string") return false;
-  if (v["op"] !== "get" && v["op"] !== "set" && v["op"] !== "ping") return false;
+  if (v["op"] !== "get" && v["op"] !== "set" && v["op"] !== "ping")
+    return false;
   if (v["id"] !== undefined && typeof v["id"] !== "string") return false;
-  if (v["confirmOverwrite"] !== undefined && typeof v["confirmOverwrite"] !== "boolean") {
+  if (
+    v["confirmOverwrite"] !== undefined &&
+    typeof v["confirmOverwrite"] !== "boolean"
+  ) {
     return false;
   }
   return true;

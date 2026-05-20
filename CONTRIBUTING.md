@@ -155,4 +155,4 @@ Before you mark a PR ready for review:
 - [ ] Changeset added for user-facing changes (`pnpm changeset`).
 - [ ] Tests pass locally (`pnpm test`, `uv run pytest` where relevant).
 - [ ] Conventional commit message on the PR title (`feat:`, `fix:`, `docs:`).
-- [ ] PR description explains *why*, not just *what*.
+- [ ] PR description explains _why_, not just _what_.

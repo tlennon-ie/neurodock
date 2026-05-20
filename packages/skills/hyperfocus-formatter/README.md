@@ -21,7 +21,7 @@ Set `preferences.output_format: "conventional"` in your profile. The skill becom
 
 ## References
 
-See  (substrate skill spec) and §8 (hyperfocus monitor in the clinical guardrails layer). This skill is the visible surface in Phase 1; the deeper detector (`mcp-guardrail.check_hyperfocus`) lands in Phase 2 and will feed the same Tier-C decision.
+See (substrate skill spec) and §8 (hyperfocus monitor in the clinical guardrails layer). This skill is the visible surface in Phase 1; the deeper detector (`mcp-guardrail.check_hyperfocus`) lands in Phase 2 and will feed the same Tier-C decision.
 
 ## License
 

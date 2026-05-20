@@ -23,7 +23,12 @@
               "type": ["object", "null"],
               "description": "The currently-open session as recorded by mcp-chronometric. null when no session is open (in which case the level is always 'none').",
               "additionalProperties": false,
-              "required": ["session_id", "started_at", "intent", "elapsed_seconds"],
+              "required": [
+                "session_id",
+                "started_at",
+                "intent",
+                "elapsed_seconds"
+              ],
               "properties": {
                 "session_id": {
                   "type": "string",
@@ -84,8 +89,8 @@
           "required": ["gentle", "nudge", "hard"],
           "properties": {
             "gentle": { "type": "integer", "minimum": 5, "maximum": 480 },
-            "nudge":  { "type": "integer", "minimum": 5, "maximum": 480 },
-            "hard":   { "type": "integer", "minimum": 5, "maximum": 480 }
+            "nudge": { "type": "integer", "minimum": 5, "maximum": 480 },
+            "hard": { "type": "integer", "minimum": 5, "maximum": 480 }
           }
         }
       }
@@ -277,9 +282,18 @@
           "description": "Compares elapsed_seconds against (gentle, nudge, hard) thresholds; when now > end_of_day_local, escalates one step."
         },
         "override_options": [
-          { "token": "commit-and-close", "description": "Close out and stop here." },
-          { "token": "snooze-15m", "description": "Give me 15 more minutes then come back stronger." },
-          { "token": "extend-end-of-day", "description": "Move my end-of-day to a new time; logged locally so the next nudge knows." }
+          {
+            "token": "commit-and-close",
+            "description": "Close out and stop here."
+          },
+          {
+            "token": "snooze-15m",
+            "description": "Give me 15 more minutes then come back stronger."
+          },
+          {
+            "token": "extend-end-of-day",
+            "description": "Move my end-of-day to a new time; logged locally so the next nudge knows."
+          }
         ],
         "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
       }

@@ -9,10 +9,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { FloatingButton } from "./floatingButton.js";
 import { Panel } from "./panel.js";
-import {
-  startSelectionWatcher,
-  type Editable,
-} from "./selectionWatcher.js";
+import { startSelectionWatcher, type Editable } from "./selectionWatcher.js";
 import type {
   Channel,
   ExtensionProfile,
@@ -24,7 +21,7 @@ export interface ContentAppProps {
   readonly channel: Channel;
   readonly profile: ExtensionProfile;
   readonly requestTranslate: (
-    request: TranslationRequest
+    request: TranslationRequest,
   ) => Promise<TranslationResponse | null>;
 }
 

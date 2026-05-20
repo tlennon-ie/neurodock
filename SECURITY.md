@@ -30,12 +30,12 @@ First acknowledgement of a report arrives within five working days. Some maintai
 
 After acknowledgement, the maintainer triages the report and targets the following resolution windows.
 
-| Severity | Target fix |
-|---|---|
-| Critical | 14 calendar days |
-| High | 30 calendar days |
-| Medium | 60 calendar days |
-| Low | Next scheduled release |
+| Severity | Target fix             |
+| -------- | ---------------------- |
+| Critical | 14 calendar days       |
+| High     | 30 calendar days       |
+| Medium   | 60 calendar days       |
+| Low      | Next scheduled release |
 
 We post status updates to the reporter at least every fourteen days while a report is open.
 

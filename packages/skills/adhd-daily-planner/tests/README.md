@@ -15,7 +15,7 @@ Every test file has exactly four top-level sections, in this order:
 
 - Tool calls reference the schemas in `packages/mcp-*/schemas/`. The runner validates each fake return against its schema before injecting it.
 - "Confidence" values are always rendered to two decimal places in the response, mirroring the contract in `SKILL.md`.
-- Prohibited phrases (per  voice and tone) are tested explicitly: `superpower`, `crusher`, `smash`, `you got this`, `let's go`, `differently abled`.
+- Prohibited phrases (per voice and tone) are tested explicitly: `superpower`, `crusher`, `smash`, `you got this`, `let's go`, `differently abled`.
 - Response length envelopes are upper-bounds, expressed in characters (not tokens) so the test is vendor-neutral.
 
 ## Adding a new test

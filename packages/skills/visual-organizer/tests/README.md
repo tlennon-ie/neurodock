@@ -2,11 +2,11 @@
 
 Three replayable invocations. CI parses each file's `## Input` block, feeds it to the reference client with the stated profile, and checks the output against the `## Pass criteria` block.
 
-| # | File | Diagram type | Profile flag exercised |
-|---|---|---|---|
-| 1 | `01-flowchart-from-prose.md` | `flowchart TD` | default motion |
-| 2 | `02-sequence-from-meeting-notes.md` | `sequenceDiagram` | default motion |
-| 3 | `03-mindmap-from-overwhelm-dump.md` | `mindmap` | `motion: reduced` |
+| #   | File                                | Diagram type      | Profile flag exercised |
+| --- | ----------------------------------- | ----------------- | ---------------------- |
+| 1   | `01-flowchart-from-prose.md`        | `flowchart TD`    | default motion         |
+| 2   | `02-sequence-from-meeting-notes.md` | `sequenceDiagram` | default motion         |
+| 3   | `03-mindmap-from-overwhelm-dump.md` | `mindmap`         | `motion: reduced`      |
 
 ## Universal pass criteria (apply to all three)
 

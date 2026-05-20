@@ -28,6 +28,7 @@ Priya: Agreed. June 30.
 ## Expected MCP tool sequence
 
 1. `mcp-translation.brief_meeting({ transcript: "<the transcript above>", me: "Thomas", project: "neurodock" })` →
+
    ```json
    {
      "my_asks": [
@@ -142,9 +143,11 @@ Priya: Agreed. June 30.
      }
    }
    ```
+
    (Character offsets in the fixture are illustrative; the runner validates `quoted_span.text` against the actual slice of the supplied transcript, not the literal offsets.)
 
 2. `mcp-cognitive-graph.recall_decisions({ project: "neurodock", since: "2026-04-21" })` →
+
    ```json
    {
      "decisions": [

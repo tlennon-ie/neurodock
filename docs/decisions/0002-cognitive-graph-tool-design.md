@@ -8,7 +8,7 @@
 
 ## Context
 
-`mcp-cognitive-graph` is the second MCP server NeuroDock will ship and the persistence backbone of the substrate. Per  it lands inside Phase 1 alongside `mcp-chronometric`; per §6 it provides four tools (`recall_entity`, `record_fact`, `recall_decisions`, `weekly_rollup`) that together externalise the user's working memory of people, projects, decisions, and concepts. Per §15 Week 3+ it is the substrate dependency that `audhd-context-recovery` (the `/resume` skill) and the Monday-morning brief in `adhd-daily-planner` both rely on, and it is a substrate dependency for `asd-meeting-translator` in Phase 2.
+`mcp-cognitive-graph` is the second MCP server NeuroDock will ship and the persistence backbone of the substrate. Per it lands inside Phase 1 alongside `mcp-chronometric`; per §6 it provides four tools (`recall_entity`, `record_fact`, `recall_decisions`, `weekly_rollup`) that together externalise the user's working memory of people, projects, decisions, and concepts. Per §15 Week 3+ it is the substrate dependency that `audhd-context-recovery` (the `/resume` skill) and the Monday-morning brief in `adhd-daily-planner` both rely on, and it is a substrate dependency for `asd-meeting-translator` in Phase 2.
 
 The cognitive graph's value is that it lets a neurodivergent user offload "who said what about which decision when" into a store they own, queried by name rather than by structured key. The schemas must therefore be:
 
@@ -37,7 +37,7 @@ Treat every fact as a (subject, predicate, object) IRI triple, with subject and 
 
 **Rejected because:**
 
-- Forces every value-typed fact (a tag, a status, a free-text note) to become its own entity. The user-facing UX of "tag  as external-memory" becomes a two-step entity creation.
+- Forces every value-typed fact (a tag, a status, a free-text note) to become its own entity. The user-facing UX of "tag as external-memory" becomes a two-step entity creation.
 - IRIs as a public surface leak ontology choices into skill authors' code. A skill should call `record_fact({type:"project", name:""}, "tagged", {literal:"external-memory"})`, not construct an IRI.
 - Tooling overhead (SPARQL-ish concerns, OWL alignment) is wrong for a local-first ND substrate.
 - The ND user community is not asking for RDF; they are asking for "find what I said about Roberto".
@@ -178,6 +178,7 @@ We deliberately do not ship `semantic_search(query)` or `find_similar(entity)` a
 ## Open questions
 
 1. **Alias-matching strategy in `recall_entity`.** v0.1.0 promises four resolution methods (`exact`, `alias`, `fuzzy`, `embedding`) but does not pin thresholds. Three credible positions:
+
    - **Conservative:** require ≥ 0.85 cosine similarity for embedding matches; fall back to `none` otherwise. Lower false-positive rate; risk that "Rob" doesn't match "Roberto" until an explicit alias is recorded.
    - **Liberal:** ≥ 0.65 cosine; rely on the `resolution.score` field to let skills decide whether to confirm.
    - **Profile-declared:** thresholds live in `~/.neurodock/profile.yaml` under `cognitive_graph.alias_threshold`.
@@ -185,6 +186,7 @@ We deliberately do not ship `semantic_search(query)` or `find_similar(entity)` a
    Recommended: ship conservative defaults in v0.1.0, add profile override in v0.1.x, defer adaptive thresholds.
 
 2. **`record_fact` deduplication semantics.** When the same `(subject, predicate, object)` triple is recorded twice with different `source` or `confidence`, what happens?
+
    - **Last-write-wins on source/confidence**, single row in storage. Simplest; loses provenance.
    - **Append-only with a logical-fact id**, where `fact_id` returned is the canonical row and `deduplicated: true` signals that a new source/confidence was merged onto it. Preserves provenance; more storage.
    - **Always insert**, accept duplicates, let `recall_entity` collapse them at read time.
@@ -192,6 +194,7 @@ We deliberately do not ship `semantic_search(query)` or `find_similar(entity)` a
    Recommended: option 2 — append-only with logical-fact ids — because losing provenance is the worse failure for a memory substrate. Maintainer to confirm before `mcp-server-builder` implements.
 
 3. **`weekly_rollup` `next_actions` without an LLM.** v0.1.0 templates `next_actions` from open blockers, decisions lacking follow-up, and `tagged` facts with value `next-action`. This is heuristic and will produce dull suggestions. Three positions:
+
    - **Keep the heuristic and label it as such** in the field description; richer suggestions are explicitly a Phase 2 LLM-on-the-caller-side enhancement.
    - **Drop `next_actions` from v0.1.0 entirely** and add it back when LLM rollups land.
    - **Allow the caller to pass a `next_action_strategy` enum** and select between templates.

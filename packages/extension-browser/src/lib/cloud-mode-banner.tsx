@@ -35,13 +35,16 @@ export function CloudModeBanner({
       data-testid="cloud-mode-banner"
       className="font-body leading-nd flex items-start gap-3 border border-warn-light bg-neutral-50 px-4 py-3 text-sm text-neutral-900 dark:border-warn-dark dark:bg-neutral-900 dark:text-neutral-100"
     >
-      <span aria-hidden="true" className="select-none font-mono text-warn-light dark:text-warn-dark">
+      <span
+        aria-hidden="true"
+        className="select-none font-mono text-warn-light dark:text-warn-dark"
+      >
         cloud
       </span>
       <div className="flex-1">
         <p className="m-0">
-          NeuroDock is in cloud mode. Text you translate leaves your device
-          for <strong>{provider}</strong>.
+          NeuroDock is in cloud mode. Text you translate leaves your device for{" "}
+          <strong>{provider}</strong>.
         </p>
         <button
           type="button"

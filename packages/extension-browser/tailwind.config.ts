@@ -10,10 +10,7 @@ import type { Config } from "tailwindcss";
  * loading webfonts from a CDN would violate local-first defaults.
  */
 const config: Config = {
-  content: [
-    "./entrypoints/**/*.{ts,tsx,html}",
-    "./src/**/*.{ts,tsx}",
-  ],
+  content: ["./entrypoints/**/*.{ts,tsx,html}", "./src/**/*.{ts,tsx}"],
   darkMode: "media",
   theme: {
     extend: {

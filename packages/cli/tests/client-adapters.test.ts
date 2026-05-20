@@ -12,7 +12,10 @@ const env = {
 };
 
 const desired: Record<string, McpServerEntry> = {
-  "neurodock-chronometric": { command: "uv", args: ["run", "neurodock-mcp-chronometric"] },
+  "neurodock-chronometric": {
+    command: "uv",
+    args: ["run", "neurodock-mcp-chronometric"],
+  },
 };
 
 describe("client adapters", () => {

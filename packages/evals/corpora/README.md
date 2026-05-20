@@ -13,7 +13,7 @@ corpora/
 │   ├── tone/           # check_tone evaluator
 │   ├── outgoing/       # rewrite_outgoing evaluator
 │   └── meetings/       # brief_meeting evaluator
-└── guardrail/          # Reserved for the  
+└── guardrail/          # Reserved for the
 ```
 
 ## File format
@@ -24,7 +24,7 @@ contribution flow.
 
 ## Provenance
 
-Every example in v0.0.1 is **synthesised** by  to
+Every example in v0.0.1 is **synthesised** by to
 demonstrate the format and exercise the harness end-to-end. These are NOT
 real corporate messages. Phase 2 brings the first contributed examples
 through the consent pipeline at `evals.neurodock.org/contribute`.

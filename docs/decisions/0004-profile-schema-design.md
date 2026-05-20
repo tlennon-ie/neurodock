@@ -3,12 +3,12 @@
 - **Status:** proposed
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
-- **Consulted:** `mcp-server-builder` (consumes from every server), `skill-author` (consumes from every skill),  (consent fields), `governance-author` (ETHICS alignment)
+- **Consulted:** `mcp-server-builder` (consumes from every server), `skill-author` (consumes from every skill), (consent fields), `governance-author` (ETHICS alignment)
 - **Informed:** `accessibility-auditor`, `doc-writer`, `release-pilot`, `changelog-keeper`
 
 ## Context
 
-The profile is the single cross-cutting consent-and-preference manifest for NeuroDock. Every MCP server reads it; every skill respects it; the CLI installer writes it; presets in `profiles/` extend it. It lives at `~/.neurodock/profile.yaml` by default  and is loaded into memory on session start.
+The profile is the single cross-cutting consent-and-preference manifest for NeuroDock. Every MCP server reads it; every skill respects it; the CLI installer writes it; presets in `profiles/` extend it. It lives at `~/.neurodock/profile.yaml` by default and is loaded into memory on session start.
 
 Three properties make this contract unusually load-bearing:
 
@@ -62,7 +62,7 @@ Each skill ships its own config block (`.config/neurodock/skills/<name>.yaml`).
 **Rejected because:**
 
 - Fragments consent. A user opting into cloud embeddings would have to repeat the toggle in every skill's config. ETHICS principle 4 (no aggregation) is harder to enforce when consent state lives in N files.
-- Defeats the "Claude that knows me" experience  — the user wants one place to set preferences.
+- Defeats the "Claude that knows me" experience — the user wants one place to set preferences.
 - Plugin authors would re-derive identity/neurotype detection logic; we want that centralised in the loader.
 
 ## Decision
@@ -71,19 +71,19 @@ Adopt **Option C: nested YAML with permissive forward-compat.**
 
 ### Shape (summarised; canonical definition in `profile.schema.json`)
 
-| Block | Required? | Notes |
-|---|---|---|
-| `identity` | Yes | Only required block. Contains `display_name` (free-form), `neurotypes` (enum array), optional `additional_notes`. |
-| `preferences` | No | `output_format`, `max_chunk_size`, `reading_font_hint`, `motion`. All defaulted. |
-| `chronometric` | No | `hyperfocus_break_minutes`, `end_of_day_local`, `zones`, `session_overlap_policy`. |
-| `guardrails` | No | `rumination_threshold`, `rumination_window_minutes`, `sycophancy_check`. |
-| `privacy` | No | `embeddings`, `telemetry`, `os_idle_consent`. |
-| `schema_version` | No | Optional self-declared version string. |
-| `extends` | No | Optional single-level preset extension. |
+| Block            | Required? | Notes                                                                                                             |
+| ---------------- | --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `identity`       | Yes       | Only required block. Contains `display_name` (free-form), `neurotypes` (enum array), optional `additional_notes`. |
+| `preferences`    | No        | `output_format`, `max_chunk_size`, `reading_font_hint`, `motion`. All defaulted.                                  |
+| `chronometric`   | No        | `hyperfocus_break_minutes`, `end_of_day_local`, `zones`, `session_overlap_policy`.                                |
+| `guardrails`     | No        | `rumination_threshold`, `rumination_window_minutes`, `sycophancy_check`.                                          |
+| `privacy`        | No        | `embeddings`, `telemetry`, `os_idle_consent`.                                                                     |
+| `schema_version` | No        | Optional self-declared version string.                                                                            |
+| `extends`        | No        | Optional single-level preset extension.                                                                           |
 
 ### Seventeen binding design choices
 
-1. **`identity.neurotypes` is self-identification, never a diagnosis claim.** Enum: `adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other`. Plus optional free-form `additional_notes`. Per ETHICS, self-ID is sufficient; this field is *never* used to gate features. It is an input to skill activation: a skill tagged `adhd` activates iff `"adhd" in identity.neurotypes`. `audhd` is treated as a first-class identity (combined ADHD + autism), not as a derived `["adhd", "asd"]`, because the lived experience differs from either alone.
+1. **`identity.neurotypes` is self-identification, never a diagnosis claim.** Enum: `adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other`. Plus optional free-form `additional_notes`. Per ETHICS, self-ID is sufficient; this field is _never_ used to gate features. It is an input to skill activation: a skill tagged `adhd` activates iff `"adhd" in identity.neurotypes`. `audhd` is treated as a first-class identity (combined ADHD + autism), not as a derived `["adhd", "asd"]`, because the lived experience differs from either alone.
 
 2. **`preferences.output_format`** enum: `answer_first | conventional | bullet_first`. Default `answer_first` per plan.md §6.
 
@@ -105,7 +105,7 @@ Adopt **Option C: nested YAML with permissive forward-compat.**
 
 11. **`privacy.embeddings`** enum: `local | cloud_voyage | cloud_openai`. Default `local`. Cloud options trigger a visible session-start notice.
 
-12. **`privacy.telemetry`** enum: `off | local_otel_only | full`. Default `off` per plan.md §4. `full` is reserved in v0.1.0 and requires a future ADR plus  sign-off.
+12. **`privacy.telemetry`** enum: `off | local_otel_only | full`. Default `off` per plan.md §4. `full` is reserved in v0.1.0 and requires a future ADR plus sign-off.
 
 13. **`privacy.os_idle_consent`** boolean, default false. Required true for `mcp-chronometric.idle_status` to return real data (ADR 0001).
 
@@ -114,6 +114,7 @@ Adopt **Option C: nested YAML with permissive forward-compat.**
 15. **`identity` is the only required block.** Every other block is optional; defaults are applied by the loader at read time, not written into the file. The minimal valid profile is two fields long (`display_name`, `neurotypes`).
 
 16. **Profile location precedence** (highest wins):
+
     1. `$NEURODOCK_PROFILE_PATH` env var (testing/CI override)
     2. `$XDG_CONFIG_HOME/neurodock/profile.yaml` (Linux convention)
     3. `~/.neurodock/profile.yaml` (default per plan.md §6)
@@ -154,6 +155,7 @@ The schema declares `default:` values for documentation, but those defaults are 
 ## Open questions
 
 1. **How does `extends:` resolve when the named preset is unavailable?** Two clean positions:
+
    - **Error:** refuse to load; force the user to install the missing preset package.
    - **Warn-and-use-defaults:** log a structured warning, ignore the `extends:` clause, apply schema defaults.
 

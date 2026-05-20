@@ -16,11 +16,7 @@
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "os_idle_seconds",
-        "hyperfocus_signal",
-        "consent_granted"
-      ],
+      "required": ["os_idle_seconds", "hyperfocus_signal", "consent_granted"],
       "properties": {
         "os_idle_seconds": {
           "type": ["integer", "null"],

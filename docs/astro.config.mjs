@@ -47,17 +47,17 @@ export default defineConfig({
           attrs: { name: "twitter:image", content: "/og-image.svg" },
         },
       ],
-      social: {
-        github: "https://github.com/tlennon-ie/neurodock",
-      },
-      editLink: {
-        baseUrl:
-          "https://github.com/tlennon-ie/neurodock/edit/main/docs/",
-      },
-      customCss: [
-        "./src/styles/tokens.css",
-        "./src/styles/overrides.css",
+      social: [
+        {
+          icon: "github",
+          label: "GitHub",
+          href: "https://github.com/tlennon-ie/neurodock",
+        },
       ],
+      editLink: {
+        baseUrl: "https://github.com/tlennon-ie/neurodock/edit/main/docs/",
+      },
+      customCss: ["./src/styles/tokens.css", "./src/styles/overrides.css"],
       lastUpdated: true,
       pagination: true,
       tableOfContents: {
@@ -74,7 +74,10 @@ export default defineConfig({
           label: "Getting started",
           items: [
             { label: "Installation", link: "/getting-started/installation/" },
-            { label: "Your first skill", link: "/getting-started/first-skill/" },
+            {
+              label: "Your first skill",
+              link: "/getting-started/first-skill/",
+            },
             { label: "Profile", link: "/getting-started/profile/" },
           ],
         },
@@ -194,10 +197,19 @@ export default defineConfig({
               label: "Plugin types",
               items: [
                 { label: "skill", link: "/contribute/plugin-types/skill/" },
-                { label: "mcp-server", link: "/contribute/plugin-types/mcp-server/" },
+                {
+                  label: "mcp-server",
+                  link: "/contribute/plugin-types/mcp-server/",
+                },
                 { label: "profile", link: "/contribute/plugin-types/profile/" },
-                { label: "translation-pack", link: "/contribute/plugin-types/translation-pack/" },
-                { label: "language-pack", link: "/contribute/plugin-types/language-pack/" },
+                {
+                  label: "translation-pack",
+                  link: "/contribute/plugin-types/translation-pack/",
+                },
+                {
+                  label: "language-pack",
+                  link: "/contribute/plugin-types/language-pack/",
+                },
                 { label: "theme", link: "/contribute/plugin-types/theme/" },
               ],
             },

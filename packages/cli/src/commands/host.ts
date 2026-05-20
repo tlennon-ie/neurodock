@@ -12,7 +12,11 @@
 import { fileURLToPath } from "node:url";
 import { existsSync, realpathSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
-import { register, unregister, detectPlatform } from "@neurodock/native-host/dist/registration/index.js";
+import {
+  register,
+  unregister,
+  detectPlatform,
+} from "@neurodock/native-host/dist/registration/index.js";
 import type { RegistrationOutcome } from "@neurodock/native-host/dist/registration/index.js";
 
 const DEFAULT_EXTENSION_IDS: ReadonlyArray<string> = [
@@ -37,11 +41,30 @@ function resolveHostBinPath(): string {
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
     // dist/commands/host.js -> ../../node_modules/@neurodock/native-host/dist/cli.js
-    resolve(here, "..", "..", "node_modules", "@neurodock", "native-host", "dist", "cli.js"),
+    resolve(
+      here,
+      "..",
+      "..",
+      "node_modules",
+      "@neurodock",
+      "native-host",
+      "dist",
+      "cli.js",
+    ),
     // monorepo: dist/commands/host.js -> ../../../native-host/dist/cli.js
     resolve(here, "..", "..", "..", "native-host", "dist", "cli.js"),
     // monorepo sibling: dist/commands/host.js (cli) -> ../../../packages/native-host/dist/cli.js
-    resolve(here, "..", "..", "..", "..", "packages", "native-host", "dist", "cli.js"),
+    resolve(
+      here,
+      "..",
+      "..",
+      "..",
+      "..",
+      "packages",
+      "native-host",
+      "dist",
+      "cli.js",
+    ),
     // From cwd
     join(process.cwd(), "packages", "native-host", "dist", "cli.js"),
   ];
@@ -61,7 +84,8 @@ function resolveHostBinPath(): string {
 }
 
 export function runHostInstall(opts: HostInstallOptions): HostCommandResult {
-  const ids = opts.extensionIds.length > 0 ? opts.extensionIds : DEFAULT_EXTENSION_IDS;
+  const ids =
+    opts.extensionIds.length > 0 ? opts.extensionIds : DEFAULT_EXTENSION_IDS;
   const platform = detectPlatform();
   const hostPath = resolveHostBinPath();
   const outcomes = register({ hostPath, allowedExtensionIds: ids });

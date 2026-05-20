@@ -55,7 +55,14 @@
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["fact_id", "recorded_at", "subject", "predicate", "object", "deduplicated"],
+      "required": [
+        "fact_id",
+        "recorded_at",
+        "subject",
+        "predicate",
+        "object",
+        "deduplicated"
+      ],
       "properties": {
         "fact_id": {
           "type": "string",
@@ -147,12 +154,24 @@
       "output": {
         "fact_id": "fact_01HZ0AABBCCDDEEFFGGHHJJKKLL",
         "recorded_at": "2026-05-15T09:14:22+01:00",
-        "subject": { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" },
+        "subject": {
+          "type": "person",
+          "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2",
+          "name": "Roberto"
+        },
         "predicate": "decided_in",
-        "object": { "type": "decision", "id": "ent_01HZDEC0001", "name": "Adopt SQLite + sqlite-vec" },
+        "object": {
+          "type": "decision",
+          "id": "ent_01HZDEC0001",
+          "name": "Adopt SQLite + sqlite-vec"
+        },
         "deduplicated": false,
         "auto_created_entities": [
-          { "id": "ent_01HZDEC0001", "type": "decision", "name": "Adopt SQLite + sqlite-vec" }
+          {
+            "id": "ent_01HZDEC0001",
+            "type": "decision",
+            "name": "Adopt SQLite + sqlite-vec"
+          }
         ]
       }
     },
@@ -167,7 +186,11 @@
       "output": {
         "fact_id": "fact_01HZTAG0001",
         "recorded_at": "2026-05-15T09:15:01+01:00",
-        "subject": { "type": "project", "id": "ent_01HZPRJKIPISYSTEM", "name": "" },
+        "subject": {
+          "type": "project",
+          "id": "ent_01HZPRJKIPISYSTEM",
+          "name": ""
+        },
         "predicate": "tagged",
         "object": { "literal": "external-memory" },
         "deduplicated": false,
@@ -184,9 +207,17 @@
       "output": {
         "fact_id": "fact_01HZKIPI001",
         "recorded_at": "2026-04-10T12:00:00+01:00",
-        "subject": { "type": "project", "id": "ent_01HZPRJKIPISYSTEM", "name": "" },
+        "subject": {
+          "type": "project",
+          "id": "ent_01HZPRJKIPISYSTEM",
+          "name": ""
+        },
         "predicate": "depends_on",
-        "object": { "type": "concept", "id": "ent_01HZCONCEPTSQLITEVEC", "name": "sqlite-vec" },
+        "object": {
+          "type": "concept",
+          "id": "ent_01HZCONCEPTSQLITEVEC",
+          "name": "sqlite-vec"
+        },
         "deduplicated": true,
         "auto_created_entities": []
       }

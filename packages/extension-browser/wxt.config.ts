@@ -27,7 +27,13 @@ export default defineConfig({
     name: "NeuroDock — Translate",
     description:
       "Decode corporate subtext and check tone before you send. Local-first by default; cloud only with your explicit consent.",
-    permissions: ["activeTab", "storage", "contextMenus", "scripting", "notifications"],
+    permissions: [
+      "activeTab",
+      "storage",
+      "contextMenus",
+      "scripting",
+      "notifications",
+    ],
     host_permissions: [
       "https://mail.google.com/*",
       "https://app.slack.com/*",

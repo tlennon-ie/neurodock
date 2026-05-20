@@ -13,7 +13,12 @@
 import { fileURLToPath } from "node:url";
 import { realpathSync } from "node:fs";
 import { runHost } from "./index.js";
-import { detectPlatform, register, unregister, HOST_NAME } from "./registration/index.js";
+import {
+  detectPlatform,
+  register,
+  unregister,
+  HOST_NAME,
+} from "./registration/index.js";
 
 const USAGE = `neurodock-native-host <command> [options]
 
@@ -91,12 +96,16 @@ function printOutcomes(outcomes: ReadonlyArray<PrintableOutcome>): void {
   for (const o of outcomes) {
     const detail = o.detail ? ` — ${o.detail}` : "";
     process.stdout.write(
-      `  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${o.manifestPath}${detail}\n`,
+      `  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${
+        o.manifestPath
+      }${detail}\n`,
     );
   }
 }
 
-export function main(argv: ReadonlyArray<string> = process.argv.slice(2)): number {
+export function main(
+  argv: ReadonlyArray<string> = process.argv.slice(2),
+): number {
   const parsed = parseArgs(argv);
 
   if (parsed.command === "help") {
@@ -112,10 +121,16 @@ export function main(argv: ReadonlyArray<string> = process.argv.slice(2)): numbe
     return 0;
   }
   if (parsed.command === "install") {
-    const ids = parsed.extensionIds.length > 0 ? parsed.extensionIds : DEFAULT_EXTENSION_IDS;
+    const ids =
+      parsed.extensionIds.length > 0
+        ? parsed.extensionIds
+        : DEFAULT_EXTENSION_IDS;
     const platformId = detectPlatform();
     process.stdout.write(`Installing ${HOST_NAME} (platform=${platformId})\n`);
-    const outcomes = register({ hostPath: resolveHostPath(), allowedExtensionIds: ids });
+    const outcomes = register({
+      hostPath: resolveHostPath(),
+      allowedExtensionIds: ids,
+    });
     printOutcomes(outcomes);
     return 0;
   }

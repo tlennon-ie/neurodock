@@ -50,7 +50,10 @@
               "type": "array",
               "description": "Other names by which this entity is known. Used by alias-resolution on subsequent recalls.",
               "items": { "type": "string" },
-              "examples": [["R.", "Rob"], ["kipi", "Kipi System"]]
+              "examples": [
+                ["R.", "Rob"],
+                ["kipi", "Kipi System"]
+              ]
             },
             "created_at": {
               "type": "string",
@@ -143,18 +146,34 @@
         "facts": [
           {
             "id": "fact_01HZ0AABBCCDDEEFFGGHHJJKKLL",
-            "subject": { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" },
+            "subject": {
+              "type": "person",
+              "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2",
+              "name": "Roberto"
+            },
             "predicate": "decided_in",
-            "object": { "type": "decision", "id": "ent_01HZDEC0001", "name": "Adopt SQLite + sqlite-vec" },
+            "object": {
+              "type": "decision",
+              "id": "ent_01HZDEC0001",
+              "name": "Adopt SQLite + sqlite-vec"
+            },
             "source": "msg://slack/C123/p1715683200000100",
             "confidence": 1.0,
             "recorded_at": "2026-05-14T16:42:00+01:00"
           },
           {
             "id": "fact_01HY9ZZYYXXWWVVUUTTSSRRQQPP",
-            "subject": { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" },
+            "subject": {
+              "type": "person",
+              "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2",
+              "name": "Roberto"
+            },
             "predicate": "reports_to",
-            "object": { "type": "person", "id": "ent_01HY0BOSS", "name": "Priya" },
+            "object": {
+              "type": "person",
+              "id": "ent_01HY0BOSS",
+              "name": "Priya"
+            },
             "source": null,
             "confidence": 0.9,
             "recorded_at": "2026-03-02T10:11:00+01:00"
@@ -192,9 +211,17 @@
         "facts": [
           {
             "id": "fact_01HZKIPI001",
-            "subject": { "type": "project", "id": "ent_01HZPRJKIPISYSTEM", "name": "" },
+            "subject": {
+              "type": "project",
+              "id": "ent_01HZPRJKIPISYSTEM",
+              "name": ""
+            },
             "predicate": "depends_on",
-            "object": { "type": "concept", "id": "ent_01HZCONCEPTSQLITEVEC", "name": "sqlite-vec" },
+            "object": {
+              "type": "concept",
+              "id": "ent_01HZCONCEPTSQLITEVEC",
+              "name": "sqlite-vec"
+            },
             "source": "https://github.com//",
             "confidence": 1.0,
             "recorded_at": "2026-04-10T12:00:00+01:00"
@@ -234,7 +261,14 @@
     "Fact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "subject", "predicate", "object", "confidence", "recorded_at"],
+      "required": [
+        "id",
+        "subject",
+        "predicate",
+        "object",
+        "confidence",
+        "recorded_at"
+      ],
       "properties": {
         "id": {
           "type": "string",

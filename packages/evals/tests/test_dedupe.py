@@ -39,7 +39,7 @@ def test_find_near_duplicates_returns_pairs() -> None:
         ("c", "Stack the database migrations behind a feature flag."),
     ]
     pairs = find_near_duplicates(texts)
-    assert any({a, b} == {"a", "b"} for a, b, _ in pairs), (
-        "a + b should be flagged as near-duplicates"
-    )
+    assert any(
+        {a, b} == {"a", "b"} for a, b, _ in pairs
+    ), "a + b should be flagged as near-duplicates"
     assert not any("c" in (a, b) for a, b, _ in pairs)

@@ -76,14 +76,14 @@ neurodock/
 
 ## CI workflows you must create
 
-| File | Trigger | What it does |
-|---|---|---|
-| `.github/workflows/ci.yml` | Pull request, push to main | Matrix lint + type-check + unit tests on touched packages |
-| `.github/workflows/eval.yml` | Nightly + PR if eval-touching | Runs the eval harness against versioned corpora |
-| `.github/workflows/release.yml` | Tag push (`v*`) | Changesets-driven publish |
-| `.github/workflows/extension.yml` | Tag on `extension-browser` | Build and submit Chrome/Firefox/Edge |
-| `.github/workflows/codeql.yml` | Pull request | Static analysis |
-| `.github/workflows/a11y.yml` | PR touching UI | Runs axe-core |
+| File                              | Trigger                       | What it does                                              |
+| --------------------------------- | ----------------------------- | --------------------------------------------------------- |
+| `.github/workflows/ci.yml`        | Pull request, push to main    | Matrix lint + type-check + unit tests on touched packages |
+| `.github/workflows/eval.yml`      | Nightly + PR if eval-touching | Runs the eval harness against versioned corpora           |
+| `.github/workflows/release.yml`   | Tag push (`v*`)               | Changesets-driven publish                                 |
+| `.github/workflows/extension.yml` | Tag on `extension-browser`    | Build and submit Chrome/Firefox/Edge                      |
+| `.github/workflows/codeql.yml`    | Pull request                  | Static analysis                                           |
+| `.github/workflows/a11y.yml`      | PR touching UI                | Runs axe-core                                             |
 
 All workflows use `concurrency: { group: ..., cancel-in-progress: true }` to prevent stale runs.
 

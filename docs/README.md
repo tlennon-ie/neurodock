@@ -72,10 +72,10 @@ Canonical ADR markdown lives at the repository root under `docs/decisions/`. The
 
 These pages mirror canonical artefacts that live elsewhere:
 
-| Page | Canonical source |
-|---|---|
-| `manifesto.mdx` | (until `MANIFESTO.md` is published at repo root) |
-| `ethics.mdx` | (until `ETHICS.md` is published at repo root) |
+| Page                      | Canonical source                                     |
+| ------------------------- | ---------------------------------------------------- |
+| `manifesto.mdx`           | (until `MANIFESTO.md` is published at repo root)     |
+| `ethics.mdx`              | (until `ETHICS.md` is published at repo root)        |
 | `contribute/overview.mdx` | /(until `CONTRIBUTING.md` is published at repo root) |
 
 | `decisions/0001-*.mdx` … `0004-*.mdx` | `docs/decisions/000*-*.md` |

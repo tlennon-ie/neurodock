@@ -50,7 +50,8 @@ const ALL_GROUPS: ReadonlyArray<ServerExamples> = [
         tool: "get_time_context",
       },
       {
-        prompt: "Start a session — I'm working on emails for the next 30 minutes.",
+        prompt:
+          "Start a session — I'm working on emails for the next 30 minutes.",
         tool: "mark_session_start",
       },
       {
@@ -72,7 +73,8 @@ const ALL_GROUPS: ReadonlyArray<ServerExamples> = [
         tool: "recall_entity",
       },
       {
-        prompt: "What decisions have I made about the auth refactor in the last 30 days?",
+        prompt:
+          "What decisions have I made about the auth refactor in the last 30 days?",
         tool: "recall_decisions",
       },
       {
@@ -124,7 +126,8 @@ const ALL_GROUPS: ReadonlyArray<ServerExamples> = [
   },
   {
     server: "neurodock-guardrail",
-    label: "mcp-guardrail (rumination + loop checks — mostly invoked via skills)",
+    label:
+      "mcp-guardrail (rumination + loop checks — mostly invoked via skills)",
     prompts: [
       {
         prompt:
@@ -149,7 +152,9 @@ export async function runExamples(
   const requested = options.server ?? null;
   if (requested !== null && !isKnownServer(requested)) {
     messages.push(
-      `Unknown --server '${requested}'. Known: ${ALL_GROUPS.map((g) => g.server).join(", ")}.`,
+      `Unknown --server '${requested}'. Known: ${ALL_GROUPS.map(
+        (g) => g.server,
+      ).join(", ")}.`,
     );
     return { wired, groups: [], messages };
   }
@@ -161,11 +166,17 @@ export async function runExamples(
 
   if (groups.length === 0) {
     if (requested !== null) {
-      messages.push(`Server '${requested}' is not wired in any detected MCP client config.`);
-      messages.push("Run 'neurodock init' (or 'neurodock install-all') to wire it.");
+      messages.push(
+        `Server '${requested}' is not wired in any detected MCP client config.`,
+      );
+      messages.push(
+        "Run 'neurodock init' (or 'neurodock install-all') to wire it.",
+      );
     } else {
       messages.push("No NeuroDock servers detected in any client config.");
-      messages.push("Run 'neurodock init' (or 'neurodock install-all') to wire them.");
+      messages.push(
+        "Run 'neurodock init' (or 'neurodock install-all') to wire them.",
+      );
     }
     return { wired, groups: [], messages };
   }
@@ -181,7 +192,9 @@ export async function runExamples(
     messages.push("");
     messages.push(useColor ? chalk.bold(g.label) : g.label);
     for (const p of g.prompts) {
-      const promptLine = useColor ? chalk.cyan(`"${p.prompt}"`) : `"${p.prompt}"`;
+      const promptLine = useColor
+        ? chalk.cyan(`"${p.prompt}"`)
+        : `"${p.prompt}"`;
       const toolLine = useColor ? chalk.dim(`→ ${p.tool}`) : `→ ${p.tool}`;
       messages.push(`  ${promptLine}`);
       messages.push(`    ${toolLine}`);
@@ -193,7 +206,9 @@ export async function runExamples(
   return { wired, groups, messages };
 }
 
-function detectWiredServers(env: ReturnType<typeof readEnv>): ReadonlyArray<ServerName> {
+function detectWiredServers(
+  env: ReturnType<typeof readEnv>,
+): ReadonlyArray<ServerName> {
   const detections = detectClients(env).filter((d) => d.exists);
   const seen = new Set<ServerName>();
   for (const d of detections) {
@@ -201,7 +216,9 @@ function detectWiredServers(env: ReturnType<typeof readEnv>): ReadonlyArray<Serv
       const raw = readFileSync(d.path, "utf8");
       const parsed = parseJsonSafely(raw);
       if (!parsed.ok) continue;
-      const cfg = (parsed.value ?? {}) as { mcpServers?: Record<string, unknown> };
+      const cfg = (parsed.value ?? {}) as {
+        mcpServers?: Record<string, unknown>;
+      };
       for (const key of Object.keys(cfg.mcpServers ?? {})) {
         if (isKnownServer(key)) seen.add(key);
       }

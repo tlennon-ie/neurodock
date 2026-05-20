@@ -113,13 +113,19 @@ class NativeHostSession {
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ): Promise<NativeHostResponse> {
     if (this.disconnected) {
-      return Promise.reject(new Error(`native host: ${this.disconnectReason ?? "disconnected"}`));
+      return Promise.reject(
+        new Error(`native host: ${this.disconnectReason ?? "disconnected"}`),
+      );
     }
     const id = `nd-${++this.seq}`;
     return new Promise<NativeHostResponse>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error(`native host: request ${id} timed out after ${timeoutMs}ms`));
+        reject(
+          new Error(
+            `native host: request ${id} timed out after ${timeoutMs}ms`,
+          ),
+        );
       }, timeoutMs);
       this.pending.set(id, { resolve, reject, timer });
       try {
@@ -167,7 +173,10 @@ function openSession(): NativeHostSession | null {
 export async function probeNativeHost(): Promise<NativeHostHello> {
   const session = openSession();
   if (!session) {
-    return { status: "absent", detail: "chrome.runtime.connectNative unavailable" };
+    return {
+      status: "absent",
+      detail: "chrome.runtime.connectNative unavailable",
+    };
   }
   try {
     const r = await session.request("ping", undefined, undefined, 1000);
@@ -179,7 +188,10 @@ export async function probeNativeHost(): Promise<NativeHostHello> {
     return { status: "active", version: data?.version ?? r.version };
   } catch (err) {
     session.close();
-    return { status: "absent", detail: err instanceof Error ? err.message : String(err) };
+    return {
+      status: "absent",
+      detail: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
@@ -222,7 +234,11 @@ export async function nativeHostSetProfile(
     };
   }
   try {
-    const r = await session.request("set", profile, opts.confirmOverwrite ?? false);
+    const r = await session.request(
+      "set",
+      profile,
+      opts.confirmOverwrite ?? false,
+    );
     session.close();
     if (r.ok) {
       return {

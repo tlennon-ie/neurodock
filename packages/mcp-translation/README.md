@@ -7,15 +7,15 @@ prompt library with `@neurodock/extension-browser` (Phase 2).
 
 ## Status
 
-v0.0.1 implements the four tools specified  Section 7 and ADR
+v0.0.1 implements the four tools specified Section 7 and ADR
 [`0005-translation-tool-design.md`](../../docs/decisions/0005-translation-tool-design.md):
 
-| Tool | Status |
-|---|---|
-| `translate_incoming` | deterministic baseline + LLM-refinement prompt |
-| `check_tone` | deterministic baseline + LLM-refinement prompt |
-| `rewrite_outgoing` | deterministic baseline + LLM-refinement prompt |
-| `brief_meeting` | deterministic baseline + verbatim-anchor enforcement |
+| Tool                 | Status                                               |
+| -------------------- | ---------------------------------------------------- |
+| `translate_incoming` | deterministic baseline + LLM-refinement prompt       |
+| `check_tone`         | deterministic baseline + LLM-refinement prompt       |
+| `rewrite_outgoing`   | deterministic baseline + LLM-refinement prompt       |
+| `brief_meeting`      | deterministic baseline + verbatim-anchor enforcement |
 
 ## Design framing: deterministic baseline + optional LLM refinement
 
@@ -25,7 +25,9 @@ construction. Each tool returns an envelope of the shape:
 
 ```json
 {
-  "deterministic_analysis": { /* v0.1.0 output shape, populated heuristically */ },
+  "deterministic_analysis": {
+    /* v0.1.0 output shape, populated heuristically */
+  },
   "prompt_for_llm_refinement": {
     "role": "user",
     "content": "<rendered prompt template>",
@@ -62,7 +64,7 @@ transcript. This is anti-hallucination armour required by plan.md §7.
 
 ## References
 
-- Spec:  Section 7.
+- Spec: Section 7.
 - Tool design rationale: `docs/decisions/0005-translation-tool-design.md`.
 - Authoritative schemas: `packages/mcp-translation/schemas/`.
 

@@ -2,11 +2,11 @@
 
 Three replayable scenarios covering the pack's three prompt overrides.
 
-| Test | Scenario | Pack asset exercised |
-|---|---|---|
-| `01-translate-incoming-counsel-email.md` | Literal-translate flow over an outside-counsel email containing two terms of art and three hedges. | `prompts/literal_meaning.md` |
-| `02-check-tone-register-mismatch.md` | Detects a register mismatch when a casual draft is being sent to outside counsel. | `prompts/subtext.md` (used in detection) |
-| `03-rewrite-outgoing-to-legal-formal.md` | Rewrites a blunt direct draft into the legal-formal register while preserving named terms. | `prompts/tone.md` |
+| Test                                     | Scenario                                                                                           | Pack asset exercised                     |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `01-translate-incoming-counsel-email.md` | Literal-translate flow over an outside-counsel email containing two terms of art and three hedges. | `prompts/literal_meaning.md`             |
+| `02-check-tone-register-mismatch.md`     | Detects a register mismatch when a casual draft is being sent to outside counsel.                  | `prompts/subtext.md` (used in detection) |
+| `03-rewrite-outgoing-to-legal-formal.md` | Rewrites a blunt direct draft into the legal-formal register while preserving named terms.         | `prompts/tone.md`                        |
 
 ## How tests run
 

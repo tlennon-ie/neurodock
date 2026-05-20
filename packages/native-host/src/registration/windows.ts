@@ -29,16 +29,31 @@ interface BrowserTarget {
 
 function manifestDir(home: string, env: NodeJS.ProcessEnv): string {
   const appdata = env["APPDATA"];
-  const root = appdata && appdata.trim().length > 0 ? appdata : join(home, "AppData", "Roaming");
+  const root =
+    appdata && appdata.trim().length > 0
+      ? appdata
+      : join(home, "AppData", "Roaming");
   return join(root, "NeuroDock", "native-host");
 }
 
 function targets(): ReadonlyArray<BrowserTarget> {
   return [
-    { browser: "chrome", registryKey: `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}` },
-    { browser: "chromium", registryKey: `HKCU\\Software\\Chromium\\NativeMessagingHosts\\${HOST_NAME}` },
-    { browser: "edge", registryKey: `HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\${HOST_NAME}` },
-    { browser: "brave", registryKey: `HKCU\\Software\\BraveSoftware\\Brave-Browser\\NativeMessagingHosts\\${HOST_NAME}` },
+    {
+      browser: "chrome",
+      registryKey: `HKCU\\Software\\Google\\Chrome\\NativeMessagingHosts\\${HOST_NAME}`,
+    },
+    {
+      browser: "chromium",
+      registryKey: `HKCU\\Software\\Chromium\\NativeMessagingHosts\\${HOST_NAME}`,
+    },
+    {
+      browser: "edge",
+      registryKey: `HKCU\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\${HOST_NAME}`,
+    },
+    {
+      browser: "brave",
+      registryKey: `HKCU\\Software\\BraveSoftware\\Brave-Browser\\NativeMessagingHosts\\${HOST_NAME}`,
+    },
     {
       browser: "firefox",
       registryKey: `HKCU\\Software\\Mozilla\\NativeMessagingHosts\\${HOST_NAME}`,
@@ -47,7 +62,10 @@ function targets(): ReadonlyArray<BrowserTarget> {
   ];
 }
 
-function writeRegistryKey(key: string, value: string): { ok: boolean; detail?: string } {
+function writeRegistryKey(
+  key: string,
+  value: string,
+): { ok: boolean; detail?: string } {
   const result = spawnSync(
     "reg",
     ["add", key, "/ve", "/t", "REG_SZ", "/d", value, "/f"],
@@ -57,31 +75,50 @@ function writeRegistryKey(key: string, value: string): { ok: boolean; detail?: s
     return { ok: false, detail: result.error.message };
   }
   if ((result.status ?? 1) !== 0) {
-    return { ok: false, detail: (result.stderr || result.stdout || "reg.exe failed").trim() };
+    return {
+      ok: false,
+      detail: (result.stderr || result.stdout || "reg.exe failed").trim(),
+    };
   }
   return { ok: true };
 }
 
 function deleteRegistryKey(key: string): { ok: boolean; detail?: string } {
-  const result = spawnSync("reg", ["delete", key, "/f"], { stdio: "pipe", encoding: "utf8" });
+  const result = spawnSync("reg", ["delete", key, "/f"], {
+    stdio: "pipe",
+    encoding: "utf8",
+  });
   if (result.error) {
     return { ok: false, detail: result.error.message };
   }
   if ((result.status ?? 1) !== 0) {
-    return { ok: false, detail: (result.stderr || result.stdout || "reg.exe failed").trim() };
+    return {
+      ok: false,
+      detail: (result.stderr || result.stdout || "reg.exe failed").trim(),
+    };
   }
   return { ok: true };
 }
 
-export function registerWindows(opts: RegistrationOptions): ReadonlyArray<RegistrationOutcome> {
+export function registerWindows(
+  opts: RegistrationOptions,
+): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
   const dir = manifestDir(home, process.env);
   mkdirSync(dir, { recursive: true });
 
   const chromiumManifestPath = join(dir, `${HOST_NAME}.json`);
   const firefoxManifestPath = join(dir, `${HOST_NAME}.firefox.json`);
-  writeFileSync(chromiumManifestPath, JSON.stringify(buildManifest(opts), null, 2), "utf8");
-  writeFileSync(firefoxManifestPath, JSON.stringify(buildFirefoxManifest(opts), null, 2), "utf8");
+  writeFileSync(
+    chromiumManifestPath,
+    JSON.stringify(buildManifest(opts), null, 2),
+    "utf8",
+  );
+  writeFileSync(
+    firefoxManifestPath,
+    JSON.stringify(buildFirefoxManifest(opts), null, 2),
+    "utf8",
+  );
 
   const out: RegistrationOutcome[] = [];
   for (const t of targets()) {
@@ -90,13 +127,20 @@ export function registerWindows(opts: RegistrationOptions): ReadonlyArray<Regist
     if (r.ok) {
       out.push({ browser: t.browser, manifestPath, action: "create" });
     } else {
-      out.push({ browser: t.browser, manifestPath, action: "skip", detail: r.detail });
+      out.push({
+        browser: t.browser,
+        manifestPath,
+        action: "skip",
+        detail: r.detail,
+      });
     }
   }
   return out;
 }
 
-export function unregisterWindows(opts: UnregisterOptions = {}): ReadonlyArray<RegistrationOutcome> {
+export function unregisterWindows(
+  opts: UnregisterOptions = {},
+): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
   const dir = manifestDir(home, process.env);
   const chromiumManifestPath = join(dir, `${HOST_NAME}.json`);
@@ -109,7 +153,12 @@ export function unregisterWindows(opts: UnregisterOptions = {}): ReadonlyArray<R
     if (r.ok) {
       out.push({ browser: t.browser, manifestPath, action: "remove" });
     } else {
-      out.push({ browser: t.browser, manifestPath, action: "skip", detail: r.detail });
+      out.push({
+        browser: t.browser,
+        manifestPath,
+        action: "skip",
+        detail: r.detail,
+      });
     }
   }
 

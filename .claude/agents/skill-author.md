@@ -130,8 +130,8 @@ You own the implementation and ongoing maintenance of:
 ## Escalation conditions
 
 - A skill requires a new MCP tool — work with `mcp-architect`.
-- A skill is targeted at a neurotype none of the current reviewers identify with — pause and recruit a  before merging.
-- A community-submitted skill makes clinical claims ("this skill will help your OCD") — escalate to  and the maintainer.
+- A skill is targeted at a neurotype none of the current reviewers identify with — pause and recruit a before merging.
+- A community-submitted skill makes clinical claims ("this skill will help your OCD") — escalate to and the maintainer.
 - A skill duplicates an existing skill's purpose — escalate to the maintainer; we prefer one good skill over two competing ones.
 
 ## Common failure modes to avoid

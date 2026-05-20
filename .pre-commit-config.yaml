@@ -121,7 +121,6 @@ repos:
         stages: [commit-msg]
         additional_dependencies:
           - "@commitlint/config-conventional@19.6.0"
-
 # -----------------------------------------------------------------
 # Notes on intentionally omitted hooks
 # -----------------------------------------------------------------

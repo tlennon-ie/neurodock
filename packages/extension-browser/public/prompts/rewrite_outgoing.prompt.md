@@ -14,21 +14,21 @@ Source message:
 
 A deterministic baseline rewrite is included below. You MAY return it
 unchanged, refine it, or replace it — but the result MUST keep every term in
-``preserve_terms`` exactly as written.
+`preserve_terms` exactly as written.
 
 Deterministic baseline:
 {deterministic_summary}
 
 Return a JSON object conforming to the v0.1.0 schema at
-``packages/mcp-translation/schemas/rewrite_outgoing.schema.json`` (the
-``output`` sub-schema). Required keys:
+`packages/mcp-translation/schemas/rewrite_outgoing.schema.json` (the
+`output` sub-schema). Required keys:
 
-- ``rewritten``: the rewritten message.
-- ``preserved_terms``: terms from input that appear verbatim in ``rewritten``.
-- ``unpreserved_terms``: terms from input that do NOT appear in ``rewritten``.
-- ``diff_summary``: ``{{tone_shift, structural_changes[], warnings[]}}``.
-- ``eval_corpus_slice``: keep as supplied.
-- ``model_provenance``: ``{{mode, provider, model}}``.
+- `rewritten`: the rewritten message.
+- `preserved_terms`: terms from input that appear verbatim in `rewritten`.
+- `unpreserved_terms`: terms from input that do NOT appear in `rewritten`.
+- `diff_summary`: `{{tone_shift, structural_changes[], warnings[]}}`.
+- `eval_corpus_slice`: keep as supplied.
+- `model_provenance`: `{{mode, provider, model}}`.
 
-Do NOT auto-retry on missing terms; report the gap in ``unpreserved_terms``
-and a corresponding entry in ``diff_summary.warnings``.
+Do NOT auto-retry on missing terms; report the gap in `unpreserved_terms`
+and a corresponding entry in `diff_summary.warnings`.

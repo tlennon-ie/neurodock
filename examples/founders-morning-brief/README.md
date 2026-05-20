@@ -10,6 +10,7 @@ A 5-minute morning ritual for solo founders and small-team operators. Pulls from
 - **Founders with ADHD, autism, AuDHD, or any neurotype where time-blindness or context-loss makes the start of the day expensive.** The whole substrate is built for this. Picking a profile (next section) tunes it.
 
 It is **not** for:
+
 - Multi-team engineering organisations. Use `plugins/skill-eng-manager-1on1/` for the 1:1 prep flow and run the morning brief separately.
 - VC-pitch prep, fundraising-pipeline tracking, or any "growth-at-all-costs" framing. The brief is deliberately quiet about metrics theatre.
 - Replacing your actual project management tool. The brief reads from your local memory; it does not pretend to be the source of truth for tickets, deals, or anything else that lives in another system.
@@ -32,20 +33,22 @@ This is the same pattern the in-tree `adhd-daily-planner` skill follows. The wal
 
 Copy one of the ND-tuned profiles into place. For most founders one of these three is a sensible starting point:
 
-| Profile | Pick this if |
-|---|---|
-| `profiles/adhd.yaml` | You self-identify with ADHD: distractibility, time-blindness, hyperfocus episodes. Defaults to `max_chunk_size: 5`, `hyperfocus_break_minutes: 75`. |
-| `profiles/audhd.yaml` | You self-identify with both ADHD and autistic traits. Tighter `max_chunk_size`, motion reduced, output_format answer_first. |
-| `profiles/low-stimulation.yaml` | You want the calmest possible default regardless of label. Minimal output, no decoration, motion off. |
+| Profile                         | Pick this if                                                                                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles/adhd.yaml`            | You self-identify with ADHD: distractibility, time-blindness, hyperfocus episodes. Defaults to `max_chunk_size: 5`, `hyperfocus_break_minutes: 75`. |
+| `profiles/audhd.yaml`           | You self-identify with both ADHD and autistic traits. Tighter `max_chunk_size`, motion reduced, output_format answer_first.                         |
+| `profiles/low-stimulation.yaml` | You want the calmest possible default regardless of label. Minimal output, no decoration, motion off.                                               |
 
 Copy your pick to `~/.neurodock/profile.yaml`:
 
 **macOS/Linux:**
+
 ```bash
 cp profiles/adhd.yaml ~/.neurodock/profile.yaml
 ```
 
 **Windows PowerShell:**
+
 ```powershell
 New-Item -ItemType Directory -Force -Path "$HOME\.neurodock" | Out-Null
 Copy-Item profiles\adhd.yaml "$HOME\.neurodock\profile.yaml"
@@ -94,6 +97,7 @@ When Claude receives the morning prompt with NeuroDock's MCP servers connected, 
 3. **Per-project rollups.** For each retained project, calls `mcp-cognitive-graph.weekly_rollup(project=<name>)`. Reads `decisions`, `blockers`, `next_actions` verbatim — does not paraphrase.
 
 4. **Top three priorities.** Picks up to three projects from step 2's ranking (capped, not always full three — if you only had activity on one project this week, you get one). For each, calls `neurodock-mcp-task-fractionator.next_one(project=<name>)`. Three outcomes per project:
+
    - Success with `confidence >= 0.7` — surfaces the task title verbatim with the confidence value.
    - Success with `confidence < 0.7` — surfaces the title and says "low confidence" plainly.
    - `NO_TASKS_AVAILABLE` — says "no decomposed tasks for <project>; consider `decompose` if it's time to plan it" and moves on.

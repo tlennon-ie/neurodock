@@ -25,7 +25,15 @@ const baseEnv = {
 describe("paths", () => {
   it("resolves Claude Desktop config on macOS", () => {
     const got = claudeDesktopConfigPath({ ...baseEnv, platform: "darwin" });
-    expect(got).toBe(p(baseEnv.home, "Library", "Application Support", "Claude", "claude_desktop_config.json"));
+    expect(got).toBe(
+      p(
+        baseEnv.home,
+        "Library",
+        "Application Support",
+        "Claude",
+        "claude_desktop_config.json",
+      ),
+    );
   });
 
   it("resolves Claude Desktop config on Windows using APPDATA", () => {
@@ -42,7 +50,9 @@ describe("paths", () => {
 
   it("resolves Claude Desktop config on Linux", () => {
     const got = claudeDesktopConfigPath({ ...baseEnv, platform: "linux" });
-    expect(got).toBe(p(baseEnv.home, ".config", "Claude", "claude_desktop_config.json"));
+    expect(got).toBe(
+      p(baseEnv.home, ".config", "Claude", "claude_desktop_config.json"),
+    );
   });
 
   it("returns project and user Claude Code paths", () => {
@@ -62,19 +72,26 @@ describe("paths", () => {
   it("honours $NEURODOCK_PROFILE_PATH override", () => {
     const got = profilePath({
       ...baseEnv,
-      env: { NEURODOCK_PROFILE_PATH: "/tmp/test/profile.yaml" } as NodeJS.ProcessEnv,
+      env: {
+        NEURODOCK_PROFILE_PATH: "/tmp/test/profile.yaml",
+      } as NodeJS.ProcessEnv,
     });
     expect(got).toBe("/tmp/test/profile.yaml");
   });
 
   it("honours $XDG_CONFIG_HOME", () => {
     const xdg = p("", "xdg");
-    const got = profilePath({ ...baseEnv, env: { XDG_CONFIG_HOME: xdg } as NodeJS.ProcessEnv });
+    const got = profilePath({
+      ...baseEnv,
+      env: { XDG_CONFIG_HOME: xdg } as NodeJS.ProcessEnv,
+    });
     expect(got).toBe(p(xdg, "neurodock", "profile.yaml"));
   });
 
   it("falls back to ~/.neurodock/profile.yaml", () => {
-    expect(profilePath(baseEnv)).toBe(p(baseEnv.home, ".neurodock", "profile.yaml"));
+    expect(profilePath(baseEnv)).toBe(
+      p(baseEnv.home, ".neurodock", "profile.yaml"),
+    );
   });
 
   it("enumerates all client locations", () => {

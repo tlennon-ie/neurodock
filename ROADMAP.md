@@ -17,52 +17,52 @@ on the existing one.
 **Theme:** make the developer preview comfortable to actually use.
 
 - [ ] **Real LLM provider wiring in the browser extension** —
-  Ollama (local), Anthropic, OpenAI. Implementation exists on
-  `feat/extension-browser/v0.0.2-llm`; needs a conflict-resolution merge
-  pass.
+      Ollama (local), Anthropic, OpenAI. Implementation exists on
+      `feat/extension-browser/v0.0.2-llm`; needs a conflict-resolution merge
+      pass.
 - [ ] **Browser-store submissions** — Chrome Web Store, Firefox Add-ons,
-  Edge Add-ons. Developer accounts + screenshots + privacy disclosures.
-  Manual, low-novelty, high-leverage.
+      Edge Add-ons. Developer accounts + screenshots + privacy disclosures.
+      Manual, low-novelty, high-leverage.
 - [ ] **Profile presets** — curated YAML defaults under `profiles/` for
-  adhd, audhd, ocd, dyslexic, low-stimulation. (Shipped 2026-05-20.)
+      adhd, audhd, ocd, dyslexic, low-stimulation. (Shipped 2026-05-20.)
 - [ ] **CLI ergonomics** — `neurodock install-all`, `neurodock examples`,
-  `neurodock profile use <preset>`.
+      `neurodock profile use <preset>`.
 - [ ] **Plugin examples** — `plugins/example-skill-pomodoro/` as a
-  copy-from template for new skill authors.
+      copy-from template for new skill authors.
 - [ ] **Good-first-issue ramp** — at least 10 well-scoped tickets at any
-  time so a new contributor can land a PR in their first session.
+      time so a new contributor can land a PR in their first session.
 
 ## Next — Q3 2026
 
 **Theme:** translate the substrate into measurable benefit.
 
 - [ ] **Eval corpus growth** — 100 anonymised examples across translation
-  and guardrail tasks; contribution pipeline well-trodden.
+      and guardrail tasks; contribution pipeline well-trodden.
 - [ ] **Translation language packs** — Hiberno-English, German directness
-  norms, Japanese keigo. Out-of-tree plugins per ADR 0007.
+      norms, Japanese keigo. Out-of-tree plugins per ADR 0007.
 - [ ] **`mcp-translation` v0.1.0** — LLM refinement envelope wired to
-  real providers behind the same MCP contract the extension uses.
+      real providers behind the same MCP contract the extension uses.
 - [ ] **`mcp-cognitive-graph` semantic recall** — embedding rung tuned
-  with real corpora; benchmark suite checked into `packages/evals/`.
+      with real corpora; benchmark suite checked into `packages/evals/`.
 - [ ] **Docs site deploy** — `docs.neurodock.org` actually serving.
 - [ ] **`@neurodock/extension-browser` published** to store(s) and
-  promoted on the docs site.
+      promoted on the docs site.
 
 ## Later — Q4 2026 and beyond
 
 **Theme:** durability and community.
 
 - [ ] **Plugin marketplace** — a docs page that lists discovered
-  third-party plugins with install snippets.
+      third-party plugins with install snippets.
 - [ ] **Hosted profile sync (opt-in)** — a small server-side component
-  for users who want their profile shared between devices. Default
-  remains local-only.
+      for users who want their profile shared between devices. Default
+      remains local-only.
 - [ ] **`neurodock-clinical` heuristics expansion** — formalised library
-  of detector primitives shared across servers.
+      of detector primitives shared across servers.
 - [ ] **i18n of the CLI and extension** — at least one non-English
-  locale fully covered end to end.
+      locale fully covered end to end.
 - [ ] **A formal `0.x → 1.0` review** — protocol stability, semver
-  guarantees on MCP tool contracts, ADR for breaking-change policy.
+      guarantees on MCP tool contracts, ADR for breaking-change policy.
 
 ## Explicit non-goals
 

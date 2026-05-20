@@ -6,7 +6,15 @@
   "$comment": "Discovery is filesystem-based in v0.1.0: the substrate walks plugins/*/plugin.yaml (in-repo) and $XDG_DATA_HOME/neurodock/plugins/*/plugin.yaml (per-user) at init. The Phase 3 federated registry at plugins.neurodock.org is opt-in and indexes signed manifests; the protocol does NOT depend on a central registry. Loaders MUST preserve unknown top-level and nested keys when round-tripping a manifest so a v0.1.0 install can read and re-emit a v0.2.0 manifest without data loss. Asset paths in `provides[].path` and `hooks.*` are sandboxed: the resolved absolute path MUST remain inside the plugin's directory after normalisation. Symlinks pointing outside the plugin dir MUST be rejected by the loader.",
   "type": "object",
   "additionalProperties": true,
-  "required": ["schema_version", "name", "type", "version", "description", "license", "trust"],
+  "required": [
+    "schema_version",
+    "name",
+    "type",
+    "version",
+    "description",
+    "license",
+    "trust"
+  ],
   "properties": {
     "schema_version": {
       "type": "string",
@@ -224,7 +232,10 @@
             "type": "string",
             "description": "Path to the asset, RELATIVE to the plugin directory. MUST start with './' or a non-leading-slash subdirectory. Loader normalises and rejects any path resolving outside the plugin directory or pointing through a symlink that does so.",
             "pattern": "^(\\./)?[^/\\\\][^\\\\:*?\"<>|]*$",
-            "examples": ["./prompts/translate-hiberno-direct.md", "prompts/tone-warm.md"]
+            "examples": [
+              "./prompts/translate-hiberno-direct.md",
+              "prompts/tone-warm.md"
+            ]
           },
           "applies_to": {
             "type": "object",

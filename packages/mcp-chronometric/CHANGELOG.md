@@ -10,7 +10,7 @@ This package follows semantic versioning per .
 ### Added
 
 - Initial in-memory implementation of all five chronometric MCP tools defined
-   Section 6 and ADR 0001:
+  Section 6 and ADR 0001:
   - `get_time_context()`
   - `mark_session_start(intent)` — auto-closes the prior open session and
     surfaces its metadata in `auto_closed_prior_session`.

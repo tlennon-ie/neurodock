@@ -23,7 +23,10 @@ function makeSandbox(): { home: string; cwd: string; cleanup: () => void } {
   };
 }
 
-function writeClaudeCodeConfig(cwd: string, servers: Record<string, unknown>): void {
+function writeClaudeCodeConfig(
+  cwd: string,
+  servers: Record<string, unknown>,
+): void {
   const path = join(cwd, ".mcp.json");
   writeFileSync(path, JSON.stringify({ mcpServers: servers }, null, 2));
 }
@@ -41,7 +44,9 @@ describe("neurodock examples", () => {
     writeClaudeCodeConfig(sandbox.cwd, {
       "neurodock-chronometric": { command: "neurodock-mcp-chronometric" },
       "neurodock-cognitive-graph": { command: "neurodock-mcp-cognitive-graph" },
-      "neurodock-task-fractionator": { command: "neurodock-mcp-task-fractionator" },
+      "neurodock-task-fractionator": {
+        command: "neurodock-mcp-task-fractionator",
+      },
     });
 
     const r = await runExamples(
@@ -115,7 +120,10 @@ describe("neurodock examples", () => {
 
     const parsed = JSON.parse(r.messages.join("\n")) as {
       wired: string[];
-      groups: Array<{ server: string; prompts: Array<{ prompt: string; tool: string }> }>;
+      groups: Array<{
+        server: string;
+        prompts: Array<{ prompt: string; tool: string }>;
+      }>;
     };
     expect(parsed.wired).toContain("neurodock-translation");
     expect(parsed.groups).toHaveLength(1);

@@ -49,7 +49,7 @@ export interface TranslationClientOptions {
 
 export async function translate<T = unknown>(
   request: TranslationRequest,
-  options: TranslationClientOptions
+  options: TranslationClientOptions,
 ): Promise<TranslationResponse<T>> {
   const { profile, forceMock } = options;
   const timestamp = new Date().toISOString();
@@ -72,7 +72,7 @@ export async function translate<T = unknown>(
 function translateCloud<T>(
   request: TranslationRequest,
   options: TranslationClientOptions,
-  timestamp: string
+  timestamp: string,
 ): TranslationResponse<T> {
   const { profile } = options;
   if (!profile.cloudProvider || !profile.cloudModel) {
@@ -82,8 +82,8 @@ function translateCloud<T>(
       data: null,
       error:
         "MISSING_CLOUD_PROVIDER: Cloud mode is enabled but no provider is " +
-          "configured. Open the popup and pick a provider, or switch back " +
-          "to local mode.",
+        "configured. Open the popup and pick a provider, or switch back " +
+        "to local mode.",
       mockMode: false,
       provenance: {
         mode: "cloud",
@@ -99,8 +99,8 @@ function translateCloud<T>(
     data: null,
     error:
       "CLOUD_NOT_WIRED: v0.0.1 does not call cloud providers. The " +
-        "wire format and persistent banner are in place; provider " +
-        "integration lands in v0.0.2.",
+      "wire format and persistent banner are in place; provider " +
+      "integration lands in v0.0.2.",
     mockMode: false,
     provenance: {
       mode: "cloud",
@@ -114,7 +114,7 @@ function translateCloud<T>(
 function mockResponse<T>(
   request: TranslationRequest,
   timestamp: string,
-  reason: "force_mock" | "local_default"
+  reason: "force_mock" | "local_default",
 ): TranslationResponse<T> {
   const provenance: ModelProvenance = {
     mode: "local",
@@ -137,7 +137,7 @@ function mockResponse<T>(
 function buildMockData(
   tool: TranslationTool,
   input: Record<string, unknown>,
-  reason: string
+  reason: string,
 ): Record<string, unknown> {
   const noteHeader =
     "[MOCK] This response is a deterministic placeholder. v0.0.1 does not " +
@@ -146,7 +146,7 @@ function buildMockData(
 
   const evalSlice = `packages/evals/corpora/translation/${tool.replace(
     "_",
-    "/"
+    "/",
   )}/v0.1.0/mock.jsonl`;
 
   const provenance = {
@@ -166,7 +166,7 @@ function buildMockData(
         {
           text:
             "[MOCK] Subtext analysis stub. The real model would rank likely " +
-              "implicit meanings here.",
+            "implicit meanings here.",
           confidence: 0.5,
         },
       ],
@@ -175,7 +175,7 @@ function buildMockData(
         action: "clarify",
         reason:
           "[MOCK] Recommendation placeholder. Configure a model to receive " +
-            "a real next-action suggestion.",
+          "a real next-action suggestion.",
         draft_reply: null,
       },
       eval_corpus_slice: evalSlice,

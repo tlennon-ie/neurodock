@@ -226,7 +226,16 @@
   "$defs": {
     "Channel": {
       "type": "string",
-      "enum": ["email", "slack", "linear", "github", "notion", "gdocs", "outlook", "generic"],
+      "enum": [
+        "email",
+        "slack",
+        "linear",
+        "github",
+        "notion",
+        "gdocs",
+        "outlook",
+        "generic"
+      ],
       "description": "Channel of origin. Drives register expectations in the prompt template."
     },
     "SubtextHypothesis": {

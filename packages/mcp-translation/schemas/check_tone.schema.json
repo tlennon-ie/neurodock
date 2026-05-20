@@ -115,7 +115,9 @@
   "errors": {
     "type": "object",
     "properties": {
-      "TEXT_REQUIRED": { "description": "The text argument was missing or empty." },
+      "TEXT_REQUIRED": {
+        "description": "The text argument was missing or empty."
+      },
       "TEXT_TOO_LONG": {
         "description": "Input text exceeded the 8000-character cap. Caller SHOULD split or excerpt before calling."
       },
@@ -203,7 +205,16 @@
   "$defs": {
     "Channel": {
       "type": "string",
-      "enum": ["email", "slack", "linear", "github", "notion", "gdocs", "outlook", "generic"]
+      "enum": [
+        "email",
+        "slack",
+        "linear",
+        "github",
+        "notion",
+        "gdocs",
+        "outlook",
+        "generic"
+      ]
     },
     "TargetRegister": {
       "type": "string",

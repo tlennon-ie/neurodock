@@ -36,9 +36,9 @@ You are the consistency layer for everything a NeuroDock user sees and reads. Vi
 ## Approved typography
 
 ```css
---font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
---font-heading: 'Lexend', 'Atkinson Hyperlegible', sans-serif;
---font-mono: 'JetBrains Mono', ui-monospace, monospace;
+--font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
+--font-heading: "Lexend", "Atkinson Hyperlegible", sans-serif;
+--font-mono: "JetBrains Mono", ui-monospace, monospace;
 
 --text-base: 16px;
 --text-secondary: 14px;

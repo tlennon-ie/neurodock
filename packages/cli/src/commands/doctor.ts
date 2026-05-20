@@ -18,7 +18,13 @@ export async function runDoctor(): Promise<DoctorResult> {
 
   checks.push(checkNodeVersion());
   checks.push(checkCommandAvailable("uv", ["--version"]));
-  checks.push(checkCommandAvailable("python3", ["--version"], "python3 or python >= 3.11"));
+  checks.push(
+    checkCommandAvailable(
+      "python3",
+      ["--version"],
+      "python3 or python >= 3.11",
+    ),
+  );
 
   // Profile presence + validity.
   const pPath = profilePath(env);
@@ -39,7 +45,9 @@ export async function runDoctor(): Promise<DoctorResult> {
         checks.push({
           name: "Profile schema valid",
           status: "FAIL",
-          detail: result.violations.map((v) => `${v.path}: ${v.message}`).join("; "),
+          detail: result.violations
+            .map((v) => `${v.path}: ${v.message}`)
+            .join("; "),
         });
       }
     } catch (err: unknown) {
@@ -77,13 +85,18 @@ export async function runDoctor(): Promise<DoctorResult> {
         status: "PASS",
         detail: d.path,
       });
-      const cfg = (parsed.value ?? {}) as { mcpServers?: Record<string, unknown> };
+      const cfg = (parsed.value ?? {}) as {
+        mcpServers?: Record<string, unknown>;
+      };
       const servers = cfg.mcpServers ?? {};
-      const wired = Object.keys(servers).filter((k) => k.startsWith("neurodock-"));
+      const wired = Object.keys(servers).filter((k) =>
+        k.startsWith("neurodock-"),
+      );
       checks.push({
         name: `NeuroDock servers wired: ${d.id} (${d.scope})`,
         status: wired.length > 0 ? "PASS" : "FAIL",
-        detail: wired.length > 0 ? wired.join(", ") : "no neurodock-* entries found",
+        detail:
+          wired.length > 0 ? wired.join(", ") : "no neurodock-* entries found",
       });
     }
   }
@@ -101,14 +114,24 @@ function checkNodeVersion(): CheckResult {
   return { name: "Node >= 22", status: "FAIL", detail: `node ${v}` };
 }
 
-function checkCommandAvailable(cmd: string, args: ReadonlyArray<string>, label?: string): CheckResult {
+function checkCommandAvailable(
+  cmd: string,
+  args: ReadonlyArray<string>,
+  label?: string,
+): CheckResult {
   const name = label ?? `${cmd} available`;
   try {
-    const out = execFileSync(cmd, args as string[], { stdio: ["ignore", "pipe", "pipe"], timeout: 4000 });
+    const out = execFileSync(cmd, args as string[], {
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 4000,
+    });
     const text = out.toString().trim().split("\n")[0] ?? "";
     return { name, status: "PASS", detail: text };
   } catch (err: unknown) {
-    const detail = err instanceof Error ? err.message.split("\n")[0] ?? "unknown error" : String(err);
+    const detail =
+      err instanceof Error
+        ? err.message.split("\n")[0] ?? "unknown error"
+        : String(err);
     return { name, status: "FAIL", detail };
   }
 }

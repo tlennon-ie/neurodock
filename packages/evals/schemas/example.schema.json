@@ -4,7 +4,16 @@
   "title": "NeuroDock eval example",
   "description": "One YAML file under packages/evals/corpora/<server>/<slice>/. Stored as YAML on disk; validated as JSON.",
   "type": "object",
-  "required": ["id", "slice", "created_at", "consent", "status", "license", "input", "expected"],
+  "required": [
+    "id",
+    "slice",
+    "created_at",
+    "consent",
+    "status",
+    "license",
+    "input",
+    "expected"
+  ],
   "additionalProperties": false,
   "properties": {
     "id": {

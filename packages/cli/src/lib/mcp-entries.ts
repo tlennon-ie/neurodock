@@ -26,12 +26,26 @@ export function detectRepoRoot(env: EnvSnapshot): string | undefined {
 }
 
 const NEURODOCK_SERVERS = [
-  { key: "neurodock-chronometric", pkg: "mcp-chronometric", entrypoint: "neurodock-mcp-chronometric" },
-  { key: "neurodock-cognitive-graph", pkg: "mcp-cognitive-graph", entrypoint: "neurodock-mcp-cognitive-graph" },
-  { key: "neurodock-task-fractionator", pkg: "mcp-task-fractionator", entrypoint: "neurodock-mcp-task-fractionator" },
+  {
+    key: "neurodock-chronometric",
+    pkg: "mcp-chronometric",
+    entrypoint: "neurodock-mcp-chronometric",
+  },
+  {
+    key: "neurodock-cognitive-graph",
+    pkg: "mcp-cognitive-graph",
+    entrypoint: "neurodock-mcp-cognitive-graph",
+  },
+  {
+    key: "neurodock-task-fractionator",
+    pkg: "mcp-task-fractionator",
+    entrypoint: "neurodock-mcp-task-fractionator",
+  },
 ] as const;
 
-export function buildMcpServers(ctx: McpEntryContext): Record<string, McpServerEntry> {
+export function buildMcpServers(
+  ctx: McpEntryContext,
+): Record<string, McpServerEntry> {
   const out: Record<string, McpServerEntry> = {};
   for (const s of NEURODOCK_SERVERS) {
     if (ctx.repoRoot) {

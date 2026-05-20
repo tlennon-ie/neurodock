@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -31,6 +32,7 @@ The output must contain:
 2. **`deal_stage_signal`** equals `"polite-stall"`. The strongest signal in the message is the absence of a committed next step despite the positive opening.
 
 3. **`likely_subtext`** contains at least three distinct hypotheses, each surfacing a different signal:
+
    - Interest signal: phrasebook match on "we love the product" — surfaced with confidence ≥ 0.7. Note acknowledges enthusiasm without upgrading it to a forecast.
    - Interest signal: phrasebook match on "we're aligned on the value" — surfaced with confidence ≥ 0.7. Note treats this as a milestone (stop re-pitching value, start working price/scope).
    - Budget-hedge: phrasebook match on "we just need to get budget approved" — surfaced with confidence ≥ 0.7. Note flags the word "just" as the tell that there is no budget yet.

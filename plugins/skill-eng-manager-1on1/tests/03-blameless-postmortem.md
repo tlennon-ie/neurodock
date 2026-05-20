@@ -7,6 +7,7 @@ This test is the most behaviour-heavy of the three because it must assert what t
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []

@@ -20,23 +20,58 @@ It is Monday, 2026-05-18, 08:42 local time. The user invokes the skill by typing
    ```json
    {
      "project": null,
-     "period": {"start": "2026-05-11", "end": "2026-05-18"},
+     "period": { "start": "2026-05-11", "end": "2026-05-18" },
      "summary": "This week across all projects: 4 decisions recorded, 1 blocker noted, 3 candidate next actions.",
      "decisions": [
-       {"id": "ent_D1", "name": "Ship rumination detector first", "decided_on": "2026-05-16", "decided_by": [], "confidence": 1.0},
-       {"id": "ent_D2", "name": "Adopt sqlite-vec 0.2", "decided_on": "2026-05-15", "decided_by": [], "confidence": 1.0},
-       {"id": "ent_D3", "name": "Defer guardrail  to month 6", "decided_on": "2026-05-14", "decided_by": [], "confidence": 1.0},
-       {"id": "ent_D4", "name": "Founding scope locked to three pillars", "decided_on": "2026-05-12", "decided_by": [], "confidence": 1.0}
+       {
+         "id": "ent_D1",
+         "name": "Ship rumination detector first",
+         "decided_on": "2026-05-16",
+         "decided_by": [],
+         "confidence": 1.0
+       },
+       {
+         "id": "ent_D2",
+         "name": "Adopt sqlite-vec 0.2",
+         "decided_on": "2026-05-15",
+         "decided_by": [],
+         "confidence": 1.0
+       },
+       {
+         "id": "ent_D3",
+         "name": "Defer guardrail  to month 6",
+         "decided_on": "2026-05-14",
+         "decided_by": [],
+         "confidence": 1.0
+       },
+       {
+         "id": "ent_D4",
+         "name": "Founding scope locked to three pillars",
+         "decided_on": "2026-05-12",
+         "decided_by": [],
+         "confidence": 1.0
+       }
      ],
      "blockers": [
-       {"id": "fact_B1", "subject": {"type": "project", "name": "neurodock"}, "predicate": "blocked_by", "object": {"literal": "awaiting  confirmation"}, "confidence": 0.9, "recorded_at": "2026-05-15T11:20:00+01:00"}
+       {
+         "id": "fact_B1",
+         "subject": { "type": "project", "name": "neurodock" },
+         "predicate": "blocked_by",
+         "object": { "literal": "awaiting  confirmation" },
+         "confidence": 0.9,
+         "recorded_at": "2026-05-15T11:20:00+01:00"
+       }
      ],
-     "next_actions": ["Resolve blocker on neurodock", "Follow up on decision 'Adopt sqlite-vec 0.2' with implementation owner", "Draft RFC section 4"]
+     "next_actions": [
+       "Resolve blocker on neurodock",
+       "Follow up on decision 'Adopt sqlite-vec 0.2' with implementation owner",
+       "Draft RFC section 4"
+     ]
    }
    ```
-3. `mcp-cognitive-graph.weekly_rollup(project="neurodock")` → decisions=[ent_D1, ent_D3], blockers=[fact_B1], next_actions=["Resolve blocker on neurodock: 'awaiting  confirmation'"]
+3. `mcp-cognitive-graph.weekly_rollup(project="neurodock")` → decisions=[ent_D1, ent_D3], blockers=[fact_B1], next_actions=["Resolve blocker on neurodock: 'awaiting confirmation'"]
 4. `mcp-cognitive-graph.weekly_rollup(project="")` → decisions=[ent_D2], blockers=[], next_actions=[] (empty)
-5. `mcp-cognitive-graph.recall_decisions(project="", since="2026-04-18")` → returns the two most recent decisions on  (because step 4 returned empty next_actions)
+5. `mcp-cognitive-graph.recall_decisions(project="", since="2026-04-18")` → returns the two most recent decisions on (because step 4 returned empty next_actions)
 6. `mcp-cognitive-graph.weekly_rollup(project="phase-0-rfc")` → decisions=[ent_D4], blockers=[], next_actions=["Draft RFC section 4"]
 7. `mcp-task-fractionator.next_one(project="neurodock")` → task with confidence 0.92
 8. `mcp-task-fractionator.next_one(project="")` → task with confidence 0.81

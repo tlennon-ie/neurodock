@@ -39,7 +39,7 @@ const SOURCE_DIR = resolve(
   "mcp-translation",
   "src",
   "neurodock_mcp_translation",
-  "prompts"
+  "prompts",
 );
 const LIB_TARGET = resolve(PKG_ROOT, "src", "lib", "prompts");
 const PUBLIC_TARGET = resolve(PKG_ROOT, "public", "prompts");
@@ -53,7 +53,7 @@ export function syncPrompts(): SyncResult {
   if (!existsSync(SOURCE_DIR)) {
     throw new Error(
       `sync-prompts: source dir not found at ${SOURCE_DIR}. ` +
-        `Is packages/mcp-translation present in the workspace?`
+        `Is packages/mcp-translation present in the workspace?`,
     );
   }
   mkdirSync(LIB_TARGET, { recursive: true });
@@ -96,7 +96,9 @@ if (isMain()) {
   // eslint-disable-next-line no-console
   console.log(
     `[sync-prompts] copied ${result.copied.length} prompt(s)` +
-      (result.skipped.length > 0 ? `; skipped ${result.skipped.join(", ")}` : "")
+      (result.skipped.length > 0
+        ? `; skipped ${result.skipped.join(", ")}`
+        : ""),
   );
   if (result.copied.length === 0) {
     process.exit(1);

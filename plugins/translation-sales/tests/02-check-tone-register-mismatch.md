@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -15,6 +16,7 @@ plugins:
 ```
 
 `mcp-translation` is mocked. The reference client passes:
+
 - `target_register: "sales-late-stage"` based on the deal-stage context the rep configured (the recipient is in procurement-review; the thread history contains "we're rationalising our vendor stack").
 
 ## User prompt
@@ -32,6 +34,7 @@ The output must contain:
 2. **`register_assessment`** equals `"mismatch"`. The pack surfaces the mismatch but does NOT auto-rewrite during `check_tone`.
 
 3. **`signals`** contains entries for each register-mismatch token, each with a brief explanation of why the token is mismatched for the target stage:
+
    - `"just wanted to"` — `"just" hedge weakens the message; remove for late-stage`.
    - `"touch base"` — phrasebook match (status-check with no agenda); flagged as deal-stage gatekeeping when the rep is the one initiating without a specific topic.
    - `"circle back"` — phrasebook-adjacent (hedged commitment phrase deployed by the rep themselves); reads as filler.

@@ -48,16 +48,16 @@ For every new or modified tool, you must produce:
 
 ## Versioning policy
 
-| Change type | Version bump | Backward compat required? |
-|---|---|---|
-| Adding an optional input parameter | minor | Yes |
-| Adding a new tool to a server | minor | Yes |
-| Adding a new optional output field | minor | Yes |
-| Renaming a tool | major | No (old name removed) |
-| Removing a tool | major | Provide deprecation cycle ≥ 1 minor release |
-| Changing the type of an existing field | major | No |
-| Making a required input optional | minor | Yes |
-| Making an optional input required | major | No |
+| Change type                            | Version bump | Backward compat required?                   |
+| -------------------------------------- | ------------ | ------------------------------------------- |
+| Adding an optional input parameter     | minor        | Yes                                         |
+| Adding a new tool to a server          | minor        | Yes                                         |
+| Adding a new optional output field     | minor        | Yes                                         |
+| Renaming a tool                        | major        | No (old name removed)                       |
+| Removing a tool                        | major        | Provide deprecation cycle ≥ 1 minor release |
+| Changing the type of an existing field | major        | No                                          |
+| Making a required input optional       | minor        | Yes                                         |
+| Making an optional input required      | major        | No                                          |
 
 A "deprecation cycle" means: tool keeps working but emits a structured warning; documented removal date announced; removed in next major.
 

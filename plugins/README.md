@@ -20,14 +20,14 @@ The long-form contributor guide (how to author each plugin type end-to-end) ship
 
 ## The six plugin types
 
-| Type | What it ships | Required extras |
-|---|---|---|
-| `skill` | A Claude skill (SKILL.md + tests) | A `SKILL.md` alongside `plugin.yaml` (out-of-tree skills need BOTH files; see ADR 0007) |
-| `mcp-server` | A new MCP server binary | A runnable entrypoint declared in `provides[].path` |
-| `profile` | A curated profile preset | A YAML preset file under `provides[]` |
-| `translation-pack` | Domain-specific translation prompts (engineering review, legal, etc.) | At least one `provides[].type: translation-prompt` |
-| `language-pack` | Locale-specific overrides for `mcp-translation` defaults | `locale` array; `provides[].type: language-prompt-override` |
-| `theme` | Design-system-keeper-approved visual variant | Token files + CSS bundle |
+| Type               | What it ships                                                         | Required extras                                                                         |
+| ------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `skill`            | A Claude skill (SKILL.md + tests)                                     | A `SKILL.md` alongside `plugin.yaml` (out-of-tree skills need BOTH files; see ADR 0007) |
+| `mcp-server`       | A new MCP server binary                                               | A runnable entrypoint declared in `provides[].path`                                     |
+| `profile`          | A curated profile preset                                              | A YAML preset file under `provides[]`                                                   |
+| `translation-pack` | Domain-specific translation prompts (engineering review, legal, etc.) | At least one `provides[].type: translation-prompt`                                      |
+| `language-pack`    | Locale-specific overrides for `mcp-translation` defaults              | `locale` array; `provides[].type: language-prompt-override`                             |
+| `theme`            | Design-system-keeper-approved visual variant                          | Token files + CSS bundle                                                                |
 
 ## The minimal manifest
 
@@ -41,8 +41,8 @@ version: "0.1.0" # semver
 description: "One sentence." # no clinical claims (ETHICS commitment 1)
 license: "AGPL-3.0-or-later" # must be on the v0.1.0 whitelist
 trust:
- level: "community" # see trust ladder below
- source_url: "https://github.com/you/your-plugin"
+  level: "community" # see trust ladder below
+  source_url: "https://github.com/you/your-plugin"
 ```
 
 Everything else is optional. See [`plugin.example.yaml`](../packages/core/schemas/plugin.example.yaml) for the full shape.
@@ -51,12 +51,12 @@ Everything else is optional. See [`plugin.example.yaml`](../packages/core/schema
 
 Four levels. The substrate decides what to prompt the user with based on the level and the user's `profile.plugins.*` policy.
 
-| Level | Meaning | User prompt? |
-|---|---|---|
-| `official` | published by the NeuroDock maintainer | No |
-| `verified` | Signed by a verified contributor (maintainer keyring) | No |
-| `community` | Author-signed; provenance recorded but not vouched | Prompt-once-remember (default) |
-| `experimental` | Unsigned | Refuse by default; user can opt in per session |
+| Level          | Meaning                                               | User prompt?                                   |
+| -------------- | ----------------------------------------------------- | ---------------------------------------------- |
+| `official`     | published by the NeuroDock maintainer                 | No                                             |
+| `verified`     | Signed by a verified contributor (maintainer keyring) | No                                             |
+| `community`    | Author-signed; provenance recorded but not vouched    | Prompt-once-remember (default)                 |
+| `experimental` | Unsigned                                              | Refuse by default; user can opt in per session |
 
 Signature verification ships in Phase 3 alongside the federated registry. Until then, `verified` is operationally equivalent to `community` for user experience; the schema field is reserved so we don't re-architect when verification lands.
 

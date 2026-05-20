@@ -57,12 +57,18 @@ function seedClaudeCode(cwd: string): string {
   return cfg;
 }
 
-function seedNeurodockDataDir(home: string): { profile: string; graph: string } {
+function seedNeurodockDataDir(home: string): {
+  profile: string;
+  graph: string;
+} {
   const dir = join(home, ".neurodock");
   mkdirSync(dir, { recursive: true });
   const profile = join(dir, "profile.yaml");
   const graph = join(dir, "cognitive-graph.sqlite");
-  writeFileSync(profile, "identity:\n  display_name: t\n  neurotypes: [adhd]\n");
+  writeFileSync(
+    profile,
+    "identity:\n  display_name: t\n  neurotypes: [adhd]\n",
+  );
   writeFileSync(graph, "stub");
   return { profile, graph };
 }

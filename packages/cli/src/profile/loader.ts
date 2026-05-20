@@ -40,13 +40,22 @@ export interface WriteProfileFromTemplateInput {
   readonly displayName: string;
 }
 
-export function writeProfileFromTemplate(input: WriteProfileFromTemplateInput): string {
+export function writeProfileFromTemplate(
+  input: WriteProfileFromTemplateInput,
+): string {
   const templateText = readFileSync(input.templatePath, "utf8");
   const doc = parseDocument(templateText);
   // Set identity.display_name. parseDocument preserves comments and ordering.
   const identity = doc.get("identity");
-  if (identity && typeof identity === "object" && "set" in (identity as object)) {
-    (identity as { set: (k: string, v: unknown) => void }).set("display_name", input.displayName);
+  if (
+    identity &&
+    typeof identity === "object" &&
+    "set" in (identity as object)
+  ) {
+    (identity as { set: (k: string, v: unknown) => void }).set(
+      "display_name",
+      input.displayName,
+    );
   } else {
     // Fallback: re-parse, mutate the plain object, re-stringify (loses comments
     // but only triggers if template is malformed, which we control).

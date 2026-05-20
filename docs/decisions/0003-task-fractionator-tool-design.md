@@ -4,11 +4,11 @@
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder`, `skill-author` (for the daily-planner and `/resume` consumers)
-- **Informed:**  (no clinical surface in v0.1.0 but Phase 2 may add chronometric-aware nudging), `doc-writer`, `accessibility-auditor`
+- **Informed:** (no clinical surface in v0.1.0 but Phase 2 may add chronometric-aware nudging), `doc-writer`, `accessibility-auditor`
 
 ## Context
 
-`mcp-task-fractionator` is the third substrate server scheduled for Phase 1 (), shipping alongside `mcp-chronometric` and `mcp-cognitive-graph` in the `v0.1` developer preview. It supports the user stories in , most directly the "Director with ADHD" story: *"voice-dump a vague initiative and get back 7 atomic tasks plus the single next one"* — with the acceptance bar that 80%+ of pilots rate the output "I can start now".
+`mcp-task-fractionator` is the third substrate server scheduled for Phase 1 (), shipping alongside `mcp-chronometric` and `mcp-cognitive-graph` in the `v0.1` developer preview. It supports the user stories in , most directly the "Director with ADHD" story: _"voice-dump a vague initiative and get back 7 atomic tasks plus the single next one"_ — with the acceptance bar that 80%+ of pilots rate the output "I can start now".
 
 The server provides two tools:
 
@@ -21,7 +21,7 @@ This ADR sits on top of the precedent established by ADR 0001 (`0001-chronometri
 
 1. **ADHD-friendly atomic granularity.** Tasks must be small enough that a user with executive-function load can pick them up cold. The 5–90 minute estimated range, the 3–12 target count (hard cap 20), and the requirement that every task carry at least one acceptance criterion all encode this.
 2. **Stateless server in v0.1.0.** Persistence already has a home (`mcp-cognitive-graph`); duplicating it inside the fractionator would couple two servers and split the source of truth.
-3. **No LLM call from inside the server.** Per  the LLM boundary is the user's MCP client. The substrate servers do not embed model calls. This is a vendor-neutrality property and a privacy property.
+3. **No LLM call from inside the server.** Per the LLM boundary is the user's MCP client. The substrate servers do not embed model calls. This is a vendor-neutrality property and a privacy property.
 4. **Additive-only evolution.** Same versioning policy as the chronometric server. The `v0.1.0` `$id` is part of the contract.
 5. **No vendor lock-in.** No assumption about which LLM client invokes these tools. No assumption about which storage backend mcp-cognitive-graph is using underneath.
 6. **Composition is the manifesto.** A `plan` tool that combines decompose+next would be cheaper to call but would conflate two responsibilities and prevent skills from interposing between them (e.g. running a clarification step on the decomposition before committing to a single next step).
@@ -41,7 +41,7 @@ A single server that owns tasks end-to-end: `decompose` writes to a local SQLite
 
 ### Option B — Stateless server with cognitive-graph persistence (chosen)
 
-`decompose` returns the task list as data. `next_one` reads from `mcp-cognitive-graph` (which the caller — usually a skill — wrote to between the two calls). The fractionator owns the *decomposition algorithm*; the graph owns the *state*.
+`decompose` returns the task list as data. `next_one` reads from `mcp-cognitive-graph` (which the caller — usually a skill — wrote to between the two calls). The fractionator owns the _decomposition algorithm_; the graph owns the _state_.
 
 ### Option C — A single combined `plan` tool
 
@@ -78,7 +78,7 @@ The seven binding design decisions:
 
 Like `mcp-cognitive-graph`, this server does not call an LLM directly. v0.1.0 uses local templating and heuristics for decomposition. The LLM boundary stays at the user's MCP client.
 
-The richer-decomposition path is a v0.2 tool, *not* a v0.1 hidden upgrade:
+The richer-decomposition path is a v0.2 tool, _not_ a v0.1 hidden upgrade:
 
 - **Provisional name:** `decompose_with_assist(goal, llm_draft, time_budget?)`. The LLM produces a draft decomposition client-side and submits it; the server validates the schema, fills in UUIDs, topologically sorts, checks budget feasibility, and rejects malformed or unsafe drafts. The server remains the schema and invariants authority; the LLM is a content provider.
 - This separation keeps vendor-neutrality intact and keeps the "no remote calls from the server" property auditable.
@@ -91,7 +91,7 @@ ISO 8601 durations only, validated with the same regex used by the chronometric 
 ^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(\d+H)?(\d+M)?(\d+(\.\d+)?S)?)?$
 ```
 
-Examples that parse: `PT4H`, `P3D`, `PT30M`, `PT2H30M`. `P3D` is treated as 3 working blocks of profile-declared length (default 4 hours each) — this lets a user say "I have three days" without the server pretending they will work 72 consecutive hours. Days-to-minutes conversion is a server-internal heuristic and may evolve; the *schema* commits only to the duration format.
+Examples that parse: `PT4H`, `P3D`, `PT30M`, `PT2H30M`. `P3D` is treated as 3 working blocks of profile-declared length (default 4 hours each) — this lets a user say "I have three days" without the server pretending they will work 72 consecutive hours. Days-to-minutes conversion is a server-internal heuristic and may evolve; the _schema_ commits only to the duration format.
 
 Unparseable input returns `TIME_BUDGET_UNPARSEABLE`. The server does NOT silently fall back to unbounded, because that would mask caller bugs.
 
@@ -139,15 +139,16 @@ This makes `next_one` trivially definable as "sequence = 1 of the unfinished sub
 
 ## Open questions
 
-1. **How does the v0.1.0 heuristic decomposition handle vague goals?** The current plan is a local templating + keyword heuristic engine: it recognises verbs (`ship`, `fix`, `draft`, `set up`), nouns (`RFC`, `bug`, `feature`), and time markers (`by Friday`, `before the demo`) and maps them to small task skeletons. For genuinely vague input (e.g. `"do the thing"`) the server returns `DECOMPOSITION_UNAVAILABLE` with a `clarifying_question` field — *not* a fabricated decomposition. Open: should the clarifying-question generator itself live in the server, or should it be a skill-side concern fed from a small static table the server returns? Recommended: server returns one canned question per detected ambiguity class; richer clarification is a skill responsibility.
+1. **How does the v0.1.0 heuristic decomposition handle vague goals?** The current plan is a local templating + keyword heuristic engine: it recognises verbs (`ship`, `fix`, `draft`, `set up`), nouns (`RFC`, `bug`, `feature`), and time markers (`by Friday`, `before the demo`) and maps them to small task skeletons. For genuinely vague input (e.g. `"do the thing"`) the server returns `DECOMPOSITION_UNAVAILABLE` with a `clarifying_question` field — _not_ a fabricated decomposition. Open: should the clarifying-question generator itself live in the server, or should it be a skill-side concern fed from a small static table the server returns? Recommended: server returns one canned question per detected ambiguity class; richer clarification is a skill responsibility.
 
 2. **Should `next_one` consider chronometric `energy_zone` in its choice?** A 60-minute writing task is a worse pick at 4pm `afternoon_dip` than a 15-minute coordination task. v0.1.0 ignores energy zone (purely sequence-based) to keep the dependency graph between substrate servers shallow. Phase 2 enhancement: `next_one` reads `get_time_context()` and weights candidates by tag/energy fit. This would be additive (an optional output field `energy_zone_match: float`); the input schema would not change. Maintainer to confirm before Phase 2 work begins.
 
 3. **How does `BUDGET_INFEASIBLE` carry partial progress back to the caller?** When the server cannot fit a decomposition under `time_budget`, it currently returns the error code only. Two options:
-   - **Strict:** error payload contains `minimum_feasible_minutes` only; the caller retries with a larger budget.
-   - **Generous:** error payload contains a draft decomposition that *would* fit if the budget were relaxed, plus `minimum_feasible_minutes`.
 
-   The generous option is more useful to ADHD-prone users (they see the shape of the work, not just a refusal) but risks the caller treating the draft as authoritative. Recommended: strict for v0.1.0; revisit after the first  cycle. The schema is forward-compatible with either choice because errors carry payloads that are not strictly schematised in v0.1.0.
+   - **Strict:** error payload contains `minimum_feasible_minutes` only; the caller retries with a larger budget.
+   - **Generous:** error payload contains a draft decomposition that _would_ fit if the budget were relaxed, plus `minimum_feasible_minutes`.
+
+   The generous option is more useful to ADHD-prone users (they see the shape of the work, not just a refusal) but risks the caller treating the draft as authoritative. Recommended: strict for v0.1.0; revisit after the first cycle. The schema is forward-compatible with either choice because errors carry payloads that are not strictly schematised in v0.1.0.
 
 ## Notes for `mcp-server-builder`
 

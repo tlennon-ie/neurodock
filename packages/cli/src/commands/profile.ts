@@ -2,7 +2,10 @@ import { existsSync } from "node:fs";
 import { readEnv } from "../lib/env.js";
 import { profilePath } from "../lib/paths.js";
 import { loadProfileFromFile, renderResolvedYaml } from "../profile/loader.js";
-import { validateProfile, type ValidationResult } from "../profile/validator.js";
+import {
+  validateProfile,
+  type ValidationResult,
+} from "../profile/validator.js";
 
 export interface ValidateResult {
   readonly path: string;
@@ -17,7 +20,16 @@ export async function runProfileValidate(): Promise<ValidateResult> {
     return {
       path: p,
       missing: true,
-      result: { valid: false, violations: [{ path: "/", message: "profile file does not exist", keyword: "missing" }] },
+      result: {
+        valid: false,
+        violations: [
+          {
+            path: "/",
+            message: "profile file does not exist",
+            keyword: "missing",
+          },
+        ],
+      },
     };
   }
   const loaded = loadProfileFromFile(p);

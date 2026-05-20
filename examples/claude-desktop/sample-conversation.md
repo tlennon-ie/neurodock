@@ -28,6 +28,7 @@ chronometric:
 ## 08:34 — Morning brief
 
 **You:**
+
 > Morning. What's on the table today?
 
 **Claude (invokes `get_time_context`)**
@@ -43,10 +44,11 @@ chronometric:
 ```
 
 **Claude:**
+
 > 08:34, Tuesday. Morning-focus zone, no session running.
 >
-> Last thing I have a note on is from Monday evening: *"draft pitch deck v3,
-> get to the financials slide before EOD."* Want to pick that up, or start
+> Last thing I have a note on is from Monday evening: _"draft pitch deck v3,
+> get to the financials slide before EOD."_ Want to pick that up, or start
 > something else?
 
 (Claude pulled "last thing I have a note on" by invoking
@@ -58,6 +60,7 @@ fact at the end of yesterday's session.)
 ## 08:35 — Start a session
 
 **You:**
+
 > Pick it up. Pitch deck — financials slide. Give me 45 minutes.
 
 **Claude (invokes `mark_session_start`):**
@@ -70,6 +73,7 @@ fact at the end of yesterday's session.)
 ```
 
 **Claude:**
+
 > Started. 45-minute interval, ending at 09:20. I'll nudge you at 30 if you
 > haven't checked in.
 
@@ -78,9 +82,11 @@ fact at the end of yesterday's session.)
 ## 09:11 — Check-in (you're deep in)
 
 **You:**
+
 > Almost done with the unit economics block. One more table.
 
 **Claude:**
+
 > Good. You're 36 minutes in — past the 30-mark already. Keep going if you're
 > still flowing; I'll check again at the 45.
 
@@ -92,6 +98,7 @@ session.)
 ## 09:25 — Past the end
 
 **You:**
+
 > Done. Got through unit economics and TAM. Skipped CAC payback for now.
 
 **Claude (invokes `mark_session_end`):**
@@ -105,6 +112,7 @@ session.)
 ```
 
 **Claude:**
+
 > Logged. You ran 50 minutes — slightly over. You're approaching the
 > hyperfocus-break threshold (your profile is set to 90). Want to take 10
 > before the next thing, or push on?
@@ -114,6 +122,7 @@ session.)
 ## 09:26 — Take the break
 
 **You:**
+
 > Yeah, 10 min. What should I record so I don't lose the CAC thing?
 
 **Claude (invokes `record_fact` on cognitive-graph):**
@@ -128,6 +137,7 @@ session.)
 ```
 
 **Claude:**
+
 > Recorded. When you come back to the deck I'll surface it. Go drink water.
 
 ---

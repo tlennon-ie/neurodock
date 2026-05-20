@@ -2,11 +2,11 @@
 
 Three replayable scenarios cover the skill's full lifecycle: open, mid-session check, break trigger, close.
 
-| Test | Scenario | Duration | Expected behaviour |
-|---|---|---|---|
-| `01-start-25min-pomodoro.md` | Default 25-minute start | 25 min | Skill calls `mark_session_start` with intent parsed from the user message. One-line confirmation returned. |
-| `02-custom-duration.md` | User-specified 50-minute block with explicit intent | 50 min | Skill calls `mark_session_start` with the user's stated intent. Tracks the 50-minute threshold for the later break trigger. |
-| `03-break-trigger.md` | Full lifecycle: start, wait, break trigger, close | 25 min | Skill surfaces a break suggestion once `current_session_length >= PT25M`, then closes on user's "done", then records the optional Pomodoro fact. |
+| Test                         | Scenario                                            | Duration | Expected behaviour                                                                                                                               |
+| ---------------------------- | --------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `01-start-25min-pomodoro.md` | Default 25-minute start                             | 25 min   | Skill calls `mark_session_start` with intent parsed from the user message. One-line confirmation returned.                                       |
+| `02-custom-duration.md`      | User-specified 50-minute block with explicit intent | 50 min   | Skill calls `mark_session_start` with the user's stated intent. Tracks the 50-minute threshold for the later break trigger.                      |
+| `03-break-trigger.md`        | Full lifecycle: start, wait, break trigger, close   | 25 min   | Skill surfaces a break suggestion once `current_session_length >= PT25M`, then closes on user's "done", then records the optional Pomodoro fact. |
 
 ## How tests run
 

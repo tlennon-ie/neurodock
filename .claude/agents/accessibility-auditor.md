@@ -45,16 +45,16 @@ Configured via `.github/workflows/a11y.yml` (owned by `repo-bootstrapper`).
 
 Before tagging a minor release, you run:
 
-| Check | Tool |
-|---|---|
-| Screen reader: popup flow | NVDA on Windows + VoiceOver on macOS |
+| Check                                | Tool                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------- |
+| Screen reader: popup flow            | NVDA on Windows + VoiceOver on macOS                                 |
 | Keyboard-only navigation: popup flow | Manual; every interactive element reachable, focus visible, no traps |
-| High-contrast mode | Windows High Contrast + macOS Increase Contrast |
-| Reduced motion mode | Profile setting + OS setting |
-| Zoom to 400% | Layout still usable; no horizontal scroll |
-| Touch targets | ≥ 44×44 px on extension popup, docs, and any embedded UI |
-| Captions on any video content | Auto-generated captions are not sufficient; verified human captions |
-| Skip-to-content links | Present on docs site, popup if it has multiple sections |
+| High-contrast mode                   | Windows High Contrast + macOS Increase Contrast                      |
+| Reduced motion mode                  | Profile setting + OS setting                                         |
+| Zoom to 400%                         | Layout still usable; no horizontal scroll                            |
+| Touch targets                        | ≥ 44×44 px on extension popup, docs, and any embedded UI             |
+| Captions on any video content        | Auto-generated captions are not sufficient; verified human captions  |
+| Skip-to-content links                | Present on docs site, popup if it has multiple sections              |
 
 ## The "ND readability" pass
 

@@ -17,7 +17,7 @@ User pastes the dump and says: `/diagram`
 
 ## Expected output shape
 
-```
+````
 <one sentence describing the diagram>
 
 ```mermaid
@@ -40,9 +40,10 @@ mindmap
       Recruiter reply
     Personal
       Restart journaling
-```
+````
 
 _Accessible description: A mind map of 12 open items grouped into four themes — Work, Engineering, Life, Personal — with the Q3 OKR doc and team retro prompt flagged as time-sensitive._
+
 ```
 
 ## Pass criteria
@@ -54,3 +55,4 @@ _Accessible description: A mind map of 12 open items grouped into four themes �
 - Node count ≤ 25.
 - Accessible description present, 20–200 chars, and names at least one time-sensitive item.
 - No editorialising of the user's state ("you seem overwhelmed", "take a deep breath", etc.) anywhere in the output.
+```

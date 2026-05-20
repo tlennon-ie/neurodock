@@ -48,6 +48,7 @@ Follow these steps in order. Do not skip steps. Do not improvise additional tool
 1. **Anchor the day.** Call `mcp-chronometric.get_time_context()`. Note `day_of_week`, `energy_zone`, and `current_session_length`. If `day_of_week` is `Monday`, this is a **weekly brief**. Otherwise it is a **daily-light brief**.
 
 2. **Pull the weekly rollup, scoped or unscoped.**
+
    - For a weekly brief: call `mcp-cognitive-graph.weekly_rollup()` with no project filter to discover which projects had activity in the trailing seven days. Rank projects by the most recent `decisions[].decided_on` (falling back to most recent `blockers[].recorded_at` when there are no decisions).
    - For a daily-light brief: same call, same ranking.
    - Cap the project list at `preferences.max_chunk_size` (default 5). If more projects had activity, note the count of elided projects in the closing line — do not name them.
@@ -57,6 +58,7 @@ Follow these steps in order. Do not skip steps. Do not improvise additional tool
 4. **Decide whether to surface decision detail.** If a project has decisions in the last seven days but `weekly_rollup.next_actions` is empty for that project, call `mcp-cognitive-graph.recall_decisions(project=<name>, since=<thirty days ago>)` once to surface up to two recent decisions that may need follow-up. Skip this call when `next_actions` is already populated.
 
 5. **Get one concrete next-action per project.** Call `mcp-task-fractionator.next_one(project=<name>)` for each project. Three outcomes:
+
    - Success with `confidence >= 0.7` — quote the task title and the confidence value.
    - Success with `confidence < 0.7` — quote the title and explicitly say "low confidence" with the value. Do not pretend certainty.
    - Error `NO_TASKS_AVAILABLE` — say "no decomposed tasks for this project; consider `decompose` if it's time to plan it." Do not fabricate a task.

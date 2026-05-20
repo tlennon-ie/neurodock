@@ -28,6 +28,6 @@ Remove the trigger phrases from `~/.neurodock/profile.yaml` under `skills.adhd-d
 
 The skill follows the project-wide "Answer First" rule: the first sentence fits in 80 characters and names the day's shape. Project sections cap at three bullets each. The closing line is always present and is always non-judgmental.
 
-See  (Launch skills #1) for the canonical spec, and `SKILL.md` for the full instructions the LLM follows when this skill activates. The three files under `tests/` are the executable contract — CI replays them against a reference MCP client on every PR.
+See (Launch skills #1) for the canonical spec, and `SKILL.md` for the full instructions the LLM follows when this skill activates. The three files under `tests/` are the executable contract — CI replays them against a reference MCP client on every PR.
 
 Licensed AGPL-3.0-or-later.

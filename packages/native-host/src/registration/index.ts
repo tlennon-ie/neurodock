@@ -20,7 +20,9 @@ export function detectPlatform(): SupportedPlatform | "unsupported" {
   return "unsupported";
 }
 
-export function register(opts: RegistrationOptions): ReadonlyArray<RegistrationOutcome> {
+export function register(
+  opts: RegistrationOptions,
+): ReadonlyArray<RegistrationOutcome> {
   const p = detectPlatform();
   switch (p) {
     case "darwin":
@@ -41,7 +43,9 @@ export function register(opts: RegistrationOptions): ReadonlyArray<RegistrationO
   }
 }
 
-export function unregister(opts: UnregisterOptions = {}): ReadonlyArray<RegistrationOutcome> {
+export function unregister(
+  opts: UnregisterOptions = {},
+): ReadonlyArray<RegistrationOutcome> {
   const p = detectPlatform();
   switch (p) {
     case "darwin":
@@ -62,5 +66,9 @@ export function unregister(opts: UnregisterOptions = {}): ReadonlyArray<Registra
   }
 }
 
-export type { RegistrationOptions, RegistrationOutcome, UnregisterOptions } from "./types.js";
+export type {
+  RegistrationOptions,
+  RegistrationOutcome,
+  UnregisterOptions,
+} from "./types.js";
 export { HOST_NAME } from "./types.js";

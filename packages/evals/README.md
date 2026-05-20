@@ -8,7 +8,7 @@ prove that ND-aware prompts help neurodivergent users in real situations, and
 we catch regressions when prompts change. The harness gates prompt PRs in CI.
 
 This package is **v0.0.1** — the scaffold, the harness, and 6-10 hand-authored
-seed examples. The seeds are **synthesised by  to
+seed examples. The seeds are **synthesised by to
 demonstrate the format** — they are NOT real corporate messages. Real
 contributed corpora arrive over Phase 2 (target ~300 examples by month 6, per
 ).
@@ -63,13 +63,13 @@ under a different policy.
 
 ## Glossary
 
-| Term | Meaning |
-| ---- | ------- |
-| corpus slice | a directory under `corpora/<server>/<slice>/`; the unit of versioning |
-| example | one YAML file under a slice — one input, one `expected` block, multiple ratings |
-| rating | one ND-rater's judgement of how close the `expected` block matches their read |
-| deterministic baseline | the heuristic output a translation tool returns without invoking an LLM |
-| eval-corpus binding | every `mcp-translation` tool cites the slice that validates it (ADR 0005 §4) |
+| Term                   | Meaning                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| corpus slice           | a directory under `corpora/<server>/<slice>/`; the unit of versioning           |
+| example                | one YAML file under a slice — one input, one `expected` block, multiple ratings |
+| rating                 | one ND-rater's judgement of how close the `expected` block matches their read   |
+| deterministic baseline | the heuristic output a translation tool returns without invoking an LLM         |
+| eval-corpus binding    | every `mcp-translation` tool cites the slice that validates it (ADR 0005 §4)    |
 
 ## Status
 

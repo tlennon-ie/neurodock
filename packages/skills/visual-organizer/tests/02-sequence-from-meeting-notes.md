@@ -27,7 +27,7 @@ User pastes the transcript and says: "draw this out"
 
 ## Expected output shape
 
-```
+````
 <one sentence describing the diagram>
 
 ```mermaid
@@ -46,9 +46,10 @@ sequenceDiagram
   PM->>Engineer: Confirm remaining screens buildable
   Engineer->>PM: Confirmed; branch by Thursday
   PM->>PM: Send summary to wider team
-```
+````
 
 _Accessible description: A sequence between PM, Designer, and Engineer agreeing to drop a team-size field from the onboarding flow, with the Engineer committing to a branch by Thursday and the PM to a team summary._
+
 ```
 
 ## Pass criteria
@@ -60,3 +61,4 @@ _Accessible description: A sequence between PM, Designer, and Engineer agreeing 
 - Neutral theme directive present.
 - Accessible description present, 20–200 chars.
 - Node/arrow total ≤ 25.
+```

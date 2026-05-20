@@ -1,6 +1,6 @@
 # Test invocations — ocd-decision-finalizer
 
-Each `NN-<name>.md` file in this directory is a single test invocation for the skill. They are executable against a reference MCP client (see `packages/evals/` for the harness) and gate skill releases in CI. Because this skill is `clinical_review_required: false`, every test change additionally goes to the  agent before merge.
+Each `NN-<name>.md` file in this directory is a single test invocation for the skill. They are executable against a reference MCP client (see `packages/evals/` for the harness) and gate skill releases in CI. Because this skill is `clinical_review_required: false`, every test change additionally goes to the agent before merge.
 
 ## Format
 
@@ -15,7 +15,7 @@ Every test file has exactly four top-level sections, in this order:
 
 - Tool calls reference the schemas in `packages/mcp-cognitive-graph/schemas/`. The runner validates each fake return against its schema before injecting it.
 - Decision names quoted in the response are matched against the verbatim `decisions[].name` returned by the fake `recall_decisions` call. Any paraphrase fails the test.
-- Prohibited phrases (per  voice rules and the SKILL.md "Do not" section) are tested explicitly: `rumination`, `anxiety`, `obsessive`, `compulsive`, `spiral`, `loop`, `executive function`, `neurodivergent`, `executive dysfunction`, `intrusive`, plus the general-tone block list (`superpower`, `you got this`, `let's go`).
+- Prohibited phrases (per voice rules and the SKILL.md "Do not" section) are tested explicitly: `rumination`, `anxiety`, `obsessive`, `compulsive`, `spiral`, `loop`, `executive function`, `neurodivergent`, `executive dysfunction`, `intrusive`, plus the general-tone block list (`superpower`, `you got this`, `let's go`).
 - When finality fires, the `--override "fresh-context"` line MUST be present. Absence fails the test — the ethics contract requires every guardrail-style intervention to be overridable.
 - Response length envelopes are upper-bounds, expressed in characters (not tokens) so the test is vendor-neutral.
 

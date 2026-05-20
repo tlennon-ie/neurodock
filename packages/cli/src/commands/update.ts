@@ -41,12 +41,16 @@ export async function runUpdate(
   const messages: string[] = [];
 
   const detections = detectClients(env);
-  const targets = pickTargets(detections, options.client).filter((t) => t.exists);
+  const targets = pickTargets(detections, options.client).filter(
+    (t) => t.exists,
+  );
 
   if (targets.length === 0) {
     messages.push("No client configs found to update.");
     if (options.client !== "all") {
-      messages.push(`Looked for ${options.client} but no existing config was found.`);
+      messages.push(
+        `Looked for ${options.client} but no existing config was found.`,
+      );
     }
     return { clients: [], applied: false, messages };
   }
@@ -65,14 +69,20 @@ export async function runUpdate(
     return {
       clients: diffs,
       applied: false,
-      messages: ["Dry run. No changes written.", ...messages, ...formatDiffs(diffs)],
+      messages: [
+        "Dry run. No changes written.",
+        ...messages,
+        ...formatDiffs(diffs),
+      ],
     };
   }
 
   for (const d of diffs) {
     if (d.action === "updated") {
       applyDiff(d, desiredServers);
-      messages.push(`Updated ${d.client} at ${d.path}: ${d.updatedKeys.join(", ")}.`);
+      messages.push(
+        `Updated ${d.client} at ${d.path}: ${d.updatedKeys.join(", ")}.`,
+      );
     } else if (d.action === "no-change") {
       messages.push(`${d.client} at ${d.path} already up to date.`);
     } else if (d.action === "not-wired") {
@@ -80,7 +90,9 @@ export async function runUpdate(
         `${d.client} at ${d.path} has no NeuroDock servers wired. Run 'neurodock init' first.`,
       );
     } else if (d.action === "skip") {
-      messages.push(`Skipped ${d.client} at ${d.path}: ${d.reason ?? "unable to parse"}.`);
+      messages.push(
+        `Skipped ${d.client} at ${d.path}: ${d.reason ?? "unable to parse"}.`,
+      );
     }
   }
 
@@ -111,7 +123,9 @@ function diffClient(
       reason: `existing config is not valid JSON: ${parsed.error}`,
     };
   }
-  const existing = (parsed.value ?? {}) as { mcpServers?: Record<string, McpServerEntry> };
+  const existing = (parsed.value ?? {}) as {
+    mcpServers?: Record<string, McpServerEntry>;
+  };
   const existingServers = existing.mcpServers ?? {};
   const allKeys = Object.keys(existingServers);
   const neurodockKeys = allKeys.filter((k) => k.startsWith(NEURODOCK_PREFIX));
@@ -176,7 +190,10 @@ function applyDiff(
   writeFileSync(diff.path, `${JSON.stringify(shaped, null, 2)}\n`, "utf8");
 }
 
-function entriesEqual(a: McpServerEntry | undefined, b: McpServerEntry): boolean {
+function entriesEqual(
+  a: McpServerEntry | undefined,
+  b: McpServerEntry,
+): boolean {
   if (a === undefined) return false;
   if (a.command !== b.command) return false;
   if (a.cwd !== b.cwd) return false;
@@ -210,7 +227,8 @@ function formatDiffs(diffs: ReadonlyArray<UpdateClientDiff>): string[] {
   for (const d of diffs) {
     out.push(`Client ${d.client} (${d.action}): ${d.path}`);
     for (const k of d.updatedKeys) out.push(`  ~ mcpServers.${k}`);
-    for (const k of d.preservedKeys) out.push(`  = mcpServers.${k} (preserved)`);
+    for (const k of d.preservedKeys)
+      out.push(`  = mcpServers.${k} (preserved)`);
     if (d.reason) out.push(`  reason: ${d.reason}`);
   }
   return out;

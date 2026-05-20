@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -29,10 +30,12 @@ The output must contain:
 1. **`explicit_ask`** equals (or paraphrases) "Confirm by end of business today that the warranty cap remains as drafted."
 
 2. **`legal_terms_of_art`** contains two entries:
+
    - `term: "without prejudice"`, `effect` ends with the word "typically" and describes the typical operational effect (the statement cannot be used against the sender in subsequent proceedings).
    - `term: "subject to contract"`, `effect` ends with the word "typically" and describes that nothing in the correspondence is binding until a signed contract exists.
 
 3. **`ambiguity.spans`** contains entries for at least:
+
    - "As a matter of housekeeping" — the `note` matches the phrasebook entry's `literal`.
    - "broadly comfortable" — `note` from the phrasebook ("We agree with most of the position but have specific reservations we are about to list").
    - "I'd be grateful if you could revert by close of play" — `note` from the phrasebook (deadline is real; politeness is etiquette).

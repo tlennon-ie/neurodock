@@ -28,18 +28,24 @@ export interface UnregisterOptions {
   readonly home?: string;
 }
 
-export function buildManifest(opts: RegistrationOptions): Record<string, unknown> {
+export function buildManifest(
+  opts: RegistrationOptions,
+): Record<string, unknown> {
   return {
     name: HOST_NAME,
     description:
       "NeuroDock native messaging host. Exposes ~/.neurodock/profile.yaml to the browser extension.",
     path: opts.hostPath,
     type: "stdio",
-    allowed_origins: opts.allowedExtensionIds.map((id) => `chrome-extension://${id}/`),
+    allowed_origins: opts.allowedExtensionIds.map(
+      (id) => `chrome-extension://${id}/`,
+    ),
   };
 }
 
-export function buildFirefoxManifest(opts: RegistrationOptions): Record<string, unknown> {
+export function buildFirefoxManifest(
+  opts: RegistrationOptions,
+): Record<string, unknown> {
   return {
     name: HOST_NAME,
     description:

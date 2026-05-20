@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -18,6 +19,7 @@ preferences:
 `mcp-chronometric` is NOT mocked as available (Flow A does not require it).
 
 Mocked `recall_entity({ "name_or_alias": "Sarah" })` returns:
+
 ```json
 {
   "entity": {
@@ -30,14 +32,22 @@ Mocked `recall_entity({ "name_or_alias": "Sarah" })` returns:
   "facts": [
     {
       "fact_id": "f1a2b3c4-d5e6-4789-90ab-cdef12345678",
-      "subject": { "type": "person", "id": "a47c3b21-9d8e-4f5a-b6c7-8d9e0f1a2b3c" },
+      "subject": {
+        "type": "person",
+        "id": "a47c3b21-9d8e-4f5a-b6c7-8d9e0f1a2b3c"
+      },
       "predicate": "mentioned_in",
-      "object": { "literal": "blocked on staging-DB access for the migration project; waiting on platform team" },
+      "object": {
+        "literal": "blocked on staging-DB access for the migration project; waiting on platform team"
+      },
       "recorded_at": "2026-05-12T15:20:00+01:00"
     },
     {
       "fact_id": "f2b3c4d5-e6f7-4890-a1bc-def123456789",
-      "subject": { "type": "person", "id": "a47c3b21-9d8e-4f5a-b6c7-8d9e0f1a2b3c" },
+      "subject": {
+        "type": "person",
+        "id": "a47c3b21-9d8e-4f5a-b6c7-8d9e0f1a2b3c"
+      },
       "predicate": "decided_in",
       "object": { "literal": "owns the read-replica failover runbook from Q2" },
       "recorded_at": "2026-05-05T11:00:00+01:00"
@@ -45,7 +55,11 @@ Mocked `recall_entity({ "name_or_alias": "Sarah" })` returns:
   ],
   "neighbours": [
     {
-      "entity": { "type": "project", "id": "p1c2d3e4-f5a6-4789-abcd-ef0123456789", "name": "migration-q2" },
+      "entity": {
+        "type": "project",
+        "id": "p1c2d3e4-f5a6-4789-abcd-ef0123456789",
+        "name": "migration-q2"
+      },
       "relationship": "belongs_to"
     }
   ],

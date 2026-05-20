@@ -95,7 +95,9 @@ describe("neurodock validate", () => {
     expect(r.violations.length).toBeGreaterThan(0);
     const paths = r.violations.map((v) => v.path);
     expect(
-      paths.some((p) => p.includes("neurotypes") || p.includes("output_format")),
+      paths.some(
+        (p) => p.includes("neurotypes") || p.includes("output_format"),
+      ),
     ).toBe(true);
     for (const v of r.violations) {
       expect(v.keyword.length).toBeGreaterThan(0);
@@ -157,7 +159,9 @@ describe("neurodock validate", () => {
       },
     );
     expect(r.valid).toBe(false);
-    const additional = r.violations.find((v) => v.keyword === "additionalProperties");
+    const additional = r.violations.find(
+      (v) => v.keyword === "additionalProperties",
+    );
     expect(additional).toBeDefined();
     expect(additional!.path).toContain("future_block");
   });

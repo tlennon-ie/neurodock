@@ -3,12 +3,12 @@
 - **Status:** proposed
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
-- **Consulted:** `mcp-server-builder`,  (pre-review for consent semantics on `idle_status`)
+- **Consulted:** `mcp-server-builder`, (pre-review for consent semantics on `idle_status`)
 - **Informed:** `skill-author`, `accessibility-auditor`, `doc-writer`
 
 ## Context
 
-`mcp-chronometric` is the first MCP server NeuroDock will ship. Per  it is the only MCP package committed for the Phase 0 → Phase 1 transition, and per §15 Week 2 the `mcp-server-builder` agent is expected to start implementation as soon as schemas exist. It is therefore the precedent-setting design for every later substrate server (`mcp-cognitive-graph`, `mcp-task-fractionator`, `mcp-translation`, `mcp-guardrail`). Decisions made here propagate.
+`mcp-chronometric` is the first MCP server NeuroDock will ship. Per it is the only MCP package committed for the Phase 0 → Phase 1 transition, and per §15 Week 2 the `mcp-server-builder` agent is expected to start implementation as soon as schemas exist. It is therefore the precedent-setting design for every later substrate server (`mcp-cognitive-graph`, `mcp-task-fractionator`, `mcp-translation`, `mcp-guardrail`). Decisions made here propagate.
 
 The substrate's value to neurodivergent users depends on externalising executive function — time awareness, session framing, hyperfocus interruption, idle vs distraction discrimination — without requiring the LLM to maintain that state across turns. The tools must therefore be:
 
@@ -70,14 +70,14 @@ We adopt **Option B: the five-tool decomposition** as specified in the five sche
 
 For v0.1.0, `energy_zone` is computed as a heuristic over local clock time, with profile-declared adjustments:
 
-| Local hour (24h) | Default zone |
-|---|---|
-| 05:00–08:59 | `morning_peak` |
-| 09:00–11:59 | `morning_peak` |
-| 12:00–13:59 | `midday` |
-| 14:00–16:29 | `afternoon_dip` |
-| 16:30–19:29 | `evening_quiet` |
-| 19:30–04:59 | `night_owl_caution` |
+| Local hour (24h) | Default zone        |
+| ---------------- | ------------------- |
+| 05:00–08:59      | `morning_peak`      |
+| 09:00–11:59      | `morning_peak`      |
+| 12:00–13:59      | `midday`            |
+| 14:00–16:29      | `afternoon_dip`     |
+| 16:30–19:29      | `evening_quiet`     |
+| 19:30–04:59      | `night_owl_caution` |
 
 A profile entry under `chronometric.zones` MAY override these bands; an unparseable profile yields `unknown` rather than failing the call. The heuristic is intentionally crude — refinement is an open question, below.
 
@@ -106,6 +106,7 @@ A profile entry under `chronometric.zones` MAY override these bands; an unparsea
 ## Open questions
 
 1. **How is `energy_zone` computed?** v0.1.0 uses the static clock-band heuristic above. Three credible refinements:
+
    - **profile-declared:** the user names their own zones in YAML;
    - **adaptive heuristic:** a rolling 30-day model of session productivity (requires storage we do not yet have);
    - **ML-derived:** clustering over local session telemetry, opt-in only.
@@ -115,6 +116,7 @@ A profile entry under `chronometric.zones` MAY override these bands; an unparsea
 2. **How is OS-idle consent surfaced?** The schema requires `profile.privacy.os_idle_consent`. Open: should the CLI `npx neurodock init` flow ask for it at install time (one-shot, easy to dismiss thoughtlessly) or defer until the user first installs a skill that requests `idle_status` (just-in-time, friction at a useful moment)? Recommended: just-in-time, but require the `mcp-server-builder` to emit a structured "consent missing" log line when `idle_status` is called without consent, so the omission is visible.
 
 3. **Should `mark_session_start` auto-close a prior unterminated session, or error?** The schema supports both via the optional `auto_closed_prior_session` output field and the `SESSION_ALREADY_OPEN` error code. Two clean positions:
+
    - **Auto-close:** charitable to ADHD users who forget; risk of swallowing real intent.
    - **Error:** forces the user to confront the orphan session; risk of friction at the worst possible moment.
 

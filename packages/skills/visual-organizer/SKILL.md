@@ -11,7 +11,7 @@ triggers:
   - phrase: "make a diagram"
 mcp_dependencies: []
 profile_dependencies:
-  - preferences.motion   # if "reduced", the diagram MUST have animation: false
+  - preferences.motion # if "reduced", the diagram MUST have animation: false
 license: AGPL-3.0-or-later
 ---
 
@@ -31,12 +31,12 @@ The user picked the trigger. Respect it. Do not editorialise their state.
 
 ## Pick the diagram type
 
-| Input shape | Diagram |
-|---|---|
-| Linear cause-and-effect, a process, or a pipeline | `flowchart TD` |
-| Interactions between named actors over time | `sequenceDiagram` |
-| Loose related concepts the user dumped in one go | `mindmap` |
-| Branching decisions and consequences | `flowchart LR` with diamond `{decision?}` nodes |
+| Input shape                                       | Diagram                                         |
+| ------------------------------------------------- | ----------------------------------------------- |
+| Linear cause-and-effect, a process, or a pipeline | `flowchart TD`                                  |
+| Interactions between named actors over time       | `sequenceDiagram`                               |
+| Loose related concepts the user dumped in one go  | `mindmap`                                       |
+| Branching decisions and consequences              | `flowchart LR` with diamond `{decision?}` nodes |
 
 If two fit, pick the one with fewer nodes. Cognitive load cap below is the tie-breaker.
 

@@ -54,12 +54,12 @@ overrides are still a future minor version.
 
 ### Thresholds
 
-| Rung      | Threshold       | Score in `resolution.score` |
-|-----------|-----------------|-----------------------------|
-| exact     | n/a             | 1.0                         |
-| alias     | n/a             | 0.95                        |
-| fuzzy     | WRatio >= 75    | WRatio / 100                |
-| embedding | cosine >= 0.82  | cosine (clamped 0..1)       |
+| Rung      | Threshold      | Score in `resolution.score` |
+| --------- | -------------- | --------------------------- |
+| exact     | n/a            | 1.0                         |
+| alias     | n/a            | 0.95                        |
+| fuzzy     | WRatio >= 75   | WRatio / 100                |
+| embedding | cosine >= 0.82 | cosine (clamped 0..1)       |
 
 ### Notes
 
@@ -73,7 +73,7 @@ overrides are still a future minor version.
 ## [0.0.1] — 2026-05-15
 
 First working slice of the cognitive-graph MCP server. Implements the four
-tools defined in  against the JSON Schemas under `schemas/`.
+tools defined in against the JSON Schemas under `schemas/`.
 
 ### Added
 
@@ -104,7 +104,7 @@ tools defined in  against the JSON Schemas under `schemas/`.
 
 - **Open question 2 — `record_fact` deduplication semantics:** option 2
   (**append-only with logical fact id**). A duplicate `(subject, predicate,
-  object)` returns the canonical `fact_id` with `deduplicated=true`; the new
+object)` returns the canonical `fact_id` with `deduplicated=true`; the new
   `source` / `confidence` is appended to a `fact_provenance` log so provenance
   is preserved.
 - **Open question 3 — `weekly_rollup.next_actions` without an LLM:** option 1

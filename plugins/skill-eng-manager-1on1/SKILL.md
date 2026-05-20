@@ -61,6 +61,7 @@ The user says some variant of `prep my 1:1 with Sarah`. Goal: a one-page brief b
 4. **If `entity` is null**, say so plainly: `No entity in the graph matches "<parsed name>". I can still help you prep — what's on your mind for this conversation?` Stop and wait for the user.
 
 5. **Compose the brief from `recall_entity`'s returned data.** Read three things:
+
    - `entity.last_interaction_at` (or the most recent `facts[].recorded_at` if the entity lacks a `last_interaction_at` field) — this is the "last conversation" timestamp.
    - `facts[]` filtered to predicates `mentioned_in`, `decided_in`, `blocked_by` — these become "open topics".
    - `neighbours[]` — these are the projects and decisions Sarah is connected to.
@@ -78,6 +79,7 @@ The user says `decompose this sprint review` (or one of the equivalent triggers)
 2. **Once notes are in hand**, call `decompose({ "goal": "<the pasted notes, verbatim>", "time_budget": "PT45M" })`. The 45-minute time budget is the default — it maps to roughly one working block. If the notes themselves state a different budget (e.g. "we have a week for this"), parse that and pass it as ISO 8601 (e.g. `P5D`). The task-fractionator interprets `P5D` as five working blocks of 4h, not 120h calendar — see ADR 0003 §3.
 
 3. **Three outcomes from `decompose`:**
+
    - **Success** — a list of atomic tasks, each with at least one acceptance criterion. Continue to step 4.
    - **`BUDGET_INFEASIBLE`** — surface the error message as one line: `The notes describe more work than fits in the time budget. Try a longer budget, or break the review into two passes.` Stop.
    - **`DECOMPOSITION_UNAVAILABLE` or any other error** — surface the error code on one line. Stop.
@@ -97,11 +99,13 @@ The user says `blameless postmortem on <incident>`. This flow walks 5 Whys plus 
 2. **Five Whys, one at a time.** Ask the user the first Why. Wait. After their answer, ask the next Why grounded in their answer. Each Why is a single sentence ending with a question mark. Each Why targets a system, a process, a tool, or a condition — never a person.
 
    Examples of acceptable Why phrasings:
+
    - `Why did the system enter that state?`
    - `Why was that condition possible in the first place?`
    - `Why did the alerting/runbook/deployment process allow it?`
 
    Banned Why phrasings (these are blaming dressed up as Whys):
+
    - `Why didn't <name> notice?` — restate as `Why did the alerting not surface it?`
    - `Why did <name> push that change?` — restate as `Why did the change-gate allow it through?`
    - `Why didn't anyone catch this?` — restate as `Why did the review process not flag it?`
@@ -109,6 +113,7 @@ The user says `blameless postmortem on <incident>`. This flow walks 5 Whys plus 
    If the user's own answer names a person, accept the answer but rephrase the next Why to target the system around that person, not the person.
 
 3. **After five Whys (or sooner if the chain has terminated in a system root cause)**, list system factors. Ask one short question: `Which of these system factors were in play? (You can name more than one.)` Then list six candidates:
+
    - `Documentation gap` — runbook missing, stale, or wrong.
    - `Observability gap` — the system did not surface the problem in time.
    - `Change-gate gap` — the deploy/review/test process let the issue through.
@@ -145,6 +150,7 @@ This brief is for you, not for sharing. It is not a performance summary.
 ```
 
 Rules:
+
 - Maximum three bullets per section. If fewer than three open topics exist, list what you have — do not invent.
 - Confidence is not surfaced in this flow (a 1:1 brief is for the human running the meeting; pretending the graph is more certain than it is would mislead).
 - The "not a performance summary" line is mandatory.
@@ -179,6 +185,7 @@ These items are decomposed from your notes. I did not invent owners or estimates
 ```
 
 Rules:
+
 - Owners appear in the order the first task for each owner appears in the decomposition.
 - Estimates are surfaced verbatim from the decompose result — do not round or restate.
 - The closing line is mandatory; it grounds the user that the decomposition is constrained to what their notes said.
@@ -229,7 +236,7 @@ If the user's invoking message contains phrases like `I'm furious`, `someone nee
 
 - Not a performance-review prep tool.
 - Not a coaching framework.
-- Not a sprint-planning tool (it decomposes a *review*, not a roadmap).
+- Not a sprint-planning tool (it decomposes a _review_, not a roadmap).
 - Not a root-cause analysis tool for non-incident work.
 - Not a clinical tool. The skill makes no claims about the user's or their reports' neurotypes.
 

@@ -2,7 +2,7 @@
 
 A NeuroDock skill that responds to repeat re-validation of an already-made decision. When the user asks "should I really go with X?" or "is this okay?" three or more times on the same decision in the same local day, the skill surfaces the prior decision verbatim from the cognitive graph and declines to re-analyse it until new information is supplied. It is a workflow tool, not a clinical intervention.
 
-This skill is **beta** and **clinical-review-required**. The `clinical_review_required: false` flag in `SKILL.md` is mandatory and will be enforced by the  agent on any future PR.
+This skill is **beta** and **clinical-review-required**. The `clinical_review_required: false` flag in `SKILL.md` is mandatory and will be enforced by the agent on any future PR.
 
 ## When it fires
 
@@ -36,10 +36,10 @@ Writes: `mcp-cognitive-graph.record_fact` — one `tagged → "re-validated"` ro
 
 ## References
 
--  — launch skill #4 specification.
--  — clinical guardrails framing and ethics framework.
--  — voice and tone rules.
-- `ETHICS.md` — root-repo ethics document (currently TBD; see  in the interim).
+- — launch skill #4 specification.
+- — clinical guardrails framing and ethics framework.
+- — voice and tone rules.
+- `ETHICS.md` — root-repo ethics document (currently TBD; see in the interim).
 - `SKILL.md` — the instructions the LLM follows when this skill activates.
 - `tests/` — three executable invocation contracts replayed by CI.
 

@@ -9,7 +9,11 @@ import type {
   McpServerEntry,
 } from "../types.js";
 import { readEnv } from "../lib/env.js";
-import { profilePath, detectClients, type DetectionResult } from "../lib/paths.js";
+import {
+  profilePath,
+  detectClients,
+  type DetectionResult,
+} from "../lib/paths.js";
 import { adapterFor } from "../clients/index.js";
 import { mergeMcpServers, parseJsonSafely } from "../lib/json-patch.js";
 import { writeProfileFromTemplate } from "../profile/loader.js";
@@ -26,7 +30,10 @@ export interface InitDependencies {
   readonly envOverrides?: Parameters<typeof readEnv>[0];
 }
 
-export async function runInit(options: InitOptions, deps: InitDependencies = {}): Promise<InitRunResult> {
+export async function runInit(
+  options: InitOptions,
+  deps: InitDependencies = {},
+): Promise<InitRunResult> {
   const env = readEnv(deps.envOverrides ?? {});
   const messages: string[] = [];
 
@@ -36,7 +43,9 @@ export async function runInit(options: InitOptions, deps: InitDependencies = {})
   const detectedTargets = targets.filter((t) => t.exists);
 
   if (options.client !== "all" && targets.length === 0) {
-    messages.push(`No supported client locations exist for '${options.client}'.`);
+    messages.push(
+      `No supported client locations exist for '${options.client}'.`,
+    );
   }
 
   if (options.client === "all" && detectedTargets.length === 0) {
@@ -47,7 +56,11 @@ export async function runInit(options: InitOptions, deps: InitDependencies = {})
     }
     messages.push("See: https://docs.neurodock.org/install#supported-clients");
     return {
-      diff: { profileAction: "skipped", profilePath: profilePath(env), clients: [] },
+      diff: {
+        profileAction: "skipped",
+        profilePath: profilePath(env),
+        clients: [],
+      },
       applied: false,
       messages,
     };
@@ -61,7 +74,9 @@ export async function runInit(options: InitOptions, deps: InitDependencies = {})
 
   // 3. Profile.
   const pPath = profilePath(env);
-  const profileAction: InitDiff["profileAction"] = existsSync(pPath) ? "exists" : "create";
+  const profileAction: InitDiff["profileAction"] = existsSync(pPath)
+    ? "exists"
+    : "create";
 
   // 4. Per-client diff.
   const clientDiffs: ClientDiff[] = [];
@@ -85,7 +100,11 @@ export async function runInit(options: InitOptions, deps: InitDependencies = {})
     return {
       diff,
       applied: false,
-      messages: ["Dry run. No changes written.", ...messages, ...formatDiff(diff)],
+      messages: [
+        "Dry run. No changes written.",
+        ...messages,
+        ...formatDiff(diff),
+      ],
     };
   }
 
@@ -111,7 +130,11 @@ export async function runInit(options: InitOptions, deps: InitDependencies = {})
     } else if (cd.action === "no-change") {
       messages.push(`${cd.client} already wired at ${cd.path}.`);
     } else if (cd.action === "skip") {
-      messages.push(`Skipped ${cd.client} at ${cd.path}: ${cd.reason ?? "collision (re-run with --yes to overwrite)"}.`);
+      messages.push(
+        `Skipped ${cd.client} at ${cd.path}: ${
+          cd.reason ?? "collision (re-run with --yes to overwrite)"
+        }.`,
+      );
     }
   }
 
@@ -167,7 +190,8 @@ async function diffClient(
       action: "skip",
       added: merge.added,
       collisions: merge.collisions,
-      reason: "existing keys would be overwritten; re-run with --yes to confirm",
+      reason:
+        "existing keys would be overwritten; re-run with --yes to confirm",
     };
   }
 
@@ -207,13 +231,17 @@ function applyClientDiff(
     desired,
     overwrite,
   );
-  const shaped = adapter.shapeConfig(existing, merged.merged.mcpServers as Record<string, McpServerEntry>);
+  const shaped = adapter.shapeConfig(
+    existing,
+    merged.merged.mcpServers as Record<string, McpServerEntry>,
+  );
   mkdirSync(dirname(cd.path), { recursive: true });
   writeFileSync(cd.path, `${JSON.stringify(shaped, null, 2)}\n`, "utf8");
 }
 
 function resolveTemplatePath(profile: "minimal" | "example"): string {
-  const filename = profile === "minimal" ? "profile.minimal.yaml" : "profile.example.yaml";
+  const filename =
+    profile === "minimal" ? "profile.minimal.yaml" : "profile.example.yaml";
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
     resolve(here, "..", "..", "..", "core", "schemas", filename),

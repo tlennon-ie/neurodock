@@ -8,6 +8,6 @@ if (host) {
   createRoot(host).render(
     <React.StrictMode>
       <App />
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 }

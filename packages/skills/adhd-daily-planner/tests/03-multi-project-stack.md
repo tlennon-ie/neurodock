@@ -4,16 +4,16 @@
 
 It is Monday, 2026-05-25, 08:30 local time. The user types `/resume monday`. Their profile sets `identity.neurotypes: ["adhd", "asd"]` (AuDHD), `preferences.output_format: "answer_first"`, `preferences.max_chunk_size: 5`, `chronometric.end_of_day_local: "18:30"`. The local cognitive graph has activity in the trailing seven days for **eight** projects. Each project has at least one decision; the most recent decision dates per project are:
 
-| Project | Most recent decision date |
-|---|---|
-| neurodock | 2026-05-23 |
-|  | 2026-05-22 |
-| phase-0-rfc | 2026-05-22 |
-| mcp-chronometric | 2026-05-21 |
-| extension-browser | 2026-05-20 |
-| eval-corpus | 2026-05-18 |
-| docs-site | 2026-05-17 |
-| plugin-marketplace | 2026-05-15 |
+| Project            | Most recent decision date |
+| ------------------ | ------------------------- |
+| neurodock          | 2026-05-23                |
+|                    | 2026-05-22                |
+| phase-0-rfc        | 2026-05-22                |
+| mcp-chronometric   | 2026-05-21                |
+| extension-browser  | 2026-05-20                |
+| eval-corpus        | 2026-05-18                |
+| docs-site          | 2026-05-17                |
+| plugin-marketplace | 2026-05-15                |
 
 The skill must rank by `decided_on` recency, retain the top 5 (`neurodock`, ``, `phase-0-rfc`, `mcp-chronometric`, `extension-browser`), and elide the remaining 3 with a count — never naming them.
 

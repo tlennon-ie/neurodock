@@ -16,14 +16,14 @@ This package delivers Area 2 (communication translation) per .
 
 ### What v0.0.1 does NOT do (deferred to v0.0.2+)
 
-| Feature | Status |
-|---|---|
-| Real local Ollama wiring (HTTP call) | Deferred — v0.0.1 returns a clearly-labelled MOCK response in local mode. |
-| Real cloud provider integration (Anthropic, OpenAI) | Deferred — v0.0.1 surfaces `CLOUD_NOT_WIRED` errors when cloud mode is fully configured. |
-| Native messaging bridge to `~/.neurodock/profile.yaml` | Deferred — v0.0.1 stores profile state in `chrome.storage.local` only. |
-| Browser store submission scripts | Deferred. |
-| E2E Playwright suite against the loaded extension | Deferred — Vitest covers units in v0.0.1. |
-| `axe-core` automated runs in CI | Deferred — components are written to be a11y-clean and reduced-motion-by-default. |
+| Feature                                                | Status                                                                                   |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Real local Ollama wiring (HTTP call)                   | Deferred — v0.0.1 returns a clearly-labelled MOCK response in local mode.                |
+| Real cloud provider integration (Anthropic, OpenAI)    | Deferred — v0.0.1 surfaces `CLOUD_NOT_WIRED` errors when cloud mode is fully configured. |
+| Native messaging bridge to `~/.neurodock/profile.yaml` | Deferred — v0.0.1 stores profile state in `chrome.storage.local` only.                   |
+| Browser store submission scripts                       | Deferred.                                                                                |
+| E2E Playwright suite against the loaded extension      | Deferred — Vitest covers units in v0.0.1.                                                |
+| `axe-core` automated runs in CI                        | Deferred — components are written to be a11y-clean and reduced-motion-by-default.        |
 
 ## Privacy model
 
@@ -36,14 +36,14 @@ The extension defaults to **local mode** with **NO remote network calls**. Speci
 
 ## Supported sites and content-script entrypoints
 
-| Site | Match | Entrypoint | Channel |
-|---|---|---|---|
-| Gmail | `https://mail.google.com/*` | `entrypoints/gmail.content.ts` | `email` |
-| Slack web | `https://app.slack.com/*` | `entrypoints/slack.content.ts` | `slack` |
-| Linear | `https://linear.app/*` | `entrypoints/linear.content.ts` | `linear` |
-| Notion | `https://www.notion.so/*` | `entrypoints/notion.content.ts` | `notion` |
-| GitHub | `https://github.com/*` | `entrypoints/github.content.ts` | `github` |
-| Google Docs | `https://docs.google.com/*` | `entrypoints/gdocs.content.ts` | `gdocs` |
+| Site        | Match                                                             | Entrypoint                       | Channel   |
+| ----------- | ----------------------------------------------------------------- | -------------------------------- | --------- |
+| Gmail       | `https://mail.google.com/*`                                       | `entrypoints/gmail.content.ts`   | `email`   |
+| Slack web   | `https://app.slack.com/*`                                         | `entrypoints/slack.content.ts`   | `slack`   |
+| Linear      | `https://linear.app/*`                                            | `entrypoints/linear.content.ts`  | `linear`  |
+| Notion      | `https://www.notion.so/*`                                         | `entrypoints/notion.content.ts`  | `notion`  |
+| GitHub      | `https://github.com/*`                                            | `entrypoints/github.content.ts`  | `github`  |
+| Google Docs | `https://docs.google.com/*`                                       | `entrypoints/gdocs.content.ts`   | `gdocs`   |
 | Outlook web | `outlook.live.com`, `outlook.office.com`, `outlook.office365.com` | `entrypoints/outlook.content.ts` | `outlook` |
 
 ## Architecture

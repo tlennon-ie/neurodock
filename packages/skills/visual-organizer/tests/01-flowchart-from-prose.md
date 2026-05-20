@@ -17,7 +17,7 @@ User pastes the input and ends with: `/visualize`
 
 ## Expected output shape
 
-```
+````
 <one sentence describing the diagram>
 
 ```mermaid
@@ -39,9 +39,10 @@ flowchart TD
   prod --> health{Health check at 10m}
   health -- fail --> page[Page on-call]
   health -- pass --> done[Done]
-```
+````
 
 _Accessible description: A linear deploy pipeline from PR through CI, review, merge, staging smoke tests, manual approval gate, production promotion, and a 10-minute post-deploy health check with rollback and on-call paths on failure._
+
 ```
 
 ## Pass criteria
@@ -53,3 +54,4 @@ _Accessible description: A linear deploy pipeline from PR through CI, review, me
 - Neutral theme directive present.
 - `animation: false` is NOT required (profile motion is normal).
 - Accessible description present, 20–200 chars.
+```

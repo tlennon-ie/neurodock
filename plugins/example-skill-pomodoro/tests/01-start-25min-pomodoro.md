@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -15,6 +16,7 @@ chronometric:
 `mcp-cognitive-graph` is NOT mocked as available for this test (so the skill must not attempt to call `record_fact` later).
 
 No session is currently open. Mocked `get_time_context()` would return:
+
 ```json
 {
   "now": "2026-05-20T10:02:14+01:00",
@@ -26,6 +28,7 @@ No session is currently open. Mocked `get_time_context()` would return:
 ```
 
 Mocked `mark_session_start({ "intent": "finish the inbox triage" })` returns:
+
 ```json
 {
   "session_id": "7c4f9a2b-1d3e-4f5a-8b6c-9d0e1f2a3b4c",

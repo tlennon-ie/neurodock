@@ -43,11 +43,11 @@ fine.
 Most disagreements resolve in the thread they started in. When they don't:
 
 1. The disagreeing parties summarise the question and the trade-offs they
- see in a single comment.
+   see in a single comment.
 2. The maintainer makes the call and records it.
 3. If the disagreement is about the manifesto or ethics, the change is
- refused unless and until the manifesto or ethics document itself is
- updated.
+   refused unless and until the manifesto or ethics document itself is
+   updated.
 
 ## Forking safely
 

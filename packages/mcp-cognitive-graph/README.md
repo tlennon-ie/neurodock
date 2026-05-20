@@ -23,12 +23,12 @@ default. Override with the `NEURODOCK_GRAPH_DB_PATH` environment variable.
 
 ## Tools (v0.0.1)
 
-| Tool | Purpose |
-| --- | --- |
-| `recall_entity(name_or_alias)` | Look up a person/project/decision/concept. Returns the entity, its facts (capped at 500), first-degree neighbours (capped at 20), and a resolution diagnostic. |
-| `record_fact(subject, predicate, object, source?, confidence?)` | Persist a typed-edge fact. Auto-creates entities by `(type, name)`. Enforces the v0.1.0 eight-predicate vocabulary. |
-| `recall_decisions(project, since?)` | Return decisions for a project, ordered by date desc, capped at 200. |
-| `weekly_rollup(project?)` | Server-templated activity summary for the trailing seven UTC days. No LLM call (vendor boundary). |
+| Tool                                                            | Purpose                                                                                                                                                        |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recall_entity(name_or_alias)`                                  | Look up a person/project/decision/concept. Returns the entity, its facts (capped at 500), first-degree neighbours (capped at 20), and a resolution diagnostic. |
+| `record_fact(subject, predicate, object, source?, confidence?)` | Persist a typed-edge fact. Auto-creates entities by `(type, name)`. Enforces the v0.1.0 eight-predicate vocabulary.                                            |
+| `recall_decisions(project, since?)`                             | Return decisions for a project, ordered by date desc, capped at 200.                                                                                           |
+| `weekly_rollup(project?)`                                       | Server-templated activity summary for the trailing seven UTC days. No LLM call (vendor boundary).                                                              |
 
 The full input/output contract is in `schemas/`. The Pydantic v2 models in
 `src/neurodock_mcp_cognitive_graph/types.py` mirror those schemas.

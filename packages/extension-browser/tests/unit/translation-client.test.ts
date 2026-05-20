@@ -36,12 +36,22 @@ describe("translation-client", () => {
     ] as const;
     for (const tool of tools) {
       const res = await translate(
-        { tool, input: { text: "hi", transcript: "hi", target_register: "direct", me: "T" } },
-        { profile: baseProfile }
+        {
+          tool,
+          input: {
+            text: "hi",
+            transcript: "hi",
+            target_register: "direct",
+            me: "T",
+          },
+        },
+        { profile: baseProfile },
       );
       expect(res.tool).toBe(tool);
       expect(res.mockMode).toBe(true);
-      expect(res.data).toMatchObject({ model_provenance: { provider: "mock" } });
+      expect(res.data).toMatchObject({
+        model_provenance: { provider: "mock" },
+      });
     }
   });
 
@@ -49,7 +59,7 @@ describe("translation-client", () => {
     const profile: ExtensionProfile = { ...baseProfile, mode: "cloud" };
     const res = await translate(
       { tool: "check_tone", input: { text: "ok" } },
-      { profile }
+      { profile },
     );
     expect(res.ok).toBe(false);
     expect(res.error).toMatch(/MISSING_CLOUD_PROVIDER/);
@@ -66,7 +76,7 @@ describe("translation-client", () => {
     };
     const res = await translate(
       { tool: "check_tone", input: { text: "ok" } },
-      { profile }
+      { profile },
     );
     expect(res.ok).toBe(false);
     expect(res.error).toMatch(/CLOUD_NOT_WIRED/);
@@ -79,23 +89,23 @@ describe("translation-client", () => {
 
   it("detects the right channel from each supported site URL", () => {
     expect(detectChannelFromUrl("https://mail.google.com/mail/u/0/")).toBe(
-      "email"
+      "email",
     );
     expect(detectChannelFromUrl("https://app.slack.com/client/T0/C0")).toBe(
-      "slack"
+      "slack",
     );
     expect(detectChannelFromUrl("https://linear.app/team/issue/AB-1")).toBe(
-      "linear"
+      "linear",
     );
     expect(detectChannelFromUrl("https://github.com/x/y/pull/1")).toBe(
-      "github"
+      "github",
     );
     expect(detectChannelFromUrl("https://www.notion.so/page")).toBe("notion");
     expect(detectChannelFromUrl("https://docs.google.com/document/d/x")).toBe(
-      "gdocs"
+      "gdocs",
     );
     expect(detectChannelFromUrl("https://outlook.live.com/mail/0/")).toBe(
-      "email"
+      "email",
     );
     expect(detectChannelFromUrl("https://example.invalid/")).toBe("generic");
   });

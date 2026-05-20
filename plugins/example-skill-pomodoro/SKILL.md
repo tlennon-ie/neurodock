@@ -14,7 +14,13 @@ triggers:
   - phrase: "pomodoro on"
 mcp_dependencies:
   - server: mcp-chronometric
-    tools: [mark_session_start, get_time_context, request_break_if_needed, mark_session_end]
+    tools:
+      [
+        mark_session_start,
+        get_time_context,
+        request_break_if_needed,
+        mark_session_end,
+      ]
   - server: mcp-cognitive-graph
     tools: [record_fact]
     optional: true
@@ -44,6 +50,7 @@ The LLM owns the wall-clock timing between steps 2 and 3.
 3. **Periodic check (LLM-owned timing).** When the user prompts again during the session, call `get_time_context()` and read `current_session_length`. Below threshold: answer the user's actual question normally, do not nag the timer. Surface a status line only if explicitly asked.
 
 4. **Break trigger.** When `current_session_length >= <duration>`, call `request_break_if_needed({ "threshold_minutes": <duration> })`. Three outcomes:
+
    - `null` (race condition; session was reset) — skip the suggestion silently.
    - Object — emit one line quoting `prior_intent` verbatim and naming `suggested_action`. Format: `<duration> minutes done. Stated intent: "<prior_intent>". Suggested next: <suggested_action>. Say "done" to close the session or "another" to start the next block.`
    - Error — surface the error code as one line; do not pretend the timer ran cleanly.

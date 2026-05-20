@@ -6,6 +6,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 preferences:
   output_format: "answer_first"
@@ -15,6 +16,7 @@ chronometric:
 ```
 
 Mocked `get_time_context()` returns:
+
 ```json
 {
   "now": "2026-05-15T11:15:00+01:00",

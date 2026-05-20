@@ -16,10 +16,12 @@ describe("sync-prompts", () => {
         "check_tone.prompt.md",
         "rewrite_outgoing.prompt.md",
         "translate_incoming.prompt.md",
-      ].sort()
+      ].sort(),
     );
     for (const name of result.copied) {
-      expect(existsSync(resolve(here, "src", "lib", "prompts", name))).toBe(true);
+      expect(existsSync(resolve(here, "src", "lib", "prompts", name))).toBe(
+        true,
+      );
       expect(existsSync(resolve(here, "public", "prompts", name))).toBe(true);
     }
   });

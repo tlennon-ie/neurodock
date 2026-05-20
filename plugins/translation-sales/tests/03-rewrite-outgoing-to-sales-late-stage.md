@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -15,6 +16,7 @@ plugins:
 ```
 
 The reference client passes:
+
 - `target_register: "sales-late-stage"`
 - `preserve_terms: ["procurement review", "warranty cap"]`
 - `preserve_intent: "follow up on the open warranty cap question and propose a specific next call"`
@@ -32,6 +34,7 @@ The user runs `rewrite_outgoing` on the same draft from Test 02:
 The output must contain:
 
 1. **`rewritten`** — a rewritten message that:
+
    - Leads with the specific ask (the open warranty-cap question).
    - Contains the literal strings `"procurement review"` and `"warranty cap"` verbatim.
    - Names a concrete proposed next step — a specific time or a specific deliverable. Acceptable forms: "Could we get 30 minutes this Thursday or Friday to walk through the warranty cap?" or "Are you in a position to confirm the warranty cap by Friday so we can clear the procurement review?"
@@ -46,6 +49,7 @@ The output must contain:
 4. **`diff_summary.tone_shift`** is `"more_specific"` or `"more_direct"` (or `"less_buzzword"`).
 
 5. **`diff_summary.structural_changes`** lists at minimum:
+
    - Filler opener ("Hey — just wanted to touch base") removed or replaced with a direct opening.
    - Vague "let me know your thoughts" replaced with a specific question or date.
    - Conditional "happy to set up another sync if helpful" replaced with a concrete proposed time or removed.

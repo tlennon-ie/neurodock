@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -31,6 +32,7 @@ The output must contain:
 2. **`register_assessment`** equals `"mismatch"`. The pack surfaces the mismatch but does NOT auto-rewrite during `check_tone`.
 
 3. **`signals`** contains entries for each register-mismatch token:
+
    - `"Hey"` — opener, register-mismatched (casual vs legal-formal).
    - `"yeah no problem"` — substantive concession in casual register (potential record-creation issue; what was the user actually agreeing to?).
    - `"the warranty cap thing"` — vague referent to what the prior thread treated as a term of art.

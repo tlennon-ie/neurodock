@@ -30,6 +30,7 @@ Thomas: Got it.
 ## Expected MCP tool sequence
 
 1. `mcp-translation.brief_meeting({ transcript: "<the transcript above>", me: "Thomas", project: "phase-2-pricing" })` →
+
    ```json
    {
      "my_asks": [
@@ -95,9 +96,11 @@ Thomas: Got it.
      }
    }
    ```
+
    (Character offsets are illustrative; the runner validates `quoted_span.text` against the actual slice of the supplied transcript.)
 
 2. `mcp-cognitive-graph.recall_decisions({ project: "phase-2-pricing", since: "2026-04-27" })` →
+
    ```json
    { "decisions": [], "truncated": false }
    ```

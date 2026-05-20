@@ -22,10 +22,10 @@ It demonstrates the minimum surface area an out-of-tree NeuroDock skill plugin n
 
 NeuroDock has two paths for adding a skill, and they have different requirements:
 
-| Path | Lives at | Needs `plugin.yaml`? | Needs `SKILL.md`? |
-|---|---|---|---|
-| **In-tree first-party** | `packages/skills/<name>/` | No | Yes |
-| **Out-of-tree plugin** | `plugins/<name>/` or `~/.neurodock/plugins/<name>/` | **Yes** | Yes |
+| Path                    | Lives at                                            | Needs `plugin.yaml`? | Needs `SKILL.md`? |
+| ----------------------- | --------------------------------------------------- | -------------------- | ----------------- |
+| **In-tree first-party** | `packages/skills/<name>/`                           | No                   | Yes               |
+| **Out-of-tree plugin**  | `plugins/<name>/` or `~/.neurodock/plugins/<name>/` | **Yes**              | Yes               |
 
 The reason: in-tree skills inherit trust and licensing from the repo (the `LICENSE` at the repo root, the maintainer-signed commits). Out-of-tree plugins are loaded by the substrate from places it did not write itself, so it needs a manifest to declare trust level, license, version, and dependencies before activating anything.
 

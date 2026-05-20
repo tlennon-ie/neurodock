@@ -16,7 +16,7 @@ Every test file has exactly four top-level sections, in this order:
 - Tool calls reference the schemas in `packages/mcp-translation/schemas/` and `packages/mcp-cognitive-graph/schemas/`. The runner validates each fake return against its schema before injecting it.
 - Ambiguous items in the response are compared by `quoted_span.text == transcript.slice(start_char, end_char)`. Any deviation fails the test, mirroring the `VERBATIM_ANCHOR_FAILED` guarantee.
 - Reason codes use the v0.1.0 enum from `brief_meeting.schema.json`: `vague_timeline | vague_referent | unassigned_owner | hedged_commitment | deferred_topic | contested | other`. Unknown codes are normalised to `other`.
-- Prohibited phrases (per  voice and the `Do not` block in `SKILL.md`) are tested explicitly: `autistic`, `neurodivergent`, `spectrum`, `executive function`, `superpower`, `crusher`, `smash`, `you got this`, `let's go`, `differently abled`, `clinical`.
+- Prohibited phrases (per voice and the `Do not` block in `SKILL.md`) are tested explicitly: `autistic`, `neurodivergent`, `spectrum`, `executive function`, `superpower`, `crusher`, `smash`, `you got this`, `let's go`, `differently abled`, `clinical`.
 - `record_fact` writes are asserted by call count and shape. Asks and ambiguous items must never be recorded.
 
 ## Adding a new test

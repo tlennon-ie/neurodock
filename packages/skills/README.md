@@ -6,7 +6,7 @@ This directory is intentionally not a workspace package — skills are content, 
 
 Phase 0: stub frontmatter for the six launch skills only. Real prompts and tests land in Phase 1 and Phase 2.
 
-Launch skills (see  Section 6):
+Launch skills (see Section 6):
 
 - `adhd-daily-planner` — Morning ritual, generates 1–3 things that matter today.
 - `audhd-context-recovery` — `/resume` command; reconstructs yesterday from the cognitive graph.

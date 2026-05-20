@@ -71,9 +71,18 @@ interface PackageSpec {
 }
 
 const PACKAGES: ReadonlyArray<PackageSpec> = [
-  { pkg: "neurodock-mcp-chronometric", entrypoint: "neurodock-mcp-chronometric" },
-  { pkg: "neurodock-mcp-cognitive-graph", entrypoint: "neurodock-mcp-cognitive-graph" },
-  { pkg: "neurodock-mcp-task-fractionator", entrypoint: "neurodock-mcp-task-fractionator" },
+  {
+    pkg: "neurodock-mcp-chronometric",
+    entrypoint: "neurodock-mcp-chronometric",
+  },
+  {
+    pkg: "neurodock-mcp-cognitive-graph",
+    entrypoint: "neurodock-mcp-cognitive-graph",
+  },
+  {
+    pkg: "neurodock-mcp-task-fractionator",
+    entrypoint: "neurodock-mcp-task-fractionator",
+  },
   { pkg: "neurodock-mcp-translation", entrypoint: "neurodock-mcp-translation" },
   { pkg: "neurodock-mcp-guardrail", entrypoint: "neurodock-mcp-guardrail" },
   { pkg: "neurodock-evals", entrypoint: "neurodock-evals" },
@@ -100,9 +109,13 @@ export async function runInstallAll(
   if (options.skipInstall) {
     messages.push("Skipping Python package install (--skip-install).");
   } else if (options.dryRun) {
-    messages.push("Dry run. No packages installed and no client configs touched.");
     messages.push(
-      `Would install ${PACKAGES.length} packages using ${installer ?? "<no installer found>"}:`,
+      "Dry run. No packages installed and no client configs touched.",
+    );
+    messages.push(
+      `Would install ${PACKAGES.length} packages using ${
+        installer ?? "<no installer found>"
+      }:`,
     );
     for (const p of PACKAGES) {
       messages.push(`  + ${p.pkg}`);
@@ -133,7 +146,9 @@ export async function runInstallAll(
   // Phase 2: install + verify each package (unless skipped).
   const outcomes: PackageOutcome[] = [];
   if (!options.skipInstall && installer !== null) {
-    messages.push(`Installing ${PACKAGES.length} Python MCP servers via '${installer}'...`);
+    messages.push(
+      `Installing ${PACKAGES.length} Python MCP servers via '${installer}'...`,
+    );
     for (const spec of PACKAGES) {
       const outcome = installAndVerify(spec, installer, spawn);
       outcomes.push(outcome);
@@ -175,7 +190,7 @@ export async function runInstallAll(
     const detail = err instanceof Error ? err.message : String(err);
     messages.push(`init failed: ${detail}`);
     return {
-      installer: options.skipInstall ? "skipped" : (installer ?? "skipped"),
+      installer: options.skipInstall ? "skipped" : installer ?? "skipped",
       packages: outcomes,
       initResult: null,
       messages,
@@ -189,7 +204,9 @@ export async function runInstallAll(
   const totalCount = outcomes.length;
   messages.push("");
   if (options.skipInstall) {
-    messages.push(`Summary: skipped install. ${onPathCount}/${totalCount} on PATH. Wired clients.`);
+    messages.push(
+      `Summary: skipped install. ${onPathCount}/${totalCount} on PATH. Wired clients.`,
+    );
   } else {
     messages.push(
       `Summary: ${installedCount}/${totalCount} installed, ${onPathCount}/${totalCount} on PATH. Wired clients.`,
@@ -205,7 +222,7 @@ export async function runInstallAll(
 
   const exitCode: 0 | 1 | 2 = allOnPath ? 0 : 1;
   return {
-    installer: options.skipInstall ? "skipped" : (installer ?? "skipped"),
+    installer: options.skipInstall ? "skipped" : installer ?? "skipped",
     packages: outcomes,
     initResult,
     messages,
@@ -251,11 +268,17 @@ function installAndVerify(
   if (installer === "uv") {
     const r = spawn("uv", ["tool", "install", spec.pkg], {});
     installed = r.status === 0;
-    if (!installed) installError = (r.stderr || r.stdout || "uv tool install failed").trim();
+    if (!installed)
+      installError = (r.stderr || r.stdout || "uv tool install failed").trim();
   } else {
-    const r = spawn(pythonExe(), ["-m", "pip", "install", "--upgrade", spec.pkg], {});
+    const r = spawn(
+      pythonExe(),
+      ["-m", "pip", "install", "--upgrade", spec.pkg],
+      {},
+    );
     installed = r.status === 0;
-    if (!installed) installError = (r.stderr || r.stdout || "pip install failed").trim();
+    if (!installed)
+      installError = (r.stderr || r.stdout || "pip install failed").trim();
   }
 
   const pathCheck = checkOnPath(spec.entrypoint, spawn);
@@ -275,7 +298,12 @@ function checkOnPath(
 ): { readonly ok: boolean; readonly error?: string } {
   const r = spawn(entrypoint, ["--help"], {});
   if (r.status === 0) return { ok: true };
-  const err = (r.stderr || r.stdout || r.error?.message || "command not found").trim();
+  const err = (
+    r.stderr ||
+    r.stdout ||
+    r.error?.message ||
+    "command not found"
+  ).trim();
   return { ok: false, error: err };
 }
 
@@ -284,7 +312,9 @@ function formatPackageLine(o: PackageOutcome): string {
     return `  [ok]   ${o.pkg}`;
   }
   if (!o.installed) {
-    return `  [fail] ${o.pkg} — install failed: ${truncate(o.installError ?? "unknown")}`;
+    return `  [fail] ${o.pkg} — install failed: ${truncate(
+      o.installError ?? "unknown",
+    )}`;
   }
   return `  [warn] ${o.pkg} — installed but '${o.entrypoint}' not on PATH`;
 }

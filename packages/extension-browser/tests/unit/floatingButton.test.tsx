@@ -9,7 +9,7 @@ describe("FloatingButton", () => {
         visible={false}
         anchor={{ top: 0, left: 0 }}
         onActivate={() => {}}
-      />
+      />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -20,7 +20,7 @@ describe("FloatingButton", () => {
         visible={true}
         anchor={{ top: 10, left: 20 }}
         onActivate={() => {}}
-      />
+      />,
     );
     const btn = screen.getByTestId("neurodock-floating-button");
     expect(btn).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe("FloatingButton", () => {
         visible={true}
         anchor={{ top: 0, left: 0 }}
         onActivate={onActivate}
-      />
+      />,
     );
     screen.getByTestId("neurodock-floating-button").click();
     expect(onActivate).toHaveBeenCalledOnce();
@@ -47,12 +47,12 @@ describe("FloatingButton", () => {
         visible={true}
         anchor={{ top: 0, left: 0 }}
         onActivate={onActivate}
-      />
+      />,
     );
     const btn = screen.getByTestId("neurodock-floating-button");
     btn.focus();
     btn.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Enter", bubbles: true })
+      new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
     );
     expect(onActivate).toHaveBeenCalled();
   });

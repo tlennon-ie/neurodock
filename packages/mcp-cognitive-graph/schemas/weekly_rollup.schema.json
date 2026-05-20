@@ -23,7 +23,14 @@
     "output": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "period", "summary", "decisions", "blockers", "next_actions"],
+      "required": [
+        "project",
+        "period",
+        "summary",
+        "decisions",
+        "blockers",
+        "next_actions"
+      ],
       "properties": {
         "project": {
           "type": ["string", "null"],
@@ -131,9 +138,15 @@
         "blockers": [
           {
             "id": "fact_01HZBLK001",
-            "subject": { "type": "project", "id": "ent_01HZPRJNEURODOCK", "name": "neurodock" },
+            "subject": {
+              "type": "project",
+              "id": "ent_01HZPRJNEURODOCK",
+              "name": "neurodock"
+            },
             "predicate": "blocked_by",
-            "object": { "literal": "awaiting  confirmation for Phase 1 launch" },
+            "object": {
+              "literal": "awaiting  confirmation for Phase 1 launch"
+            },
             "source": null,
             "confidence": 0.9,
             "recorded_at": "2026-05-12T11:20:00+01:00"
@@ -198,7 +211,14 @@
     "Fact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "subject", "predicate", "object", "confidence", "recorded_at"],
+      "required": [
+        "id",
+        "subject",
+        "predicate",
+        "object",
+        "confidence",
+        "recorded_at"
+      ],
       "properties": {
         "id": { "type": "string" },
         "subject": {

@@ -62,7 +62,10 @@ export interface WriteResult {
  * Write a profile YAML, preserving comments when the on-disk file already
  * exists by merging the new value into the parsed document.
  */
-export function writeProfile(path: string, value: Record<string, unknown>): WriteResult {
+export function writeProfile(
+  path: string,
+  value: Record<string, unknown>,
+): WriteResult {
   mkdirSync(dirname(path), { recursive: true });
   let text: string;
   let created = false;
@@ -79,7 +82,10 @@ export function writeProfile(path: string, value: Record<string, unknown>): Writ
   return { path, created, bytesWritten: Buffer.byteLength(text, "utf8") };
 }
 
-function mergeIntoDocument(doc: Document.Parsed, patch: Record<string, unknown>): void {
+function mergeIntoDocument(
+  doc: Document.Parsed,
+  patch: Record<string, unknown>,
+): void {
   for (const [key, value] of Object.entries(patch)) {
     doc.set(key, value);
   }

@@ -12,7 +12,7 @@ A NeuroDock `translation-pack` plugin that tunes [`mcp-translation`](../../packa
 - **Neurodivergent professionals** — particularly autistic and ADHD readers — who find that the literal text of a legal email never quite matches what their colleagues seem to take from it.
 - **Anyone working with British firms** for the first time. The British-firm register is now the global default for legal correspondence, and the unstated rules are unstated for a reason.
 
-This is not a substitute for a lawyer. It's a reading aid for register. The literal translations describe what a phrase *typically* means; context still matters, and the same phrase can mean different things in different deal stages, court contexts, or relationships.
+This is not a substitute for a lawyer. It's a reading aid for register. The literal translations describe what a phrase _typically_ means; context still matters, and the same phrase can mean different things in different deal stages, court contexts, or relationships.
 
 ## What it covers
 
@@ -86,7 +86,7 @@ A real translation-pack ships with its own eval corpus at `eval/corpus.yaml` per
 
 - It is not legal advice. It explains how lawyers talk, not what they're saying about your particular situation.
 - It does not make jurisdictional claims. The same phrase ("without prejudice") has slightly different operational effects in different jurisdictions; the pack notes the typical effect, not the binding one.
-- It does not editorialise about lawyers. The literal translations describe what the speaker *means*, not whether they are being honest, helpful, or otherwise.
+- It does not editorialise about lawyers. The literal translations describe what the speaker _means_, not whether they are being honest, helpful, or otherwise.
 - It does not aggregate any user data. Everything stays local to your `mcp-translation` install per the ADR 0005 privacy model.
 
 ## License

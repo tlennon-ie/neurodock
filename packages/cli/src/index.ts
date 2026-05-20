@@ -26,27 +26,65 @@ export function buildProgram(): Command {
   program
     .command("init")
     .description("install NeuroDock MCP servers into your MCP-aware clients")
-    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
     .option("--profile <id>", "minimal | example", "example")
     .option("--dry-run", "print the diff without writing anything", false)
-    .option("--yes", "answer yes to all prompts (idempotent re-runs, collisions)", false)
-    .action(async (opts: { client: string; profile: string; dryRun: boolean; yes: boolean }) => {
-      const client = validateClient(opts.client);
-      const profile = validateProfile(opts.profile);
-      const result = await runInit({ client, profile, dryRun: opts.dryRun, yes: opts.yes });
-      for (const m of result.messages) print(m);
-      process.exit(0);
-    });
+    .option(
+      "--yes",
+      "answer yes to all prompts (idempotent re-runs, collisions)",
+      false,
+    )
+    .action(
+      async (opts: {
+        client: string;
+        profile: string;
+        dryRun: boolean;
+        yes: boolean;
+      }) => {
+        const client = validateClient(opts.client);
+        const profile = validateProfile(opts.profile);
+        const result = await runInit({
+          client,
+          profile,
+          dryRun: opts.dryRun,
+          yes: opts.yes,
+        });
+        for (const m of result.messages) print(m);
+        process.exit(0);
+      },
+    );
 
   program
     .command("install-all")
-    .description("install the 6 Python MCP servers and wire MCP clients in one step")
-    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .description(
+      "install the 6 Python MCP servers and wire MCP clients in one step",
+    )
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
     .option("--profile <id>", "minimal | example", "example")
     .option("--installer <id>", "uv | pip | auto", "auto")
-    .option("--skip-install", "skip the Python install step (only run init)", false)
-    .option("--yes", "answer yes to all prompts (idempotent re-runs, collisions)", false)
-    .option("--dry-run", "print what would happen without writing anything", false)
+    .option(
+      "--skip-install",
+      "skip the Python install step (only run init)",
+      false,
+    )
+    .option(
+      "--yes",
+      "answer yes to all prompts (idempotent re-runs, collisions)",
+      false,
+    )
+    .option(
+      "--dry-run",
+      "print what would happen without writing anything",
+      false,
+    )
     .action(
       async (opts: {
         client: string;
@@ -74,8 +112,13 @@ export function buildProgram(): Command {
 
   program
     .command("examples")
-    .description("print copy-pasteable prompts that exercise every wired NeuroDock MCP tool")
-    .option("--server <name>", "filter to a single server (e.g. neurodock-chronometric)")
+    .description(
+      "print copy-pasteable prompts that exercise every wired NeuroDock MCP tool",
+    )
+    .option(
+      "--server <name>",
+      "filter to a single server (e.g. neurodock-chronometric)",
+    )
     .option("--json", "print the example data as JSON for scripting", false)
     .action(async (opts: { server?: string; json: boolean }) => {
       const r = await runExamples({
@@ -99,7 +142,9 @@ export function buildProgram(): Command {
       process.exit(r.ok ? 0 : 1);
     });
 
-  const profileCmd = program.command("profile").description("profile utilities");
+  const profileCmd = program
+    .command("profile")
+    .description("profile utilities");
 
   profileCmd
     .command("validate")
@@ -137,15 +182,24 @@ export function buildProgram(): Command {
   program
     .command("validate")
     .description("validate a NeuroDock profile against the canonical schema")
-    .option("--file <path>", "path to the profile file (default: resolved profile path)")
-    .option("--strict", "also flag unknown keys (default allows forward-compat extras)", false)
+    .option(
+      "--file <path>",
+      "path to the profile file (default: resolved profile path)",
+    )
+    .option(
+      "--strict",
+      "also flag unknown keys (default allows forward-compat extras)",
+      false,
+    )
     .action(async (opts: { file?: string; strict: boolean }) => {
       const r = await runValidate({
         ...(opts.file !== undefined ? { file: opts.file } : {}),
         strict: opts.strict === true,
       });
       if (r.missing) {
-        print(`No profile at ${r.resolvedPath}. Run 'neurodock init' to create one.`);
+        print(
+          `No profile at ${r.resolvedPath}. Run 'neurodock init' to create one.`,
+        );
         process.exit(1);
       }
       if (r.parseError) {
@@ -165,8 +219,14 @@ export function buildProgram(): Command {
 
   program
     .command("update")
-    .description("re-run install adapters to refresh existing NeuroDock MCP entries")
-    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .description(
+      "re-run install adapters to refresh existing NeuroDock MCP entries",
+    )
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
     .option("--dry-run", "print the diff without writing anything", false)
     .action(async (opts: { client: string; dryRun: boolean }) => {
       const client = validateClient(opts.client);
@@ -177,11 +237,25 @@ export function buildProgram(): Command {
 
   program
     .command("uninstall")
-    .description("remove NeuroDock MCP entries from your clients; optionally purge data")
-    .option("--client <id>", "claude-desktop | claude-code | cursor | all", "all")
+    .description(
+      "remove NeuroDock MCP entries from your clients; optionally purge data",
+    )
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
     .option("--dry-run", "print the diff without writing anything", false)
-    .option("--yes", "skip interactive prompts (still preserves data unless --purge)", false)
-    .option("--purge", "also delete ~/.neurodock/profile.yaml and cognitive-graph.sqlite", false)
+    .option(
+      "--yes",
+      "skip interactive prompts (still preserves data unless --purge)",
+      false,
+    )
+    .option(
+      "--purge",
+      "also delete ~/.neurodock/profile.yaml and cognitive-graph.sqlite",
+      false,
+    )
     .action(
       async (opts: {
         client: string;
@@ -203,11 +277,15 @@ export function buildProgram(): Command {
 
   const hostCmd = program
     .command("host")
-    .description("manage the optional native messaging host (browser extension <-> ~/.neurodock/profile.yaml)");
+    .description(
+      "manage the optional native messaging host (browser extension <-> ~/.neurodock/profile.yaml)",
+    );
 
   hostCmd
     .command("install")
-    .description("register the NeuroDock native messaging host with installed browsers")
+    .description(
+      "register the NeuroDock native messaging host with installed browsers",
+    )
     .option(
       "--extension-id <id>",
       "browser extension id allowed to connect (repeatable)",
@@ -219,20 +297,30 @@ export function buildProgram(): Command {
       print(`Installing com.neurodock.profile (platform=${result.platform})`);
       for (const o of result.outcomes) {
         const detail = o.detail ? ` — ${o.detail}` : "";
-        print(`  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${o.manifestPath}${detail}`);
+        print(
+          `  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${
+            o.manifestPath
+          }${detail}`,
+        );
       }
       process.exit(0);
     });
 
   hostCmd
     .command("uninstall")
-    .description("remove the NeuroDock native messaging host manifests / registry pointers")
+    .description(
+      "remove the NeuroDock native messaging host manifests / registry pointers",
+    )
     .action(() => {
       const result = runHostUninstall();
       print(`Removing com.neurodock.profile (platform=${result.platform})`);
       for (const o of result.outcomes) {
         const detail = o.detail ? ` — ${o.detail}` : "";
-        print(`  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${o.manifestPath}${detail}`);
+        print(
+          `  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${
+            o.manifestPath
+          }${detail}`,
+        );
       }
       process.exit(0);
     });
@@ -241,7 +329,12 @@ export function buildProgram(): Command {
 }
 
 function validateClient(value: string): ClientId | "all" {
-  if (value === "all" || value === "claude-desktop" || value === "claude-code" || value === "cursor") {
+  if (
+    value === "all" ||
+    value === "claude-desktop" ||
+    value === "claude-code" ||
+    value === "cursor"
+  ) {
     return value;
   }
   throw new Error(`Unknown --client value: ${value}`);
@@ -281,12 +374,15 @@ function formatCheck(c: CheckResult): string {
 
 const isMain =
   process.argv[1] !== undefined &&
-  (process.argv[1].endsWith("index.js") || process.argv[1].endsWith("neurodock"));
+  (process.argv[1].endsWith("index.js") ||
+    process.argv[1].endsWith("neurodock"));
 
 if (isMain) {
-  buildProgram().parseAsync(process.argv).catch((err: unknown) => {
-    const message = err instanceof Error ? err.message : String(err);
-    process.stderr.write(`Error: ${message}\n`);
-    process.exit(1);
-  });
+  buildProgram()
+    .parseAsync(process.argv)
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`Error: ${message}\n`);
+      process.exit(1);
+    });
 }

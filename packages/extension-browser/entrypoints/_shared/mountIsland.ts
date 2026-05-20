@@ -17,14 +17,11 @@ export interface Island {
   readonly destroy: () => void;
 }
 
-export function mountIsland(
-  hostId: string,
-  doc: Document = document
-): Island {
+export function mountIsland(hostId: string, doc: Document = document): Island {
   const existing = doc.getElementById(hostId);
   if (existing && existing.shadowRoot) {
     const containerNode = existing.shadowRoot.querySelector(
-      "div[data-neurodock-root]"
+      "div[data-neurodock-root]",
     );
     if (containerNode instanceof HTMLElement) {
       const root = createRoot(containerNode);

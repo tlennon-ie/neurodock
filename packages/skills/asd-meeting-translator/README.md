@@ -29,8 +29,8 @@ Remove the trigger phrases from `~/.neurodock/profile.yaml` under `skills.asd-me
 
 ## References
 
--  — launch skill #3 specification.
--  — Area 2 translation layer (the four-section meeting brief user story).
+- — launch skill #3 specification.
+- — Area 2 translation layer (the four-section meeting brief user story).
 - `docs/decisions/0005-translation-tool-design.md` — verbatim-anchor enforcement and the four-tool decomposition.
 - `packages/mcp-translation/schemas/brief_meeting.schema.json` — the wire contract.
 - `SKILL.md` — the instructions the LLM follows when this skill activates.

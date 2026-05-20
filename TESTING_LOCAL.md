@@ -44,7 +44,8 @@ asyncio.run(demo)
 ```
 
 You should see your local time + day_of_week + energy_zone, then a session_id
-+ timestamp + intent echo.
+
+- timestamp + intent echo.
 
 ## Step 3 — Build the CLI
 
@@ -73,12 +74,15 @@ node packages/cli/dist/index.js init
 ```
 
 This:
+
 1. Detects your platform's Claude Desktop config path
- - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
- - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
- - Linux: `~/.config/Claude/claude_desktop_config.json`
+
+- Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+- macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Linux: `~/.config/Claude/claude_desktop_config.json`
+
 2. Adds entries under `mcpServers` for each NeuroDock server, pointing at
- the `neurodock-mcp-chronometric` etc. console scripts in your local uv venv
+   the `neurodock-mcp-chronometric` etc. console scripts in your local uv venv
 3. Copies `packages/core/schemas/profile.minimal.yaml` to `~/.neurodock/profile.yaml`
 4. Prints next steps
 
@@ -125,8 +129,8 @@ Open `~/.neurodock/profile.yaml` and set:
 
 ```yaml
 identity:
-  display_name: "Thomas"          # your name
-  neurotypes: ["adhd"]            # whatever applies; self-ID only
+  display_name: "Thomas" # your name
+  neurotypes: ["adhd"] # whatever applies; self-ID only
 preferences:
   output_format: "answer_first"
   motion: "reduced"
@@ -167,6 +171,7 @@ the published store version comes later.
 ## What to expect
 
 This is v0.0.1. Things that work:
+
 - Time context, session marking, break suggestions
 - Persistent memory across sessions (cognitive-graph)
 - Task decomposition
@@ -174,6 +179,7 @@ This is v0.0.1. Things that work:
 - Rumination detection (the OCD-adjacent skill is beta — )
 
 Things that are stubs or deferred:
+
 - Hyperfocus + sycophancy detectors (return `DETECTOR_NOT_YET_IMPLEMENTED`)
 - Real LLM-backed translation in the extension (currently returns labeled MOCK)
 - Embedding-based fuzzy entity recall (uses exact + alias match for now)

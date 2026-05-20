@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runUpdate } from "../src/commands/update.js";
@@ -145,8 +151,12 @@ describe("neurodock update", () => {
         {
           mcpServers: {
             "neurodock-chronometric": { command: "neurodock-mcp-chronometric" },
-            "neurodock-cognitive-graph": { command: "neurodock-mcp-cognitive-graph" },
-            "neurodock-task-fractionator": { command: "neurodock-mcp-task-fractionator" },
+            "neurodock-cognitive-graph": {
+              command: "neurodock-mcp-cognitive-graph",
+            },
+            "neurodock-task-fractionator": {
+              command: "neurodock-mcp-task-fractionator",
+            },
           },
         },
         null,

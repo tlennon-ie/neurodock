@@ -8,4 +8,4 @@ It activates on `/resume`, `/where-was-i`, the phrases "where was I" / "what was
 
 It is AuDHD-targeted because the combination of ADHD context-loss and autistic deep-context-investment makes reconstruction especially costly. The skill carries the cost so the user does not have to.
 
-See  for the launch-skill specification.
+See for the launch-skill specification.

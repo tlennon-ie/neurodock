@@ -12,13 +12,13 @@ serve you.
 
 ## Available presets
 
-| Preset | Distinctive tuning |
-|---|---|
-| [`adhd.yaml`](adhd.yaml) | `max_chunk_size: 5`, `hyperfocus_break_minutes: 75`, `reading_font_hint: lexend`. Activates `adhd-daily-planner`, `hyperfocus-formatter`, `audhd-context-recovery`, `visual-organizer`. |
-| [`audhd.yaml`](audhd.yaml) | `neurotypes: ["audhd"]` (first-class, not a sum). 75-minute break cadence + `end_of_day_local` pre-set. Activates `audhd-context-recovery` (primary), plus ADHD- and ASD-tagged skills including `asd-meeting-translator`. |
-| [`ocd.yaml`](ocd.yaml) | Strictest guardrail config: `rumination_threshold: 2` over a 60-minute window, `sycophancy_check: refuse`. Activates `ocd-decision-finalizer`. |
-| [`dyslexic.yaml`](dyslexic.yaml) | `reading_font_hint: atkinson_hyperlegible`, `max_chunk_size: 4`, `output_format: answer_first` for fast scanning. |
-| [`low-stimulation.yaml`](low-stimulation.yaml) | Temporary-override shape. `neurotypes: []` (no identity claim), `max_chunk_size: 3`, `hyperfocus_break_minutes: 60`, all guardrails at most-protective values. |
+| Preset                                         | Distinctive tuning                                                                                                                                                                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`adhd.yaml`](adhd.yaml)                       | `max_chunk_size: 5`, `hyperfocus_break_minutes: 75`, `reading_font_hint: lexend`. Activates `adhd-daily-planner`, `hyperfocus-formatter`, `audhd-context-recovery`, `visual-organizer`.                                    |
+| [`audhd.yaml`](audhd.yaml)                     | `neurotypes: ["audhd"]` (first-class, not a sum). 75-minute break cadence + `end_of_day_local` pre-set. Activates `audhd-context-recovery` (primary), plus ADHD- and ASD-tagged skills including `asd-meeting-translator`. |
+| [`ocd.yaml`](ocd.yaml)                         | Strictest guardrail config: `rumination_threshold: 2` over a 60-minute window, `sycophancy_check: refuse`. Activates `ocd-decision-finalizer`.                                                                             |
+| [`dyslexic.yaml`](dyslexic.yaml)               | `reading_font_hint: atkinson_hyperlegible`, `max_chunk_size: 4`, `output_format: answer_first` for fast scanning.                                                                                                          |
+| [`low-stimulation.yaml`](low-stimulation.yaml) | Temporary-override shape. `neurotypes: []` (no identity claim), `max_chunk_size: 3`, `hyperfocus_break_minutes: 60`, all guardrails at most-protective values.                                                             |
 
 ## How to use a preset
 

@@ -28,8 +28,23 @@ function resolveSchemaPath(): string | null {
   const candidates = [
     resolve(here, "..", "..", "core", "schemas", "profile.schema.json"),
     resolve(here, "..", "..", "..", "core", "schemas", "profile.schema.json"),
-    resolve(here, "..", "..", "..", "..", "core", "schemas", "profile.schema.json"),
-    resolve(process.cwd(), "packages", "core", "schemas", "profile.schema.json"),
+    resolve(
+      here,
+      "..",
+      "..",
+      "..",
+      "..",
+      "core",
+      "schemas",
+      "profile.schema.json",
+    ),
+    resolve(
+      process.cwd(),
+      "packages",
+      "core",
+      "schemas",
+      "profile.schema.json",
+    ),
   ];
   for (const c of candidates) {
     if (existsSync(c)) return c;
@@ -43,8 +58,13 @@ function getValidator(): ReturnType<Ajv2020["compile"]> | null {
   if (!path) return null;
   const raw = readFileSync(path, "utf8");
   const schema = JSON.parse(raw) as object;
-  const ajv = new Ajv2020({ allErrors: true, strict: false, allowUnionTypes: true });
-  const addFormatsFn = (addFormats as unknown as (a: Ajv2020) => Ajv2020) ?? addFormats;
+  const ajv = new Ajv2020({
+    allErrors: true,
+    strict: false,
+    allowUnionTypes: true,
+  });
+  const addFormatsFn =
+    (addFormats as unknown as (a: Ajv2020) => Ajv2020) ?? addFormats;
   addFormatsFn(ajv);
   cachedValidator = ajv.compile(schema);
   return cachedValidator;

@@ -13,7 +13,10 @@
  */
 import { defineBackground } from "wxt/utils/define-background";
 import { loadProfile } from "../src/lib/profile.js";
-import { translate, detectChannelFromUrl } from "../src/lib/translation-client.js";
+import {
+  translate,
+  detectChannelFromUrl,
+} from "../src/lib/translation-client.js";
 import { appendHistory, truncatePreview } from "../src/lib/storage.js";
 import type {
   RuntimeMessage,
@@ -36,14 +39,15 @@ export default defineBackground(() => {
         // Swallow chrome.runtime.lastError so re-install does not log noise.
         // (createContextMenu errors if the id already exists.)
         void chrome.runtime.lastError;
-      }
+      },
     );
   });
 
   chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (info.menuItemId !== CONTEXT_MENU_ID) return;
     if (!tab?.id) return;
-    const text = typeof info.selectionText === "string" ? info.selectionText : "";
+    const text =
+      typeof info.selectionText === "string" ? info.selectionText : "";
     if (text.length === 0) return;
     const url = tab.url ?? "";
     const channel = detectChannelFromUrl(url);
@@ -63,7 +67,7 @@ export default defineBackground(() => {
     (
       msg: RuntimeMessage,
       _sender,
-      sendResponse: (env: RuntimeResponseEnvelope) => void
+      sendResponse: (env: RuntimeResponseEnvelope) => void,
     ) => {
       if (!msg || msg.type !== "translate") return false;
       void (async () => {
@@ -79,12 +83,12 @@ export default defineBackground(() => {
         }
       })();
       return true; // async response
-    }
+    },
   );
 });
 
 async function runTranslate(
-  request: TranslationRequest
+  request: TranslationRequest,
 ): Promise<TranslationResponse> {
   const profile = await loadProfile();
   const response = await translate(request, { profile });

@@ -26,14 +26,14 @@ published install this matures into `uv tool install neurodock-mcp-*`.
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `neurodock init` | Install MCP servers into Claude Desktop / Claude Code / Cursor. |
-| `neurodock doctor` | Diagnose your install — profile validity, client wiring, tool availability. |
-| `neurodock profile validate` | Validate `~/.neurodock/profile.yaml` against the v0.1 schema. |
-| `neurodock profile show` | Print the resolved profile with loader defaults applied. |
-| `neurodock host install` | Register the optional native messaging host so the browser extension can read `~/.neurodock/profile.yaml` directly. |
-| `neurodock host uninstall` | Remove all NeuroDock native-host manifests and registry pointers. |
+| Command                      | What it does                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `neurodock init`             | Install MCP servers into Claude Desktop / Claude Code / Cursor.                                                     |
+| `neurodock doctor`           | Diagnose your install — profile validity, client wiring, tool availability.                                         |
+| `neurodock profile validate` | Validate `~/.neurodock/profile.yaml` against the v0.1 schema.                                                       |
+| `neurodock profile show`     | Print the resolved profile with loader defaults applied.                                                            |
+| `neurodock host install`     | Register the optional native messaging host so the browser extension can read `~/.neurodock/profile.yaml` directly. |
+| `neurodock host uninstall`   | Remove all NeuroDock native-host manifests and registry pointers.                                                   |
 
 ### `neurodock init`
 
@@ -60,13 +60,13 @@ key are skipped unless `--yes` is supplied.
 
 ### Detection locations
 
-| Client | Platform | Path |
-|---|---|---|
-| Claude Desktop | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Claude Desktop | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
-| Claude Desktop | Linux | `~/.config/Claude/claude_desktop_config.json` |
-| Claude Code | All | `./.claude/settings.json` (project, preferred) then `~/.claude/settings.json` (user) |
-| Cursor | All | `./.cursor/mcp.json` (project, preferred) then `~/.cursor/mcp.json` (user) |
+| Client         | Platform | Path                                                                                 |
+| -------------- | -------- | ------------------------------------------------------------------------------------ |
+| Claude Desktop | macOS    | `~/Library/Application Support/Claude/claude_desktop_config.json`                    |
+| Claude Desktop | Windows  | `%APPDATA%\Claude\claude_desktop_config.json`                                        |
+| Claude Desktop | Linux    | `~/.config/Claude/claude_desktop_config.json`                                        |
+| Claude Code    | All      | `./.claude/settings.json` (project, preferred) then `~/.claude/settings.json` (user) |
+| Cursor         | All      | `./.cursor/mcp.json` (project, preferred) then `~/.cursor/mcp.json` (user)           |
 
 ### `neurodock host install` / `uninstall`
 

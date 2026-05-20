@@ -46,7 +46,11 @@ export async function runValidate(
       missing: true,
       valid: false,
       violations: [
-        { path: "/", message: "profile file does not exist", keyword: "missing" },
+        {
+          path: "/",
+          message: "profile file does not exist",
+          keyword: "missing",
+        },
       ],
     };
   }
@@ -98,7 +102,8 @@ export async function runValidate(
     const instancePath = e.instancePath === "" ? "/" : e.instancePath;
     const path =
       e.keyword === "additionalProperties" &&
-      typeof (e.params as Record<string, unknown>)["additionalProperty"] === "string"
+      typeof (e.params as Record<string, unknown>)["additionalProperty"] ===
+        "string"
         ? `${instancePath}/${
             (e.params as Record<string, string>)["additionalProperty"] ?? ""
           }`
@@ -124,9 +129,16 @@ function buildValidator(strict: boolean): CompiledValidator {
   if (strict && cachedStrict) return cachedStrict;
   if (!strict && cachedLenient) return cachedLenient;
 
-  const schema = JSON.parse(JSON.stringify(loadSchema())) as Record<string, unknown>;
+  const schema = JSON.parse(JSON.stringify(loadSchema())) as Record<
+    string,
+    unknown
+  >;
   if (strict) forceAdditionalPropertiesFalse(schema);
-  const ajv = new Ajv2020({ allErrors: true, strict: false, allowUnionTypes: true });
+  const ajv = new Ajv2020({
+    allErrors: true,
+    strict: false,
+    allowUnionTypes: true,
+  });
   const addFormatsFn =
     (addFormats as unknown as (a: Ajv2020) => Ajv2020) ?? addFormats;
   addFormatsFn(ajv);
@@ -180,7 +192,8 @@ function locateLine(
       }
     }
     const range = (node as { range?: ReadonlyArray<number> } | null)?.range;
-    if (!range || range.length === 0 || range[0] === undefined) return undefined;
+    if (!range || range.length === 0 || range[0] === undefined)
+      return undefined;
     const pos = lineCounter.linePos(range[0]);
     return pos.line;
   } catch {

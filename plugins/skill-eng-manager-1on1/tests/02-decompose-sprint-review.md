@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -17,6 +18,7 @@ preferences:
 `mcp-cognitive-graph` is mocked as available but unused in this flow.
 
 Mocked `decompose` is called with:
+
 ```json
 {
   "goal": "Sprint review notes — payments squad, sprint 47. Stripe webhook retries are still timing out on the production read path; we agreed Alex would look at the connection-pool sizing. Refund flow has two open bugs from QA, both assigned to Priya: the partial-refund total doesn't round correctly, and the refund confirmation email is going to the wrong address when the customer updated their account email mid-flow. We also need to write a one-pager on the upcoming SCA changes so the rest of engineering knows what's coming, but nobody picked it up.",
@@ -25,6 +27,7 @@ Mocked `decompose` is called with:
 ```
 
 Mocked response:
+
 ```json
 {
   "tasks": [

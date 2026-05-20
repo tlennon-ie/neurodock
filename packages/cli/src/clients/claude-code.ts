@@ -14,7 +14,9 @@ export const claudeCodeAdapter: ClientAdapter = {
   },
   shapeConfig(existing, mcpServers) {
     const base = isObject(existing) ? { ...existing } : {};
-    const prev = isObject(base["mcpServers"]) ? (base["mcpServers"] as Record<string, McpServerEntry>) : {};
+    const prev = isObject(base["mcpServers"])
+      ? (base["mcpServers"] as Record<string, McpServerEntry>)
+      : {};
     base["mcpServers"] = { ...prev, ...mcpServers };
     return base;
   },

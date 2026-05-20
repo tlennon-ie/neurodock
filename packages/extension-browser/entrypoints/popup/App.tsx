@@ -70,14 +70,23 @@ export function App(): React.ReactElement {
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />
 
       <section aria-labelledby="mode-heading" className="flex flex-col gap-2">
-        <h2 id="mode-heading" className="font-heading m-0 text-base font-medium">
+        <h2
+          id="mode-heading"
+          className="font-heading m-0 text-base font-medium"
+        >
           Mode
         </h2>
         <ModeToggle profile={profile} onChange={update} />
       </section>
 
-      <section aria-labelledby="history-heading" className="flex flex-col gap-2">
-        <h2 id="history-heading" className="font-heading m-0 text-base font-medium">
+      <section
+        aria-labelledby="history-heading"
+        className="flex flex-col gap-2"
+      >
+        <h2
+          id="history-heading"
+          className="font-heading m-0 text-base font-medium"
+        >
           History
         </h2>
         <HistoryPanel
@@ -88,7 +97,10 @@ export function App(): React.ReactElement {
       </section>
 
       <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
-        <h2 id="sync-heading" className="font-heading m-0 text-base font-medium">
+        <h2
+          id="sync-heading"
+          className="font-heading m-0 text-base font-medium"
+        >
           Profile sync
         </h2>
         <ProfileSyncLine status={syncStatus} />
@@ -113,8 +125,7 @@ function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
     return (
       <div className="flex flex-col gap-0.5 text-xs text-neutral-600 dark:text-neutral-400">
         <span>
-          <strong>native host (active).</strong>{" "}
-          Reading and writing{" "}
+          <strong>native host (active).</strong> Reading and writing{" "}
           <code className="font-mono">~/.neurodock/profile.yaml</code>.
         </span>
         {status.detail ? (
@@ -145,7 +156,10 @@ interface ModeToggleProps {
   readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void>;
 }
 
-function ModeToggle({ profile, onChange }: ModeToggleProps): React.ReactElement {
+function ModeToggle({
+  profile,
+  onChange,
+}: ModeToggleProps): React.ReactElement {
   return (
     <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
       <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
@@ -171,7 +185,7 @@ function ModeToggle({ profile, onChange }: ModeToggleProps): React.ReactElement 
             if (!profile.cloudProvider) {
               alert(
                 "Set a cloud provider id below before enabling cloud mode. " +
-                  "Cloud mode requires explicit consent per call."
+                  "Cloud mode requires explicit consent per call.",
               );
               return;
             }
@@ -192,7 +206,8 @@ function ModeToggle({ profile, onChange }: ModeToggleProps): React.ReactElement 
           placeholder="anthropic, openai, …"
           onChange={(e) =>
             void onChange({
-              cloudProvider: e.target.value.length === 0 ? null : e.target.value,
+              cloudProvider:
+                e.target.value.length === 0 ? null : e.target.value,
             })
           }
           className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"

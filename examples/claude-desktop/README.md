@@ -59,8 +59,8 @@ This:
 
 1. Detects your Claude Desktop config path
    - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
-   - macOS:   `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Linux:   `~/.config/Claude/claude_desktop_config.json`
+   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - Linux: `~/.config/Claude/claude_desktop_config.json`
 2. Adds entries under `mcpServers` for each NeuroDock server, pointing at the
    absolute paths of the console scripts in your uv venv
 3. Copies `packages/core/schemas/profile.minimal.yaml` to
@@ -78,7 +78,7 @@ Open `~/.neurodock/profile.yaml`. The minimal version looks like this:
 ```yaml
 identity:
   display_name: "Your Name"
-  neurotypes: ["adhd"]          # self-ID only; pick what fits
+  neurotypes: ["adhd"] # self-ID only; pick what fits
 preferences:
   output_format: "answer_first"
   motion: "reduced"

@@ -80,7 +80,9 @@
   "examples": [
     {
       "name": "clean end with summary",
-      "input": { "summary": "shipped the RFC reply, parked two follow-ups in inbox" },
+      "input": {
+        "summary": "shipped the RFC reply, parked two follow-ups in inbox"
+      },
       "output": {
         "session_id": "6f9f4f5e-3b1c-4e2a-9f7d-2b3c4d5e6f70",
         "started_at": "2026-05-15T09:14:22+01:00",

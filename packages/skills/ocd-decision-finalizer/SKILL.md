@@ -87,7 +87,7 @@ Rules:
 - Every quoted decision name must come back verbatim from the graph. Do not paraphrase, summarise, or "polish" the title.
 - The opener is one line. It states "This is the Nth time today" with the integer, and the decision name. No softening adjectives. No "I notice that".
 - The "what you weighed" section is bounded at 5 bullets. If more than 5 candidate facts exist, take the 5 with the most recent `recorded_at` and append one closing line `(<M> further trade-off facts in the graph; ask for them if you want the full list.)`
-- The override line is always present when finality fires. Without it the response is non-overridable, which violates the ethics contract (see  ethics framework, items 2 and 3).
+- The override line is always present when finality fires. Without it the response is non-overridable, which violates the ethics contract (see ethics framework, items 2 and 3).
 
 ## What this skill is not
 

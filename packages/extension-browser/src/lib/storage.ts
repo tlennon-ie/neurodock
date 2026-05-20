@@ -49,7 +49,7 @@ export async function appendHistory(entry: HistoryEntry): Promise<void> {
 }
 
 export async function listHistory(
-  limit: number = DEFAULT_PAGE_SIZE
+  limit: number = DEFAULT_PAGE_SIZE,
 ): Promise<HistoryEntry[]> {
   const d = await db();
   const tx = d.transaction(STORE, "readonly");

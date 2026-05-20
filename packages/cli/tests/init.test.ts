@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  readFileSync,
+  existsSync,
+  mkdirSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runInit } from "../src/commands/init.js";
@@ -47,7 +54,9 @@ describe("neurodock init", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -68,7 +77,10 @@ describe("neurodock init", () => {
   it("creates a profile from the minimal template using $USER as display_name", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    writeFileSync(join(sandbox.cwd, ".mcp.json"), JSON.stringify({ mcpServers: {} }, null, 2));
+    writeFileSync(
+      join(sandbox.cwd, ".mcp.json"),
+      JSON.stringify({ mcpServers: {} }, null, 2),
+    );
 
     const profileFile = join(sandbox.home, "profile.yaml");
     const result = await runInit(
@@ -79,7 +91,10 @@ describe("neurodock init", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "alice",
-          env: { NEURODOCK_PROFILE_PATH: profileFile, USER: "alice" } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: profileFile,
+            USER: "alice",
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -111,7 +126,9 @@ describe("neurodock init", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
@@ -130,16 +147,26 @@ describe("neurodock init", () => {
   it("is idempotent: a second run reports no-change", async () => {
     const claudeDir = join(sandbox.cwd, ".claude");
     mkdirSync(claudeDir, { recursive: true });
-    writeFileSync(join(sandbox.cwd, ".mcp.json"), JSON.stringify({ mcpServers: {} }, null, 2));
+    writeFileSync(
+      join(sandbox.cwd, ".mcp.json"),
+      JSON.stringify({ mcpServers: {} }, null, 2),
+    );
 
-    const opts = { client: "claude-code" as const, profile: "minimal" as const, dryRun: false, yes: true };
+    const opts = {
+      client: "claude-code" as const,
+      profile: "minimal" as const,
+      dryRun: false,
+      yes: true,
+    };
     const deps = {
       envOverrides: {
         platform: "linux" as const,
         home: sandbox.home,
         cwd: sandbox.cwd,
         user: "tester",
-        env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+        env: {
+          NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+        } as NodeJS.ProcessEnv,
       },
     };
     await runInit(opts, deps);
@@ -157,11 +184,15 @@ describe("neurodock init", () => {
           home: sandbox.home,
           cwd: sandbox.cwd,
           user: "tester",
-          env: { NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml") } as NodeJS.ProcessEnv,
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
         },
       },
     );
     expect(result.applied).toBe(false);
-    expect(result.messages.join("\n")).toContain("No supported MCP client detected");
+    expect(result.messages.join("\n")).toContain(
+      "No supported MCP client detected",
+    );
   });
 });

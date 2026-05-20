@@ -50,7 +50,7 @@ export function isEditableElement(node: EventTarget | null): node is Editable {
 
 export function startSelectionWatcher(
   doc: Document,
-  options: SelectionWatcherOptions
+  options: SelectionWatcherOptions,
 ): SelectionWatcherHandle {
   const focusHandler = (event: FocusEvent): void => {
     if (isEditableElement(event.target)) {

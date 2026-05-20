@@ -26,13 +26,21 @@ interface FakeHostState {
   exists: boolean;
 }
 
-function installFakeRuntime(state: FakeHostState, opts: { failConnect?: boolean } = {}): () => void {
+function installFakeRuntime(
+  state: FakeHostState,
+  opts: { failConnect?: boolean } = {},
+): () => void {
   const original = (globalThis as unknown as { chrome?: unknown }).chrome;
   let messageListener: Listener<unknown> | null = null;
   let disconnectListener: (() => void) | null = null;
   const port: FakePort = {
     postMessage(value) {
-      const v = value as { id?: string; op: string; payload?: unknown; confirmOverwrite?: boolean };
+      const v = value as {
+        id?: string;
+        op: string;
+        payload?: unknown;
+        confirmOverwrite?: boolean;
+      };
       // Reply asynchronously to simulate native messaging cadence.
       queueMicrotask(() => {
         if (!messageListener) return;
@@ -51,7 +59,11 @@ function installFakeRuntime(state: FakeHostState, opts: { failConnect?: boolean 
             ...(id !== undefined ? { id } : {}),
             ok: true,
             op: "get",
-            data: { path: "/tmp/profile.yaml", exists: state.exists, profile: state.profile },
+            data: {
+              path: "/tmp/profile.yaml",
+              exists: state.exists,
+              profile: state.profile,
+            },
             error: null,
             version: "0.1.0",
           });
@@ -72,7 +84,11 @@ function installFakeRuntime(state: FakeHostState, opts: { failConnect?: boolean 
               ...(id !== undefined ? { id } : {}),
               ok: true,
               op: "set",
-              data: { path: "/tmp/profile.yaml", created: true, bytesWritten: 64 },
+              data: {
+                path: "/tmp/profile.yaml",
+                created: true,
+                bytesWritten: 64,
+              },
               error: null,
               version: "0.1.0",
             });
@@ -83,8 +99,16 @@ function installFakeRuntime(state: FakeHostState, opts: { failConnect?: boolean 
     disconnect() {
       if (disconnectListener) disconnectListener();
     },
-    onMessage: { addListener: (fn) => { messageListener = fn; } },
-    onDisconnect: { addListener: (fn) => { disconnectListener = fn; } },
+    onMessage: {
+      addListener: (fn) => {
+        messageListener = fn;
+      },
+    },
+    onDisconnect: {
+      addListener: (fn) => {
+        disconnectListener = fn;
+      },
+    },
   };
 
   const fakeChrome = {
@@ -135,7 +159,10 @@ describe("native-host-client", () => {
   });
 
   it("returns absent when connectNative throws", async () => {
-    restore = installFakeRuntime({ profile: null, exists: false }, { failConnect: true });
+    restore = installFakeRuntime(
+      { profile: null, exists: false },
+      { failConnect: true },
+    );
     const r = await probeNativeHost();
     expect(r.status).toBe("absent");
   });

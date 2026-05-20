@@ -2,11 +2,11 @@
 
 Three replayable scenarios covering the pack's three prompt overrides.
 
-| Test | Scenario | Pack asset exercised |
-|---|---|---|
-| `01-translate-incoming-buyer-reply.md` | Literal-translate flow over a buyer email containing layered polite-stall, budget-hedge, and interest signals. | `prompts/literal_meaning.md` |
-| `02-check-tone-register-mismatch.md` | Detects register-mismatch when a draft to a late-stage buyer reads as casual / vague. | `prompts/subtext.md` (used in detection) |
-| `03-rewrite-outgoing-to-sales-late-stage.md` | Rewrites a vague follow-up into a specific, ask-led message while preserving named terms. | `prompts/tone.md` |
+| Test                                         | Scenario                                                                                                       | Pack asset exercised                     |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `01-translate-incoming-buyer-reply.md`       | Literal-translate flow over a buyer email containing layered polite-stall, budget-hedge, and interest signals. | `prompts/literal_meaning.md`             |
+| `02-check-tone-register-mismatch.md`         | Detects register-mismatch when a draft to a late-stage buyer reads as casual / vague.                          | `prompts/subtext.md` (used in detection) |
+| `03-rewrite-outgoing-to-sales-late-stage.md` | Rewrites a vague follow-up into a specific, ask-led message while preserving named terms.                      | `prompts/tone.md`                        |
 
 ## How tests run
 

@@ -51,7 +51,7 @@ authors:
     role: "maintainer"
   - name: "Síofra Ní Bhriain"
     handle: "@sionb"
-    role: "reviewer"  # lived-experience reviewer
+    role: "reviewer" # lived-experience reviewer
 
 # Optional. Neurotype targeting. Empty / absent = agnostic (auto-activates
 # for every user). Non-empty intersection with profile.identity.neurotypes
@@ -67,7 +67,7 @@ neurotypes:
 # when both apply.
 locale:
   - "en-IE"
-  - "en-GB"  # ie-IE register often surfaces in en-GB workplaces too
+  - "en-GB" # ie-IE register often surfaces in en-GB workplaces too
 
 # Optional. Hard runtime requirements.
 requires:
@@ -141,7 +141,7 @@ keywords:
 # trust.level in {'official', 'verified'}. Community plugins MAY declare
 # hooks; they will be ignored until the hook sandbox lands in Phase 3.
 hooks:
-  on_install: "./install.sh"     # idempotent setup; no network, no out-of-dir writes
+  on_install: "./install.sh" # idempotent setup; no network, no out-of-dir writes
   on_uninstall: "./uninstall.sh" # cleanup of any plugin-local state
 
 # Optional. Forward-compat declarations. Reserved.

@@ -137,7 +137,11 @@
           "properties": {
             "name": {
               "type": "string",
-              "enum": ["word_overlap_jaccard", "embedding_cosine", "topic_model"],
+              "enum": [
+                "word_overlap_jaccard",
+                "embedding_cosine",
+                "topic_model"
+              ],
               "description": "v0.1.0 ships only 'word_overlap_jaccard'. Other values reserved for future minor versions."
             },
             "version": {
@@ -189,7 +193,10 @@
       },
       "allOf": [
         {
-          "if": { "properties": { "detected": { "const": true } }, "required": ["detected"] },
+          "if": {
+            "properties": { "detected": { "const": true } },
+            "required": ["detected"]
+          },
           "then": {
             "properties": {
               "override_options": { "minItems": 1 },
@@ -243,9 +250,18 @@
       "input": {
         "current_prompt": "should I really use Postgres for this or is SQLite better?",
         "history": [
-          { "text": "should I use Postgres or SQLite for this?", "at": "2026-05-16T13:02:00+01:00" },
-          { "text": "is Postgres really the right choice over SQLite here?", "at": "2026-05-16T13:34:00+01:00" },
-          { "text": "am I sure Postgres beats SQLite for this workload?", "at": "2026-05-16T14:05:00+01:00" }
+          {
+            "text": "should I use Postgres or SQLite for this?",
+            "at": "2026-05-16T13:02:00+01:00"
+          },
+          {
+            "text": "is Postgres really the right choice over SQLite here?",
+            "at": "2026-05-16T13:34:00+01:00"
+          },
+          {
+            "text": "am I sure Postgres beats SQLite for this workload?",
+            "at": "2026-05-16T14:05:00+01:00"
+          }
         ],
         "window_minutes": 90,
         "threshold_count": 3,
@@ -254,9 +270,21 @@
       "output": {
         "detected": true,
         "similar_prompts": [
-          { "text": "should I use Postgres or SQLite for this?", "at": "2026-05-16T13:02:00+01:00", "similarity": 0.78 },
-          { "text": "is Postgres really the right choice over SQLite here?", "at": "2026-05-16T13:34:00+01:00", "similarity": 0.71 },
-          { "text": "am I sure Postgres beats SQLite for this workload?", "at": "2026-05-16T14:05:00+01:00", "similarity": 0.64 }
+          {
+            "text": "should I use Postgres or SQLite for this?",
+            "at": "2026-05-16T13:02:00+01:00",
+            "similarity": 0.78
+          },
+          {
+            "text": "is Postgres really the right choice over SQLite here?",
+            "at": "2026-05-16T13:34:00+01:00",
+            "similarity": 0.71
+          },
+          {
+            "text": "am I sure Postgres beats SQLite for this workload?",
+            "at": "2026-05-16T14:05:00+01:00",
+            "similarity": 0.64
+          }
         ],
         "count": 3,
         "window_seconds": 5400,
@@ -269,10 +297,22 @@
           "description": "Tokenises both prompts on whitespace and punctuation, lowercases, removes a 60-word stoplist, and computes the Jaccard index on the resulting sets."
         },
         "override_options": [
-          { "token": "fresh-context", "description": "You have new information that changes the question; the detector will skip and the new context will be recorded." },
-          { "token": "override-once", "description": "Run this prompt anyway, just this once. Nothing is logged." },
-          { "token": "disable-for-session", "description": "Stop the rumination check until you end this session." },
-          { "token": "lower-sensitivity", "description": "Re-run the check with a stricter similarity threshold (0.75)." }
+          {
+            "token": "fresh-context",
+            "description": "You have new information that changes the question; the detector will skip and the new context will be recorded."
+          },
+          {
+            "token": "override-once",
+            "description": "Run this prompt anyway, just this once. Nothing is logged."
+          },
+          {
+            "token": "disable-for-session",
+            "description": "Stop the rumination check until you end this session."
+          },
+          {
+            "token": "lower-sensitivity",
+            "description": "Re-run the check with a stricter similarity threshold (0.75)."
+          }
         ],
         "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
       }

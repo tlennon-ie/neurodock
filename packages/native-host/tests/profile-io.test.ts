@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readProfile, resolveProfilePath, writeProfile } from "../src/profile-io.js";
+import {
+  readProfile,
+  resolveProfilePath,
+  writeProfile,
+} from "../src/profile-io.js";
 
 describe("profile-io", () => {
   let dir = "";

@@ -97,7 +97,11 @@
             "name": "Adopt SQLite + sqlite-vec",
             "decided_on": "2026-04-22",
             "decided_by": [
-              { "type": "person", "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2", "name": "Roberto" }
+              {
+                "type": "person",
+                "id": "ent_01H9X2K3R4S5T6U7V8W9X0Y1Z2",
+                "name": "Roberto"
+              }
             ],
             "source": "msg://slack/C123/p1715683200000100",
             "confidence": 1.0,

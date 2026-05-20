@@ -5,7 +5,7 @@ description: Reformats responses to Answer-First when sessions run long; surface
 neurotypes: ["adhd", "audhd"]
 status: stable
 triggers:
-  - on_every_response: true   # passive activation — applies a formatting transform
+  - on_every_response: true # passive activation — applies a formatting transform
 mcp_dependencies:
   - server: mcp-chronometric
     tools: [get_time_context, request_break_if_needed]
@@ -71,6 +71,7 @@ The visible word count above any collapsed block must not exceed roughly 120 wor
 ## Examples
 
 See `tests/`:
+
 - `01-short-session-no-change.md` — Tier A: light Answer-First on a 12-minute session.
 - `02-long-session-answer-first.md` — Tier B: aggressive Answer-First on a 75-minute session.
 - `03-past-threshold-soft-nudge.md` — Tier C: one verbatim-intent line on a 102-minute session past the 90-minute threshold.

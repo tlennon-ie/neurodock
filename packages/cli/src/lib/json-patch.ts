@@ -19,7 +19,10 @@ export function mergeMcpServers(
   overwrite: boolean,
 ): MergeResult {
   const base: McpClientConfig = current ?? {};
-  const existingServers = (base.mcpServers ?? {}) as Record<string, McpServerEntry>;
+  const existingServers = (base.mcpServers ?? {}) as Record<
+    string,
+    McpServerEntry
+  >;
 
   const added: string[] = [];
   const collisions: string[] = [];
@@ -66,7 +69,10 @@ function shallowEnvEqual(
   b: Readonly<Record<string, string>> | undefined,
 ): boolean {
   if (a === b) return true;
-  if (!a || !b) return Object.keys(a ?? {}).length === 0 && Object.keys(b ?? {}).length === 0;
+  if (!a || !b)
+    return (
+      Object.keys(a ?? {}).length === 0 && Object.keys(b ?? {}).length === 0
+    );
   const ka = Object.keys(a).sort();
   const kb = Object.keys(b).sort();
   if (ka.length !== kb.length) return false;
@@ -78,7 +84,9 @@ function shallowEnvEqual(
   return true;
 }
 
-export function parseJsonSafely(source: string): { ok: true; value: unknown } | { ok: false; error: string } {
+export function parseJsonSafely(
+  source: string,
+): { ok: true; value: unknown } | { ok: false; error: string } {
   try {
     return { ok: true, value: JSON.parse(source) };
   } catch (error: unknown) {

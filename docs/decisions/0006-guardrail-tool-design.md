@@ -3,17 +3,17 @@
 - **Status:** proposed
 - **Date:** 2026-05-16
 - **Deciders:** maintainer (TBD), , `mcp-architect`
-- **Consulted:** `mcp-server-builder`,  (co-required per `.claude/agents/mcp-architect.md` "clinical-implications tool"), `skill-author` (consumer of `check_rumination` from `ocd-decision-finalizer`)
+- **Consulted:** `mcp-server-builder`, (co-required per `.claude/agents/mcp-architect.md` "clinical-implications tool"), `skill-author` (consumer of `check_rumination` from `ocd-decision-finalizer`)
 - **Informed:** `eval-curator` (field-study corpus owner), `accessibility-auditor`, `doc-writer`, `governance-author`
 
 ## Context
 
-`mcp-guardrail` is the substrate's clinical layer — Area 3 in  and the entire subject of `ETHICS.md`. It is the only server whose tool changes require sign-off from both the maintainer and the . It is also the only server whose detectors directly mediate the conversation between an LLM and a neurodivergent user, which makes every schema choice ethically loaded.
+`mcp-guardrail` is the substrate's clinical layer — Area 3 in and the entire subject of `ETHICS.md`. It is the only server whose tool changes require sign-off from both the maintainer and the . It is also the only server whose detectors directly mediate the conversation between an LLM and a neurodivergent user, which makes every schema choice ethically loaded.
 
 Per :
 
 - **Phase 2 (months 4–7)** ships `mcp-guardrail` v0.1 with **rumination detection only**.
-- **Phase 3 (month 8+)** ships all three detectors live once the  (kicked off in month 6, 30–50 ND professionals, 8-week pilot) endorses the heuristics and thresholds.
+- **Phase 3 (month 8+)** ships all three detectors live once the (kicked off in month 6, 30–50 ND professionals, 8-week pilot) endorses the heuristics and thresholds.
 
 This ADR locks the schemas for all three tools **now**, in advance of Phase 2 shipping, so:
 
@@ -120,8 +120,8 @@ We adopt:
 2. **Word-overlap Jaccard** for `check_rumination` v0.1.0 (defaults: window 90 min, threshold count 3, similarity 0.55).
 3. **Caller-supplied `chronometric_snapshot`** for `check_hyperfocus`. No direct imports.
 4. **Schema-only deployment** for `check_hyperfocus` and `check_sycophancy` in Phase 2; their runtime returns `DETECTOR_NOT_YET_IMPLEMENTED`. Phase 3 turns them on after field-study endorsement.
-5. **Closed override-token vocabulary** as listed above. New tokens require a minor version bump and  sign-off.
-6. **`x-clinical-review-required: true`** annotation on every schema, recording the standing requirement that changes to these schemas — or to the heuristic implementations in `packages/clinical/` — require  sign-off per its agent definition and consultation with the  per `ETHICS.md` and .
+5. **Closed override-token vocabulary** as listed above. New tokens require a minor version bump and sign-off.
+6. **`x-clinical-review-required: true`** annotation on every schema, recording the standing requirement that changes to these schemas — or to the heuristic implementations in `packages/clinical/` — require sign-off per its agent definition and consultation with the per `ETHICS.md` and .
 7. **`heuristic_source` path** recorded in each schema's `compatibility` block. The path is normative: the source code IS the auditable specification per `ETHICS.md` commitment 3.
 
 ### Cross-cutting alignment with ADR 0001 and ADR 0002
@@ -153,11 +153,11 @@ We adopt:
 - **Jaccard misses paraphrases.** "Should I use Postgres" vs "is SQLite the wrong call" will not match in v0.1.0. Users with phrasing-flexible rumination patterns get fewer detections. Mitigated by v0.0.2 embedding work and by the conservative default threshold (0.55) being calibrated on the field-study corpus.
 - **Schema-only Phase 2 deployment for hyperfocus and sycophancy** means callers must handle `DETECTOR_NOT_YET_IMPLEMENTED`. This is documented in every schema but is a real burden on Phase-2 skill authors. Mitigated by making the error explicit and including a `phase: "3"` metadata field.
 - **Caller-supplied chronometric snapshot is more work for the caller.** Mitigated by exposing a `chronometric-snapshot` helper in `@neurodock/skill-sdk` (already foreshadowed in ADR 0001's "Negative consequences" section).
-- **The override-token vocabulary will need to grow.** Each addition is a minor version bump. The risk is that contributors propose tokens faster than the maintainer and  can review them. Mitigated by documenting the closed vocabulary explicitly and routing additions through this ADR's amendment process.
+- **The override-token vocabulary will need to grow.** Each addition is a minor version bump. The risk is that contributors propose tokens faster than the maintainer and can review them. Mitigated by documenting the closed vocabulary explicitly and routing additions through this ADR's amendment process.
 
 ## Open questions
 
-1. **Where does the field-study corpus live?** Per  the false-positive rate target is < 5% measured on this corpus. The corpus needs to be: opt-in, anonymised, versioned in the open per `ETHICS.md`. Open: does it live under `packages/evals/guardrail-corpus/` (in-repo, contributors PR examples) or on HuggingFace under the `neurodock` org (mirrors `mcp-translation`'s corpus path from §7)? Recommended: HuggingFace, consistent with the translation eval corpus, with a small in-repo seed for CI replay.
+1. **Where does the field-study corpus live?** Per the false-positive rate target is < 5% measured on this corpus. The corpus needs to be: opt-in, anonymised, versioned in the open per `ETHICS.md`. Open: does it live under `packages/evals/guardrail-corpus/` (in-repo, contributors PR examples) or on HuggingFace under the `neurodock` org (mirrors `mcp-translation`'s corpus path from §7)? Recommended: HuggingFace, consistent with the translation eval corpus, with a small in-repo seed for CI replay.
 
 2. ** process before tagging v0.1.0.** The schemas are locked here but the runtime ships in Phase 2 (rumination) and Phase 3 (hyperfocus + sycophancy). What does sign-off look like for a Phase-2 tag if the Phase-3 schemas are part of the same package? Two clean positions: (a) tag each detector independently (`@neurodock/mcp-guardrail-rumination@0.1.0`, etc.); (b) tag the package and document detector status in the release notes. Recommended: (b), with `x-implementation-status` carrying the truth in the schema itself. Maintainer to confirm.
 
@@ -176,14 +176,14 @@ We adopt:
 - **The "stateless server, skills MAY write to cognitive graph" boundary is precedent-setting.** It says: detection events that get persisted are persisted with the calling skill's intent and the user's knowledge, never by the detector itself. Maintainer should confirm this stance.
 - **The schema-only Phase-2 deployment of two detectors is unusual.** It says: the contract is permanent, the implementation is gated on field-study results. Maintainer should confirm this is the right way to lock contracts ahead of evidence; the alternative (delay the schemas until Phase 3) would mean Phase-2 skills couldn't plan against them.
 
-## Cross-cutting concerns for the 
+## Cross-cutting concerns for the
 
-- **The Jaccard threshold of 0.55 is a clinical-relevance call, not just a statistical one.** A higher threshold (e.g. 0.7) reduces false positives at the cost of missing more paraphrased rumination loops. The  should weigh in before the threshold ships, and the  should explicitly measure threshold sensitivity.
-- **The hyperfocus escalation ladder (none → gentle → nudge → hard) and the trigger of crossing `end_of_day_local` as an escalation step are clinically loaded choices.** The  should confirm whether crossing a user's stated end-of-day should escalate level by exactly one step, or whether the relationship is more nuanced (e.g. severity multiplier).
-- **The sycophancy pattern enum's `praise_without_evidence` and `escalating_validation` patterns are particularly subjective.** What an raters considers appropriate validation vs sycophantic affirmation varies. The  should over-sample these patterns and the  should review the raters' calibration before the v0.1.0 thresholds lock.
-- **The `i-want-validation` override token is ethically deliberate.** It says: the user can explicitly request the validation the detector would suppress. The  should confirm this respects user autonomy without subverting the detector's purpose.
-- **The false-positive feedback path is a public GitHub issue template.** A user reporting a false positive thereby discloses the prompt that fired. The  should review the issue template (to be drafted by `governance-author`) to ensure the disclosure surface is appropriate.
-- **Quarterly review cadence per .** This ADR establishes the v0.1.0 baseline; the  should set the first quarterly review date in their first meeting and confirm the agenda includes thresholds, heuristics, and the false-positive issue queue.
+- **The Jaccard threshold of 0.55 is a clinical-relevance call, not just a statistical one.** A higher threshold (e.g. 0.7) reduces false positives at the cost of missing more paraphrased rumination loops. The should weigh in before the threshold ships, and the should explicitly measure threshold sensitivity.
+- **The hyperfocus escalation ladder (none → gentle → nudge → hard) and the trigger of crossing `end_of_day_local` as an escalation step are clinically loaded choices.** The should confirm whether crossing a user's stated end-of-day should escalate level by exactly one step, or whether the relationship is more nuanced (e.g. severity multiplier).
+- **The sycophancy pattern enum's `praise_without_evidence` and `escalating_validation` patterns are particularly subjective.** What an raters considers appropriate validation vs sycophantic affirmation varies. The should over-sample these patterns and the should review the raters' calibration before the v0.1.0 thresholds lock.
+- **The `i-want-validation` override token is ethically deliberate.** It says: the user can explicitly request the validation the detector would suppress. The should confirm this respects user autonomy without subverting the detector's purpose.
+- **The false-positive feedback path is a public GitHub issue template.** A user reporting a false positive thereby discloses the prompt that fired. The should review the issue template (to be drafted by `governance-author`) to ensure the disclosure surface is appropriate.
+- **Quarterly review cadence per .** This ADR establishes the v0.1.0 baseline; the should set the first quarterly review date in their first meeting and confirm the agenda includes thresholds, heuristics, and the false-positive issue queue.
 
 ## Notes for `mcp-server-builder`
 
@@ -193,10 +193,10 @@ We adopt:
 - The server MUST NOT emit telemetry, log detection events, or open network sockets. CI MUST enforce this with a packet-capture check on the test suite (see `eval-curator` for the harness).
 - `check_hyperfocus` and `check_sycophancy` v0.1.0 implementations return `DETECTOR_NOT_YET_IMPLEMENTED` with a `phase: "3"` metadata field. The wire response is structurally a normal MCP tool error; callers handle it gracefully.
 - `check_rumination` v0.1.0 implements the word-overlap Jaccard heuristic per the schema example; the unit-test corpus seeds the .
-- `x-clinical-review-required` is a schema annotation, not an enforcement mechanism. CI MUST enforce it via a CODEOWNERS rule that requires  approval on changes under `packages/mcp-guardrail/` and `packages/clinical/`.
+- `x-clinical-review-required` is a schema annotation, not an enforcement mechanism. CI MUST enforce it via a CODEOWNERS rule that requires approval on changes under `packages/mcp-guardrail/` and `packages/clinical/`.
 
-## Notes for 
+## Notes for
 
-- Standing review authority on this package and `packages/clinical/`. Block any PR that changes a threshold, a heuristic, an enum value, or copy that surfaces to the user without  appropriate to the change's scope.
+- Standing review authority on this package and `packages/clinical/`. Block any PR that changes a threshold, a heuristic, an enum value, or copy that surfaces to the user without appropriate to the change's scope.
 - The seed thresholds (rumination similarity 0.55, hyperfocus 60/90/120 minutes, sycophancy reassurance count 3) are tentative pending the . Resist proposals to tune them on intuition; the field-study corpus is the calibration surface.
 - The override-token vocabulary is the user-autonomy contract. Resist proposals to remove tokens, change their semantics, or hide them behind configuration.

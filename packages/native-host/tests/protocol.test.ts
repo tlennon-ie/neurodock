@@ -54,7 +54,9 @@ describe("native messaging protocol", () => {
     const body = Buffer.from("not-json", "utf8");
     const prefix = Buffer.alloc(4);
     prefix.writeUInt32LE(body.byteLength, 0);
-    expect(() => tryDecodeMessage(Buffer.concat([prefix, body]))).toThrow(ProtocolError);
+    expect(() => tryDecodeMessage(Buffer.concat([prefix, body]))).toThrow(
+      ProtocolError,
+    );
   });
 
   it("isHostRequest accepts ping/get/set and rejects garbage", () => {

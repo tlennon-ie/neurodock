@@ -62,11 +62,11 @@ node packages/native-host/dist/cli.js install --extension-id <ID>
 
 Per-platform manifest locations:
 
-| Platform | Manifest |
-|---|---|
-| macOS | `~/Library/Application Support/<browser>/NativeMessagingHosts/com.neurodock.profile.json` |
-| Linux | `$XDG_CONFIG_HOME/<browser>/NativeMessagingHosts/com.neurodock.profile.json` (Firefox uses `~/.mozilla/native-messaging-hosts/`) |
-| Windows | Manifest JSON under `%APPDATA%\NeuroDock\native-host\`; registry pointer under `HKCU\Software\<browser>\NativeMessagingHosts\com.neurodock.profile` (via `reg.exe`) |
+| Platform | Manifest                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| macOS    | `~/Library/Application Support/<browser>/NativeMessagingHosts/com.neurodock.profile.json`                                                                           |
+| Linux    | `$XDG_CONFIG_HOME/<browser>/NativeMessagingHosts/com.neurodock.profile.json` (Firefox uses `~/.mozilla/native-messaging-hosts/`)                                    |
+| Windows  | Manifest JSON under `%APPDATA%\NeuroDock\native-host\`; registry pointer under `HKCU\Software\<browser>\NativeMessagingHosts\com.neurodock.profile` (via `reg.exe`) |
 
 Uninstall removes every manifest and registry pointer the install step
 created.

@@ -7,8 +7,11 @@ import {
 } from "../../src/lib/profile.js";
 
 async function clearChromeStorage(): Promise<void> {
-  const c = (globalThis as unknown as { chrome: { storage: { local: { clear: () => Promise<void> } } } })
-    .chrome;
+  const c = (
+    globalThis as unknown as {
+      chrome: { storage: { local: { clear: () => Promise<void> } } };
+    }
+  ).chrome;
   await c.storage.local.clear();
 }
 
@@ -34,12 +37,15 @@ describe("profile", () => {
 
   it("refuses cloud mode without a configured provider", async () => {
     await expect(setMode("cloud")).rejects.toThrow(
-      /Cloud mode requires a configured provider/
+      /Cloud mode requires a configured provider/,
     );
   });
 
   it("allows cloud mode after a provider id is configured", async () => {
-    await saveProfile({ cloudProvider: "anthropic", cloudModel: "claude-sonnet" });
+    await saveProfile({
+      cloudProvider: "anthropic",
+      cloudModel: "claude-sonnet",
+    });
     const next = await setMode("cloud");
     expect(next.mode).toBe("cloud");
     expect(next.cloudProvider).toBe("anthropic");

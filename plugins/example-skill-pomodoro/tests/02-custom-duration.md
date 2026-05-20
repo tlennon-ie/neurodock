@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -15,6 +16,7 @@ chronometric:
 `mcp-cognitive-graph` IS mocked as available for this test (it will be called at session close if the duration warrants).
 
 No session is currently open. Mocked `get_time_context()` returns:
+
 ```json
 {
   "now": "2026-05-20T13:45:30+01:00",
@@ -26,6 +28,7 @@ No session is currently open. Mocked `get_time_context()` returns:
 ```
 
 Mocked `mark_session_start({ "intent": "draft the RFC reply" })` returns:
+
 ```json
 {
   "session_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",

@@ -15,6 +15,9 @@ export default defineContentScript({
   cssInjectionMode: "manual",
   runAt: "document_idle",
   main() {
-    bootstrapContent({ channel: "outlook", hostId: "neurodock-outlook-island" });
+    bootstrapContent({
+      channel: "outlook",
+      hostId: "neurodock-outlook-island",
+    });
   },
 });

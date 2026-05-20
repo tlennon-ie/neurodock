@@ -6,8 +6,20 @@ import { validateProfile } from "../src/profile/validator.js";
 import { applyDefaults, PROFILE_DEFAULTS } from "../src/profile/defaults.js";
 
 const repoRoot = resolve(__dirname, "..", "..", "..");
-const minimalPath = resolve(repoRoot, "packages", "core", "schemas", "profile.minimal.yaml");
-const examplePath = resolve(repoRoot, "packages", "core", "schemas", "profile.example.yaml");
+const minimalPath = resolve(
+  repoRoot,
+  "packages",
+  "core",
+  "schemas",
+  "profile.minimal.yaml",
+);
+const examplePath = resolve(
+  repoRoot,
+  "packages",
+  "core",
+  "schemas",
+  "profile.example.yaml",
+);
 
 function loadYaml(p: string): unknown {
   return parse(readFileSync(p, "utf8"));

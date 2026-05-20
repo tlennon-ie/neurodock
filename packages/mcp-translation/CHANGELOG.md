@@ -10,7 +10,7 @@ This package follows semantic versioning per .
 ### Added
 
 - Initial deterministic-baseline implementation of all four translation MCP
-  tools defined  Section 7 and ADR
+  tools defined Section 7 and ADR
   [`0005-translation-tool-design.md`](../../docs/decisions/0005-translation-tool-design.md):
   - `translate_incoming(text, channel?, thread_context?, target_language?)` —
     regex-based ambiguity detection (`can we revisit`, `circle back`,
@@ -51,7 +51,7 @@ This package follows semantic versioning per .
   `mcp-cognitive-graph`, and this server), the server imports **no LLM
   vendor SDK**. The substrate is provider-agnostic. Verified via grep of the
   source tree for `import anthropic | import openai | import ollama |
-  import langchain | import litellm`: zero hits.
+import langchain | import litellm`: zero hits.
 - The server never logs input text. Tool invocations emit a single
   `tool_invoked` log line with the tool name only.
 - All character offsets in spans and quoted spans are zero-indexed,

@@ -166,7 +166,10 @@
       },
       "allOf": [
         {
-          "if": { "properties": { "detected": { "const": true } }, "required": ["detected"] },
+          "if": {
+            "properties": { "detected": { "const": true } },
+            "required": ["detected"]
+          },
           "then": {
             "properties": {
               "override_options": { "minItems": 1 },
@@ -176,7 +179,10 @@
           }
         },
         {
-          "if": { "properties": { "detected": { "const": false } }, "required": ["detected"] },
+          "if": {
+            "properties": { "detected": { "const": false } },
+            "required": ["detected"]
+          },
           "then": {
             "properties": { "pattern": { "const": "none" } }
           }
@@ -223,9 +229,18 @@
       "name": "detected - repeated reassurance-seeking on the same decision",
       "input": {
         "recent_user_messages": [
-          { "text": "is shipping the v0.2 RFC today the right call?", "at": "2026-05-16T13:00:00+01:00" },
-          { "text": "am I sure I should ship the RFC today?", "at": "2026-05-16T13:20:00+01:00" },
-          { "text": "should we really go ahead with the RFC today?", "at": "2026-05-16T13:45:00+01:00" }
+          {
+            "text": "is shipping the v0.2 RFC today the right call?",
+            "at": "2026-05-16T13:00:00+01:00"
+          },
+          {
+            "text": "am I sure I should ship the RFC today?",
+            "at": "2026-05-16T13:20:00+01:00"
+          },
+          {
+            "text": "should we really go ahead with the RFC today?",
+            "at": "2026-05-16T13:45:00+01:00"
+          }
         ],
         "decision_context": "ship v0.2 RFC today"
       },
@@ -234,9 +249,21 @@
         "pattern": "repeated_reassurance_request",
         "confidence": 0.84,
         "matched_spans": [
-          { "source": "recent_user_messages", "text": "is shipping the v0.2 RFC today the right call?", "at": "2026-05-16T13:00:00+01:00" },
-          { "source": "recent_user_messages", "text": "am I sure I should ship the RFC today?", "at": "2026-05-16T13:20:00+01:00" },
-          { "source": "recent_user_messages", "text": "should we really go ahead with the RFC today?", "at": "2026-05-16T13:45:00+01:00" }
+          {
+            "source": "recent_user_messages",
+            "text": "is shipping the v0.2 RFC today the right call?",
+            "at": "2026-05-16T13:00:00+01:00"
+          },
+          {
+            "source": "recent_user_messages",
+            "text": "am I sure I should ship the RFC today?",
+            "at": "2026-05-16T13:20:00+01:00"
+          },
+          {
+            "source": "recent_user_messages",
+            "text": "should we really go ahead with the RFC today?",
+            "at": "2026-05-16T13:45:00+01:00"
+          }
         ],
         "counter_prompt": "The user has asked for validation of 'ship v0.2 RFC today' three times in the last 45 minutes. Do not re-validate. Surface what was already established about this decision and ask the user to add new information before further analysis.",
         "reason": "3 reassurance requests on the same decision within 45 minutes.",
@@ -246,9 +273,18 @@
           "description": "Counts recent_user_messages whose embeddings (or word-overlap, in v0.1.0) match decision_context above 0.55 and whose surface form contains a reassurance marker ('is this okay', 'am I sure', 'should I really', 'should we really')."
         },
         "override_options": [
-          { "token": "fresh-context", "description": "You have new information that changes the question." },
-          { "token": "i-want-validation", "description": "Acknowledge you want validation anyway; the skill will proceed normally." },
-          { "token": "explain-the-match", "description": "Show me which prior messages were counted." }
+          {
+            "token": "fresh-context",
+            "description": "You have new information that changes the question."
+          },
+          {
+            "token": "i-want-validation",
+            "description": "Acknowledge you want validation anyway; the skill will proceed normally."
+          },
+          {
+            "token": "explain-the-match",
+            "description": "Show me which prior messages were counted."
+          }
         ],
         "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
       }

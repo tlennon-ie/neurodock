@@ -10,7 +10,10 @@ export interface ClientAdapter {
   /** Possible config file locations, highest precedence first. */
   configPaths(env: EnvSnapshot): ReadonlyArray<ConfigCandidate>;
   /** Wrap an mcpServers map into the shape this client expects. */
-  shapeConfig(existing: unknown, mcpServers: Record<string, McpServerEntry>): unknown;
+  shapeConfig(
+    existing: unknown,
+    mcpServers: Record<string, McpServerEntry>,
+  ): unknown;
 }
 
 export interface ConfigCandidate {

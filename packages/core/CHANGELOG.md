@@ -8,6 +8,7 @@
 
   First release of `neurodock-evals` (Python, PyPI). The harness scaffold and
   seed-corpus structure that Phase 2 prompt regressions will gate against.
+
   - Harness modules: `harness.py`, `corpus.py`, `runner.py`, `scoring.py`, `anonymise.py`, `dedupe.py`, `types.py`.
   - JSON Schemas: `schemas/example.schema.json`, `schemas/annotation.schema.json`.
   - Ten hand-authored synthesised seed examples across four translation slices (incoming, tone, outgoing, meetings), including a multi-rater agreement metric demo.
@@ -25,6 +26,7 @@
   to PyPI.
 
   ## Open questions before publish
+
   - None blocking the harness release. HuggingFace publication of any
     contributed corpora is deferred to v0.1.0 once consented examples arrive.
 
@@ -35,6 +37,7 @@
   `check_sycophancy` are schema-locked stubs that return
   `DETECTOR_NOT_YET_IMPLEMENTED` until the Phase 3 endorses
   thresholds.
+
   - `check_rumination` — rolling-window Jaccard word-overlap, default 3 queries in 90 minutes at similarity ≥ 0.55. Advisory only — never blocks.
   - `check_hyperfocus` / `check_sycophancy` — schema validation against the v0.1.0 contract; runtime returns Phase-3 stub.
   - Closed v0.1.0 override-token vocabulary, hand-rolled 60-word English stoplist (auditable per `ETHICS.md` commitment 3).
@@ -47,6 +50,7 @@
   to PyPI.
 
   ## Open questions before publish — GATING
+
   - ** sign-off required** on `src/neurodock_mcp_guardrail/heuristics/` and `_stopwords.py` per ADR 0006 and `ETHICS.md` commitment 3. Maintainer must confirm sign-off captured before tagging.
   - \*\*\*\* on the rumination advisory copy — . Maintainer confirms before tagging.
 
@@ -55,6 +59,7 @@
   First release of `neurodock-mcp-translation` (Python, PyPI). Implements the
   four-tool translation contract from ADR 0005 against the JSON Schemas under
   `packages/mcp-translation/schemas/`:
+
   - `translate_incoming` — explicit-ask extraction, regex ambiguity detection, recommended next action.
   - `check_tone` — directness / warmth / urgency scoring on 0–100 axes with a baseline-delta flag at > 25 percentage points.
   - `rewrite_outgoing` — register-specific surface transforms with exact-substring preservation of `preserve_terms`.
@@ -71,6 +76,7 @@
   this Python-package release; the actual artefact ships to PyPI.
 
   ## Open questions before publish
+
   - None blocking. Eval corpus arrival (Phase 2) will gate prompt regressions in
     CI, but does not gate this developer-preview release.
 
@@ -79,6 +85,7 @@
   Documents the v0.1.0 plugin manifest contract in `@neurodock/core`. No
   runtime code change ships in this release — the schema is a contract for
   Phase 3 to implement against.
+
   - Six plugin types covered by one manifest: `skill`, `mcp-server`, `profile`, `translation-pack`, `language-pack`, `theme`.
   - Four-tier trust ladder that degrades gracefully when no central registry is reachable (air-gapped installs are first-class).
   - License-compatibility gate: plugin manifests declare a license; the substrate refuses to load license-incompatible plugins.
@@ -88,6 +95,7 @@
   References: ADR 0004, ADR 0005, ADR 0007.
 
   ## Open questions before publish
+
   - None blocking. Federated discovery (`plugins.neurodock.org`) is Phase 3
     work; the manifest is published now so plugin authors can target the
     permanent shape.

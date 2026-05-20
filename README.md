@@ -69,21 +69,21 @@ neurodock/
 **v0.2.1 developer preview shipped.** All three substrate pillars (cognitive,
 communication, guardrails) are built, on `main`, and installable.
 
-| Surface | Version | Notes |
-|---|---|---|
-| `neurodock-mcp-chronometric` | 0.0.1 | 5 tools, 22 tests, mypy --strict |
-| `neurodock-mcp-cognitive-graph` | 0.0.2 | 4 tools, SQLite + sqlite-vec + fastembed; 4-rung resolution cascade (exact → alias → fuzzy → embedding) |
-| `neurodock-mcp-task-fractionator` | 0.0.2 | 2 tools, 32 tests; ISO 8601 duration spec clarified |
-| `neurodock-mcp-translation` | 0.0.1 | 4 tools, 29 tests, deterministic baseline + LLM refinement envelope |
-| `neurodock-mcp-guardrail` | 0.0.2 | All three detectors live: rumination + hyperfocus + sycophancy (48 tests, public heuristics) |
-| `neurodock-evals` | 0.0.2 | Air-gapped harness + 10 seed corpus examples + contribution pipeline |
-| `neurodock-clinical` | 0.0.0 | Reserved name; importable detector library (currently a stub) |
-| `@neurodock/cli` | 0.2.0 | `init`, `doctor`, `validate`, `update`, `uninstall`, `host install`, `host uninstall`, `profile show/validate` |
-| `@neurodock/core` | 0.0.1 | Profile schema + plugin protocol manifests (JSON Schema 2020-12) |
-| `@neurodock/native-host` | 0.1.0 | Optional Chrome Native Messaging host for extension ↔ profile sync |
-| `@neurodock/extension-browser` | 0.0.1 (local) | WXT MV3, 7 sites, mock LLM provider; **not yet published** |
-| Six launch skills | — | adhd-daily-planner, audhd-context-recovery, ocd-decision-finalizer (beta), hyperfocus-formatter, visual-organizer, asd-meeting-translator |
-| Docs site | — | 36 pages, builds clean (Astro Starlight; deployment pending DNS) |
+| Surface                           | Version       | Notes                                                                                                                                     |
+| --------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `neurodock-mcp-chronometric`      | 0.0.1         | 5 tools, 22 tests, mypy --strict                                                                                                          |
+| `neurodock-mcp-cognitive-graph`   | 0.0.2         | 4 tools, SQLite + sqlite-vec + fastembed; 4-rung resolution cascade (exact → alias → fuzzy → embedding)                                   |
+| `neurodock-mcp-task-fractionator` | 0.0.2         | 2 tools, 32 tests; ISO 8601 duration spec clarified                                                                                       |
+| `neurodock-mcp-translation`       | 0.0.1         | 4 tools, 29 tests, deterministic baseline + LLM refinement envelope                                                                       |
+| `neurodock-mcp-guardrail`         | 0.0.2         | All three detectors live: rumination + hyperfocus + sycophancy (48 tests, public heuristics)                                              |
+| `neurodock-evals`                 | 0.0.2         | Air-gapped harness + 10 seed corpus examples + contribution pipeline                                                                      |
+| `neurodock-clinical`              | 0.0.0         | Reserved name; importable detector library (currently a stub)                                                                             |
+| `@neurodock/cli`                  | 0.2.0         | `init`, `doctor`, `validate`, `update`, `uninstall`, `host install`, `host uninstall`, `profile show/validate`                            |
+| `@neurodock/core`                 | 0.0.1         | Profile schema + plugin protocol manifests (JSON Schema 2020-12)                                                                          |
+| `@neurodock/native-host`          | 0.1.0         | Optional Chrome Native Messaging host for extension ↔ profile sync                                                                       |
+| `@neurodock/extension-browser`    | 0.0.1 (local) | WXT MV3, 7 sites, mock LLM provider; **not yet published**                                                                                |
+| Six launch skills                 | —             | adhd-daily-planner, audhd-context-recovery, ocd-decision-finalizer (beta), hyperfocus-formatter, visual-organizer, asd-meeting-translator |
+| Docs site                         | —             | 36 pages, builds clean (Astro Starlight; deployment pending DNS)                                                                          |
 
 What's still deferred to a future release:
 
@@ -111,16 +111,16 @@ pnpm --filter @neurodock/docs run dev
 The substrate splits into three pillars:
 
 1. **Cognitive substrate** — externalises executive function (time,
- memory, decomposition). MCP servers: chronometric, cognitive-graph,
- task-fractionator.
+   memory, decomposition). MCP servers: chronometric, cognitive-graph,
+   task-fractionator.
 2. **Communication layer** — translates corporate ambiguity; rewrites
- outgoing messages for register-appropriate tone; structures meeting
- transcripts. MCP server: translation. Browser extension surfaces the
- same prompts in Gmail / Slack / Linear / Notion / GitHub / Docs / Outlook.
+   outgoing messages for register-appropriate tone; structures meeting
+   transcripts. MCP server: translation. Browser extension surfaces the
+   same prompts in Gmail / Slack / Linear / Notion / GitHub / Docs / Outlook.
 3. **Clinical guardrails** — detects and intervenes on rumination
- (repeat-validation loops), hyperfocus (escalating session-length
- nudges), and sycophancy (unconditional agreement). MCP server: guardrail.
- Heuristics are public and auditable per `ETHICS.md`.
+   (repeat-validation loops), hyperfocus (escalating session-length
+   nudges), and sycophancy (unconditional agreement). MCP server: guardrail.
+   Heuristics are public and auditable per `ETHICS.md`.
 
 All three layers compose via the same MCP protocol the LLM client already
 speaks. There's no "NeuroDock app" — the surface is your Claude client.
@@ -141,12 +141,14 @@ Design rationale lives in `docs/decisions/`:
 what you want to do:
 
 **Smallest first PR (~15 min):**
+
 - Add a test to an existing skill (`packages/skills/<name>/tests/`)
 - Add a seed eval example (`packages/evals/corpora/translation/`)
 - Improve a tool's parameter description (the LLM uses these — clearer
   descriptions = better tool use)
 
 **One-afternoon PR:**
+
 - Write a new skill — markdown bundle activating on specific phrases.
   Copy any `packages/skills/<name>/` as a template; see
   `docs/src/content/docs/contribute/write-a-skill.mdx`.
@@ -155,6 +157,7 @@ what you want to do:
   `mcp-cognitive-graph`.
 
 **Multi-day PR:**
+
 - Build an out-of-tree plugin (skill / mcp-server / profile / translation
   pack / language pack / theme) per the ADR 0007 plugin protocol. See
   `docs/src/content/docs/contribute/write-a-plugin.mdx`.
@@ -162,14 +165,16 @@ what you want to do:
   Japanese keigo).
 
 **No code:**
+
 - Add an anonymised eval example from your own corporate inbox. The
   contribution pipeline lives in `packages/evals/` and is the highest-
   leverage non-code contribution.
 
 All PRs run CI: `pnpm turbo run lint typecheck test build` + `uv run pytest`
-+ `uv run mypy --strict packages/...`. Every published package has its
-own CHANGELOG. Use Conventional Commits in PR titles (`feat:`, `fix:`,
-`docs:`, `test:`, `chore:`, `ci:`).
+
+- `uv run mypy --strict packages/...`. Every published package has its
+  own CHANGELOG. Use Conventional Commits in PR titles (`feat:`, `fix:`,
+  `docs:`, `test:`, `chore:`, `ci:`).
 
 ## Manifesto (short)
 
@@ -178,7 +183,7 @@ own CHANGELOG. Use Conventional Commits in PR titles (`feat:`, `fix:`,
 3. **The user is the authority.** Self-ID sufficient.
 4. **Composable over monolithic.** No god-modules.
 5. **Refuse where appropriate.** AI that fuels rumination, hyperfocus, or
- anxiety is a regression, not a feature.
+   anxiety is a regression, not a feature.
 
 Full text in `MANIFESTO.md`. Ethics framework in `ETHICS.md`. Governance
 in `GOVERNANCE.md`.

@@ -59,16 +59,30 @@ function isObject(x: unknown): x is Record<string, unknown> {
 export function applyDefaults(raw: unknown): Record<string, unknown> {
   const out: Record<string, unknown> = isObject(raw) ? { ...raw } : {};
 
-  out["preferences"] = mergeBlock(out["preferences"], PROFILE_DEFAULTS.preferences);
-  out["chronometric"] = mergeBlock(out["chronometric"], PROFILE_DEFAULTS.chronometric);
-  out["guardrails"] = mergeBlock(out["guardrails"], PROFILE_DEFAULTS.guardrails);
+  out["preferences"] = mergeBlock(
+    out["preferences"],
+    PROFILE_DEFAULTS.preferences,
+  );
+  out["chronometric"] = mergeBlock(
+    out["chronometric"],
+    PROFILE_DEFAULTS.chronometric,
+  );
+  out["guardrails"] = mergeBlock(
+    out["guardrails"],
+    PROFILE_DEFAULTS.guardrails,
+  );
   out["privacy"] = mergeBlock(out["privacy"], PROFILE_DEFAULTS.privacy);
 
   return out;
 }
 
-function mergeBlock(existing: unknown, defaults: Record<string, unknown>): Record<string, unknown> {
-  const base: Record<string, unknown> = isObject(existing) ? { ...existing } : {};
+function mergeBlock(
+  existing: unknown,
+  defaults: Record<string, unknown>,
+): Record<string, unknown> {
+  const base: Record<string, unknown> = isObject(existing)
+    ? { ...existing }
+    : {};
   for (const [key, value] of Object.entries(defaults)) {
     if (!(key in base) || base[key] === undefined || base[key] === null) {
       base[key] = value;

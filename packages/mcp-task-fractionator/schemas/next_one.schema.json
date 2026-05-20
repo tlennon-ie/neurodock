@@ -16,11 +16,7 @@
           "minLength": 1,
           "maxLength": 120,
           "description": "Project name. Matches a project entity name in mcp-cognitive-graph if present; otherwise treated as a free-form bucket key. Case-sensitive match — callers SHOULD normalise before invoking (the server does NOT do fuzzy matching, to avoid silently returning the wrong project's tasks).",
-          "examples": [
-            "neurodock",
-            "mcp-chronometric",
-            "founding-scope-rfc"
-          ]
+          "examples": ["neurodock", "mcp-chronometric", "founding-scope-rfc"]
         }
       }
     },

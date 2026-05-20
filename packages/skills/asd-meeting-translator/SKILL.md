@@ -63,6 +63,7 @@ Follow these steps in order. Do not improvise extra tool calls.
 2. **Call `brief_meeting`.** Invoke `mcp-translation.brief_meeting(transcript=<full transcript>, me=<resolved name>, project=<project or omitted>)`. Pass `speakers` only if the user supplied a roster; do not fabricate one from the transcript.
 
 3. **Handle errors plainly.**
+
    - `VERBATIM_ANCHOR_FAILED`: surface this verbatim and stop: `I couldn't anchor one of the ambiguous items to the transcript. This usually means the transcript wasn't captured verbatim, or the model paraphrased a span. Want to retry with a cleaner transcript, or skip the ambiguous-items section?` Do not retry silently. Do not fall back to a non-verbatim brief.
    - `TRANSCRIPT_TOO_LONG`: tell the user the cap is 90 minutes / 200,000 characters and to chunk.
    - `ME_REQUIRED`: ask the clarifying question from "Required inputs" and re-run.
@@ -74,12 +75,13 @@ Follow these steps in order. Do not improvise extra tool calls.
 5. **Render the four-section brief.** See "Output format" below. The brief is the deliverable; do not append a question, a follow-up offer, or a "shall I…" prompt.
 
 6. **Record decisions back into the graph.** For each item in `output.decisions`, call `mcp-cognitive-graph.record_fact` exactly once:
+
    - `subject = { type: "decision", name: <decision.text truncated to 200 chars> }`
    - `predicate = "decided_in"`
    - `object = { type: "project", name: <project> }` if `project` is set, otherwise skip the entire write (do not invent a project name to satisfy the predicate).
    - `source = "meeting transcript via asd-meeting-translator"`
    - `confidence = 0.85`
-   Do not write asks, ambiguous items, or `my_asks` rows. Decisions only. Cap at 10 writes per invocation; if the brief contains more decisions, write the first 10 in transcript order and note the truncation count in the closing line.
+     Do not write asks, ambiguous items, or `my_asks` rows. Decisions only. Cap at 10 writes per invocation; if the brief contains more decisions, write the first 10 in transcript order and note the truncation count in the closing line.
 
 7. **Stop.** No follow-up question.
 

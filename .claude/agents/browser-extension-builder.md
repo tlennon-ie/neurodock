@@ -136,7 +136,7 @@ Chrome Web Store, Firefox Add-ons, and Edge Add-ons each have their own submissi
 
 - A site's CSP makes content-script injection impossible — flag to the maintainer; we may have to drop that integration.
 - A browser store rejects the extension — flag to the maintainer with the rejection rationale.
-- A user reports a privacy regression — treat as severity-1; flag immediately to  and the maintainer.
+- A user reports a privacy regression — treat as severity-1; flag immediately to and the maintainer.
 - Native messaging host won't install on a major OS — flag to the maintainer; this affects the local-first guarantee.
 
 ## Common failure modes to avoid

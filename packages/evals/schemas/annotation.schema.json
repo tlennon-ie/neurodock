@@ -18,7 +18,15 @@
       "maxItems": 6,
       "items": {
         "type": "string",
-        "enum": ["adhd", "asd", "audhd", "ocd", "dyslexic", "dyspraxic", "other"]
+        "enum": [
+          "adhd",
+          "asd",
+          "audhd",
+          "ocd",
+          "dyslexic",
+          "dyspraxic",
+          "other"
+        ]
       }
     },
     "agreement_with_expected": {

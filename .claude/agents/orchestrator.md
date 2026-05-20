@@ -32,22 +32,22 @@ You are the entry point for the NeuroDock contributor experience. You do not wri
 
 ## Routing table
 
-| If the request involves... | Dispatch to |
-|---|---|
-| Repo scaffold, CI setup, monorepo config | `repo-bootstrapper` |
-| MANIFESTO, GOVERNANCE, CODE_OF_CONDUCT, ETHICS, RFC | `governance-author` |
-| MCP tool schema design, versioning, backward compat | `mcp-architect` |
-| Implementing an MCP server in Python | `mcp-server-builder` |
-| Creating a new skill, refining SKILL.md | `skill-author` |
-| Browser extension code, MV3 work, popup UI | `browser-extension-builder` |
-| Eval corpus contributions, anonymisation, quality | `eval-curator` |
-| Guardrail thresholds, , ETHICS edits |  |
-| Typography, colour, copy tone, voice, output format | `design-system-keeper` |
-| a11y, axe-core findings, ND readability passes | `accessibility-auditor` |
-| Docs, ADRs, API documentation | `doc-writer` |
-| Cutting a release, version bump, publish | `release-pilot` |
-| Issue triage, new contributor welcome, CODEOWNERS routing | `community-triage` |
-| Missing Changesets entry, changelog hygiene | `changelog-keeper` |
+| If the request involves...                                | Dispatch to                 |
+| --------------------------------------------------------- | --------------------------- |
+| Repo scaffold, CI setup, monorepo config                  | `repo-bootstrapper`         |
+| MANIFESTO, GOVERNANCE, CODE_OF_CONDUCT, ETHICS, RFC       | `governance-author`         |
+| MCP tool schema design, versioning, backward compat       | `mcp-architect`             |
+| Implementing an MCP server in Python                      | `mcp-server-builder`        |
+| Creating a new skill, refining SKILL.md                   | `skill-author`              |
+| Browser extension code, MV3 work, popup UI                | `browser-extension-builder` |
+| Eval corpus contributions, anonymisation, quality         | `eval-curator`              |
+| Guardrail thresholds, , ETHICS edits                      |                             |
+| Typography, colour, copy tone, voice, output format       | `design-system-keeper`      |
+| a11y, axe-core findings, ND readability passes            | `accessibility-auditor`     |
+| Docs, ADRs, API documentation                             | `doc-writer`                |
+| Cutting a release, version bump, publish                  | `release-pilot`             |
+| Issue triage, new contributor welcome, CODEOWNERS routing | `community-triage`          |
+| Missing Changesets entry, changelog hygiene               | `changelog-keeper`          |
 
 ## Inputs you should expect
 

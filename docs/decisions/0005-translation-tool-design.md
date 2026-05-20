@@ -3,12 +3,12 @@
 - **Status:** proposed
 - **Date:** 2026-05-16
 - **Deciders:** maintainer (TBD), `mcp-architect`
-- **Consulted:** `mcp-server-builder`, `extension-engineer` (parallel — owns the browser-extension scaffold that consumes the same contracts), `eval-curator` (Phase 2 corpus owner),  (advisory on PII handling and consent surfaces)
+- **Consulted:** `mcp-server-builder`, `extension-engineer` (parallel — owns the browser-extension scaffold that consumes the same contracts), `eval-curator` (Phase 2 corpus owner), (advisory on PII handling and consent surfaces)
 - **Informed:** `skill-author` (consumer in `asd-meeting-translator` and Phase 2 PR-review skills), `accessibility-auditor`, `doc-writer`, `prompt-librarian`
 
 ## Context
 
-`mcp-translation` is the third substrate MCP server NeuroDock will ship and the engine of Area 2 (communication and translation). Per  it launches in Phase 2 alongside a browser extension, and the same prompt library and eval corpus power both surfaces — one MCP server, one extension, one prompt repo, one test harness.
+`mcp-translation` is the third substrate MCP server NeuroDock will ship and the engine of Area 2 (communication and translation). Per it launches in Phase 2 alongside a browser extension, and the same prompt library and eval corpus power both surfaces — one MCP server, one extension, one prompt repo, one test harness.
 
 The user stories in §7 partition cleanly into four jobs:
 
@@ -22,7 +22,7 @@ ADRs 0001 (chronometric), 0002 (cognitive-graph), and 0003 (task-fractionator) e
 ## Decision drivers
 
 1. **Extension parity.** The browser extension and the MCP server are two surfaces over one contract. The schemas defined here are the source of truth for both. Designing the tool surface poorly means re-doing it in two places.
-2. **No LLM SDK inside the server.** The substrate's vendor-neutrality rule  and ADR 0002 §8 both say substrate servers do not call vendor SDKs. `mcp-translation` is the precedent-setting case for a server whose entire job is prompt orchestration. We confirm: the server returns structured prompt assets and/or typed analysis schemas; the caller's MCP client (Claude / OpenAI / local Ollama) executes the actual model call. The tool response is the model output, returned in the structured shape these schemas define.
+2. **No LLM SDK inside the server.** The substrate's vendor-neutrality rule and ADR 0002 §8 both say substrate servers do not call vendor SDKs. `mcp-translation` is the precedent-setting case for a server whose entire job is prompt orchestration. We confirm: the server returns structured prompt assets and/or typed analysis schemas; the caller's MCP client (Claude / OpenAI / local Ollama) executes the actual model call. The tool response is the model output, returned in the structured shape these schemas define.
 3. **Local-first / cloud-mode parity.** The server's behaviour must be identical whether the user has configured local Ollama or a cloud provider. The server itself is provider-agnostic. The user's profile and the extension's settings choose the provider; the server only orchestrates prompts.
 4. **Eval-corpus-driven correctness.** Per plan.md §7, every prompt change runs against the eval suite in CI. Each schema cites the eval slice that validates its prompts (`packages/evals/corpora/translation/...`). The corpus does not exist yet at v0.1.0 tag — `eval-curator` is collecting it in Phase 2 — but the contract is recorded now so the gate is built before the prompts are written.
 5. **Verbatim quoting for clinical safety.** `brief_meeting.ambiguous_items` quote the exact transcript span. Per plan.md §7 acceptance, ambiguous items MUST anchor verbatim; the schema enforces this at the type level (`verbatim: const true`, `quoted_span` required, server-side `VERBATIM_ANCHOR_FAILED` error if the LLM fabricates a span). This is not aesthetic — it is anti-hallucination armour for a meeting brief that an autistic director will rely on.
@@ -69,12 +69,12 @@ We adopt **Option B: the four-tool decomposition** as specified in the four sche
 
 ### 1. Tool surface
 
-| Tool | Purpose | Required input | Output shape |
-|---|---|---|---|
-| `translate_incoming` | Decode subtext + ambiguity in an incoming message | `text` | `explicit_ask, likely_subtext[], ambiguity{detected, spans[]}, recommended_next_action, eval_corpus_slice, model_provenance` |
-| `check_tone` | Score outgoing message on directness/warmth/urgency axes; flag baseline-delta phrases | `text` | `axes, axes_target?, baseline_delta?, flagged_phrases[], suggested_rewrite_hint, eval_corpus_slice, model_provenance` |
-| `rewrite_outgoing` | Rewrite preserving technical terms + intent, shifted toward target register | `text, target_register` | `rewritten, preserved_terms[], unpreserved_terms[], diff_summary, eval_corpus_slice, model_provenance` |
-| `brief_meeting` | Transcript → four-section structured brief | `transcript, me` | `my_asks[], others_asks[], decisions[], ambiguous_items[], eval_corpus_slice, model_provenance` |
+| Tool                 | Purpose                                                                               | Required input          | Output shape                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `translate_incoming` | Decode subtext + ambiguity in an incoming message                                     | `text`                  | `explicit_ask, likely_subtext[], ambiguity{detected, spans[]}, recommended_next_action, eval_corpus_slice, model_provenance` |
+| `check_tone`         | Score outgoing message on directness/warmth/urgency axes; flag baseline-delta phrases | `text`                  | `axes, axes_target?, baseline_delta?, flagged_phrases[], suggested_rewrite_hint, eval_corpus_slice, model_provenance`        |
+| `rewrite_outgoing`   | Rewrite preserving technical terms + intent, shifted toward target register           | `text, target_register` | `rewritten, preserved_terms[], unpreserved_terms[], diff_summary, eval_corpus_slice, model_provenance`                       |
+| `brief_meeting`      | Transcript → four-section structured brief                                            | `transcript, me`        | `my_asks[], others_asks[], decisions[], ambiguous_items[], eval_corpus_slice, model_provenance`                              |
 
 ### 2. No LLM SDK inside the server (precedent-setting confirmation)
 
@@ -178,6 +178,7 @@ Each tool returns `{mode, provider, model}` reflecting what the caller's MCP cli
 ## Open questions
 
 1. **Where do `baseline_messages` come from?** Three credible positions:
+
    - **Caller-supplied** (current schema): the extension or skill assembles the baseline before calling. Simplest; pushes responsibility outward.
    - **Cognitive-graph lookup**: a future minor version adds `baseline_from: {person: "Roberto", lookback_days: 30}` and the server queries `mcp-cognitive-graph` directly. Tighter integration; violates "no cross-server dependencies" from `.claude/agents/mcp-architect.md`.
    - **Hybrid**: caller-supplied wins; a skill MAY wrap the call and inject baselines from the cognitive graph. (Recommended.)
@@ -185,6 +186,7 @@ Each tool returns `{mode, provider, model}` reflecting what the caller's MCP cli
    Recommendation: ship caller-supplied in v0.1.0. The cross-server-lookup variant is a skill, not a server feature.
 
 2. **Should `brief_meeting` optionally output a Mermaid sequence diagram?** The plan.md §11 visual-organizer skill makes Mermaid first-class. Three positions:
+
    - **No** — visualisation belongs to the visual-organizer skill, which can consume the structured brief.
    - **Optional output field** in v0.1.x — `mermaid_sequence` populated when the caller passes `include_diagram: true`.
    - **Separate tool** `diagram_meeting(brief)` in v0.2.
@@ -192,6 +194,7 @@ Each tool returns `{mode, provider, model}` reflecting what the caller's MCP cli
    Recommendation: option 1 (no). Keep the substrate tool focused; the visual-organizer skill composes.
 
 3. **How do language packs override prompt templates?** plan.md §7 calls out Hiberno-English, German directness norms, Japanese keigo as contribution lanes. The schema has `target_language` (BCP-47) but no registration mechanism. Open positions:
+
    - **File-system convention**: `prompts/<tool>/<bcp47>.md` shadows `prompts/<tool>/default.md`.
    - **Plugin manifest**: language packs ship as plugins with `plugin.yaml type: language-pack` per plan.md §4.
    - **Server config**: registered at server start from a YAML.
@@ -199,6 +202,7 @@ Each tool returns `{mode, provider, model}` reflecting what the caller's MCP cli
    Recommendation: align with plan.md §4's plugin model. Language packs are plugins. Defer the manifest schema work to a separate ADR.
 
 4. **Is `recommended_next_action.draft_reply` the right place to draft, or should the caller always chain to `rewrite_outgoing`?** Two positions:
+
    - **Inline draft (current)**: `translate_incoming` may return a draft reply when action is `reply|clarify|acknowledge`. Saves a round trip.
    - **No inline draft**: `translate_incoming` returns only the recommendation; the caller calls `rewrite_outgoing` (or a future `draft_reply` tool) to produce text.
 

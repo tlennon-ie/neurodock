@@ -5,6 +5,7 @@
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -15,6 +16,7 @@ plugins:
 ```
 
 The reference client passes:
+
 - `target_register: "legal-formal-neutral"` (or `british-firm` — both acceptable register targets)
 - `preserve_terms: ["warranty cap", "without prejudice"]`
 - `preserve_intent: "decline the requested warranty cap increase; offer a call to discuss"`
@@ -30,6 +32,7 @@ The user runs `rewrite_outgoing` on the following draft:
 The output must contain:
 
 1. **`rewritten`** — a rewritten message that:
+
    - Declines the warranty-cap increase (same substantive position).
    - Contains the literal string `"warranty cap"` verbatim.
    - Contains the literal string `"without prejudice"` verbatim.
@@ -44,6 +47,7 @@ The output must contain:
 4. **`diff_summary.tone_shift`** is `"more_formal"` (or `"more_softened"`).
 
 5. **`diff_summary.structural_changes`** lists at minimum:
+
    - Opening "No" replaced with formal decline phrasing.
    - "Call me" replaced with conventional softener ("I'd be grateful if you could call").
 

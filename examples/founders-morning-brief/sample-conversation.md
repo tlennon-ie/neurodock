@@ -101,14 +101,19 @@ chronometric:
 {
   "project": "product-v2",
   "decisions": [
-    { "title": "ship the auth flow before the demo", "decided_on": "2026-05-19", "confidence": 0.85 }
+    {
+      "title": "ship the auth flow before the demo",
+      "decided_on": "2026-05-19",
+      "confidence": 0.85
+    }
   ],
   "blockers": [
-    { "literal": "webhook signing key rotation not yet documented", "recorded_at": "2026-05-19T16:42:00+01:00" }
+    {
+      "literal": "webhook signing key rotation not yet documented",
+      "recorded_at": "2026-05-19T16:42:00+01:00"
+    }
   ],
-  "next_actions": [
-    { "literal": "write the runbook entry for key rotation" }
-  ]
+  "next_actions": [{ "literal": "write the runbook entry for key rotation" }]
 }
 ```
 
@@ -124,11 +129,17 @@ chronometric:
 {
   "project": "customer-research",
   "decisions": [
-    { "title": "interview pool capped at 8 for this cycle", "decided_on": "2026-05-18", "confidence": 0.91 }
+    {
+      "title": "interview pool capped at 8 for this cycle",
+      "decided_on": "2026-05-18",
+      "confidence": 0.91
+    }
   ],
   "blockers": [],
   "next_actions": [
-    { "literal": "send follow-up to the three remaining unconfirmed interviewees" }
+    {
+      "literal": "send follow-up to the three remaining unconfirmed interviewees"
+    }
   ]
 }
 ```
@@ -145,10 +156,17 @@ chronometric:
 {
   "project": "ops-billing",
   "decisions": [
-    { "title": "switch to net-30 for the two enterprise pilots", "decided_on": "2026-05-17", "confidence": 0.79 }
+    {
+      "title": "switch to net-30 for the two enterprise pilots",
+      "decided_on": "2026-05-17",
+      "confidence": 0.79
+    }
   ],
   "blockers": [
-    { "literal": "invoicing template needs the new entity name", "recorded_at": "2026-05-17T14:30:00+01:00" }
+    {
+      "literal": "invoicing template needs the new entity name",
+      "recorded_at": "2026-05-17T14:30:00+01:00"
+    }
   ],
   "next_actions": []
 }
@@ -227,21 +245,25 @@ chronometric:
 > Wednesday morning. Three projects with activity this week. Energy zone: morning_peak.
 >
 > ### product-v2
+>
 > - Most recent decision: ship the auth flow before the demo (2026-05-19, conf 0.85)
 > - Blocker: webhook signing key rotation not yet documented
 > - Next: write the runbook entry for key rotation (35 min, conf 0.78)
 >
 > ### customer-research
+>
 > - Most recent decision: interview pool capped at 8 for this cycle (2026-05-18, conf 0.91)
 > - Blocker: none
 > - Next: send follow-up to the three remaining unconfirmed interviewees (15 min, conf 0.82)
 >
 > ### ops-billing
+>
 > - Most recent decision: switch to net-30 for the two enterprise pilots (2026-05-17, conf 0.79)
 > - Blocker: invoicing template needs the new entity name
 > - Next: update the invoicing template (20 min, low confidence 0.45)
 >
 > ---
+>
 > Energy zone right now: morning_peak. End-of-day stated as 18:00.
 > This brief is not a productivity scorecard. Yesterday's incomplete items are not graded.
 >
@@ -380,7 +402,9 @@ The session length (52 minutes) is below the 75-minute `hyperfocus_break_minutes
 `tool_use: mcp-chronometric.mark_session_end({"summary": "runbook for key rotation completed; covers detection, rollback, verification"})`
 
 ```json
-{ "summary": "runbook for key rotation completed; covers detection, rollback, verification" }
+{
+  "summary": "runbook for key rotation completed; covers detection, rollback, verification"
+}
 ```
 
 `tool_result:`
@@ -402,7 +426,9 @@ The session length (52 minutes) is below the 75-minute `hyperfocus_break_minutes
 {
   "subject": { "type": "project", "name": "product-v2" },
   "predicate": "decided_in",
-  "object": { "literal": "key-rotation runbook published; documents detection, rollback, verification" },
+  "object": {
+    "literal": "key-rotation runbook published; documents detection, rollback, verification"
+  },
   "source": "session 5e8a1c92"
 }
 ```
@@ -415,7 +441,9 @@ The session length (52 minutes) is below the 75-minute `hyperfocus_break_minutes
   "recorded_at": "2026-05-20T09:39:14+01:00",
   "subject": { "type": "project", "id": "p-product-v2", "name": "product-v2" },
   "predicate": "decided_in",
-  "object": { "literal": "key-rotation runbook published; documents detection, rollback, verification" },
+  "object": {
+    "literal": "key-rotation runbook published; documents detection, rollback, verification"
+  },
   "source": "session 5e8a1c92",
   "deduplicated": false
 }

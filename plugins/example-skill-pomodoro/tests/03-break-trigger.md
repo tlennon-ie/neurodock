@@ -7,6 +7,7 @@ This test exercises three of the four `mcp-chronometric` tools and the optional 
 ## Given
 
 Profile:
+
 ```yaml
 identity:
   neurotypes: []
@@ -17,6 +18,7 @@ chronometric:
 `mcp-cognitive-graph` IS mocked as available.
 
 A session is already open (started in a prior turn at 10:02:14). Mocked `get_time_context()` returns:
+
 ```json
 {
   "now": "2026-05-20T10:28:30+01:00",
@@ -28,6 +30,7 @@ A session is already open (started in a prior turn at 10:02:14). Mocked `get_tim
 ```
 
 Mocked `request_break_if_needed({ "threshold_minutes": 25 })` returns:
+
 ```json
 {
   "elapsed": "PT26M16S",
@@ -38,6 +41,7 @@ Mocked `request_break_if_needed({ "threshold_minutes": 25 })` returns:
 ```
 
 Mocked `mark_session_end({})` returns:
+
 ```json
 {
   "session_id": "7c4f9a2b-1d3e-4f5a-8b6c-9d0e1f2a3b4c",
@@ -50,11 +54,15 @@ Mocked `mark_session_end({})` returns:
 ```
 
 Mocked `record_fact({ "subject": { "type": "session", "id": "7c4f9a2b-1d3e-4f5a-8b6c-9d0e1f2a3b4c" }, "predicate": "tagged", "object": { "literal": "pomodoro" } })` returns:
+
 ```json
 {
   "fact_id": "f0e1d2c3-b4a5-4968-8472-635241302f1e",
   "recorded_at": "2026-05-20T10:28:42+01:00",
-  "subject": { "type": "session", "id": "7c4f9a2b-1d3e-4f5a-8b6c-9d0e1f2a3b4c" },
+  "subject": {
+    "type": "session",
+    "id": "7c4f9a2b-1d3e-4f5a-8b6c-9d0e1f2a3b4c"
+  },
   "predicate": "tagged",
   "object": { "literal": "pomodoro" },
   "deduplicated": false

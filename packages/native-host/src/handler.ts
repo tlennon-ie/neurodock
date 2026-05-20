@@ -11,7 +11,10 @@ import { validateProfile } from "./validator.js";
 export interface ProfileIoAdapter {
   resolvePath(): string;
   read(path: string): { exists: boolean; raw: unknown; text: string };
-  write(path: string, value: Record<string, unknown>): { created: boolean; bytesWritten: number };
+  write(
+    path: string,
+    value: Record<string, unknown>,
+  ): { created: boolean; bytesWritten: number };
 }
 
 function ok<T>(req: HostRequest, data: T): HostResponse<T> {
@@ -59,10 +62,17 @@ export interface SetResult {
   readonly bytesWritten: number;
 }
 
-export function handleRequest(raw: unknown, io: ProfileIoAdapter): HostResponse {
+export function handleRequest(
+  raw: unknown,
+  io: ProfileIoAdapter,
+): HostResponse {
   if (!isHostRequest(raw)) {
-    const id = isRecord(raw) && typeof raw["id"] === "string" ? raw["id"] : undefined;
-    return failUnknown(id, "BAD_REQUEST: payload does not match {op, id?, payload?}");
+    const id =
+      isRecord(raw) && typeof raw["id"] === "string" ? raw["id"] : undefined;
+    return failUnknown(
+      id,
+      "BAD_REQUEST: payload does not match {op, id?, payload?}",
+    );
   }
   const req: HostRequest = raw;
 
@@ -77,14 +87,22 @@ export function handleRequest(raw: unknown, io: ProfileIoAdapter): HostResponse 
       const result: GetResult = { path, exists: r.exists, profile: r.raw };
       return ok(req, result);
     } catch (err) {
-      return fail(req, "READ_FAILED", err instanceof Error ? err.message : String(err));
+      return fail(
+        req,
+        "READ_FAILED",
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
   if (req.op === "set") {
     const payload = req.payload;
     if (!isRecord(payload)) {
-      return fail(req, "BAD_PAYLOAD", "set requires a profile object as payload");
+      return fail(
+        req,
+        "BAD_PAYLOAD",
+        "set requires a profile object as payload",
+      );
     }
     const validation = validateProfile(payload);
     if (!validation.valid) {
@@ -92,7 +110,11 @@ export function handleRequest(raw: unknown, io: ProfileIoAdapter): HostResponse 
         .slice(0, 5)
         .map((v) => `${v.path} (${v.keyword}): ${v.message}`)
         .join("; ");
-      return fail(req, "SCHEMA_INVALID", summary || "profile failed schema validation");
+      return fail(
+        req,
+        "SCHEMA_INVALID",
+        summary || "profile failed schema validation",
+      );
     }
     try {
       const path = io.resolvePath();
@@ -107,10 +129,18 @@ export function handleRequest(raw: unknown, io: ProfileIoAdapter): HostResponse 
         }
       }
       const w = io.write(path, payload);
-      const result: SetResult = { path, created: w.created, bytesWritten: w.bytesWritten };
+      const result: SetResult = {
+        path,
+        created: w.created,
+        bytesWritten: w.bytesWritten,
+      };
       return ok(req, result);
     } catch (err) {
-      return fail(req, "WRITE_FAILED", err instanceof Error ? err.message : String(err));
+      return fail(
+        req,
+        "WRITE_FAILED",
+        err instanceof Error ? err.message : String(err),
+      );
     }
   }
 
@@ -128,7 +158,10 @@ function isRecord(x: unknown): x is Record<string, unknown> {
  */
 const EXTENSION_OWNED_TOP_LEVEL = new Set(["identity"]);
 
-export function isTrivialChange(existing: unknown, next: Record<string, unknown>): boolean {
+export function isTrivialChange(
+  existing: unknown,
+  next: Record<string, unknown>,
+): boolean {
   if (!isRecord(existing)) return true;
   for (const key of Object.keys(existing)) {
     if (EXTENSION_OWNED_TOP_LEVEL.has(key)) continue;

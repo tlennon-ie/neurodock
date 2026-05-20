@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { handleRequest, isTrivialChange, type ProfileIoAdapter } from "../src/handler.js";
+import {
+  handleRequest,
+  isTrivialChange,
+  type ProfileIoAdapter,
+} from "../src/handler.js";
 
 const VALID_PROFILE = {
   identity: { display_name: "T", neurotypes: ["adhd"] },
@@ -25,7 +29,11 @@ function makeIo(store: FakeStore): ProfileIoAdapter {
 
 describe("handler", () => {
   it("responds to ping with version metadata", () => {
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: null, exists: false };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
     const r = handleRequest({ op: "ping", id: "1" }, makeIo(store));
     expect(r.ok).toBe(true);
     expect(r.op).toBe("ping");
@@ -33,14 +41,22 @@ describe("handler", () => {
   });
 
   it("rejects a payload that does not match the request shape", () => {
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: null, exists: false };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
     const r = handleRequest({ verb: "ping" }, makeIo(store));
     expect(r.ok).toBe(false);
     expect(r.error).toMatch(/BAD_REQUEST/);
   });
 
   it("get returns the stored profile when present", () => {
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: VALID_PROFILE, exists: true };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: VALID_PROFILE,
+      exists: true,
+    };
     const r = handleRequest({ op: "get" }, makeIo(store));
     expect(r.ok).toBe(true);
     const data = r.data as { exists: boolean; profile: unknown };
@@ -49,7 +65,11 @@ describe("handler", () => {
   });
 
   it("get reports exists:false when the file is missing", () => {
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: null, exists: false };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
     const r = handleRequest({ op: "get" }, makeIo(store));
     expect(r.ok).toBe(true);
     const data = r.data as { exists: boolean };
@@ -57,7 +77,11 @@ describe("handler", () => {
   });
 
   it("set rejects a payload that fails schema validation", () => {
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: null, exists: false };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
     const r = handleRequest(
       { op: "set", payload: { identity: { neurotypes: ["adhd"] } } },
       makeIo(store),
@@ -67,8 +91,15 @@ describe("handler", () => {
   });
 
   it("set writes a valid profile when the file does not yet exist", () => {
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: null, exists: false };
-    const r = handleRequest({ op: "set", payload: { ...VALID_PROFILE } }, makeIo(store));
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
+    const r = handleRequest(
+      { op: "set", payload: { ...VALID_PROFILE } },
+      makeIo(store),
+    );
     expect(r.ok).toBe(true);
     expect(store.raw).toEqual(VALID_PROFILE);
   });
@@ -78,9 +109,16 @@ describe("handler", () => {
       identity: { display_name: "T", neurotypes: ["adhd"] },
       privacy: { telemetry: "local_otel_only" },
     };
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: onDisk, exists: true };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: onDisk,
+      exists: true,
+    };
     const r = handleRequest(
-      { op: "set", payload: { identity: { display_name: "Alex", neurotypes: ["adhd"] } } },
+      {
+        op: "set",
+        payload: { identity: { display_name: "Alex", neurotypes: ["adhd"] } },
+      },
       makeIo(store),
     );
     expect(r.ok).toBe(false);
@@ -92,7 +130,11 @@ describe("handler", () => {
       identity: { display_name: "T", neurotypes: ["adhd"] },
       privacy: { telemetry: "local_otel_only" },
     };
-    const store: FakeStore = { path: "/tmp/profile.yaml", raw: onDisk, exists: true };
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: onDisk,
+      exists: true,
+    };
     const r = handleRequest(
       {
         op: "set",
