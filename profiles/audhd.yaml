@@ -1,0 +1,76 @@
+# NeuroDock Profile preset — AuDHD (combined ADHD + autism)
+#
+# Who it's for:
+#   People who self-identify as AuDHD — combined ADHD and autistic
+#   experience treated as a first-class identity rather than a sum of
+#   parts. Pick this if you want the ADHD break-cadence AND the autism-
+#   leaning explicitness/directness at the same time. Diagnosis is
+#   never required.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = ["audhd"]   audhd is a first-class enum
+#       value in the schema and activates the AuDHD-primary skill
+#       audhd-context-recovery, plus adhd-daily-planner, hyperfocus-
+#       formatter, asd-meeting-translator, and visual-organizer.
+#     - preferences.output_format = answer_first   headline-first
+#       structure for fast scanning under context-switching load.
+#     - preferences.max_chunk_size = 5   honours the ADHD chunk-size
+#       value; autism-leaning explicitness is delivered by skill copy,
+#       not by longer lists.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   the
+#       project default; works well for mixed neurotype output. Switch
+#       to "lexend" if you prefer the ADHD-evidence font.
+#     - preferences.motion = reduced   keeps sensory load down; visual-
+#       organizer respects this with animation:false diagrams.
+#     - chronometric.hyperfocus_break_minutes = 75   tighter than the
+#       schema default of 90; sits inside the ADHD 60-75 band so the
+#       nudge fires before a deep-dive locks in. The autism side of
+#       AuDHD often benefits from earlier transition warnings too.
+#     - chronometric.end_of_day_local = "18:30"   pre-set because the
+#       AuDHD founder user story (plan.md §6) leans on the end-of-day
+#       nudge. Change it to your real end-of-day or comment it out.
+#     - guardrails.sycophancy_check = warn   manifesto default; refuse
+#       is available if you find you need it.
+#   USER-TUNABLE:
+#     - identity.display_name        set to your preferred handle.
+#     - chronometric.end_of_day_local   change or remove freely.
+#     - guardrails.rumination_threshold / rumination_window_minutes
+#       schema defaults are 3 queries / 90 min; tighten only if loops
+#       are a recurring problem for you.
+#     - privacy.os_idle_consent   off by default; opt in if you want
+#       chronometric.idle_status to read OS idle time.
+#
+# Install:
+#   cp profiles/audhd.yaml ~/.neurodock/profile.yaml
+#
+# This preset is an opinionated default, not a prescription. AuDHD is
+# yours to describe — change anything below at any time.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  neurotypes:
+    - "audhd"
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  hyperfocus_break_minutes: 75
+  end_of_day_local: "18:30"
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

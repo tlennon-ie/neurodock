@@ -1,0 +1,85 @@
+# NeuroDock Profile preset — low-stimulation
+#
+# Who it's for:
+#   Anyone, any neurotype, during an overwhelm episode, a sensory-
+#   overload day, a high-stakes deliverable week, or a slow recovery
+#   period. This preset is a TEMPORARY OVERRIDE shape: all guardrails
+#   set to their most protective values, output stripped down, motion
+#   off, break cadence tightened. It deliberately claims NO neurotype
+#   (identity.neurotypes is empty) so it composes safely on top of
+#   anyone's normal setup as a swap-in for hard days.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = []   empty array is valid per the schema
+#       and opts out of any neurotype-tagged skill activation. The
+#       skills that activate on universal triggers (e.g. visual-
+#       organizer's /diagram command) still work; the neurotype-gated
+#       ones (e.g. ocd-decision-finalizer, asd-meeting-translator) do
+#       not. This is deliberate — this preset is a sensory/cognitive
+#       posture, not an identity claim.
+#     - preferences.output_format = answer_first   conclusion first,
+#       least surface area for re-reading.
+#     - preferences.max_chunk_size = 3   the tightest practical chunk
+#       cap. Three items are easier to hold than five when capacity is
+#       low. Raise back toward 5 or 7 when capacity returns.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default; chosen for legibility under fatigue.
+#     - preferences.motion = reduced   no animation, no transitions,
+#       no auto-scroll. visual-organizer enforces animation:false in
+#       any Mermaid diagram it emits.
+#     - chronometric.hyperfocus_break_minutes = 60   the minimum
+#       "gentle" rung of the 60/+30/+60 escalation ladder. Surfaces
+#       the structured nudge as early as the schema allows the rung
+#       to be re-anchored.
+#     - guardrails.rumination_threshold = 2   tightest practical value
+#       above the schema floor of 1. Surfaces the signal early on
+#       low-capacity days when loops are most expensive.
+#     - guardrails.rumination_window_minutes = 60   tighter rolling
+#       window so the signal fires sooner.
+#     - guardrails.sycophancy_check = refuse   strongest setting; the
+#       anti-validation guard refuses further validation on flagged
+#       decisions until new information arrives. Soften to "warn" when
+#       you ramp back up.
+#   USER-TUNABLE:
+#     - identity.display_name       set to your preferred handle.
+#     - everything else.  This preset is a posture, not a rulebook.
+#
+# Install (as a temporary swap):
+#   # back up your normal profile first
+#   cp ~/.neurodock/profile.yaml ~/.neurodock/profile.yaml.bak
+#   cp profiles/low-stimulation.yaml ~/.neurodock/profile.yaml
+#   # later, restore
+#   mv ~/.neurodock/profile.yaml.bak ~/.neurodock/profile.yaml
+#
+# This preset makes no clinical claim and no neurotype claim. It is a
+# temporary, opinionated low-stimulation default you can adopt for a
+# day, a week, or a sprint — and step back out of when you're ready.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  # Empty list is valid. This preset deliberately makes no neurotype
+  # claim; it is a posture, not an identity.
+  neurotypes: []
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 3
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  hyperfocus_break_minutes: 60
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 2
+  rumination_window_minutes: 60
+  sycophancy_check: "refuse"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

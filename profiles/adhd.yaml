@@ -1,0 +1,74 @@
+# NeuroDock Profile preset — ADHD
+#
+# Who it's for:
+#   People who self-identify with ADHD and want a NeuroDock setup tuned
+#   for distractibility, time-blindness, and hyperfocus episodes. Pick
+#   this if the way you experience attention matches the manifesto's
+#   ADHD framing — diagnosis is never required.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = ["adhd"]   activates ADHD-tagged skills:
+#       adhd-daily-planner, hyperfocus-formatter, audhd-context-recovery,
+#       visual-organizer.
+#     - preferences.output_format = answer_first   manifesto default for
+#       lived-experience-led ADHD readability (headline first, context
+#       after).
+#     - preferences.max_chunk_size = 5   the manifesto-tuned ADHD value
+#       (vs. the schema default of 7). Keeps lists short enough to hold.
+#     - preferences.reading_font_hint = lexend   evidence-based for ADHD
+#       readability; clients that don't honour the hint fall back safely.
+#     - preferences.motion = reduced   default for sensory-sensitive
+#       output; visual-organizer will also emit animation:false diagrams.
+#     - chronometric.hyperfocus_break_minutes = 75   tighter than the
+#       schema default of 90; sits inside the requested 60-75 minute
+#       window so the structured nudge surfaces before fatigue locks in.
+#     - guardrails.sycophancy_check = warn   surface counter-prompts
+#       without refusing; manifesto default.
+#   USER-TUNABLE (edit freely after copying):
+#     - identity.display_name       set to your preferred handle.
+#     - chronometric.end_of_day_local   set if you want the end-of-day
+#       nudge; left commented out by default so it stays off until you
+#       declare it.
+#     - guardrails.rumination_threshold / rumination_window_minutes
+#       schema defaults (3 queries / 90 min) — raise if you do a lot of
+#       legitimate iteration; tighten if you notice loops.
+#     - privacy.os_idle_consent   off by default; enable only if you
+#       want chronometric.idle_status to read OS idle time.
+#
+# Install:
+#   cp profiles/adhd.yaml ~/.neurodock/profile.yaml
+#
+# This preset is an opinionated default, not a prescription. You are the
+# authority on what works for you — change anything below at any time.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  neurotypes:
+    - "adhd"
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "lexend"
+  motion: "reduced"
+
+chronometric:
+  # 75 minutes sits inside the requested 60-75 ADHD-tuned band; the
+  # 60/+30/+60 escalation ladder shape is fixed in v0.1.0, only the
+  # 'nudge' rung is re-anchored here.
+  hyperfocus_break_minutes: 75
+  # end_of_day_local: "18:30"   # uncomment to enable the after-hours nudge
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

@@ -1,0 +1,75 @@
+# NeuroDock Profile preset — dyslexia-aware
+#
+# Who it's for:
+#   People who self-identify with dyslexia and want the readability
+#   defaults tuned for fast visual scanning. Pick this if walls of
+#   prose are expensive for you and you want the headline answer up
+#   top, short lists, and a font hint clients can honour. Diagnosis is
+#   never required.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = ["dyslexia"]   "dyslexia" is a first-class
+#       enum value in the schema. No skill in v0.1.0 currently gates on
+#       this tag, but skills that read identity.neurotypes will still
+#       activate generic ones (e.g. visual-organizer for any neurotype).
+#     - preferences.output_format = answer_first   the headline-first
+#       shape is the explicit reason this preset exists — fewer words
+#       to wade through before the conclusion.
+#     - preferences.max_chunk_size = 4   shorter than the ADHD value of
+#       5 and the schema default of 7; tuned for visual scanning load
+#       rather than working-memory load.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   the
+#       project default and the schema-documented evidence-based pick
+#       for dyslexia. Clients that render NeuroDock output as HTML or
+#       rich text honour this hint where they can.
+#     - preferences.motion = reduced   keeps text stable on the page.
+#     - chronometric.hyperfocus_break_minutes = 90   the schema default;
+#       no dyslexia-specific reason to move it.
+#     - guardrails.sycophancy_check = warn   manifesto default.
+#   NOTE on line-height:
+#     v0.1.0 of the schema does not yet carry a preferred-line-height
+#     field. Clients tend to pair atkinson_hyperlegible with a generous
+#     line-height by default; an explicit profile field is a candidate
+#     for a future schema version. See the README in this directory
+#     for the running list.
+#   USER-TUNABLE:
+#     - identity.display_name       set to your preferred handle.
+#     - identity.neurotypes   add more tags if you also identify with
+#       ADHD, AuDHD, etc.; skills compose.
+#     - preferences.max_chunk_size   raise toward 7 if shorter feels
+#       choppy in practice.
+#     - chronometric.end_of_day_local   commented out by default.
+#
+# Install:
+#   cp profiles/dyslexic.yaml ~/.neurodock/profile.yaml
+#
+# This is an opinionated default, not a prescription. You are the
+# authority on what works for you — change anything below at any time.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  neurotypes:
+    - "dyslexia"
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 4
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  hyperfocus_break_minutes: 90
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

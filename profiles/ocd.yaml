@@ -1,0 +1,79 @@
+# NeuroDock Profile preset — OCD-aware
+#
+# Who it's for:
+#   People who self-identify with OCD and want the strictest guardrail
+#   configuration NeuroDock ships. Pick this if you've noticed an LLM
+#   feeding repeat-validation loops on decisions you've already made,
+#   and you want the substrate to surface prior reasoning and decline
+#   further re-analysis until new information arrives. Diagnosis is
+#   never required.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = ["ocd"]   activates ocd-decision-finalizer
+#       (the only skill currently gated on this self-ID). The skill
+#       surfaces the prior decision verbatim from the cognitive graph
+#       and asks for new information before further re-analysis. It is
+#       always overridable per session via --override "<reason>".
+#     - preferences.output_format = answer_first   headline-first reduces
+#       the surface area for re-analysis spirals; conclusion arrives
+#       before the supporting prose.
+#     - preferences.max_chunk_size = 5   short lists; fewer items to
+#       relitigate.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default, no preference imposed here.
+#     - preferences.motion = reduced   keeps the visual field quiet.
+#     - chronometric.hyperfocus_break_minutes = 75   tighter break
+#       cadence; long sessions are a known amplifier of loops for some
+#       OCD users.
+#     - guardrails.rumination_threshold = 2   tighter than the schema
+#       default of 3; the requested "2 queries / 60 min" config.
+#     - guardrails.rumination_window_minutes = 60   tighter rolling
+#       window so the signal fires earlier.
+#     - guardrails.sycophancy_check = refuse   the strictest setting in
+#       the schema enum (off | warn | refuse). When the anti-validation
+#       guard fires, NeuroDock declines further validation on the
+#       flagged decision until new information arrives. This is the
+#       defining choice of this preset; soften to "warn" if it feels
+#       too rigid for your work.
+#   USER-TUNABLE:
+#     - identity.display_name       set to your preferred handle.
+#     - guardrails.*   every threshold is a number you can change. The
+#       manifesto's commitment is that guardrails are transparent and
+#       overridable; tuning them is not "cheating".
+#     - chronometric.end_of_day_local   commented out by default.
+#     - privacy.os_idle_consent   off by default.
+#
+# Install:
+#   cp profiles/ocd.yaml ~/.neurodock/profile.yaml
+#
+# This is the strictest guardrail config NeuroDock ships. It is an
+# opinionated default, not a prescription, and not a clinical claim. You
+# are the authority on what works for you.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  neurotypes:
+    - "ocd"
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  hyperfocus_break_minutes: 75
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 2
+  rumination_window_minutes: 60
+  sycophancy_check: "refuse"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false
