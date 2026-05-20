@@ -35,10 +35,9 @@
     "typescript": "^5.7.2"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp"],
-    "overrides": {
-      "@astrojs/sitemap": "3.2.1",
-      "@astrojs/starlight>@astrojs/sitemap": "3.2.1"
-    }
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
   }
 }
