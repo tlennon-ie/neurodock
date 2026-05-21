@@ -1,0 +1,170 @@
+# NeuroDock Profile preset — student-university
+#
+# Who it's for:
+#   University and college students working on a semester / term
+#   cadence: lecture blocks, library sessions, group work that lands
+#   in the evening, assignment deadlines that cluster, and an exam
+#   period that warps the whole rhythm. This preset is PROFESSION-
+#   SHAPED (well — student-life-shaped), not neurotype-shaped. It
+#   claims no neurotype and is designed to be overlaid on top of an
+#   adhd / audhd / ocd / dyslexic / dyspraxia preset by copying the
+#   chronometric and preferences blocks across.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = []   empty array is valid per the schema
+#       and opts out of any neurotype-tagged skill activation. This
+#       preset is a working posture, not an identity claim. Pair it
+#       with your neurotype preset of choice.
+#     - preferences.output_format = answer_first   assignment triage
+#       requires fast scanning across many open threads (multiple
+#       modules, multiple deadlines, lecture notes, reading lists,
+#       Slack / Discord / email). The headline-first shape minimises
+#       re-reading.
+#     - preferences.max_chunk_size = 5   tighter than the schema
+#       default of 7, looser than the ADHD value of 5's stricter peers.
+#       Five works well for an assignment task-breakdown: tight enough
+#       to be a manageable session, loose enough to encompass the
+#       genuine substeps of a coursework piece.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default; chosen for legibility under fatigue (and there is a
+#       LOT of reading in a university term).
+#     - preferences.motion = reduced   no animation, no transitions.
+#     - chronometric.hyperfocus_break_minutes = 90   longer than the
+#       75-minute ADHD preset and the 75-minute educator preset.
+#       Student deadlines often genuinely justify longer focused work
+#       blocks — a 90-minute assignment block matches the typical
+#       library-session pattern, and the structured nudge then
+#       surfaces at the natural seam between blocks rather than mid-
+#       essay-paragraph.
+#     - chronometric.end_of_day_local = "22:00"   ACKNOWLEDGE real
+#       student schedules. Most student work — group meetings,
+#       library sessions, lab marking, late-night writing — happens
+#       in the evening. Setting this to "17:00" would pretend the
+#       student keeps office hours, then fire the after-EOD nudge
+#       through every legitimate evening session. 22:00 is honest:
+#       past this, you should be winding down, and the nudge fires
+#       to interrupt the 2am-essay spiral that wrecks tomorrow's
+#       9am lecture.
+#     - guardrails.sycophancy_check = warn   schema default. The
+#       counter-prompt is especially valuable when drafting essay
+#       arguments — students benefit from challenge as well as
+#       affirmation.
+#
+# Semester cadence — fields the schema does NOT yet model:
+#   This preset shares the semester-awareness problem with
+#   educator-semester.yaml. The same candidate schema fields apply
+#   (tracked in profiles/README.md):
+#     - chronometric.calendar_phase
+#         "teaching" | "deadlines" | "exam" | "break"
+#         lets skills shift defaults across the term. Week 1 of
+#         semester (light load, social calibration) has a very
+#         different demand profile from week 12 (deadline cluster,
+#         everything due at once) and from exam week (single-task
+#         focus, revision blocks).
+#     - chronometric.deadline_cluster_awareness
+#         hint to surface deadline proximity in planning skills;
+#         when three assignments are due in a single week, the
+#         break-cadence math should shift.
+#     - chronometric.weekday_overrides
+#         per-weekday overrides for end_of_day_local and
+#         hyperfocus_break_minutes — a Tuesday with a 09:00 lecture
+#         and a Saturday with a 14:00 study session are different
+#         shapes of day.
+#     - chronometric.protected_windows
+#         list of local-time ranges where the hyperfocus monitor
+#         should hard-surface (lecture blocks, lab times, scheduled
+#         study group meetings).
+#   Until those land in a schema bump, encode the intent in this
+#   comment block and in the user-tunable notes below.
+#
+# Exam-week override hint:
+#   During exam revision, drop hyperfocus_break_minutes to 60 (the
+#   schema-floor "gentle" rung) and consider swapping to the
+#   low-stimulation preset for the worst week. Sleep matters more
+#   than one extra revision hour; the firm break cadence is part of
+#   that.
+#
+# Library-block vs lecture-day pattern:
+#   A "library day" (single 90-minute block per nudge cadence, EOD at
+#   22:00, motion reduced) and a "lecture day" (multiple short
+#   teaching blocks interleaved with travel/transitions, lower
+#   typing volume but higher cognitive switching cost) are different
+#   shapes of day. v0.1.0 cannot model this; until weekday_overrides
+#   exists, accept that the lecture-day will fire the structured
+#   nudge between lectures and treat that as a "have you eaten /
+#   drunk water" reminder rather than a working-session interruption.
+#
+#   USER-TUNABLE (edit freely after copying):
+#     - identity.display_name       set to your preferred handle.
+#     - identity.neurotypes   add your neurotype tags for skill
+#       activation; skills compose.
+#     - chronometric.hyperfocus_break_minutes
+#       EXAM WEEKS: drop to 60.
+#       SHORT REVISION SESSIONS: drop to 45 for spaced-repetition work.
+#     - chronometric.end_of_day_local
+#       FINALS / DEADLINE WEEK: do NOT push this past 22:00. The
+#       temptation will be enormous; the after-EOD nudge is the
+#       interruption that protects tomorrow's exam.
+#     - guardrails.rumination_threshold / rumination_window_minutes
+#       Essay drafting involves legitimate iteration on phrasing;
+#       raise the threshold (e.g. to 5) during essay weeks if the
+#       rumination signal fires too often on genuine revision.
+#     - privacy.os_idle_consent   off by default; enable only if you
+#       want chronometric.idle_status to read OS idle time (useful for
+#       distinguishing "in a lecture" from "stuck on a thesis statement").
+#
+# Install (as your default student profile):
+#   cp profiles/student-university.yaml ~/.neurodock/profile.yaml
+#
+# Install (composed on top of a neurotype preset — manual merge for now):
+#   # 1. start from your neurotype preset
+#   cp profiles/adhd.yaml ~/.neurodock/profile.yaml
+#   # 2. copy the chronometric + preferences blocks from this file over
+#   #    the top, keeping identity.neurotypes from the neurotype preset.
+#
+# This preset is an opinionated working-posture default for university
+# life. It is not a clinical claim, not a neurotype claim, and not a
+# rulebook. Change anything below at any time — you are the authority
+# on what your term needs.
+
+schema_version: "0.1.0"
+
+identity:
+  # Placeholder. Edit to your preferred handle (single letter, nickname,
+  # or full name — all valid).
+  display_name: "Student"
+  # Empty list is valid. This preset is profession-shaped, not
+  # neurotype-shaped; overlay another preset for neurotype-specific
+  # skill activation.
+  neurotypes: []
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  # 90 minutes matches the typical library-session block; the
+  # structured nudge then surfaces at the natural seam between blocks
+  # rather than mid-essay-paragraph. EXAM WEEKS: drop to 60 (see
+  # header comment).
+  hyperfocus_break_minutes: 90
+  # 22:00 is honest about real student schedules. Group meetings,
+  # library sessions, and late-night writing legitimately run into
+  # the evening; "17:00" would pretend otherwise and fire the after-
+  # EOD nudge through every working session. Past 22:00 you should
+  # be winding down to protect tomorrow's 09:00.
+  end_of_day_local: "22:00"
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

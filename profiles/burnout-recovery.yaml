@@ -1,0 +1,142 @@
+# NeuroDock Profile preset — burnout-recovery
+#
+# Who it's for:
+#   Anyone in active burnout recovery — the period after the wall has
+#   already been hit, when cognitive bandwidth is genuinely reduced and
+#   the usual "just push through" instinct is the exact instinct that
+#   produced the burnout in the first place. This is a STATE preset,
+#   not a neurotype preset. It claims no neurotype and is designed to
+#   be overlaid on top of your normal neurotype preset (adhd / audhd /
+#   ocd / dyslexic / dyspraxia) by copying the chronometric, guardrails
+#   and preferences blocks across.
+#
+# This is a TEMPORARY preset, not a permanent state.
+#   Burnout recovery is a phase, not an identity. The aggressive
+#   guardrails and firm-early end-of-day in this preset are calibrated
+#   for the 4-6 week window when capacity is genuinely reduced and the
+#   substrate's job is to refuse to help you set yourself on fire
+#   again. Revisit this preset in 4-6 weeks. If you still need it
+#   then, that's important information — escalate from "tooling
+#   adjustment" to "human support" (therapist, GP, time off, manager
+#   conversation). Step back to your normal neurotype preset as soon
+#   as capacity returns; staying in burnout-recovery mode indefinitely
+#   would be its own kind of self-harm by infantilisation.
+#
+# THIS IS NOT A CLINICAL TOOL.
+#   NeuroDock is a substrate, not a therapist. Burnout recovery
+#   usually needs support this preset cannot provide: professional
+#   mental health support (therapist, psychiatrist), occupational
+#   support (medical leave, reduced hours, accommodations), medical
+#   evaluation (GP — burnout often co-occurs with sleep disorders,
+#   thyroid issues, anaemia, depression, and other diagnosable
+#   conditions). Use this preset alongside human support, not as a
+#   replacement for it. If you are in crisis, contact your local
+#   emergency services or a crisis line — NeuroDock cannot help with
+#   crisis and is not designed to.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = []   empty array is valid per the schema.
+#       Burnout is a state, not a neurotype; overlay your neurotype
+#       preset of choice for skill activation. (Doing both is fine —
+#       set neurotypes from your normal preset and copy the
+#       chronometric / guardrails / preferences blocks from here.)
+#     - preferences.output_format = answer_first   cognitive bandwidth
+#       is genuinely low in recovery; minimise reading load. The
+#       headline-first shape exists for exactly this kind of capacity-
+#       reduced state.
+#     - preferences.max_chunk_size = 3   tightest practical chunk cap.
+#       Three atomic items is what success-stacking needs: small
+#       enough to actually finish, large enough to feel like progress.
+#       During recovery, finishing three things matters more than
+#       starting seven.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default; chosen for legibility under fatigue.
+#     - preferences.motion = reduced   no animation, no transitions.
+#     - chronometric.hyperfocus_break_minutes = 45   below the schema-
+#       documented "gentle" rung of 60. The schema floor for this
+#       field is 15 and the value here is 45 — deliberately FIRM. Do
+#       not let the user hyperfocus through recovery; the instinct to
+#       grind is exactly what needs interrupting.
+#     - chronometric.end_of_day_local = "16:30"   firm-early EOD. Most
+#       presets either omit this or set it conservatively at 17:00 /
+#       18:30; this one is deliberately earlier than feels reasonable
+#       because in recovery "one more thing" is the symptom, not the
+#       solution. The after-EOD nudge surfaces from 16:30 onward to
+#       protect the recovery window.
+#     - guardrails.sycophancy_check = refuse   strongest setting. In
+#       burnout recovery the substrate MUST refuse to validate "I
+#       should just push through this", "I can handle one more thing",
+#       or "I'll rest after this deadline". Those statements are the
+#       failure mode this preset exists to interrupt. "warn" is
+#       insufficient — the burnt-out brain can rationalise past a
+#       warning.
+#     - guardrails.rumination_threshold = 2   lowered from the schema
+#       default of 3. The burnt-out brain catastrophises; surfacing
+#       the rumination signal early gives the user a chance to notice
+#       the loop before it consumes the afternoon.
+#     - guardrails.rumination_window_minutes = 60   tightened from the
+#       schema default of 90, matching the low-stimulation preset.
+#   USER-TUNABLE (edit freely after copying):
+#     - identity.display_name       set to your preferred handle.
+#     - identity.neurotypes   pair this preset with your neurotype
+#       tags if you want neurotype-tagged skills to keep activating.
+#     - chronometric.end_of_day_local   16:30 is deliberately early.
+#       If your job genuinely cannot accommodate that, raise it to
+#       17:00 or 17:30 — but treat any value past 18:00 as a signal
+#       to talk to a human about workload, not a tuning knob.
+#     - guardrails.sycophancy_check   leave at "refuse" for at least
+#       the first two weeks; softening to "warn" too early defeats
+#       the purpose of this preset.
+#
+# Install (as a temporary swap):
+#   # back up your normal profile first
+#   cp ~/.neurodock/profile.yaml ~/.neurodock/profile.yaml.bak
+#   cp profiles/burnout-recovery.yaml ~/.neurodock/profile.yaml
+#   # in 4-6 weeks (or sooner if capacity returns), restore
+#   mv ~/.neurodock/profile.yaml.bak ~/.neurodock/profile.yaml
+#
+# This preset is a temporary, opinionated recovery posture. It is not
+# a clinical claim, not a permanent identity, and not a substitute for
+# human support. You are the authority on what your recovery needs —
+# change anything below at any time, and step out of this preset as
+# soon as you genuinely can.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  # Empty list is valid. Burnout is a state, not a neurotype; pair
+  # this preset with your neurotype preset of choice.
+  neurotypes: []
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 3
+  reading_font_hint: "atkinson_hyperlegible"
+  motion: "reduced"
+
+chronometric:
+  # 45 minutes — below the schema-documented "gentle" rung of 60.
+  # Deliberately firm: do not let the user hyperfocus through
+  # recovery. The grind instinct is the symptom, not the solution.
+  hyperfocus_break_minutes: 45
+  # Firm-early EOD. Most presets sit at 17:00 or 18:30; this one is
+  # deliberately earlier than feels reasonable because "one more
+  # thing" is what we're protecting against.
+  end_of_day_local: "16:30"
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  # Lowered from the schema default of 3. Burnout brains
+  # catastrophise; surface the loop signal early.
+  rumination_threshold: 2
+  rumination_window_minutes: 60
+  # Strongest setting. The substrate MUST refuse to validate "I'll
+  # just push through this" during recovery.
+  sycophancy_check: "refuse"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false

@@ -1,0 +1,118 @@
+# NeuroDock Profile preset — dyspraxia
+#
+# Who it's for:
+#   People who self-identify with dyspraxia (developmental coordination
+#   difference) and want NeuroDock tuned for motor-planning load, time-
+#   estimation drift, and vestibular sensitivity. Pick this if precise
+#   typing, mouse work, or multi-step physical sequences accumulate
+#   fatigue faster than a non-dyspraxic peer would expect. Diagnosis is
+#   never required.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = ["dyspraxia"]   "dyspraxia" is a first-
+#       class enum value in the schema. No skill in v0.1.0 gates on this
+#       tag yet, but generic neurotype-aware skills (e.g. visual-
+#       organizer) will still activate.
+#     - preferences.output_format = answer_first   the headline-first
+#       shape minimises scrolling and re-positioning — every mouse
+#       gesture is motor cost.
+#     - preferences.max_chunk_size = 4   tighter than the schema default
+#       of 7 and the ADHD value of 5. Motor-planning load compounds with
+#       working-memory load; four atomic items is the practical ceiling
+#       when each one will be executed as a discrete action.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default; chosen for legibility under fatigue.
+#     - preferences.motion = reduced   NOT OPTIONAL for dyspraxia.
+#       Vestibular sensitivity is common and animation / parallax /
+#       auto-scroll can trigger nausea, dizziness, or balance loss.
+#       This preset hard-pins "reduced" rather than deferring to the OS
+#       prefers-reduced-motion setting because the cost of getting it
+#       wrong is bodily, not aesthetic.
+#     - chronometric.hyperfocus_break_minutes = 60   the minimum
+#       "gentle" rung of the 60/+30/+60 escalation ladder. Typing,
+#       clicking, and fine-motor work accumulate fatigue measurably
+#       faster than equivalent cognitive-only work; surfacing the
+#       structured nudge as early as the schema allows lets the user
+#       break before the motor system locks up.
+#     - guardrails.sycophancy_check = warn   manifesto default.
+#
+# Voice-input preference:
+#   Many dyspraxic users dictate rather than type for sustained work.
+#   v0.1.0 has no schema field for `voice_input_preferred`; until that
+#   lands, downstream skills that emit code or structured text should
+#   not assume the user can hand-edit fiddly punctuation cheaply. Keep
+#   examples copy-pasteable as a single block. Tracked as a candidate
+#   schema field in profiles/README.md.
+#
+# Time-buffer expansion:
+#   Real-world time estimates are systematically unreliable for
+#   dyspraxic users — the motor execution of a "five minute task" often
+#   takes 30-50% longer than the cognitive estimate predicts. Until the
+#   schema carries a `time_buffer_multiplier` field, downstream
+#   planning skills should pad estimates by ~30% when this preset is
+#   active. The behaviour is encoded here in the comment rather than in
+#   the data because v0.1.0 has nowhere to put it. Candidate field
+#   tracked in profiles/README.md.
+#
+# Motor-fatigue awareness:
+#   Distinct from cognitive fatigue. A dyspraxic user can be
+#   cognitively sharp and motorically wrecked at the same time; the
+#   hyperfocus monitor's existing nudge fires on continuous-session
+#   length and is the right hook to reuse, but a future
+#   `motor_fatigue_aware` field would let the monitor weight clicks /
+#   keystrokes / window-switches into the signal. Candidate schema
+#   field tracked in profiles/README.md.
+#
+#   USER-TUNABLE (edit freely after copying):
+#     - identity.display_name       set to your preferred handle.
+#     - identity.neurotypes   add more tags if you also identify with
+#       ADHD, AuDHD, dyslexia, etc.; skills compose.
+#     - preferences.max_chunk_size   raise toward 5 or 7 if four feels
+#       too tight in practice on low-motor-load days.
+#     - chronometric.hyperfocus_break_minutes   raise toward 75 or 90
+#       on days where the work is mostly reading rather than typing.
+#     - chronometric.end_of_day_local   commented out by default; set
+#       it if you want the after-hours nudge.
+#     - privacy.os_idle_consent   off by default; enable only if you
+#       want chronometric.idle_status to read OS idle time (useful for
+#       distinguishing motor-stuck from genuinely-idle).
+#
+# Install:
+#   cp profiles/dyspraxia.yaml ~/.neurodock/profile.yaml
+#
+# This is an opinionated default, not a prescription. You are the
+# authority on what works for you — change anything below at any time.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  neurotypes:
+    - "dyspraxia"
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 4
+  reading_font_hint: "atkinson_hyperlegible"
+  # Hard-pinned, not deferred to OS. See header comment — vestibular
+  # sensitivity makes this a bodily-safety setting, not a preference.
+  motion: "reduced"
+
+chronometric:
+  # 60-minute "gentle" rung. Motor-fatigue accumulates faster than
+  # cognitive-only fatigue; surface the structured nudge as early as
+  # the schema allows the 'nudge' rung to be re-anchored.
+  hyperfocus_break_minutes: 60
+  # end_of_day_local: "18:30"   # uncomment to enable the after-hours nudge
+  session_overlap_policy: "auto_close"
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false
