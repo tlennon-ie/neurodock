@@ -31,6 +31,19 @@ sequence.
 Read this if you want to see what a "full" NeuroDock interaction looks like
 once the skills, profile, and memory have settled in.
 
+### `code-review-workflow/`
+
+Worked example for an IC engineer running a 90-minute PR-review block.
+Combines chronometric session bracketing, cognitive-graph recall of prior
+comments on the changed files, and hyperfocus-formatter verdict-first
+shaping. Includes one mid-block break trigger and a session-end
+`record_fact`. NeuroDock does **not** read the code — the human still does
+the review; the substrate makes the review block less expensive.
+
+Read this if you do many reviews per week (especially senior+ ICs with
+ADHD/AuDHD/dyslexia) and want to see how the three pillars stitch together
+around a single 90-minute review block.
+
 ## When to add a new example
 
 - A new MCP client gets supported (Cursor, Cline, Zed, etc.)
