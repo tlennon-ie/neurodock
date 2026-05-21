@@ -52,6 +52,7 @@ import { createAnthropicProvider } from "./providers/anthropic.js";
 import { createOpenAIProvider } from "./providers/openai.js";
 import { createOpenRouterProvider } from "./providers/openrouter.js";
 import { createMockProvider, buildMockData } from "./providers/mock.js";
+import { hasHostPermission } from "./permissions.js";
 
 const SCHEMA_VERSION = "0.1.0";
 
@@ -121,12 +122,18 @@ export async function translate<T = unknown>(
     providerResult = await provider.complete(providerRequest);
   } catch (cause: unknown) {
     if (fallbackOnError === "endpoint_unreachable") {
-      return mockResponseFromData<T>(
-        request,
-        timestamp,
-        "endpoint_unreachable",
-        getErrorMessage(cause),
-      );
+      // v0.0.4: when the local provider throws *_PERMISSION_REQUIRED,
+      // do NOT fall back to a silent mock — surface the actionable error
+      // so the user knows to grant the host permission from Settings.
+      const message = getErrorMessage(cause);
+      if (!/_PERMISSION_REQUIRED/.test(message)) {
+        return mockResponseFromData<T>(
+          request,
+          timestamp,
+          "endpoint_unreachable",
+          message,
+        );
+      }
     }
     return {
       ok: false,
@@ -187,6 +194,7 @@ function buildLocalProvider(profile: ExtensionProfile): {
       provider: createLMStudioProvider({
         baseUrl,
         apiKey: profile.localApiKey,
+        hasPermission: hasHostPermission,
       }),
       model:
         profile.localModel.length > 0
@@ -195,7 +203,10 @@ function buildLocalProvider(profile: ExtensionProfile): {
     };
   }
   return {
-    provider: createOllamaProvider({ endpoint: profile.localEndpoint }),
+    provider: createOllamaProvider({
+      endpoint: profile.localEndpoint,
+      hasPermission: hasHostPermission,
+    }),
     model:
       profile.localModel.length > 0
         ? profile.localModel

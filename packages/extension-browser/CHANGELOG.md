@@ -1,5 +1,97 @@
 # @neurodock/extension-browser
 
+## 0.0.4
+
+### Added
+
+- **Non-localhost local-provider support.** Users who cannot bind LM
+  Studio or Ollama to localhost — Windows installs that pin to a
+  link-local APIPA address like `169.254.83.107:1234`, Tailscale nodes,
+  or LAN boxes — can now point the extension at any host on the LM
+  Studio (`:1234`) or Ollama (`:11434`) port. The user-typed origin is
+  granted per-host at runtime via `chrome.permissions.request()` after
+  an explicit click, and persists across browser sessions until revoked.
+- **`src/lib/permissions.ts`** — single entry point for host-permission
+  requests. Exports `requestHostPermission`, `revokeHostPermission`,
+  `hasHostPermission`, and `listGrantedNonDefaultOrigins`. Localhost
+  and 127.0.0.1 short-circuit without prompting (they are already
+  covered by the default `optional_host_permissions`).
+- **Settings UX:**
+  - When the LM Studio or Ollama Base URL is non-localhost, a
+    `NonLocalhostNotice` panel appears under the URL with a single
+    "Grant permission for `<origin>`" button. The grant button stays
+    inside the user-gesture context required by Chrome and Firefox.
+  - Once granted, the notice shows the origin with a
+    `(permission granted)` badge and a `Revoke` link.
+  - A new "Host permissions" panel at the bottom of Settings lists all
+    non-default granted origins with per-row Revoke buttons. The
+    default-granted origins (localhost, 127.0.0.1, the seven supported
+    sites, and the cloud-provider host you have configured) are NOT
+    listed individually.
+- **Refresh models** and **Test connection** now request the per-host
+  permission first when the configured local provider points at a
+  non-localhost host. Permission denial surfaces a precise message
+  instead of the opaque "Failed to fetch".
+- **Specific permission errors:**
+  - `LMSTUDIO_PERMISSION_REQUIRED` distinguishes
+    "extension does not have permission for this host yet" from
+    `LMSTUDIO_UNREACHABLE` ("server is down").
+  - `OLLAMA_PERMISSION_REQUIRED` mirrors the same distinction for
+    Ollama.
+  - The `translation-client` no longer silently substitutes a labelled
+    mock when the failure is a permission gate — the user gets the
+    actionable error so they know to grant the host.
+
+### Manifest / CSP
+
+`wxt.config.ts` widens the MV3 `content_security_policy.extension_pages`
+`connect-src` directive with **port-restricted host wildcards**:
+
+- `http://*:1234` (LM Studio default port)
+- `http://*:11434` (Ollama default port)
+
+The existing localhost / 127.0.0.1 entries are kept intact so
+currently-working installs do not regress. The port-restricted wildcard
+is strictly safer than `<all_urls>` because the port is fixed to the
+two well-known dev-server ports we support; Chrome Web Store accepts
+this canonical pattern (used by LocalForage-style developer-tools
+extensions for the same reason). The security model is documented in
+the header comment at the top of `wxt.config.ts`.
+
+`optional_host_permissions` is widened with `http://*/*` for the
+non-localhost case only. The per-host permission is granted per user
+gesture, not blanket-granted at install time.
+
+### Tests
+
+- New `tests/unit/permissions.test.ts` covers the helper's behaviour:
+  localhost short-circuit, granted, denied, invalid URL, already-granted
+  short-circuit, revoke, and `listGrantedNonDefaultOrigins` filtering.
+- `tests/unit/providers/lmstudio.test.ts` gains two cases for the new
+  `LMSTUDIO_PERMISSION_REQUIRED` path (provider and models fetcher).
+- `tests/unit/providers/ollama.test.ts` gains two cases for the new
+  `OLLAMA_PERMISSION_REQUIRED` path.
+- `tests/unit/settings-tab.test.tsx` gains cases asserting the
+  NonLocalhostNotice renders, the Grant button calls
+  `chrome.permissions.request` with the correct origin pattern, the
+  Refresh-models button requests permission first, and the Host
+  permissions panel lists non-default origins.
+
+Test count: 98 → 112.
+
+### Manual verification (Windows LM Studio on 169.254.83.107:1234)
+
+1. Open the extension popup → Settings tab.
+2. Select "Local LM Studio". Under Advanced, set Base URL to
+   `http://169.254.83.107:1234/v1`.
+3. Click "Grant permission for http://169.254.83.107:1234" under the
+   URL. Approve the Chrome prompt.
+4. Click "Refresh models". Models should populate from LM Studio.
+5. Click "Test connection". The extension should hit LM Studio without
+   a CSP-blocked error.
+
+If you need to revoke later: Settings → Host permissions → Revoke.
+
 ## 0.0.3
 
 ### Added

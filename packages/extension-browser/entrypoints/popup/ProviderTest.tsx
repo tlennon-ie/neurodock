@@ -9,7 +9,17 @@
  */
 import React, { useCallback, useState } from "react";
 import { buildProviderFromProfile } from "../../src/lib/translation-client.js";
+import { requestHostPermission } from "../../src/lib/permissions.js";
 import type { ExtensionProfile } from "../../src/lib/types.js";
+
+function isLocalhostBaseUrl(baseUrl: string): boolean {
+  try {
+    const u = new URL(baseUrl);
+    return u.hostname === "localhost" || u.hostname === "127.0.0.1";
+  } catch {
+    return true;
+  }
+}
 
 const TEST_PROMPT =
   'Reply with exactly this JSON object and nothing else: {"ok": true}';
@@ -31,6 +41,26 @@ export function ProviderTest({
 
   const onClick = useCallback(async () => {
     setState({ status: "running" });
+    // v0.0.4: when the local provider points at a non-localhost host,
+    // request the per-host permission FIRST from this user-gesture
+    // click handler. Without this the fetch is blocked at the
+    // host_permissions layer with the opaque "Failed to fetch" error.
+    if (
+      profile.mode === "local" &&
+      !isLocalhostBaseUrl(profile.localEndpoint)
+    ) {
+      const res = await requestHostPermission(profile.localEndpoint);
+      if (!res.granted) {
+        setState({
+          status: "fail",
+          message:
+            res.reason === "user-denied"
+              ? `Permission denied for ${res.origin}. Test connection will not work until you allow it.`
+              : `Could not request permission for ${profile.localEndpoint}.`,
+        });
+        return;
+      }
+    }
     const resolved = buildProviderFromProfile(profile);
     if ("error" in resolved) {
       setState({ status: "fail", message: resolved.error });

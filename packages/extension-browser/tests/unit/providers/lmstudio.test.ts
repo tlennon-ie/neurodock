@@ -183,6 +183,49 @@ describe("lmstudio provider", () => {
     expect((err as Error).message).toMatch(/LMSTUDIO_UNREACHABLE/);
   });
 
+  it("throws LMSTUDIO_PERMISSION_REQUIRED when hasPermission returns false (v0.0.4)", async () => {
+    const fakeFetch = vi.fn(async () => buildSseResponse(['{"ok":true}']));
+    const hasPermission = vi.fn(async () => false);
+    const provider = createLMStudioProvider({
+      baseUrl: "http://169.254.83.107:1234/v1",
+      fetchImpl: fakeFetch as unknown as typeof fetch,
+      hasPermission,
+    });
+    let err: unknown;
+    try {
+      await provider.complete({
+        tool: "translate_incoming",
+        prompt: "ping",
+        model: "phi-4",
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(Error);
+    expect((err as Error).message).toMatch(/LMSTUDIO_PERMISSION_REQUIRED/);
+    expect((err as Error).message).toMatch(/169\.254\.83\.107:1234/);
+    expect(fakeFetch).not.toHaveBeenCalled();
+    expect(hasPermission).toHaveBeenCalledWith("http://169.254.83.107:1234/v1");
+  });
+
+  it("proceeds normally when hasPermission returns true (v0.0.4)", async () => {
+    const fakeFetch = vi.fn(async () => buildSseResponse(['{"ok":true}']));
+    const hasPermission = vi.fn(async () => true);
+    const provider = createLMStudioProvider({
+      baseUrl: "http://169.254.83.107:1234/v1",
+      fetchImpl: fakeFetch as unknown as typeof fetch,
+      hasPermission,
+    });
+    const result = await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "phi-4",
+    });
+    expect(result.text).toBe('{"ok":true}');
+    expect(hasPermission).toHaveBeenCalledTimes(1);
+    expect(fakeFetch).toHaveBeenCalledTimes(1);
+  });
+
   it("falls back to JSON parsing when the response is not an event stream", async () => {
     const fakeFetch = vi.fn(async () =>
       buildJsonResponse(200, {
@@ -253,6 +296,24 @@ describe("fetchLMStudioModels", () => {
       err = e;
     }
     expect((err as Error).message).toMatch(/LMSTUDIO_UNREACHABLE/);
+  });
+
+  it("throws LMSTUDIO_PERMISSION_REQUIRED when hasPermission returns false (v0.0.4)", async () => {
+    const fakeFetch = vi.fn(async () =>
+      buildJsonResponse(200, { data: [{ id: "phi-4" }] }),
+    ) as unknown as typeof fetch;
+    const hasPermission = vi.fn(async () => false);
+    let err: unknown;
+    try {
+      await fetchLMStudioModels({
+        baseUrl: "http://169.254.83.107:1234/v1",
+        fetchImpl: fakeFetch,
+        hasPermission,
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/LMSTUDIO_PERMISSION_REQUIRED/);
   });
 
   it("forwards the bearer token when apiKey is provided", async () => {

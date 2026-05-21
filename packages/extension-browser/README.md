@@ -41,6 +41,28 @@ flowchart LR
 
 **Recommended default for cloud users:** `openrouter` with model `openrouter/auto` — OpenRouter's [auto-router](https://openrouter.ai/docs/guides/routing/routers/auto-router) picks an appropriate model per query so you get good translations without having to pick a model yourself.
 
+### LM Studio not on localhost? (e.g. 169.254.x.x or a LAN IP)
+
+Some systems can't bind LM Studio or Ollama to `localhost`. Windows in particular sometimes pins dev servers to a link-local APIPA address (`169.254.x.x`); other setups want to reach a Tailscale node or a LAN box. From v0.0.4 the extension supports this — without dropping back to `<all_urls>`.
+
+**Why localhost is the default.** Local-first means local-by-default. The MV3 manifest only grants permission for `localhost` and `127.0.0.1` out of the box. Pointing at any other host requires your explicit per-host consent.
+
+**How to grant permission.**
+
+1. Open the extension popup → **Settings** tab.
+2. Pick **Local LM Studio** (or **Local Ollama**).
+3. Open the **Advanced** section and paste the non-localhost URL (e.g. `http://169.254.83.107:1234/v1`).
+4. Click **Grant permission for `<origin>`** under the URL field. Approve the Chrome / Firefox prompt.
+5. Use **Refresh models** and **Test connection** as usual. They will skip the prompt on subsequent clicks because Chrome persists the permission until you revoke it.
+
+If you forget step 4, **Refresh models** and **Test connection** will pop the same Chrome prompt themselves — they all share the user-gesture grant path.
+
+**How to revoke.** Settings → **Host permissions** → **Revoke** next to the origin.
+
+**HTTPS local hosts (Tailscale, reverse proxies).** v0.0.4 only widens the CSP for `http://*:1234` and `http://*:11434`. If you need to reach a TLS local host, file an issue — we'd add the corresponding `https://*:port` entry on demand.
+
+**Security model.** The CSP `connect-src` directive is widened with _port-restricted_ host wildcards (`http://*:1234` and `http://*:11434`) — not a host wildcard. The port is fixed to the two well-known LM Studio / Ollama dev-server ports. Even with the CSP widened, every fetch is still gated by `host_permissions`, so you have to explicitly grant each non-localhost host yourself. Chrome Web Store accepts this canonical pattern.
+
 Provider responses are parsed defensively and validated with Ajv against the relevant MCP output schema; validation failures surface a `LLM_OUTPUT_VALIDATION_FAILED` envelope with a Retry path. The popup syncs its profile with `~/.neurodock/profile.yaml` via the optional `@neurodock/native-host` native messaging bridge; when the host is not installed, the profile lives only in `chrome.storage.local`.
 
 ### What v0.0.2 does NOT do (deferred to v0.0.3+)

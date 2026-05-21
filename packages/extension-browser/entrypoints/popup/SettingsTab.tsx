@@ -26,13 +26,37 @@
  *  - Each provider that exposes a `/models`-style endpoint gets a
  *    "Refresh models" button that populates a dropdown.
  */
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ExtensionMode, ExtensionProfile } from "../../src/lib/types.js";
 import {
   fetchModels,
   type ModelFetchableProvider,
 } from "../../src/lib/providers/models.js";
+import {
+  listGrantedNonDefaultOrigins,
+  requestHostPermission,
+  revokeHostPermission,
+} from "../../src/lib/permissions.js";
 import { ProviderTest } from "./ProviderTest.js";
+
+function isLocalhostBaseUrl(baseUrl: string): boolean {
+  try {
+    const u = new URL(baseUrl);
+    return u.hostname === "localhost" || u.hostname === "127.0.0.1";
+  } catch {
+    return true; // Treat unparseable URLs as "no prompt needed" — the
+    // fetch will fail with a separate error and surface it.
+  }
+}
+
+function originOf(baseUrl: string): string {
+  try {
+    const u = new URL(baseUrl);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return baseUrl;
+  }
+}
 
 export interface SettingsTabProps {
   readonly profile: ExtensionProfile;
@@ -185,7 +209,204 @@ export function SettingsTab({
       ) : null}
 
       <ProviderTest profile={profile} />
+
+      <HostPermissionsPanel />
     </section>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Host permission UX (v0.0.4).
+// ──────────────────────────────────────────────────────────────────────
+
+interface NonLocalhostNoticeProps {
+  readonly baseUrl: string;
+  readonly testIdPrefix: string;
+}
+
+/**
+ * Shown under a non-localhost Base URL. Lets the user explicitly grant
+ * the per-host permission via a click handler (user-gesture context,
+ * required by Chrome and Firefox). The same flow runs from Save / Test
+ * / Refresh, but this affordance makes the contract visible.
+ */
+function NonLocalhostNotice({
+  baseUrl,
+  testIdPrefix,
+}: NonLocalhostNoticeProps): React.ReactElement | null {
+  const [granted, setGranted] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const origin = useMemo(() => originOf(baseUrl), [baseUrl]);
+
+  // Check the current grant state once on mount and whenever the URL
+  // changes. This is a non-prompting check.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const all = await listGrantedNonDefaultOrigins();
+        if (cancelled) return;
+        setGranted(all.includes(origin));
+      } catch {
+        if (!cancelled) setGranted(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [origin]);
+
+  // IMPORTANT: this handler is invoked from a direct button click, so
+  // it preserves the user-gesture context required by Chrome and
+  // Firefox for permissions.request(). Do not insert awaited debounces
+  // before this call site.
+  const onGrant = useCallback(async () => {
+    setError(null);
+    const res = await requestHostPermission(baseUrl);
+    if (res.granted) {
+      setGranted(true);
+      return;
+    }
+    setGranted(false);
+    if (res.reason === "user-denied") {
+      setError(
+        `Permission denied for ${origin}. Test connection will not work until you allow it.`,
+      );
+    } else if (res.reason === "invalid-url") {
+      setError("That URL could not be parsed.");
+    } else {
+      setError(`Could not request permission for ${origin}.`);
+    }
+  }, [baseUrl, origin]);
+
+  const onRevoke = useCallback(async () => {
+    await revokeHostPermission(baseUrl);
+    setGranted(false);
+  }, [baseUrl]);
+
+  if (isLocalhostBaseUrl(baseUrl)) return null;
+
+  return (
+    <div
+      className="flex flex-col gap-1 border border-neutral-200 px-2 py-1 text-xs dark:border-neutral-800"
+      data-testid={`${testIdPrefix}-host-permission`}
+    >
+      <span className="text-neutral-500">
+        Host: <code className="font-mono">{origin}</code>{" "}
+        {granted === true ? (
+          <span
+            className="text-success-light dark:text-success-dark"
+            data-testid={`${testIdPrefix}-host-permission-granted`}
+          >
+            (permission granted)
+          </span>
+        ) : null}
+      </span>
+      {granted === true ? (
+        <button
+          type="button"
+          onClick={() => void onRevoke()}
+          className="self-start underline"
+          data-testid={`${testIdPrefix}-host-permission-revoke`}
+        >
+          Revoke
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => void onGrant()}
+          className="self-start border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+          data-testid={`${testIdPrefix}-host-permission-grant`}
+        >
+          Grant permission for {origin}
+        </button>
+      )}
+      {error ? (
+        <span
+          className="text-warn-light dark:text-warn-dark"
+          data-testid={`${testIdPrefix}-host-permission-error`}
+        >
+          {error}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Passive list of non-default origins currently granted via runtime
+ * `chrome.permissions.request()`. Lets the user revoke each one.
+ *
+ * The default-granted origins (localhost, 127.0.0.1) and the cloud
+ * provider hosts are intentionally NOT listed individually — those are
+ * managed via the cloud-mode flow elsewhere in Settings.
+ */
+function HostPermissionsPanel(): React.ReactElement {
+  const [origins, setOrigins] = useState<readonly string[]>([]);
+
+  const refresh = useCallback(async () => {
+    try {
+      const all = await listGrantedNonDefaultOrigins();
+      setOrigins(all);
+    } catch {
+      setOrigins([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const onRevoke = useCallback(
+    async (origin: string) => {
+      await revokeHostPermission(origin);
+      await refresh();
+    },
+    [refresh],
+  );
+
+  return (
+    <fieldset
+      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      data-testid="host-permissions-panel"
+    >
+      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+        Host permissions
+      </legend>
+      <p className="m-0 text-xs text-neutral-500">
+        Default-granted: <code className="font-mono">localhost</code>,{" "}
+        <code className="font-mono">127.0.0.1</code>, the seven supported sites,
+        and your chosen cloud provider host.
+      </p>
+      {origins.length === 0 ? (
+        <p
+          className="m-0 text-xs text-neutral-500"
+          data-testid="host-permissions-empty"
+        >
+          No additional hosts granted.
+        </p>
+      ) : (
+        <ul className="m-0 flex flex-col gap-1 p-0">
+          {origins.map((o) => (
+            <li
+              key={o}
+              className="flex items-center justify-between gap-2 text-xs"
+              data-testid={`host-permission-row-${o}`}
+            >
+              <code className="font-mono">{o}</code>
+              <button
+                type="button"
+                onClick={() => void onRevoke(o)}
+                className="underline"
+                data-testid={`host-permission-revoke-${o}`}
+              >
+                Revoke
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </fieldset>
   );
 }
 
@@ -271,6 +492,7 @@ function LocalOllamaSettings({
   profile,
   onChange,
 }: LocalProviderProps): React.ReactElement {
+  const endpoint = profile.localEndpoint || OLLAMA_DEFAULT_BASE_URL;
   return (
     <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
       <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
@@ -287,9 +509,10 @@ function LocalOllamaSettings({
           data-testid="local-endpoint-input"
         />
       </label>
+      <NonLocalhostNotice baseUrl={endpoint} testIdPrefix="local" />
       <ModelPicker
         provider="ollama"
-        baseUrl={profile.localEndpoint || OLLAMA_DEFAULT_BASE_URL}
+        baseUrl={endpoint}
         apiKey={null}
         currentModel={profile.localModel}
         defaultModel={DEFAULT_MODELS.ollama ?? ""}
@@ -333,8 +556,12 @@ function LocalLMStudioSettings({
       <p className="m-0 text-xs text-neutral-500">
         Start LM Studio, load a model, and switch the Server tab to{" "}
         <code className="font-mono">Running</code>. The default base URL is{" "}
-        <code className="font-mono">{LMSTUDIO_DEFAULT_BASE_URL}</code>.
+        <code className="font-mono">{LMSTUDIO_DEFAULT_BASE_URL}</code>. If LM
+        Studio is bound to a non-localhost address (e.g.{" "}
+        <code className="font-mono">169.254.x.x</code> or a LAN IP), set the
+        base URL under Advanced and grant the per-host permission below.
       </p>
+      <NonLocalhostNotice baseUrl={endpoint} testIdPrefix="lmstudio" />
       <ModelPicker
         provider="lmstudio"
         baseUrl={endpoint}
@@ -575,6 +802,28 @@ function ModelPicker({
 
   const onRefresh = useCallback(async () => {
     setState({ status: "loading" });
+    // v0.0.4: for local providers pointed at a non-localhost host, ask
+    // for the per-host permission FIRST. This MUST happen inside the
+    // click handler (no awaited debounce before the request) so the
+    // browser still treats the call as a user gesture. Chrome and
+    // Firefox both enforce this.
+    if (
+      (provider === "ollama" || provider === "lmstudio") &&
+      baseUrl !== null &&
+      !isLocalhostBaseUrl(baseUrl)
+    ) {
+      const res = await requestHostPermission(baseUrl);
+      if (!res.granted) {
+        setState({
+          status: "fail",
+          message:
+            res.reason === "user-denied"
+              ? `Permission denied for ${res.origin}. Test connection will not work until you allow it.`
+              : `Could not request permission for ${baseUrl}.`,
+        });
+        return;
+      }
+    }
     try {
       const models = await fetchModels({
         provider,

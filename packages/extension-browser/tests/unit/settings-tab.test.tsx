@@ -238,4 +238,159 @@ describe("SettingsTab", () => {
     const masked = screen.getByTestId("lmstudio-api-key-masked");
     expect(masked).toHaveTextContent(/••••1234/);
   });
+
+  // ──────────────────────────────────────────────────────────────────
+  // v0.0.4 — non-localhost local providers + host-permission flow.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("shows the NonLocalhostNotice when LM Studio Base URL is non-localhost", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          localProvider: "lmstudio",
+          localEndpoint: "http://192.168.1.50:1234/v1",
+        })}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByTestId("lmstudio-host-permission")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("lmstudio-host-permission-grant"),
+    ).toHaveTextContent(/http:\/\/192\.168\.1\.50:1234/);
+  });
+
+  it("does NOT show the NonLocalhostNotice when LM Studio is on localhost", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          localProvider: "lmstudio",
+          localEndpoint: "http://localhost:1234/v1",
+        })}
+        onChange={onChange}
+      />,
+    );
+    expect(
+      screen.queryByTestId("lmstudio-host-permission"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clicking Grant for a non-localhost LM Studio host calls chrome.permissions.request with the right origin", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    const requestSpy = vi.fn(
+      (_perm: { origins?: string[] }, cb: (g: boolean) => void) => cb(true),
+    );
+    const containsSpy = vi.fn(
+      (_perm: { origins?: string[] }, cb: (g: boolean) => void) => cb(false),
+    );
+    (
+      globalThis as unknown as {
+        chrome: { permissions: unknown };
+      }
+    ).chrome.permissions = {
+      request: requestSpy,
+      contains: containsSpy,
+      remove: (_perm: { origins?: string[] }, cb: (g: boolean) => void) =>
+        cb(true),
+      getAll: (cb: (a: { origins: string[] }) => void) => cb({ origins: [] }),
+    };
+
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          localProvider: "lmstudio",
+          localEndpoint: "http://192.168.1.50:1234/v1",
+        })}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("lmstudio-host-permission-grant"));
+
+    await waitFor(() => {
+      expect(requestSpy).toHaveBeenCalledWith(
+        { origins: ["http://192.168.1.50:1234/*"] },
+        expect.any(Function),
+      );
+    });
+  });
+
+  it("clicking Refresh models for a non-localhost LM Studio URL requests permission first", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    const requestSpy = vi.fn(
+      (_perm: { origins?: string[] }, cb: (g: boolean) => void) => cb(false),
+    );
+    const containsSpy = vi.fn(
+      (_perm: { origins?: string[] }, cb: (g: boolean) => void) => cb(false),
+    );
+    (
+      globalThis as unknown as {
+        chrome: { permissions: unknown };
+      }
+    ).chrome.permissions = {
+      request: requestSpy,
+      contains: containsSpy,
+      remove: (_perm: { origins?: string[] }, cb: (g: boolean) => void) =>
+        cb(true),
+      getAll: (cb: (a: { origins: string[] }) => void) => cb({ origins: [] }),
+    };
+
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          localProvider: "lmstudio",
+          localEndpoint: "http://169.254.83.107:1234/v1",
+        })}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("lmstudio-model-refresh"));
+
+    await waitFor(() => {
+      expect(requestSpy).toHaveBeenCalledWith(
+        { origins: ["http://169.254.83.107:1234/*"] },
+        expect.any(Function),
+      );
+    });
+    // And because the user denied, the model picker surfaces an error
+    // instead of a successful fetch.
+    await waitFor(() => {
+      expect(screen.getByTestId("lmstudio-model-error")).toHaveTextContent(
+        /Permission denied/,
+      );
+    });
+  });
+
+  it("Host permissions panel lists granted non-default origins", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    (
+      globalThis as unknown as {
+        chrome: { permissions: unknown };
+      }
+    ).chrome.permissions = {
+      request: (_perm: { origins?: string[] }, cb: (g: boolean) => void) =>
+        cb(false),
+      contains: (_perm: { origins?: string[] }, cb: (g: boolean) => void) =>
+        cb(false),
+      remove: (_perm: { origins?: string[] }, cb: (g: boolean) => void) =>
+        cb(true),
+      getAll: (cb: (a: { origins: string[] }) => void) =>
+        cb({
+          origins: [
+            "http://localhost/*",
+            "https://api.openai.com/*",
+            "http://169.254.83.107:1234/*",
+          ],
+        }),
+    };
+
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("host-permission-row-http://169.254.83.107:1234"),
+      ).toBeInTheDocument();
+    });
+  });
 });

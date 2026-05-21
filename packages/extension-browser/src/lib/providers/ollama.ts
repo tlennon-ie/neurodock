@@ -9,12 +9,33 @@
  *
  * Throws `OLLAMA_UNREACHABLE` when the endpoint is down so the
  * translation-client can fall through to a labelled mock.
+ *
+ * v0.0.4 adds `OLLAMA_PERMISSION_REQUIRED` for non-localhost endpoints
+ * that have not been granted host permission. The check is delegated
+ * via the optional `hasPermission` callback so the provider remains
+ * decoupled from chrome.permissions and unit-testable.
  */
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
 
 export interface OllamaOptions {
   readonly endpoint: string;
   readonly fetchImpl?: typeof fetch;
+  /**
+   * Optional permission probe. Called before any fetch. When provided
+   * and the probe returns `false`, the provider throws
+   * `OLLAMA_PERMISSION_REQUIRED` instead of attempting a fetch that
+   * would be blocked by the host_permissions gate.
+   */
+  readonly hasPermission?: (baseUrl: string) => Promise<boolean>;
+}
+
+function originOf(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return url;
+  }
 }
 
 export function createOllamaProvider(options: OllamaOptions): Provider {
@@ -22,6 +43,16 @@ export function createOllamaProvider(options: OllamaOptions): Provider {
   const f = options.fetchImpl ?? fetch.bind(globalThis);
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
+    if (options.hasPermission) {
+      const allowed = await options.hasPermission(endpoint);
+      if (!allowed) {
+        throw new Error(
+          `OLLAMA_PERMISSION_REQUIRED: Grant permission for ${originOf(
+            endpoint,
+          )} first. Click 'Test connection' to trigger the prompt.`,
+        );
+      }
+    }
     const url = `${endpoint}/api/generate`;
     const body = JSON.stringify({
       model: request.model,

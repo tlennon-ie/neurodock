@@ -63,6 +63,48 @@ describe("ollama provider", () => {
     expect((err as Error).message).toMatch(/OLLAMA_UNREACHABLE/);
   });
 
+  it("throws OLLAMA_PERMISSION_REQUIRED when hasPermission returns false (v0.0.4)", async () => {
+    const fetchImpl = vi.fn(async () => new Response(""));
+    const hasPermission = vi.fn(async () => false);
+    const provider = createOllamaProvider({
+      endpoint: "http://169.254.83.107:11434",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      hasPermission,
+    });
+    let err: unknown;
+    try {
+      await provider.complete({
+        tool: "translate_incoming",
+        prompt: "test",
+        model: "llama3.2:3b",
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/OLLAMA_PERMISSION_REQUIRED/);
+    expect((err as Error).message).toMatch(/169\.254\.83\.107:11434/);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("proceeds normally when hasPermission returns true (v0.0.4)", async () => {
+    const fetchImpl = vi.fn(async () =>
+      mockResponse(JSON.stringify({ response: "hi", done: true })),
+    );
+    const hasPermission = vi.fn(async () => true);
+    const provider = createOllamaProvider({
+      endpoint: "http://169.254.83.107:11434",
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      hasPermission,
+    });
+    const result = await provider.complete({
+      tool: "translate_incoming",
+      prompt: "test",
+      model: "llama3.2:3b",
+    });
+    expect(result.text).toBe("hi");
+    expect(hasPermission).toHaveBeenCalledTimes(1);
+  });
+
   it("throws OLLAMA_HTTP_<status> on non-2xx responses", async () => {
     const fetchImpl = vi.fn(
       async () =>

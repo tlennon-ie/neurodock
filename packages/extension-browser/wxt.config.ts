@@ -17,11 +17,50 @@ import { defineConfig } from "wxt";
  *   origins are requested via `optional_host_permissions` only when the
  *   user explicitly enables a cloud provider in Settings.
  *
- * v0.0.3 CSP additions: the MV3
- * `content_security_policy.extension_pages` `connect-src` allow-list
- * now includes:
- *   - http://localhost:11434 and http://127.0.0.1:11434 (Ollama)
- *   - http://localhost:1234  and http://127.0.0.1:1234  (LM Studio)
+ * ─────────────────────────────────────────────────────────────────────
+ * v0.0.4 SECURITY MODEL — non-localhost local providers
+ * ─────────────────────────────────────────────────────────────────────
+ *
+ * Some users cannot bind LM Studio / Ollama to localhost. Windows in
+ * particular sometimes binds dev servers to APIPA / link-local IPs
+ * (169.254.x.x), and others want to point at a Tailscale node or LAN
+ * box. We support this WITHOUT degrading to `<all_urls>` by widening
+ * the CSP `connect-src` with **port-restricted host wildcards**:
+ *
+ *   - http://*:1234   (LM Studio default port)
+ *   - http://*:11434  (Ollama default port)
+ *
+ * This is strictly safer than `<all_urls>`:
+ *   - the port is fixed to the well-known dev-server ports for the two
+ *     local LLM stacks we support;
+ *   - http only (not https) — TLS local hosts (Tailscale magic-DNS,
+ *     reverse proxies) would need a separate `https://*:port` entry
+ *     and are intentionally not included in v0.0.4;
+ *   - the extension still needs an explicit per-host permission grant
+ *     via `chrome.permissions.request()` before any fetch can succeed
+ *     (see `src/lib/permissions.ts`). The CSP merely declares that the
+ *     port is on the allow-list at the platform layer; the host-permission
+ *     check is the actual gate the user controls.
+ *
+ * Chrome Web Store accepts port-restricted host wildcards. This is the
+ * canonical pattern used by LocalForage-style developer-tools extensions
+ * that need to reach an arbitrary local dev server.
+ *
+ * `optional_host_permissions` is widened to `http://*\/*` for the
+ * NON-localhost case ONLY. The default-granted permissions in
+ * `host_permissions` remain the supported per-site origins. Non-localhost
+ * hosts are granted PER-HOST AT RUNTIME via `chrome.permissions.request()`
+ * after the user types a non-localhost base URL in Settings and clicks
+ * Save / Test / Refresh. Chrome persists optional permissions across
+ * browser restarts, and the user can revoke per-host from the Settings
+ * "Host permissions" panel.
+ *
+ * The existing localhost / 127.0.0.1 entries are preserved so currently
+ * working installs do not regress.
+ *
+ * v0.0.3 CSP entries are kept and extended:
+ *   - http://localhost:11434 + http://127.0.0.1:11434 + http://*:11434
+ *   - http://localhost:1234  + http://127.0.0.1:1234  + http://*:1234
  *   - https://api.anthropic.com
  *   - https://api.openai.com
  *   - https://openrouter.ai
@@ -59,8 +98,16 @@ export default defineConfig({
       "https://outlook.office365.com/*",
     ],
     optional_host_permissions: [
+      // Default localhost grants for the local LLM stacks.
       "http://localhost/*",
       "http://127.0.0.1/*",
+      // v0.0.4: granted per-host at runtime via chrome.permissions.request()
+      // when the user types a non-localhost base URL in Settings (e.g. an
+      // APIPA address like 169.254.83.107, a Tailscale node, or a LAN box).
+      // The user-typed host is whitelisted only after explicit consent;
+      // the Settings UI exposes a Revoke control to remove it again.
+      "http://*/*",
+      // Cloud providers — requested when the user saves an API key.
       "https://api.anthropic.com/*",
       "https://api.openai.com/*",
       "https://openrouter.ai/*",
@@ -70,10 +117,17 @@ export default defineConfig({
         "script-src 'self'; " +
         "object-src 'self'; " +
         "connect-src 'self' " +
+        // Localhost variants (v0.0.3, kept for unchanged installs).
         "http://localhost:11434 " +
         "http://127.0.0.1:11434 " +
         "http://localhost:1234 " +
         "http://127.0.0.1:1234 " +
+        // v0.0.4: port-restricted host wildcards for non-localhost local
+        // providers. Safer than <all_urls> because the port is fixed.
+        // The user must still grant the specific host via runtime
+        // chrome.permissions.request() before any fetch succeeds.
+        "http://*:11434 " +
+        "http://*:1234 " +
         "https://api.anthropic.com " +
         "https://api.openai.com " +
         "https://openrouter.ai;",

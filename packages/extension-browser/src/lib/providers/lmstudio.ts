@@ -16,6 +16,12 @@
  * Errors throw with a normalised `LMSTUDIO_*` prefix so the popup can
  * surface a friendly message.
  *
+ * v0.0.4 adds `LMSTUDIO_PERMISSION_REQUIRED` so non-localhost users get
+ * an actionable error instead of the opaque CSP-blocked "Failed to fetch".
+ * The check is delegated via the optional `hasPermission` callback so the
+ * provider remains decoupled from the chrome.permissions API and remains
+ * unit-testable.
+ *
  * Docs: https://lmstudio.ai/docs/api/openai-api
  */
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
@@ -25,6 +31,16 @@ export interface LMStudioOptions {
   readonly apiKey?: string | null;
   readonly fetchImpl?: typeof fetch;
   readonly disableStreaming?: boolean;
+  /**
+   * Optional permission probe. Called before any fetch. When provided and
+   * the probe returns `false`, the provider throws
+   * `LMSTUDIO_PERMISSION_REQUIRED` instead of attempting a fetch that
+   * would be blocked by the host_permissions gate.
+   *
+   * In production this is wired to `hasHostPermission` from
+   * `src/lib/permissions.ts`. Tests can stub it directly.
+   */
+  readonly hasPermission?: (baseUrl: string) => Promise<boolean>;
 }
 
 export const LMSTUDIO_DEFAULT_BASE_URL = "http://localhost:1234/v1";
@@ -47,10 +63,23 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     return headers;
   }
 
+  async function ensurePermitted(): Promise<void> {
+    if (!options.hasPermission) return;
+    const allowed = await options.hasPermission(baseUrl);
+    if (!allowed) {
+      throw new Error(
+        `LMSTUDIO_PERMISSION_REQUIRED: Grant permission for ${originOf(
+          baseUrl,
+        )} first. Click 'Test connection' to trigger the prompt.`,
+      );
+    }
+  }
+
   async function postOnce(
     request: ProviderRequest,
     stream: boolean,
   ): Promise<Response> {
+    await ensurePermitted();
     const url = `${baseUrl}/chat/completions`;
     const body = JSON.stringify({
       model: request.model,
@@ -103,6 +132,15 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     }
   }
 
+  function originOf(url: string): string {
+    try {
+      const u = new URL(url);
+      return `${u.protocol}//${u.host}`;
+    } catch {
+      return url;
+    }
+  }
+
   async function completeNonStreaming(
     request: ProviderRequest,
   ): Promise<ProviderResult> {
@@ -125,11 +163,29 @@ export async function fetchLMStudioModels(options: {
   readonly apiKey?: string | null;
   readonly fetchImpl?: typeof fetch;
   readonly signal?: AbortSignal;
+  readonly hasPermission?: (baseUrl: string) => Promise<boolean>;
 }): Promise<string[]> {
   const baseUrl = (options.baseUrl || LMSTUDIO_DEFAULT_BASE_URL).replace(
     /\/+$/,
     "",
   );
+  if (options.hasPermission) {
+    const allowed = await options.hasPermission(baseUrl);
+    if (!allowed) {
+      const o = (() => {
+        try {
+          const u = new URL(baseUrl);
+          return `${u.protocol}//${u.host}`;
+        } catch {
+          return baseUrl;
+        }
+      })();
+      throw new Error(
+        `LMSTUDIO_PERMISSION_REQUIRED: Grant permission for ${o} first. ` +
+          `Click 'Test connection' to trigger the prompt.`,
+      );
+    }
+  }
   const f = options.fetchImpl ?? fetch.bind(globalThis);
   const headers: Record<string, string> = { Accept: "application/json" };
   if (options.apiKey && options.apiKey.length > 0) {
