@@ -1,5 +1,19 @@
 # @neurodock/cli changelog
 
+## 0.4.2
+
+### Fixed
+
+- `neurodock init` now wires all FIVE MCP servers into the MCP-aware
+  client config, not just three. Previously chronometric +
+  cognitive-graph + task-fractionator got registered but translation
+  - guardrail were skipped — so users saw 3/5 servers in Claude even
+    after a clean `install-all` + restart. The pip install registered
+    the entrypoints; the CLI just wasn't pointing the client at them.
+    `mcp-entries.ts` `NEURODOCK_SERVERS` list extended with the missing
+    two. `examples` and `install-all` already iterated all five, so no
+    changes there.
+
 ## 0.4.1
 
 ### Changed

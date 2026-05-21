@@ -21,7 +21,7 @@ import {
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.4.1";
+export const CLI_VERSION = "0.4.2";
 
 export function buildProgram(): Command {
   const program = new Command();

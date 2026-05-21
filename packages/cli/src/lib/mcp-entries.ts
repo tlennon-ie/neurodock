@@ -41,6 +41,16 @@ const NEURODOCK_SERVERS = [
     pkg: "mcp-task-fractionator",
     entrypoint: "neurodock-mcp-task-fractionator",
   },
+  {
+    key: "neurodock-translation",
+    pkg: "mcp-translation",
+    entrypoint: "neurodock-mcp-translation",
+  },
+  {
+    key: "neurodock-guardrail",
+    pkg: "mcp-guardrail",
+    entrypoint: "neurodock-mcp-guardrail",
+  },
 ] as const;
 
 export function buildMcpServers(
