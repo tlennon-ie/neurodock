@@ -26,17 +26,25 @@ This pack contains:
 
 ## Install
 
-If you've cloned the repo, the substrate auto-discovers the plugin at `<repo>/plugins/translation-sales/`. Just restart your client.
+Use the NeuroDock CLI (requires `@neurodock/cli` ≥ 0.4.0). Run from the repo root:
 
-To install per-user (without forking the repo):
-
-```bash
+```sh
+# Install
 neurodock plugin add ./plugins/translation-sales
+
+# Activate
+neurodock plugin enable translation-sales
+
+# Restart your MCP client (Claude Desktop, Claude Code, Cursor)
+
+# Verify
+neurodock plugin list
 ```
 
-The CLI's `plugin add` copies the directory into `$XDG_DATA_HOME/neurodock/plugins/translation-sales/` (with platform fallbacks for macOS and Windows). The discovery walker picks it up on next start.
+`plugin add` copies the directory into `$XDG_DATA_HOME/neurodock/plugins/translation-sales/` (with platform fallbacks for macOS and Windows). `plugin validate ./plugins/translation-sales` will check the manifest before install if you want to dry-run.
 
-Manual install (if the CLI isn't available yet):
+<details>
+<summary>Manual install per OS (if you don't have the CLI yet)</summary>
 
 ```bash
 # Linux
@@ -54,6 +62,8 @@ $dest = "$env:APPDATA\neurodock\plugins\translation-sales"
 New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
 Copy-Item -Recurse plugins\translation-sales $dest
 ```
+
+</details>
 
 ## How to extend the phrasebook
 

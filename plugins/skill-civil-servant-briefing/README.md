@@ -56,9 +56,25 @@ The two hard requirements are declared in `plugin.yaml` under `requires.mcp_serv
 
 ## How to install
 
-NeuroDock discovers plugins from two filesystem roots. To install for local testing:
+Use the NeuroDock CLI (requires `@neurodock/cli` ≥ 0.4.0). Run from the repo root:
 
-**Per-user (recommended for trying it out):**
+```sh
+# Install
+neurodock plugin add ./plugins/skill-civil-servant-briefing
+
+# Activate
+neurodock plugin enable skill-civil-servant-briefing
+
+# Restart your MCP client (Claude Desktop, Claude Code, Cursor)
+
+# Verify
+neurodock plugin list
+```
+
+The plugin should appear with `trust: community` and the three triggers listed above. `plugin validate ./plugins/skill-civil-servant-briefing` will check the manifest before install if you want to dry-run.
+
+<details>
+<summary>Manual install per OS (if you don't have the CLI yet)</summary>
 
 Linux:
 
@@ -82,19 +98,9 @@ New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
 Copy-Item -Recurse plugins\skill-civil-servant-briefing $dest
 ```
 
-**In-repo (already done if you're reading this from the cloned repo):**
+The substrate also scans `<repo>/plugins/*/plugin.yaml`, so cloning this repo without copying is enough for in-repo discovery. Restart your LLM client either way.
 
-The substrate also scans `<repo>/plugins/*/plugin.yaml`, so cloning this repo is enough — no copy needed.
-
-Restart your LLM client (Claude Desktop, Claude Code). The substrate scans both roots at init.
-
-To verify discovery:
-
-```bash
-neurodock plugin list
-```
-
-The plugin should appear with `trust: community` and the three triggers listed above.
+</details>
 
 ## How to use
 

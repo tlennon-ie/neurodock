@@ -11,12 +11,57 @@ Authoring a new plugin requires zero core changes — fork, add a directory, ope
 
 The long-form contributor guide (how to author each plugin type end-to-end) ships separately. This file is the short reference.
 
-## Quick start
+## CLI surface
+
+Plugin management ships through six commands on the NeuroDock CLI. Requires `@neurodock/cli` ≥ 0.4.0.
+
+| Command                              | What it does                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| `neurodock plugin add <path-or-url>` | Copy a plugin directory into the per-user root and register it. Validates first. |
+| `neurodock plugin remove <name>`     | Delete a plugin from the per-user root and de-register it.                       |
+| `neurodock plugin list`              | List installed plugins with name, type, trust level, version, and enabled state. |
+| `neurodock plugin enable <name>`     | Activate an installed plugin for the current profile.                            |
+| `neurodock plugin disable <name>`    | Deactivate an installed plugin without removing it.                              |
+| `neurodock plugin validate <path>`   | Check a plugin directory against `plugin.schema.json` without installing it.     |
+
+Typical install flow:
+
+```sh
+neurodock plugin add ./plugins/translation-legal
+neurodock plugin enable translation-legal
+# Restart your MCP client (Claude Desktop, Claude Code, Cursor)
+neurodock plugin list
+```
+
+In-repo plugins under `<repo>/plugins/*/plugin.yaml` are auto-discovered without `plugin add` — cloning is enough. Use `add` for installing into your per-user root from outside the repo, or from a path the substrate won't otherwise scan.
+
+## Shipped plugins
+
+| Name                                                              | Type             | Who for                                                                              | One-line description                                                                                   |
+| ----------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| [example-skill-pomodoro](./example-skill-pomodoro/)               | skill            | Plugin authors copying a reference example                                           | 25-minute Pomodoro coach wiring `mcp-chronometric` tools — the canonical plugin template.              |
+| [skill-civil-servant-briefing](./skill-civil-servant-briefing/)   | skill            | Civil servants, policy advisers, NGO programme staff                                 | Brief drafting, consultation synthesis, and a meeting-marathon mode for sitting-day calendars.         |
+| [skill-eng-manager-1on1](./skill-eng-manager-1on1/)               | skill            | Engineering managers, tech leads, staff+ ICs with mentees                            | 1:1 prep, sprint-review decomposition, and blameless postmortems.                                      |
+| [skill-lawyer-matter](./skill-lawyer-matter/)                     | skill            | Lawyers, in-house counsel, paralegals                                                | Matter briefs, deadline checks, and email translation. Workflow tool, not legal advice.                |
+| [skill-pm-stakeholder-juggle](./skill-pm-stakeholder-juggle/)     | skill            | Product managers juggling many stakeholders                                          | Stakeholder maps, decision audits with anti-rumination close, and verdict-first exec summaries.        |
+| [skill-researcher-litreview](./skill-researcher-litreview/)       | skill            | Academic researchers, PhD students, lit-heavy industry researchers                   | Lit-review scaffolding, paper recording, and recall by author. No summaries, no invented papers.       |
+| [skill-software-engineer-daily](./skill-software-engineer-daily/) | skill            | IC software engineers running their own working day                                  | Code-review prep, deep-work planning, and the three-line async standup.                                |
+| [skill-writer-long-form](./skill-writer-long-form/)               | skill            | Novelists, essayists, technical-book authors, dissertation writers                   | Writing-block planning by tasks and minutes (not word counts), entity recall, rumination check.        |
+| [translation-customer-support](./translation-customer-support/)   | translation-pack | Tier-1/2 support agents, CSMs, founders staffing their own inbox                     | Bidirectional dictionary for inbound escalation signals and outbound de-escalation register.           |
+| [translation-german-directness](./translation-german-directness/) | translation-pack | Anyone working with German-speaking workplaces                                       | Reads German workplace directness as the neutral baseline it is, not as hostility.                     |
+| [translation-healthcare](./translation-healthcare/)               | translation-pack | ND clinicians, allied health, paralegals reading hospital records                    | Decodes SBAR, MDT, and ward-round register — severity euphemisms and decision-ownership signals.       |
+| [translation-hiberno-english](./translation-hiberno-english/)     | translation-pack | Anyone working in or with Irish workplaces                                           | Maps Hiberno-English softening, hedging, and conversation-closure patterns to plain language.          |
+| [translation-japanese-keigo](./translation-japanese-keigo/)       | translation-pack | Anyone working in or with Japanese workplaces                                        | Surfaces substantive content behind keigo soft refusals, refusals-via-omission, and vertical register. |
+| [translation-legal](./translation-legal/)                         | translation-pack | In-house counsel, paralegals, legal-tech PMs, anyone reading lawyer email            | Plain-language reading aid for hedged, indirect legal correspondence.                                  |
+| [translation-sales](./translation-sales/)                         | translation-pack | Sales engineers, CSMs, founders reading their own pipeline, technical staff on calls | Translates commitment-avoidance, polite stalling, and stage-gated sales language.                      |
+
+## Authoring quick start
 
 1. Create a directory: `plugins/my-plugin-name/`.
 2. Drop a `plugin.yaml` inside (start from `plugin.minimal.yaml`).
 3. Add your assets (Markdown prompts, SKILL.md, server binary entrypoint, theme tokens — whatever your `type` requires).
-4. Open a PR. CI validates the manifest against the schema.
+4. Run `neurodock plugin validate ./plugins/my-plugin-name` locally.
+5. Open a PR. CI validates the manifest against the schema.
 
 ## The six plugin types
 

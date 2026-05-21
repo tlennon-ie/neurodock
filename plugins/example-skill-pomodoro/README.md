@@ -33,22 +33,41 @@ If you're contributing a first-party skill, drop a directory under `packages/ski
 
 ## How to install for local testing
 
-The substrate discovers plugins from two filesystem roots:
+Use the NeuroDock CLI (requires `@neurodock/cli` ≥ 0.4.0). Run from the repo root:
 
-1. **In-repo:** `<repo>/plugins/*/plugin.yaml` — already covered for this example because it lives in the repo.
-2. **Per-user:** `$XDG_DATA_HOME/neurodock/plugins/*/plugin.yaml` with platform fallbacks:
-   - **Linux:** `~/.local/share/neurodock/plugins/example-skill-pomodoro/`
-   - **macOS:** `~/Library/Application Support/neurodock/plugins/example-skill-pomodoro/`
-   - **Windows:** `%APPDATA%\neurodock\plugins\example-skill-pomodoro\`
+```sh
+# Install
+neurodock plugin add ./plugins/example-skill-pomodoro
 
-To install for local testing without forking the repo, copy this directory into the per-user root. On Linux:
+# Activate
+neurodock plugin enable example-skill-pomodoro
+
+# Restart your MCP client (Claude Desktop, Claude Code, Cursor)
+
+# Verify
+neurodock plugin list
+```
+
+`plugin add` copies the directory into the per-user root (`$XDG_DATA_HOME/neurodock/plugins/example-skill-pomodoro/`, with platform fallbacks for macOS `~/Library/Application Support/neurodock/plugins/` and Windows `%APPDATA%\neurodock\plugins\`). The substrate also scans `<repo>/plugins/*/plugin.yaml`, so for this example you already have it discovered just by cloning the repo — no `plugin add` needed if you're working in-tree.
+
+<details>
+<summary>Manual install per OS (if you don't have the CLI yet)</summary>
+
+Linux:
 
 ```bash
 mkdir -p ~/.local/share/neurodock/plugins/
 cp -r plugins/example-skill-pomodoro ~/.local/share/neurodock/plugins/
 ```
 
-On Windows PowerShell:
+macOS:
+
+```bash
+mkdir -p "$HOME/Library/Application Support/neurodock/plugins/"
+cp -r plugins/example-skill-pomodoro "$HOME/Library/Application Support/neurodock/plugins/"
+```
+
+Windows PowerShell:
 
 ```powershell
 $dest = "$env:APPDATA\neurodock\plugins\example-skill-pomodoro"
@@ -56,9 +75,9 @@ New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
 Copy-Item -Recurse plugins\example-skill-pomodoro $dest
 ```
 
-A symlink works as well; the loader follows symlinks but rejects symlinks that point outside the plugin directory (path sandbox; see ADR 0007 decision 6).
+A symlink works as well; the loader follows symlinks but rejects symlinks that point outside the plugin directory (path sandbox; see ADR 0007 decision 6). Restart your LLM client after copying.
 
-Restart your LLM client. The substrate scans both roots at init.
+</details>
 
 ## How to fork this as your own plugin
 
@@ -77,7 +96,6 @@ Restart your LLM client. The substrate scans both roots at init.
    ```bash
    neurodock plugin validate plugins/my-skill-name
    ```
-   (The CLI command lands with the discovery walker; until then, validate against the schema with any draft-2020-12-compatible JSON Schema validator.)
 
 ## How to publish
 

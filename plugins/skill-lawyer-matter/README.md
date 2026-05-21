@@ -78,15 +78,40 @@ These are conventions, not hard requirements — the skill reads whatever `recal
 
 ## How to install
 
-NeuroDock discovers plugins from two filesystem roots. To install for local testing:
+Use the NeuroDock CLI (requires `@neurodock/cli` ≥ 0.4.0). Run from the repo root:
 
-**Per-user (recommended for trying it out):**
+```sh
+# Install
+neurodock plugin add ./plugins/skill-lawyer-matter
+
+# Activate
+neurodock plugin enable skill-lawyer-matter
+
+# Restart your MCP client (Claude Desktop, Claude Code, Cursor)
+
+# Verify
+neurodock plugin list
+```
+
+The plugin should appear with `trust: community` and the three triggers listed above. `plugin validate ./plugins/skill-lawyer-matter` will check the manifest before install if you want to dry-run.
+
+For the full Flow C experience, also install the paired translation pack:
+
+```sh
+neurodock plugin add ./plugins/translation-legal
+neurodock plugin enable translation-legal
+```
+
+<details>
+<summary>Manual install per OS (if you don't have the CLI yet)</summary>
 
 Linux:
 
 ```bash
 mkdir -p ~/.local/share/neurodock/plugins/
 cp -r plugins/skill-lawyer-matter ~/.local/share/neurodock/plugins/
+# For the full Flow C experience:
+cp -r plugins/translation-legal ~/.local/share/neurodock/plugins/
 ```
 
 macOS:
@@ -94,6 +119,7 @@ macOS:
 ```bash
 mkdir -p "$HOME/Library/Application Support/neurodock/plugins/"
 cp -r plugins/skill-lawyer-matter "$HOME/Library/Application Support/neurodock/plugins/"
+cp -r plugins/translation-legal "$HOME/Library/Application Support/neurodock/plugins/"
 ```
 
 Windows PowerShell:
@@ -102,27 +128,12 @@ Windows PowerShell:
 $dest = "$env:APPDATA\neurodock\plugins\skill-lawyer-matter"
 New-Item -ItemType Directory -Force -Path (Split-Path $dest) | Out-Null
 Copy-Item -Recurse plugins\skill-lawyer-matter $dest
+Copy-Item -Recurse plugins\translation-legal "$env:APPDATA\neurodock\plugins\translation-legal"
 ```
 
-**In-repo (already done if you're reading this from the cloned repo):**
+The substrate also scans `<repo>/plugins/*/plugin.yaml`, so cloning this repo without copying is enough for in-repo discovery. Restart your LLM client either way.
 
-The substrate also scans `<repo>/plugins/*/plugin.yaml`, so cloning this repo is enough — no copy needed.
-
-For the full Flow C experience, also install `translation-legal`:
-
-```bash
-cp -r plugins/translation-legal ~/.local/share/neurodock/plugins/
-```
-
-Restart your LLM client (Claude Desktop, Claude Code). The substrate scans both roots at init.
-
-To verify discovery:
-
-```bash
-neurodock plugin list
-```
-
-The plugin should appear with `trust: community` and the three triggers listed above.
+</details>
 
 ## How to use
 
