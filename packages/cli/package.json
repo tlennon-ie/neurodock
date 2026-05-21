@@ -1,7 +1,7 @@
 {
   "name": "@neurodock/cli",
-  "version": "0.4.2",
-  "description": "NeuroDock installer and diagnostic CLI.",
+  "version": "0.4.3",
+  "description": "NeuroDock installer and diagnostic CLI — wires the MCP servers, manages plugins, and validates your profile.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,7 +17,24 @@
     "url": "git+https://github.com/tlennon-ie/neurodock.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/tlennon-ie/neurodock#readme",
+  "homepage": "https://neurodock.org/",
+  "bugs": "https://github.com/tlennon-ie/neurodock/issues",
+  "keywords": [
+    "neurodock",
+    "neurodivergent",
+    "adhd",
+    "autism",
+    "audhd",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "anthropic",
+    "claude-desktop",
+    "cli",
+    "local-first",
+    "cognitive-substrate",
+    "executive-function"
+  ],
   "files": [
     "dist",
     "README.md",

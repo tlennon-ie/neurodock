@@ -6,7 +6,7 @@ an MCP server.
 - **Version:** v0.0.1 (developer preview)
 - **Status:** Phase 1 substrate server.
 - **License:** AGPL-3.0-or-later.
-- **Design:** see [`docs/decisions/0003-task-fractionator-tool-design.md`](../../docs/decisions/0003-task-fractionator-tool-design.md).
+- **Design:** see [ADR 0003 — task-fractionator tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0003-task-fractionator-tool-design.md).
 - **Schemas (the contract):** [`schemas/decompose.schema.json`](./schemas/decompose.schema.json) and [`schemas/next_one.schema.json`](./schemas/next_one.schema.json).
 - **User stories driving this server:** ("Director with ADHD" — voice-dump a vague initiative, get 5–12 atomic tasks plus the single next one).
 
@@ -111,7 +111,7 @@ All four must pass before a PR is mergeable.
 
 ## Pointers
 
-- Architecture rationale: [`docs/decisions/0003-task-fractionator-tool-design.md`](../../docs/decisions/0003-task-fractionator-tool-design.md).
+- Architecture rationale: [ADR 0003 — task-fractionator tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0003-task-fractionator-tool-design.md).
 - The five-principles manifesto this server has to honour: `MANIFESTO.md`.
 - Sibling servers: `mcp-chronometric` (time, idle, breaks) and
   `mcp-cognitive-graph` (persistent state — where pending tasks will live).

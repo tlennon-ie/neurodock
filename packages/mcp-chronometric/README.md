@@ -1,13 +1,13 @@
 # neurodock-mcp-chronometric
 
-Time, idle, and break management as an MCP server.
+Time, idle, and break management as an MCP server. Part of [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.
 
-**Version:** 0.0.1 (developer preview, in-memory).
+**Version:** 0.0.2 (developer preview, in-memory).
 
 ## Status
 
-v0.0.1 implements the five tools specified Section 6 and ADR
-[`0001-chronometric-tool-design.md`](../../docs/decisions/0001-chronometric-tool-design.md):
+v0.0.x implements the five tools specified in ADR
+[0001 — chronometric tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0001-chronometric-tool-design.md):
 
 | Tool                      | Status                                         |
 | ------------------------- | ---------------------------------------------- |
@@ -17,9 +17,11 @@ v0.0.1 implements the five tools specified Section 6 and ADR
 | `request_break_if_needed` | implemented                                    |
 | `idle_status`             | implemented; consent-gated, OS probe is a stub |
 
-Session state is in-memory only. SQLite persistence is tracked under the
-`# TODO: persist to SQLite` marker in `src/neurodock_mcp_chronometric/state.py`
-and lands before v0.1.0 ships.
+Session state is intentionally in-memory for the v0.0.x preview — a single
+Claude session typically ends with an explicit `mark_session_end` so durable
+storage is not on the hot path. SQLite-backed session history is planned for
+v0.1.0 per ADR 0001; until then, restart Claude and any open session is
+treated as auto-closed on the next `mark_session_start`.
 
 The OS idle probe is intentionally a no-op stub in v0.0.1: the consent gate is
 the hard correctness property, and the probe itself returns `None` on every
@@ -27,9 +29,10 @@ platform until per-platform implementations and tests land.
 
 ## References
 
-- Spec: Section 6.
-- Tool design rationale: `docs/decisions/0001-chronometric-tool-design.md`.
-- Authoritative schemas: `packages/mcp-chronometric/schemas/`.
+- Tool design rationale: [ADR 0001 — chronometric tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0001-chronometric-tool-design.md).
+- Authoritative schemas: [`packages/mcp-chronometric/schemas/`](https://github.com/tlennon-ie/neurodock/tree/main/packages/mcp-chronometric/schemas).
+- Project home: [neurodock.org](https://neurodock.org/).
+- Manifesto + ethics: [`MANIFESTO.md`](https://github.com/tlennon-ie/neurodock/blob/main/MANIFESTO.md), [`ETHICS.md`](https://github.com/tlennon-ie/neurodock/blob/main/ETHICS.md).
 
 ## Running
 

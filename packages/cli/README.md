@@ -1,8 +1,8 @@
 # @neurodock/cli
 
-The `neurodock` installer and diagnostic CLI.
+The `neurodock` installer and diagnostic CLI for [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.
 
-Status: v0.4.0.
+Status: **v0.4.3**.
 
 ## Quickstart
 
@@ -209,6 +209,15 @@ node dist/index.js --help
   itself, so the loader does.
 - No telemetry, no remote calls. `install-all` is the only command that
   shells out to a package manager, and it does so only when invoked.
+
+## Links
+
+- **Home:** [neurodock.org](https://neurodock.org/)
+- **Documentation:** [docs.neurodock.org](https://docs.neurodock.org/)
+- **Repository:** [github.com/tlennon-ie/neurodock](https://github.com/tlennon-ie/neurodock) (monorepo; this package lives at `packages/cli/`)
+- **Issues:** [github.com/tlennon-ie/neurodock/issues](https://github.com/tlennon-ie/neurodock/issues)
+- **Changelog:** [`packages/cli/CHANGELOG.md`](https://github.com/tlennon-ie/neurodock/blob/main/packages/cli/CHANGELOG.md)
+- **Manifesto + ethics:** [`MANIFESTO.md`](https://github.com/tlennon-ie/neurodock/blob/main/MANIFESTO.md), [`ETHICS.md`](https://github.com/tlennon-ie/neurodock/blob/main/ETHICS.md)
 
 ## License
 

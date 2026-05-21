@@ -3,7 +3,24 @@
 All notable changes to `neurodock-mcp-chronometric` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-This package follows semantic versioning per .
+This package follows semantic versioning.
+
+## [0.0.2] - 2026-05-22
+
+### Changed
+
+- README rewritten for the PyPI surface. ADR references now use absolute
+  GitHub URLs (relative `../../docs/decisions/` paths rendered as 404s on
+  pypi.org). Added project-home / docs / repo / issues / changelog URLs
+  to `[project.urls]` so the PyPI sidebar surfaces them.
+- Softened the in-memory-session note: framed as an intentional v0.0.x
+  design choice (sessions typically end with `mark_session_end`; restart =
+  auto-close on next `mark_session_start`) rather than surfacing an
+  internal `# TODO: persist to SQLite` grep marker. The SQLite-backed
+  history plan remains in ADR 0001 §"Notes for mcp-server-builder" and
+  lands in v0.1.0.
+
+No behaviour change. Same five tools, same schemas.
 
 ## [0.0.1] - 2026-05-15
 

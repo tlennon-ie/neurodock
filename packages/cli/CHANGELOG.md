@@ -1,5 +1,19 @@
 # @neurodock/cli changelog
 
+## 0.4.3
+
+### Changed
+
+- `homepage` in `package.json` now points at https://neurodock.org/
+  (was the GitHub README anchor). Repository link unchanged. Adds
+  `bugs`, `keywords`, and richer `description` for the npm listing.
+- README rewritten to lead with the new slogan ("A cognitive substrate
+  that remembers, paces, and refuses"), reference NeuroDock by brand
+  rather than as an internal monorepo, and add a Links section with
+  the canonical home / docs / repo / issues / changelog URLs.
+
+No behaviour change. Same surface as 0.4.2.
+
 ## 0.4.2
 
 ### Fixed

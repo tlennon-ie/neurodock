@@ -7,8 +7,8 @@ prompt library with `@neurodock/extension-browser` (Phase 2).
 
 ## Status
 
-v0.0.1 implements the four tools specified Section 7 and ADR
-[`0005-translation-tool-design.md`](../../docs/decisions/0005-translation-tool-design.md):
+v0.0.x implements the four tools specified in ADR
+[0005 — translation tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0005-translation-tool-design.md):
 
 | Tool                 | Status                                               |
 | -------------------- | ---------------------------------------------------- |

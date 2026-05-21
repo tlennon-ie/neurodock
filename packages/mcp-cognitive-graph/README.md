@@ -39,7 +39,7 @@ The eight predicates in v0.1.0 are: `mentioned_in`, `decided_in`,
 `reports_to`, `depends_on`, `resolved_by`, `blocked_by`, `tagged`,
 `belongs_to`. Unknown predicates raise `PREDICATE_NOT_IN_VOCABULARY`.
 Extension predicates land via the v0.2 `type_extensions` mechanism — see
-[`docs/decisions/0002-cognitive-graph-tool-design.md`](../../docs/decisions/0002-cognitive-graph-tool-design.md).
+[ADR 0002 — cognitive-graph tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0002-cognitive-graph-tool-design.md).
 
 ## Privacy
 
@@ -80,10 +80,10 @@ src/neurodock_mcp_cognitive_graph/
 
 ## ADR pointers
 
-- [`docs/decisions/0002-cognitive-graph-tool-design.md`](../../docs/decisions/0002-cognitive-graph-tool-design.md)
+- [ADR 0002 — cognitive-graph tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0002-cognitive-graph-tool-design.md)
   — the design rationale, vocabularies, output shapes, and the three open
   questions whose v0.0.1 resolutions are documented in `CHANGELOG.md`.
-- [`docs/decisions/0001-chronometric-tool-design.md`](../../docs/decisions/0001-chronometric-tool-design.md)
+- [ADR 0001 — chronometric tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0001-chronometric-tool-design.md)
   — the cross-cutting precedents (ISO 8601 with offsets, enums for coarse
   signals, structured errors) that this package inherits.
 
