@@ -10,27 +10,43 @@ without something landing, that's fine — this is volunteer work, not a
 ship list. If you want to drive any of these, open an issue or comment
 on the existing one.
 
-> Updated: 2026-05-20 (after the v0.2.1 developer preview).
+> Updated: 2026-05-21.
+
+## Shipped (Q2 2026)
+
+Landed since the v0.2.1 developer preview:
+
+- [x] **Real LLM provider wiring in the browser extension** —
+      Ollama (local default), Anthropic, OpenAI, and OpenRouter (incl.
+      `openrouter/auto`, the OpenRouter auto-router that picks the best
+      model per query). Landed in PR #33 / extension v0.0.2.
+- [x] **Profile presets** — nine curated YAML defaults under `profiles/`:
+      adhd, audhd, ocd, dyslexic, low-stimulation, dyspraxia,
+      burnout-recovery, educator-semester, student-university.
+- [x] **CLI ergonomics** — `install-all` (one-command first-time install),
+      `examples` (prompt cheat-sheet per wired server), and
+      `plugin add/remove/list/enable/disable/validate`. Landed in CLI v0.4.0.
+- [x] **Plugin examples** — 15 plugins shipped under `plugins/`:
+      8 skill plugins (civil-servant-briefing, eng-manager-1on1,
+      lawyer-matter, pm-stakeholder-juggle, researcher-litreview,
+      software-engineer-daily, writer-long-form, plus the
+      `example-skill-pomodoro` template) and 7 translation packs
+      (customer-support, german-directness, healthcare,
+      hiberno-english, japanese-keigo, legal, sales).
+- [x] **Good-first-issue ramp** — 10 tickets filed; 9 closed across the
+      v0.2.x cycle (see GitHub `good first issue` label).
 
 ## Now — Q2 2026
 
 **Theme:** make the developer preview comfortable to actually use.
 
-- [ ] **Real LLM provider wiring in the browser extension** —
-      Ollama (local), Anthropic, OpenAI. Implementation exists on
-      `feat/extension-browser/v0.0.2-llm`; needs a conflict-resolution merge
-      pass.
 - [ ] **Browser-store submissions** — Chrome Web Store, Firefox Add-ons,
-      Edge Add-ons. Developer accounts + screenshots + privacy disclosures.
-      Manual, low-novelty, high-leverage.
-- [ ] **Profile presets** — curated YAML defaults under `profiles/` for
-      adhd, audhd, ocd, dyslexic, low-stimulation. (Shipped 2026-05-20.)
-- [ ] **CLI ergonomics** — `neurodock install-all`, `neurodock examples`,
-      `neurodock profile use <preset>`.
-- [ ] **Plugin examples** — `plugins/example-skill-pomodoro/` as a
-      copy-from template for new skill authors.
-- [ ] **Good-first-issue ramp** — at least 10 well-scoped tickets at any
-      time so a new contributor can land a PR in their first session.
+      Edge Add-ons. Build artefacts are clean; developer accounts +
+      screenshots + privacy disclosures remain manual.
+- [ ] **Demo GIF / video** (issue #27) — until the docs site is deployed,
+      a short video is the lowest-friction "see it work" surface.
+- [ ] **Docs site DNS** — `docs.neurodock.org` build is clean; deployment
+      pending.
 
 ## Next — Q3 2026
 

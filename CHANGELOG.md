@@ -7,6 +7,41 @@ repo-wide milestones.
 
 ## Repo-wide releases
 
+### v0.2.2 — 2026-05-21
+
+Agent-driven expansion of the developer preview. No breaking changes;
+everything in v0.2.1 still works the same way.
+
+- **Browser extension v0.0.2** — real LLM providers shipped: Ollama
+  (local default), Anthropic, OpenAI, and OpenRouter (including
+  `openrouter/auto`, OpenRouter's auto-router that picks the best
+  model per query). Settings tab, API-key masking, schema-validated
+  responses, streaming on all four providers. PR #33.
+- **CLI v0.4.0** — `install-all` (one-command first-time install),
+  `examples` (prompt cheat-sheet per wired server), and the new
+  `plugin add / remove / list / enable / disable / validate`
+  subcommands for out-of-tree plugin management.
+- **Profiles** — three new presets: `dyspraxia`, `burnout-recovery`,
+  `educator-semester`, `student-university` (four new; nine total
+  under `profiles/`).
+- **Skill plugins** — five new shipped under `plugins/`:
+  `skill-civil-servant-briefing`, `skill-eng-manager-1on1`,
+  `skill-lawyer-matter`, `skill-researcher-litreview`,
+  `skill-writer-long-form`. Plus the previously shipped
+  `skill-pm-stakeholder-juggle`, `skill-software-engineer-daily`,
+  and `example-skill-pomodoro` template.
+- **Translation packs** — three new shipped under `plugins/`:
+  `translation-customer-support`, `translation-healthcare`,
+  `translation-sales`. Plus the previously shipped
+  `translation-german-directness`, `translation-hiberno-english`,
+  `translation-japanese-keigo`, `translation-legal`.
+- **Worked examples** — two new added under `examples/` to complement
+  the existing Claude Desktop walkthrough.
+- **Docs / README** — front-door rewrite: TL;DR block, MCP defined on
+  first mention, restart-Claude promoted to a numbered step, status
+  table refreshed, gating language softened. New top-level
+  `PRIVACY.md`.
+
 ### v0.2.1 — 2026-05-20 (developer preview)
 
 Three substrate pillars built, on `main`, installable from npm + PyPI.

@@ -17,7 +17,7 @@
     streaming; default model is `openrouter/auto`, OpenRouter's
     auto-router that picks the best model per query).
   - `mock` (deterministic developer-only provider).
-  Local Ollama is the default; mock is no longer the default lane.
+    Local Ollama is the default; mock is no longer the default lane.
 - **Settings tab** in the popup. Provider selection, endpoint URL,
   model name, API key entry, and a "Test connection" button. The API
   key is masked after save (`••••last4`) and is stored in
@@ -108,7 +108,7 @@ still holds in the default install.
 - `axe-core` automated accessibility runs in CI.
 - Browser-store submission scripts.
 
-## 0.1.0
+## 0.0.1
 
 ### Minor Changes
 
@@ -132,9 +132,7 @@ still holds in the default install.
   - v0.0.1 is a **developer preview scaffold** — Chrome Web Store / Firefox Add-ons / Edge Add-ons submission is deferred to v0.0.2 once Ollama / cloud wiring lands. This changeset does NOT trigger store submission; it triggers an npm publish of the package under `@neurodock/extension-browser` for downstream consumers (and CI/build verification).
   - E2E (Playwright) and `axe-core` accessibility runs are deferred to v0.0.2; release notes call this out.
 
-## 0.0.1 (Phase 2 scaffold)
-
-### Added
+### Earlier notes from the Phase 2 scaffold
 
 - WXT-based Manifest V3 scaffold targeting Chrome, Firefox, and Edge.
 - Service worker, popup, content scripts, shared modules.

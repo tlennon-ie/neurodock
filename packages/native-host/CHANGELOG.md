@@ -1,6 +1,6 @@
 # @neurodock/native-host
 
-## 0.1.0 (unreleased)
+## 0.1.0
 
 ### Added
 

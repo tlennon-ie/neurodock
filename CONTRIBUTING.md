@@ -1,15 +1,25 @@
 # Contributing
 
 Hello, you are welcome here. NeuroDock is an open-source, local-first
-cognitive substrate for neurodivergent professionals. Small contributions
+cognitive substrate for neurodivergent people. Small contributions
 are the project's lifeblood, and the on-ramp is short — a new contributor
 can land something useful inside fifteen minutes.
 
-Before you start, skim `MANIFESTO.md` for the five principles,
-`CODE_OF_CONDUCT.md` for how we treat each other, `GOVERNANCE.md` for
-how decisions get made, and `ROADMAP.md` to see what's prioritised next.
+**If you only have 5 minutes:** open an issue describing one thing you
+tried that didn't work the way you expected. That's a valid, valued
+contribution — no PR required, no setup required.
 
-## Bootstrap in one command
+When you have capacity, `MANIFESTO.md`, `CODE_OF_CONDUCT.md`,
+`GOVERNANCE.md`, and `ROADMAP.md` give the project's context — but you
+don't need to read all four to land a fix.
+
+## Pick a lane first
+
+The four PR-size lanes below describe what kinds of contributions land
+where. Skim them and pick one that matches the time and energy you have
+right now. **Then** worry about setup or the changeset flow.
+
+## Bootstrap in one command (when you need it)
 
 ```bash
 ./scripts/dev-setup.sh
@@ -19,9 +29,9 @@ Installs JS + Python dependencies, builds the workspace, runs the test
 suites. Re-runnable after every `git pull`. See `scripts/README.md` for
 prerequisites.
 
-Once that's green, read `examples/claude-desktop/README.md` for a worked
-end-to-end walkthrough — it's the fastest way to understand what the
-substrate actually does before you start changing it.
+Once that's green, `examples/claude-desktop/README.md` is a worked
+end-to-end walkthrough — useful if you want to feel how the substrate
+behaves before changing it. Skip it if you already know.
 
 ## Four PR-size lanes
 
@@ -88,46 +98,6 @@ You do not need to write code to contribute meaningfully.
 
 Branch as `docs/<short>` for doc work, or just comment on the PR.
 
-## Worked example — adding a changeset
-
-For anything in Lanes 2 or 3 that changes user-facing behaviour, add a
-changeset entry. The flow:
-
-```bash
-# 1. Make your code change and commit it
-git checkout -b feat/skills/morning-anchor
-# ... edit files ...
-git add packages/skills/morning-anchor
-git commit -m "feat(skills): add morning-anchor skill"
-
-# 2. Run the changeset CLI
-pnpm changeset
-```
-
-`pnpm changeset` is interactive. It asks:
-
-```
-?  Which packages would you like to include? ...
-   ◯ @neurodock/cli
-   ◉ @neurodock/skills
-   ◯ @neurodock/core
-
-?  Which packages should have a major bump? (none)
-?  Which packages should have a minor bump? @neurodock/skills
-?  Please enter a summary for this change:
->  Add morning-anchor skill: structured day-start prompt for ADHD profiles.
-```
-
-It writes a markdown file under `.changeset/` — commit that file:
-
-```bash
-git add .changeset/*.md
-git commit -m "chore: changeset for morning-anchor"
-git push -u origin feat/skills/morning-anchor
-```
-
-Then open the PR. Releases pick up the changeset automatically.
-
 ## Pace yourself
 
 You do not owe this project a fast turnaround. Async is the default. Open
@@ -147,6 +117,46 @@ indefinitely, feel free to take this over").
 If nothing on either list speaks to you and you have an idea, open an issue
 describing the problem (not the solution) and we'll discuss before you
 invest time.
+
+## Worked example — adding a changeset
+
+For anything in Lanes 2 or 3 that changes user-facing behaviour, add a
+changeset entry. (Lane 1 doc-only edits skip this step.) The flow:
+
+```bash
+# 1. Make your code change and commit it
+git checkout -b feat/cli/morning-anchor
+# ... edit files ...
+git add packages/cli/src/commands/morning-anchor.ts
+git commit -m "feat(cli): add morning-anchor command"
+
+# 2. Run the changeset CLI
+pnpm changeset
+```
+
+`pnpm changeset` is interactive. It asks:
+
+```
+?  Which packages would you like to include? ...
+   ◉ @neurodock/cli
+   ◯ @neurodock/core
+   ◯ @neurodock/native-host
+
+?  Which packages should have a major bump? (none)
+?  Which packages should have a minor bump? @neurodock/cli
+?  Please enter a summary for this change:
+>  Add morning-anchor command: prints a structured day-start prompt.
+```
+
+It writes a markdown file under `.changeset/` — commit that file:
+
+```bash
+git add .changeset/*.md
+git commit -m "chore: changeset for morning-anchor"
+git push -u origin feat/cli/morning-anchor
+```
+
+Then open the PR. Releases pick up the changeset automatically.
 
 ## Process checklist
 

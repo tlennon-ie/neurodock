@@ -1,28 +1,43 @@
 # NeuroDock
 
-> **Open-source, MCP-native, vendor-neutral, local-first cognitive substrate for neurodivergent professionals.**
+> **Open-source, MCP-native, vendor-neutral, local-first cognitive substrate for neurodivergent people.**
+
+## 5-second TL;DR
+
+- **What it does:** gives Claude a memory of your work, a sense of time, a refuse-rumination guardrail, and a translator for corporate ambiguity.
+- **Who it's for:** neurodivergent people — self-ID only, no diagnosis required, no gatekeeping.
+- **How to install:** one command, below.
 
 NeuroDock plugs into Claude Desktop / Claude Code / Cursor (any MCP-aware
-client) and gives the assistant a memory of your work, a sense of time, the
-ability to decompose vague goals into atomic tasks, a translator for corporate
-ambiguity, and guardrails against rumination loops.
-
-Local-first by default. No telemetry. AGPL-3.0-or-later.
+client). Local-first by default. No telemetry. AGPL-3.0-or-later.
 
 ## Install
 
-NeuroDock ships across two registries: the Python **MCP servers** on PyPI,
-and the user-facing **CLI** on npm. The CLI wraps everything else.
+NeuroDock ships across two registries: the Python **MCP servers** (MCP =
+Model Context Protocol — the standard that lets Claude call local tools)
+on PyPI, and the user-facing **CLI** on npm. The CLI wraps everything else.
+
+### 1. Install the six MCP servers
 
 ```sh
-# 1. Install the six Python MCP servers (the runtime substrate)
 pip install neurodock-mcp-chronometric neurodock-mcp-cognitive-graph neurodock-mcp-task-fractionator neurodock-mcp-translation neurodock-mcp-guardrail neurodock-evals
-
-# 2. Wire them into your MCP-aware client (Claude Desktop, Claude Code, Cursor)
-npx --yes @neurodock/cli init
-
-# 3. Restart Claude (full quit, not just close-window)
 ```
+
+### 2. Wire them into your MCP-aware client
+
+```sh
+npx --yes @neurodock/cli init
+```
+
+This detects Claude Desktop, Claude Code, or Cursor and writes the server
+entries automatically.
+
+### 3. Restart Claude (full quit — this is the #1 silent failure)
+
+Claude only reads its MCP config at startup. **Quit the app fully** (not just
+close the window; on macOS use Cmd+Q, on Windows kill it from the system tray)
+and reopen. If you skip this, the tools will be invisible and you'll think
+the install failed.
 
 Works on macOS, Linux, and Windows. Requires Python 3.11+ and Node 22+.
 
@@ -68,7 +83,8 @@ Then in any conversation: `"What was I working on yesterday?"` /
 `"Plan my morning"` / `"Decompose this goal into atomic tasks"`. Claude calls
 the MCP tools under the hood; you just talk.
 
-For testing from a clone (development mode), see `TESTING_LOCAL.md`.
+Want to see it work without installing from PyPI/npm? `TESTING_LOCAL.md`
+walks through the from-clone path.
 
 ## See it in action
 
@@ -101,25 +117,24 @@ neurodock/
 **v0.2.1 developer preview shipped.** All three substrate pillars (cognitive,
 communication, guardrails) are built, on `main`, and installable.
 
-| Surface                           | Version       | Notes                                                                                                                                     |
-| --------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `neurodock-mcp-chronometric`      | 0.0.1         | 5 tools, 22 tests, mypy --strict                                                                                                          |
-| `neurodock-mcp-cognitive-graph`   | 0.0.2         | 4 tools, SQLite + sqlite-vec + fastembed; 4-rung resolution cascade (exact → alias → fuzzy → embedding)                                   |
-| `neurodock-mcp-task-fractionator` | 0.0.2         | 2 tools, 32 tests; ISO 8601 duration spec clarified                                                                                       |
-| `neurodock-mcp-translation`       | 0.0.1         | 4 tools, 29 tests, deterministic baseline + LLM refinement envelope                                                                       |
-| `neurodock-mcp-guardrail`         | 0.0.2         | All three detectors live: rumination + hyperfocus + sycophancy (48 tests, public heuristics)                                              |
-| `neurodock-evals`                 | 0.0.2         | Air-gapped harness + 10 seed corpus examples + contribution pipeline                                                                      |
-| `neurodock-clinical`              | 0.0.0         | Reserved name; importable detector library (currently a stub)                                                                             |
-| `@neurodock/cli`                  | 0.2.0         | `init`, `doctor`, `validate`, `update`, `uninstall`, `host install`, `host uninstall`, `profile show/validate`                            |
-| `@neurodock/core`                 | 0.0.1         | Profile schema + plugin protocol manifests (JSON Schema 2020-12)                                                                          |
-| `@neurodock/native-host`          | 0.1.0         | Optional Chrome Native Messaging host for extension ↔ profile sync                                                                       |
-| `@neurodock/extension-browser`    | 0.0.1 (local) | WXT MV3, 7 sites, mock LLM provider; **not yet published**                                                                                |
-| Six launch skills                 | —             | adhd-daily-planner, audhd-context-recovery, ocd-decision-finalizer (beta), hyperfocus-formatter, visual-organizer, asd-meeting-translator |
-| Docs site                         | —             | 36 pages, builds clean (Astro Starlight; deployment pending DNS)                                                                          |
+| Surface                           | Version | Notes                                                                                                                                                                               |
+| --------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `neurodock-mcp-chronometric`      | 0.0.1   | 5 tools, 22 tests, mypy --strict                                                                                                                                                    |
+| `neurodock-mcp-cognitive-graph`   | 0.0.2   | 4 tools, SQLite + sqlite-vec + fastembed; 4-rung resolution cascade (exact → alias → fuzzy → embedding)                                                                             |
+| `neurodock-mcp-task-fractionator` | 0.0.2   | 2 tools, 32 tests; ISO 8601 duration spec clarified                                                                                                                                 |
+| `neurodock-mcp-translation`       | 0.0.1   | 4 tools, 29 tests, deterministic baseline + LLM refinement envelope                                                                                                                 |
+| `neurodock-mcp-guardrail`         | 0.0.2   | All three detectors live: rumination + hyperfocus + sycophancy (48 tests, public heuristics)                                                                                        |
+| `neurodock-evals`                 | 0.0.2   | Air-gapped harness + 10 seed corpus examples + contribution pipeline                                                                                                                |
+| `neurodock-clinical`              | 0.0.0   | Reserved name; importable detector library (currently a stub)                                                                                                                       |
+| `@neurodock/cli`                  | 0.4.0   | `init`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, `install-all`, `examples`, `plugin add/remove/list/enable/disable/validate` |
+| `@neurodock/core`                 | 0.0.1   | Profile schema + plugin protocol manifests (JSON Schema 2020-12)                                                                                                                    |
+| `@neurodock/native-host`          | 0.1.0   | Optional Chrome Native Messaging host for extension ↔ profile sync                                                                                                                 |
+| `@neurodock/extension-browser`    | 0.0.2   | WXT MV3, 7 sites, real Ollama + Anthropic + OpenAI + OpenRouter providers; **not yet store-published**                                                                              |
+| Six launch skills                 | —       | adhd-daily-planner, audhd-context-recovery, ocd-decision-finalizer (beta), hyperfocus-formatter, visual-organizer, asd-meeting-translator                                           |
+| Docs site                         | —       | 36 pages, builds clean (Astro Starlight; deployment pending DNS)                                                                                                                    |
 
 What's still deferred to a future release:
 
-- **Real Ollama / Anthropic / OpenAI provider wiring in the browser extension** — implementation exists on `feat/extension-browser/v0.0.2-llm` but needs a conflict-resolution merge pass before publishing.
 - **Browser-store submissions** — Chrome Web Store, Firefox Add-ons, Edge Add-ons developer accounts + screenshots; manual.
 
 ## How to actually test it right now
