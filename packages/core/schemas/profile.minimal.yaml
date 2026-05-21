@@ -1,10 +1,11 @@
-# NeuroDock Profile — minimal valid example.
+# ==============================================================================
+# YOUR NEURODOCK PROFILE — minimal starter
+# ==============================================================================
+# This is the smallest valid profile. The app fills in safe defaults for
+# everything else. Open profile.example.yaml if you want to see all the
+# knobs you CAN tune.
 #
-# Only `identity` is required. Every other top-level block is optional
-# and falls back to safe, lived-experience-led defaults applied by the
-# loader (see profile.schema.json for the per-field default).
-#
-# Defaults applied when the rest of this file is omitted:
+# Safe defaults applied when you leave the other blocks out:
 #   preferences.output_format        = "answer_first"
 #   preferences.max_chunk_size       = 7
 #   preferences.reading_font_hint    = "atkinson_hyperlegible"
@@ -17,10 +18,17 @@
 #   privacy.embeddings                    = "local"
 #   privacy.telemetry                     = "off"
 #   privacy.os_idle_consent               = false
+#
+# To check it's valid after editing:  neurodock profile validate
+# ==============================================================================
 
 identity:
+  # What should we call you? A nickname or even just a single letter is fine.
   display_name: "your-name"
+
+  # Which of these describe you?
+  # Self-ID is enough — no diagnosis required.
   # Any subset of: adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other
-  # Empty list ([]) is valid and opts out of neurotype-tagged skill activation.
+  # An empty list [] is valid and opts out of neurotype-tagged skill activation.
   neurotypes:
     - "adhd"

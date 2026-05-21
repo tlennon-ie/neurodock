@@ -18,13 +18,7 @@ export async function runDoctor(): Promise<DoctorResult> {
 
   checks.push(checkNodeVersion());
   checks.push(checkCommandAvailable("uv", ["--version"]));
-  checks.push(
-    checkCommandAvailable(
-      "python3",
-      ["--version"],
-      "python3 or python >= 3.11",
-    ),
-  );
+  checks.push(checkPython());
 
   // Profile presence + validity.
   const pPath = profilePath(env);
@@ -134,4 +128,61 @@ function checkCommandAvailable(
         : String(err);
     return { name, status: "FAIL", detail };
   }
+}
+
+interface PythonAttempt {
+  readonly cmd: string;
+  readonly args: ReadonlyArray<string>;
+}
+
+const PYTHON_CANDIDATES: ReadonlyArray<PythonAttempt> = [
+  // Most Unix installs (and explicit pyenv shims).
+  { cmd: "python3", args: ["--version"] },
+  // Most Windows installs (and Conda / venvs everywhere).
+  { cmd: "python", args: ["--version"] },
+  // Windows Python launcher selecting >=3.x.
+  { cmd: "py", args: ["-3", "--version"] },
+];
+
+function checkPython(): CheckResult {
+  const name = "Python >= 3.11";
+  const errors: string[] = [];
+  for (const { cmd, args } of PYTHON_CANDIDATES) {
+    try {
+      const out = execFileSync(cmd, args as string[], {
+        stdio: ["ignore", "pipe", "pipe"],
+        timeout: 4000,
+      });
+      const text = out.toString().trim().split("\n")[0] ?? "";
+      const match = text.match(/(\d+)\.(\d+)/);
+      if (!match) {
+        errors.push(`${cmd}: unexpected version output "${text}"`);
+        continue;
+      }
+      const major = Number(match[1]);
+      const minor = Number(match[2]);
+      const tooOld = major < 3 || (major === 3 && minor < 11);
+      const detail = `${cmd} ${match[0]} (${text})`;
+      return tooOld
+        ? {
+            name,
+            status: "FAIL",
+            detail: `${detail} is below 3.11. Upgrade Python.`,
+          }
+        : { name, status: "PASS", detail };
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message.split("\n")[0] ?? "unknown error"
+          : String(err);
+      errors.push(`${cmd}: ${message}`);
+    }
+  }
+  return {
+    name,
+    status: "FAIL",
+    detail: `No Python interpreter found on PATH (tried python3, python, py -3). Errors: ${errors.join(
+      "; ",
+    )}`,
+  };
 }

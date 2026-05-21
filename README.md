@@ -13,78 +13,75 @@ client). Local-first by default. No telemetry. AGPL-3.0-or-later.
 
 ## Install
 
+```sh
+npx --yes @neurodock/cli install-all
+```
+
+That's it. One command. It pip-installs the six MCP servers, wires
+Claude Desktop / Claude Code / Cursor, and drops a starter profile at
+`~/.neurodock/profile.yaml`.
+
+**Then restart Claude — full quit, not just close-window** (this is the
+#1 silent failure). Claude only reads its MCP config at startup. On macOS
+that's Cmd+Q; on Windows, kill it from the system tray.
+
+Requires Python 3.11+ and Node 22+. Works on macOS, Linux, Windows.
+
+Then in any conversation, try:
+
+```
+What was I working on yesterday?
+Plan my morning.
+Decompose this goal into atomic tasks.
+```
+
+Claude calls the MCP tools under the hood; you just talk.
+
+<details>
+<summary><strong>Want to install it step-by-step instead?</strong></summary>
+
 NeuroDock ships across two registries: the Python **MCP servers** (MCP =
 Model Context Protocol — the standard that lets Claude call local tools)
 on PyPI, and the user-facing **CLI** on npm. The CLI wraps everything else.
 
-### 1. Install the six MCP servers
+**1. Install the six MCP servers**
 
 ```sh
 pip install neurodock-mcp-chronometric neurodock-mcp-cognitive-graph neurodock-mcp-task-fractionator neurodock-mcp-translation neurodock-mcp-guardrail neurodock-evals
 ```
 
-### 2. Wire them into your MCP-aware client
+**2. Wire them into your MCP-aware client**
 
 ```sh
 npx --yes @neurodock/cli init
 ```
 
-This detects Claude Desktop, Claude Code, or Cursor and writes the server
+Detects Claude Desktop, Claude Code, or Cursor and writes the server
 entries automatically.
 
-### 3. Restart Claude (full quit — this is the #1 silent failure)
+**3. Restart Claude** (full quit — see the warning above).
 
-Claude only reads its MCP config at startup. **Quit the app fully** (not just
-close the window; on macOS use Cmd+Q, on Windows kill it from the system tray)
-and reopen. If you skip this, the tools will be invisible and you'll think
-the install failed.
-
-Works on macOS, Linux, and Windows. Requires Python 3.11+ and Node 22+.
-
-### About the `neurodock` command
-
-The `neurodock` CLI lives on npm as `@neurodock/cli`, **not** on PyPI. The
-`pip install` step in #1 gives you the MCP server binaries (`neurodock-mcp-chronometric`,
-`neurodock-mcp-cognitive-graph`, etc.) that Claude calls over stdio — those
-aren't meant to be invoked by hand.
-
-To run the CLI you have two choices:
+**About the `neurodock` command** — it lives on npm as `@neurodock/cli`,
+**not** on PyPI. The `pip install` step gives you the MCP server binaries
+that Claude calls over stdio; the CLI is separate. Two ways to run it:
 
 ```sh
-# Option A — no install, just run via npx (good for one-off use)
+# Option A — run via npx, no install
 npx --yes @neurodock/cli doctor
-npx --yes @neurodock/cli init
 
-# Option B — install once, then call 'neurodock' from anywhere
+# Option B — install once, call 'neurodock' from anywhere
 npm install -g @neurodock/cli
 neurodock doctor
-neurodock init
 ```
 
 `@neurodock/cli` exposes: `init`, `doctor`, `validate`, `update`, `uninstall`,
 `host install`, `host uninstall`, `profile show`, `profile validate`,
-`install-all`, `examples`.
+`install-all`, `examples`, `plugin add/remove/list/enable/disable/validate`.
 
-### One-command path
+Want to see it work without installing from PyPI/npm at all?
+`TESTING_LOCAL.md` walks through the from-clone path.
 
-If you don't want to think about it, `install-all` wraps step 1 and step 2:
-
-```sh
-npx --yes @neurodock/cli install-all
-```
-
-It pip-installs the six servers, wires every detected client, and copies the
-starter profile in a single step.
-
-`init` (or `install-all`) detects your client(s), writes MCP server entries,
-copies a starter profile to `~/.neurodock/profile.yaml`, and prints next steps.
-
-Then in any conversation: `"What was I working on yesterday?"` /
-`"Plan my morning"` / `"Decompose this goal into atomic tasks"`. Claude calls
-the MCP tools under the hood; you just talk.
-
-Want to see it work without installing from PyPI/npm? `TESTING_LOCAL.md`
-walks through the from-clone path.
+</details>
 
 ## See it in action
 

@@ -1,112 +1,151 @@
-# NeuroDock Profile — worked example ("T" profile from plan.md §6)
+# ==============================================================================
+# WELCOME TO YOUR NEURODOCK PROFILE
+# ==============================================================================
+# Think of this as a quick instruction manual to teach the app how your brain works.
 #
-# This file is the template copied to ~/.neurodock/profile.yaml by
-# `npx neurodock init`. Every block except `identity` is optional and
-# falls back to the safe defaults documented in profile.schema.json.
+# TIPS FOR FILLING THIS OUT:
+# - Take your time. You don't have to finish it all at once.
+# - Almost everything is OPTIONAL. If you aren't sure, just leave it as is.
+# - Your data is safe. Nothing leaves your computer without your permission.
+# - You can always come back and change these later. You can't break anything.
 #
-# Loader precedence (highest wins):
-#   1. $NEURODOCK_PROFILE_PATH               (testing override)
-#   2. $XDG_CONFIG_HOME/neurodock/profile.yaml
-#   3. ~/.neurodock/profile.yaml             (default)
-#   4. ./profile.yaml                        (project-local override)
+# Where does this file live?
+#   ~/.neurodock/profile.yaml   (your machine, your private copy)
 #
-# Forward-compatibility: unknown keys at any level are preserved by
-# loaders, not stripped. A v0.1.0 install can round-trip a v0.2.0
-# profile without data loss. Run `neurodock profile validate` to catch
-# typos that permissive parsing would otherwise swallow.
+# How to check it's valid after editing:
+#   neurodock profile validate
+# ==============================================================================
 
-# Optional. Declares which schema version this file targets. Loaders
-# accept any version; they only warn when the file is newer than they
-# understand.
+# Leave this exactly as "0.1.0". It just helps the app read this file.
 schema_version: "0.1.0"
 
-# Required. Self-declared identity. No PII is required.
+# ------------------------------------------------------------------------------
+# 1. WHO YOU ARE (Required)
+# ------------------------------------------------------------------------------
 identity:
-  # How NeuroDock addresses you. Free-form; one letter is fine.
+  # What should we call you? A nickname or even just a single letter is totally fine.
   display_name: "T"
 
-  # Self-identified neurotypes. Self-ID is sufficient — diagnosis is
-  # never required and is never used to gate features. Skills targeted
-  # at a neurotype activate when the tag appears here.
+  # Which of these describe you?
+  # Self-ID is enough — you do NOT need a diagnosis to use any feature.
+  # Skills targeted at a neurotype activate when the tag appears here.
   # Allowed: adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other
   neurotypes:
     - "adhd"
     - "asd"
 
-  # Optional free-form notes. Surfaced only when a skill explicitly
-  # asks; never logged or transmitted.
+  # Is there anything else you want the app to know about how to talk to you?
+  # (For example: "I get overwhelmed by long paragraphs" or "Please be direct".)
+  # Only surfaced when a skill explicitly asks; never logged or transmitted.
   # additional_notes: "sensory-sensitive to motion; prefers terse output"
 
-# Optional. Output and reading preferences.
+# ------------------------------------------------------------------------------
+# 2. HOW YOU LIKE TO READ & WORK (Optional)
+# ------------------------------------------------------------------------------
 preferences:
-  # answer_first | conventional | bullet_first  (default: answer_first)
+  # How do you want the AI to structure its answers?
+  # Options:
+  #   answer_first  — verdict first, reasoning after. Good for ADHD triage.
+  #   conventional  — explanation first, then verdict.
+  #   bullet_first  — verdict as a bullet list.
   output_format: "answer_first"
 
-  # Max items in any list/group/step sequence. 1..20. Default 7
-  # (Miller's-number neighbourhood); 5 is the ADHD-tuned manifesto value.
+  # Max items shown in any list / group / step sequence.
+  # Range 1..20. Default 7 (Miller's number).
+  # 5 is the ADHD-tuned manifesto value — change to your comfort.
   max_chunk_size: 5
 
-  # atkinson_hyperlegible | lexend | system_default
-  # Default: atkinson_hyperlegible (evidence-based for dyslexia).
-  # 'lexend' is evidence-based for ADHD readability.
+  # Which font style is easiest for your eyes?
+  # Options:
+  #   atkinson_hyperlegible  — evidence-based for dyslexia (default)
+  #   lexend                  — evidence-based for ADHD readability
+  #   system_default          — your OS choice
   reading_font_hint: "atkinson_hyperlegible"
 
-  # reduced | system | full  (default: reduced)
-  # 'reduced' disables animation/transitions; 'system' follows the OS
-  # prefers-reduced-motion setting.
+  # Do you want visual animations turned on?
+  # Options:
+  #   reduced  — no animations (default; safest for vestibular sensitivity)
+  #   system   — match your OS prefers-reduced-motion setting
+  #   full     — animations on
   motion: "reduced"
 
-# Optional. Thresholds consumed by mcp-chronometric.
+# ------------------------------------------------------------------------------
+# 3. TIME & FOCUS ALERTS (Optional)
+# ------------------------------------------------------------------------------
+# Helps if you tend to hyperfocus or lose track of time.
 chronometric:
-  # Continuous-session length, in minutes, at which the hyperfocus
-  # nudge fires. 15..240. Default 90. The 60/+30/+60 escalation ladder
-  # shape itself is fixed in v0.1.0; this only re-anchors the 'nudge' rung.
+  # How many minutes of straight work before we gently remind you to take a break?
+  # Range 15..240. Default 90.
+  # The 60/+30/+60 escalation ladder shape itself is fixed; this only
+  # re-anchors the 'nudge' rung in the ladder.
   hyperfocus_break_minutes: 90
 
-  # Optional. Your self-declared end-of-day time, local clock, 24h.
-  # When present, the hyperfocus monitor uses this for the
-  # "after end_of_day" nudge.
+  # What time do you want to officially "clock out" for the day?
+  # 24-hour clock (e.g. "18:30" for 6:30 PM, "22:00" for 10 PM).
+  # When set, the hyperfocus nudge gets stricter after this time.
   end_of_day_local: "18:30"
 
-  # Optional override of the energy_zone clock-band heuristic from
-  # ADR 0001. Omit unless you want to redraw your own bands.
+  # (Advanced) Re-draw your personal energy bands during the day.
+  # Leave commented out unless you specifically want to override
+  # the default clock-band heuristic.
   # zones:
   #   morning_peak: "06:00-10:30"
   #   afternoon_dip: "14:00-16:00"
 
-  # auto_close | error  (default: auto_close)
-  # What mark_session_start does when a prior session is still open.
-  # 'auto_close' is charitable to forgotten sessions; the closed
-  # session metadata is returned so the skill can surface it.
+  # What should the app do if you start a new work session but forgot
+  # to close your last one?
+  # Options:
+  #   auto_close  — safely closes the old one for you (default, charitable)
+  #   error       — stops and tells you the old session is still open
   session_overlap_policy: "auto_close"
 
-# Optional. Thresholds for mcp-guardrail detectors. Heuristics are
-# public and auditable per ETHICS; detection never blocks silently.
+# ------------------------------------------------------------------------------
+# 4. GENTLE NUDGES (Optional)
+# ------------------------------------------------------------------------------
+# Helps the app notice if you are getting stuck in a loop or overthinking.
+# Heuristics are public and auditable in ETHICS.md; detection never blocks
+# silently.
 guardrails:
-  # Number of semantically-equivalent queries in the window that
-  # triggers the rumination signal. 1..20. Default 3.
+  # How many semantically-similar questions in the window before we gently
+  # check in on you?
+  # Range 1..20. Default 3.
   rumination_threshold: 3
 
-  # Rolling window in minutes for rumination counting. 5..1440.
-  # Default 90.
+  # Over how many minutes do we count those repeated questions?
+  # Range 5..1440. Default 90.
   rumination_window_minutes: 90
 
-  # off | warn | refuse  (default: warn)
+  # Should we warn you if the AI is just agreeing with you too much instead
+  # of being helpful?
+  # Options:
+  #   off     — never flag sycophancy
+  #   warn    — flag it, you decide (default)
+  #   refuse  — refuse to send the over-validating draft
   sycophancy_check: "warn"
 
-# Optional. Consent and data-flow. Defaults are local-first; nothing
-# leaves your machine without an explicit opt-in here.
+# ------------------------------------------------------------------------------
+# 5. PRIVACY (Optional)
+# ------------------------------------------------------------------------------
+# You are in complete control. By default, everything stays on your computer.
 privacy:
-  # local | cloud_voyage | cloud_openai  (default: local)
-  # Cloud options trigger a visible "cloud embeddings enabled" notice
-  # at session start.
+  # Where should the cognitive-graph compute embeddings (for fuzzy recall)?
+  # Options:
+  #   local         — on your machine (default; uses fastembed)
+  #   cloud_voyage  — Voyage AI (opt-in; triggers a visible "cloud" notice)
+  #   cloud_openai  — OpenAI embeddings (opt-in)
   embeddings: "local"
 
-  # off | local_otel_only | full  (default: off)
-  # 'full' is reserved in v0.1.0; do not use until a future ADR lands.
+  # Do you want to send anonymous crash/bug reports to help improve the app?
+  # Options:
+  #   off              — nothing collected (default)
+  #   local_otel_only  — local-only OpenTelemetry traces; nothing leaves
+  #   full             — reserved for a future ADR; do not use yet
   telemetry: "off"
 
-  # Consent for mcp-chronometric.idle_status to read OS idle time.
-  # When false (default), idle_status returns consent_granted=false
-  # and hyperfocus_signal=unknown without error.
+  # Can the app check if your computer mouse/keyboard has been completely
+  # still? This helps it automatically pause your focus timers if you walk
+  # away from your desk.
+  # Options:
+  #   false  — no (default; idle_status returns consent_granted=false)
+  #   true   — yes, share OS idle time with the chronometric server
   os_idle_consent: false
