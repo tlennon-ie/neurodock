@@ -63,12 +63,23 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish via Changesets
-        uses: changesets/action@v1
-        with:
-          publish: pnpm release
+      # Publish every changed package directly. changesets/action was
+      # used previously but it computes a Version-PR base branch from
+      # GITHUB_REF_NAME, which on tag pushes becomes 'refs/tags/v0.2.3'
+      # (with slashes) and the GitHub PR API rejects it as an invalid
+      # base. Tag-triggered releases just need 'publish' — no PR ever
+      # gets opened from a tag push anyway. Direct pnpm publish is
+      # simpler and avoids that action's branch-trigger assumption.
+      - name: Publish packages to npm
+        run: |
+          set -e
+          echo "Publishing every workspace package whose version is not yet on npm."
+          # 'pnpm -r publish' walks every workspace package, skips
+          # private:true, and skips already-published versions cleanly.
+          # --no-git-checks because we're on a detached HEAD (tag), not
+          # a branch. --access public for scoped packages (@neurodock/*).
+          pnpm -r publish --no-git-checks --access public
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
