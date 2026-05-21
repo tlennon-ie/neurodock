@@ -130,6 +130,7 @@ describe("neurodock install-all", () => {
         skipInstall: false,
         yes: true,
         dryRun: true,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -181,6 +182,7 @@ describe("neurodock install-all", () => {
         skipInstall: false,
         yes: true,
         dryRun: false,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -229,6 +231,7 @@ describe("neurodock install-all", () => {
         skipInstall: false,
         yes: true,
         dryRun: false,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -272,6 +275,7 @@ describe("neurodock install-all", () => {
         skipInstall: true,
         yes: true,
         dryRun: false,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -320,6 +324,7 @@ describe("neurodock install-all", () => {
         skipInstall: false,
         yes: true,
         dryRun: false,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -352,6 +357,7 @@ describe("neurodock install-all", () => {
         skipInstall: false,
         yes: true,
         dryRun: false,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -384,6 +390,7 @@ describe("neurodock install-all", () => {
         skipInstall: false,
         yes: true,
         dryRun: false,
+        noNativeHost: true,
       },
       {
         spawn,
@@ -403,5 +410,166 @@ describe("neurodock install-all", () => {
     expect(r.installer).toBe("skipped");
     expect(r.packages).toHaveLength(0);
     expect(r.messages.join("\n")).toContain("Could not find an installer");
+  });
+
+  it("happy path: install-all also runs the native-host install", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    let hostInstallCalls = 0;
+    const fakeHostInstall = (): {
+      platform: string;
+      outcomes: ReadonlyArray<{
+        browser: string;
+        manifestPath: string;
+        action: "create" | "skip" | "update" | "remove";
+        detail?: string;
+      }>;
+    } => {
+      hostInstallCalls += 1;
+      return {
+        platform: "linux",
+        outcomes: [
+          {
+            browser: "chrome",
+            manifestPath: "/fake/chrome/com.neurodock.profile.json",
+            action: "create",
+          },
+        ],
+      };
+    };
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: false,
+      },
+      {
+        spawn,
+        runHostInstall: fakeHostInstall,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(hostInstallCalls).toBe(1);
+    expect(r.nativeHost.status).toBe("installed");
+    expect(r.exitCode).toBe(0);
+    const joined = r.messages.join("\n");
+    expect(joined).toContain("Installing native-messaging host");
+    expect(joined).toContain("chrome");
+    expect(joined).toContain("Installed the native-messaging host");
+    expect(joined).toContain("What this just did:");
+  });
+
+  it("--no-native-host skips the native-host install", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    let hostInstallCalls = 0;
+    const fakeHostInstall = (): {
+      platform: string;
+      outcomes: ReadonlyArray<{
+        browser: string;
+        manifestPath: string;
+        action: "create" | "skip" | "update" | "remove";
+        detail?: string;
+      }>;
+    } => {
+      hostInstallCalls += 1;
+      return { platform: "linux", outcomes: [] };
+    };
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: true,
+      },
+      {
+        spawn,
+        runHostInstall: fakeHostInstall,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(hostInstallCalls).toBe(0);
+    expect(r.nativeHost.status).toBe("skipped");
+    expect(r.exitCode).toBe(0);
+    const joined = r.messages.join("\n");
+    expect(joined).toContain("Skipping native-messaging host install");
+    expect(joined).toContain("--no-native-host");
+    expect(joined).toContain("Skipped the native-messaging host");
+  });
+
+  it("native-host failure emits a warning but does not fail the whole command", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    const fakeHostInstall = (): {
+      platform: string;
+      outcomes: ReadonlyArray<{
+        browser: string;
+        manifestPath: string;
+        action: "create" | "skip" | "update" | "remove";
+        detail?: string;
+      }>;
+    } => {
+      throw new Error("permission denied writing registry key");
+    };
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: false,
+      },
+      {
+        spawn,
+        runHostInstall: fakeHostInstall,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(r.nativeHost.status).toBe("failed");
+    expect(r.nativeHost.error).toContain("permission denied");
+    // Whole command stays exit 0 — six MCP servers installed fine; the host
+    // is optional.
+    expect(r.exitCode).toBe(0);
+    const joined = r.messages.join("\n");
+    expect(joined).toContain("[warn]");
+    expect(joined).toContain("native-messaging host install failed");
+    expect(joined).toContain("optional");
+    expect(joined).toContain("Native-messaging host install failed");
   });
 });

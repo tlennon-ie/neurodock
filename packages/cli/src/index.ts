@@ -21,7 +21,7 @@ import {
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.4.0";
+export const CLI_VERSION = "0.4.1";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -93,6 +93,10 @@ export function buildProgram(): Command {
       "print what would happen without writing anything",
       false,
     )
+    .option(
+      "--no-native-host",
+      "skip registering the optional native-messaging host (browser extension <-> profile.yaml)",
+    )
     .action(
       async (opts: {
         client: string;
@@ -101,6 +105,8 @@ export function buildProgram(): Command {
         skipInstall: boolean;
         yes: boolean;
         dryRun: boolean;
+        // Commander inverts `--no-native-host`: presence of the flag sets this to false.
+        nativeHost: boolean;
       }) => {
         const client = validateClient(opts.client);
         const profile = validateProfile(opts.profile);
@@ -112,6 +118,7 @@ export function buildProgram(): Command {
           skipInstall: opts.skipInstall === true,
           yes: opts.yes === true,
           dryRun: opts.dryRun === true,
+          noNativeHost: opts.nativeHost === false,
         });
         for (const m of r.messages) print(m);
         process.exit(r.exitCode);

@@ -1,5 +1,26 @@
 # @neurodock/cli changelog
 
+## 0.4.1
+
+### Changed
+
+- `neurodock install-all` now also registers the optional native-messaging
+  host at the end of the run (previously a separate `neurodock host install`
+  step). Brings first-time install to truly one command: pip-install the
+  six MCP servers, wire the MCP-aware clients, and register the host the
+  browser extension uses to read `~/.neurodock/profile.yaml`.
+- New `--no-native-host` flag on `install-all` for users who don't want the
+  browser-extension bridge wired (e.g. headless / server installs).
+- Host-install failure is non-fatal: the whole command stays exit 0, prints
+  a `[warn]` line, and tells the user they can re-run `neurodock host install`
+  later. Rationale: the host is only useful if the user also installs the
+  browser extension, so failing the entire first-time install over it is
+  worse UX than warning.
+- Added a "What this just did" three-bullet recap at the end of `install-all`
+  so the user can see what was wired without re-reading the full log.
+- New tests in `tests/install-all.test.ts`: happy-path host install,
+  `--no-native-host` skip, host-failure warn-but-don't-fail.
+
 ## 0.4.0
 
 ### Added

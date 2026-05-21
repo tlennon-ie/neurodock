@@ -1,6 +1,10 @@
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { readEnv, type EnvSnapshot } from "../lib/env.js";
 import { runInit, type InitRunResult } from "./init.js";
+import {
+  runHostInstall as defaultRunHostInstall,
+  type HostCommandResult,
+} from "./host.js";
 import type { ClientId } from "../types.js";
 
 export type InstallerKind = "uv" | "pip";
@@ -13,6 +17,20 @@ export interface InstallAllOptions {
   readonly skipInstall: boolean;
   readonly yes: boolean;
   readonly dryRun: boolean;
+  /**
+   * When true, skip the native-messaging host registration step. The host
+   * is optional — it only matters if the user also installs the browser
+   * extension — but we install it by default so the happy path is one
+   * command.
+   */
+  readonly noNativeHost: boolean;
+}
+
+export interface NativeHostOutcome {
+  /** "installed" = ran, "skipped" = --no-native-host or dry-run, "failed" = error caught. */
+  readonly status: "installed" | "skipped" | "failed";
+  readonly result?: HostCommandResult;
+  readonly error?: string;
 }
 
 export interface PackageOutcome {
@@ -33,6 +51,7 @@ export interface InstallAllResult {
   readonly installer: InstallerKind | "skipped" | "dry-run";
   readonly packages: ReadonlyArray<PackageOutcome>;
   readonly initResult: InitRunResult | null;
+  readonly nativeHost: NativeHostOutcome;
   readonly messages: ReadonlyArray<string>;
   /** 0 = ok, 1 = install/path failure, 2 = init failure */
   readonly exitCode: 0 | 1 | 2;
@@ -49,6 +68,12 @@ export interface InstallAllDependencies {
    * Override the init runner. Defaults to runInit. Tests can stub.
    */
   readonly runInit?: typeof runInit;
+  /**
+   * Override the native-host install step. Defaults to the real
+   * `runHostInstall` from ./host.js. Tests inject a stub so they don't
+   * touch the user's registry / config dirs.
+   */
+  readonly runHostInstall?: typeof defaultRunHostInstall;
 }
 
 export type SpawnFn = (
@@ -101,6 +126,7 @@ export async function runInstallAll(
   const env = readEnv(deps.envOverrides ?? {});
   const spawn = deps.spawn ?? defaultSpawn;
   const init = deps.runInit ?? runInit;
+  const hostInstall = deps.runHostInstall ?? defaultRunHostInstall;
   const messages: string[] = [];
 
   // Phase 1: pick installer.
@@ -123,10 +149,20 @@ export async function runInstallAll(
     messages.push("");
     messages.push("Would then run 'neurodock init' equivalent:");
     messages.push(`  --client ${options.client} --profile ${options.profile}`);
+    if (options.noNativeHost) {
+      messages.push(
+        "Would skip native-messaging host install (--no-native-host).",
+      );
+    } else {
+      messages.push(
+        "Would register the optional native-messaging host (browser extension <-> profile.yaml).",
+      );
+    }
     return {
       installer: "dry-run",
       packages: [],
       initResult: null,
+      nativeHost: { status: "skipped" },
       messages,
       exitCode: 0,
     };
@@ -138,6 +174,7 @@ export async function runInstallAll(
       installer: "skipped",
       packages: [],
       initResult: null,
+      nativeHost: { status: "skipped" },
       messages,
       exitCode: 1,
     };
@@ -193,10 +230,17 @@ export async function runInstallAll(
       installer: options.skipInstall ? "skipped" : installer ?? "skipped",
       packages: outcomes,
       initResult: null,
+      nativeHost: { status: "skipped" },
       messages,
       exitCode: 2,
     };
   }
+
+  // Phase 3.5: install the native-messaging host (optional, opt-out).
+  // Failure here is non-fatal — the host only matters if the user also
+  // installs the browser extension, and surfacing a warning is friendlier
+  // than failing the whole "first-time install" command.
+  const nativeHost = installNativeHost(options, hostInstall, messages);
 
   // Phase 4: summary + suggested prompts.
   const installedCount = outcomes.filter((o) => o.installed).length;
@@ -213,6 +257,20 @@ export async function runInstallAll(
     );
   }
   messages.push("");
+  messages.push("What this just did:");
+  messages.push(
+    "  - Installed 6 MCP servers via " +
+      (options.skipInstall
+        ? "pip (skipped)"
+        : installer === "uv"
+          ? "uv"
+          : "pip"),
+  );
+  messages.push(
+    "  - Wired your MCP-aware clients (Claude Desktop / Claude Code / Cursor)",
+  );
+  messages.push(`  - ${describeNativeHostBullet(nativeHost)}`);
+  messages.push("");
   messages.push("Try one of these in your MCP client:");
   for (const p of SUGGESTED_PROMPTS) {
     messages.push(`  - ${p}`);
@@ -225,9 +283,57 @@ export async function runInstallAll(
     installer: options.skipInstall ? "skipped" : installer ?? "skipped",
     packages: outcomes,
     initResult,
+    nativeHost,
     messages,
     exitCode,
   };
+}
+
+function installNativeHost(
+  options: InstallAllOptions,
+  hostInstall: typeof defaultRunHostInstall,
+  messages: string[],
+): NativeHostOutcome {
+  messages.push("");
+  if (options.noNativeHost) {
+    messages.push("Skipping native-messaging host install (--no-native-host).");
+    return { status: "skipped" };
+  }
+
+  messages.push(
+    "Installing native-messaging host (browser extension <-> profile.yaml)...",
+  );
+  try {
+    const result = hostInstall({ extensionIds: [] });
+    for (const o of result.outcomes) {
+      const detail = o.detail ? ` — ${o.detail}` : "";
+      messages.push(
+        `  [${o.action.padEnd(6)}] ${o.browser.padEnd(10)} ${
+          o.manifestPath
+        }${detail}`,
+      );
+    }
+    return { status: "installed", result };
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : String(err);
+    messages.push(
+      `  [warn] native-messaging host install failed: ${truncate(detail)}`,
+    );
+    messages.push(
+      "  This is optional — only the browser extension uses it. Re-run 'neurodock host install' later if you want it.",
+    );
+    return { status: "failed", error: detail };
+  }
+}
+
+function describeNativeHostBullet(outcome: NativeHostOutcome): string {
+  if (outcome.status === "installed") {
+    return "Installed the native-messaging host (lets the optional browser extension read your profile)";
+  }
+  if (outcome.status === "failed") {
+    return "Native-messaging host install failed (optional — re-run 'neurodock host install' later)";
+  }
+  return "Skipped the native-messaging host (optional — run 'neurodock host install' if you want the browser extension to read your profile)";
 }
 
 function resolveInstaller(
