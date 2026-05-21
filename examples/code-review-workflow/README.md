@@ -2,6 +2,35 @@
 
 A worked walkthrough for an IC engineer running a 90-minute PR-review block. Combines `neurodock-chronometric` (session bracketing + the 75-minute hyperfocus nudge), `neurodock-cognitive-graph` (recall of prior reviewer comments on the changed files), and `hyperfocus-formatter` (verdict-first comment shaping). NeuroDock does **not** read the code — the human still does the review. The substrate just makes the review block less expensive.
 
+## The review block at a glance
+
+What actually happens during a 90-minute review session. You read the diff, draft comments in chat, and the substrate handles the bracketing and the recall around you.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant You
+  participant Claude
+  participant Chrono as mcp-chronometric
+  participant Graph as mcp-cognitive-graph
+  participant Fmt as hyperfocus-formatter
+  You->>Claude: "Review PR #482, files A, B, C"
+  Claude->>Chrono: mark_session_start(intent)
+  Claude->>Graph: recall_entity(file=A, B, C)
+  Graph-->>Claude: prior comments per file
+  Claude->>You: surface prior context
+  loop while reviewing
+    You->>Claude: rough comment text
+    Claude->>Fmt: shape verdict-first
+    Fmt-->>You: "Don't merge: ...<br/>- reason<br/>- reason"
+  end
+  Note over Chrono: ~75 min mark
+  Chrono->>Claude: break nudge (one line)
+  You->>Claude: "done"
+  Claude->>Chrono: mark_session_end(summary)
+  Claude->>Graph: record_fact(verdict)
+```
+
 ## Who this is for
 
 - **IC engineers — especially senior+ — who do many reviews per week and find them taxing.** A 90-minute block of close reading is the most expensive thing many seniors do all week. The substrate is here to lower the activation cost, hold the timer, and surface what you already thought about the touched files last time.
@@ -13,7 +42,7 @@ It is **not** for:
 
 - Auto-reviewing PRs. NeuroDock does not read the diff. The substrate cannot tell you whether the code is correct. It can only tell you what you previously thought about these files, hold a session timer, and shape the comments you write into a verdict-first form. **The human does the review.**
 - Replacing your code-host's review UI. You still leave comments in GitHub / GitLab / Gerrit / Reviewable / wherever. The substrate runs alongside.
-- Performance scoring. There is no "you reviewed 4 PRs today" line. That is an anti-feature.
+- Performance scoring. There is no "you reviewed 4 PRs today" line. That is deliberately left out.
 
 ## What you will set up
 

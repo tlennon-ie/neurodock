@@ -21,6 +21,17 @@ Yes. The substrate is vendor-neutral. Claude Code and Cursor are both supported 
 
 No, by default. Local-first is the default in three independent consent gates: embeddings, telemetry, and OS idle detection. Each is opt-in per scope. Choosing `cloud_*` for embeddings triggers a visible session-start notice every time you launch a client. The substrate has no remote endpoint to send to. See [profiles](/concepts/profiles/#why-local-first).
 
+Here is the picture. Solid lines are what runs by default; dashed lines only happen if you explicitly turn them on.
+
+```mermaid
+flowchart LR
+  you([You]) --> claude[Claude]
+  claude --> servers[NeuroDock MCP servers]
+  servers --> local[(Local files<br/>~/.neurodock<br/>SQLite + YAML)]
+  servers -.->|only if you opt in| cloud_embed[Cloud embeddings<br/>Voyage / OpenAI]
+  servers -.->|reserved, not used yet| telem[Telemetry endpoint]
+```
+
 ## What happens if I delete `~/.neurodock/`?
 
 You lose your profile, your cognitive graph, and your local session state. The MCP server entries in your client configs survive (they only point at `uvx`-installed packages), so you can re-run `neurodock init` and start over with a fresh profile. Nothing in `~/.neurodock/` is sent off your machine, so there is nothing to "delete from the cloud".

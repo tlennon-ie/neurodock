@@ -7,6 +7,23 @@ The profile is the single cross-cutting consent and preference manifest for Neur
 
 After this page you will know why the profile is local-first, what the five blocks declare, and how forward-compatibility lets you upgrade and downgrade without losing data.
 
+## Where NeuroDock looks for your profile
+
+NeuroDock checks four places, in order. The first one it finds wins. Most people only ever need the second one (the home-folder default).
+
+```mermaid
+flowchart TD
+  start([Server starts]) --> e1{NEURODOCK_PROFILE_PATH<br/>env var set?}
+  e1 -->|yes| use1[Use that path<br/><i>test/CI override</i>]
+  e1 -->|no| e2{$XDG_CONFIG_HOME/<br/>neurodock/profile.yaml?}
+  e2 -->|yes| use2[Use it<br/><i>Linux convention</i>]
+  e2 -->|no| e3{~/.neurodock/<br/>profile.yaml?}
+  e3 -->|yes| use3[Use it<br/><i>the default</i>]
+  e3 -->|no| e4{./profile.yaml<br/>in current dir?}
+  e4 -->|yes| use4[Use it<br/><i>project-local</i>]
+  e4 -->|no| def[Fall back to safe defaults]
+```
+
 ## Why local-first
 
 Three independent consent gates govern whether anything leaves your machine:

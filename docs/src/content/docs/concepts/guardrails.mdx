@@ -7,6 +7,22 @@ The guardrail layer is the substrate's clinical safety pillar. It sits between a
 
 It is the only substrate area whose tool changes require sign-off from both the maintainer and a clinical reviewer. Every choice on this page is documented in [ETHICS.md](https://github.com/tlennon-ie/neurodock/blob/main/ETHICS.md) and in [ADR 0006](/decisions/0006-guardrail/).
 
+## How a guardrail intervenes
+
+A guardrail never silently blocks anything. The flow below shows what happens when a check fires: it always returns a reason, an override option, and lets you keep going if you want.
+
+```mermaid
+flowchart TD
+  msg([Your message or LLM response]) --> check{guardrail.check_*}
+  check -->|nothing detected| proceed[Proceed normally]
+  check -->|something detected| advisory[Surface plain-language reason<br/>+ override_options]
+  advisory --> choice{Your choice}
+  choice -->|override-once| proceed
+  choice -->|fresh-context| reset[Start a fresh conversation]
+  choice -->|i-want-validation| proceed
+  choice -->|leave it| pause[Pause here]
+```
+
 ## What the guardrail layer is not
 
 - **Not a treatment.** No detector treats, cures, manages, or remediates anything. NeuroDock is software; that is the full extent of the claim.

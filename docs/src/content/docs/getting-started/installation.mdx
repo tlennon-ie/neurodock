@@ -5,6 +5,19 @@ description: Install NeuroDock locally and wire it into Claude Desktop, Claude C
 
 After this page you will have a working NeuroDock install (v0.2.1 developer preview): the substrate's MCP servers running locally, a profile on disk, and one MCP-aware client (Claude Desktop, Claude Code, or Cursor) talking to them.
 
+## The whole install at a glance
+
+Four steps. The whole thing takes about five minutes. The diagram below is the map; everything after it is the detail.
+
+```mermaid
+flowchart LR
+  step1[1. pip install<br/>MCP servers] --> step2[2. npx neurodock init<br/>wire your client]
+  step2 --> step3[3. Restart Claude<br/><b>full quit</b>]
+  step3 --> step4[4. Tools appear<br/>in your chat]
+```
+
+The "full quit" in step 3 is the #1 silent failure — Claude only reads its MCP config at startup, so a window-close isn't enough. Cmd+Q on macOS, or kill from the tray on Windows.
+
 ## Prerequisites
 
 - **Node.js 22 or newer.** Check with `node --version`.

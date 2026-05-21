@@ -1,14 +1,19 @@
-# NeuroDock Plugin — minimal valid manifest.
+# ==============================================================================
+# THE SMALLEST POSSIBLE PLUGIN MANIFEST
+# ==============================================================================
+# This file contains ONLY the required fields for a NeuroDock plugin. Every
+# other field is optional. If you're just starting out, this is the shape to
+# copy.
 #
-# Required fields ONLY. Every other block is optional.
+# For the full version with every option explained, see:
+#   packages/core/schemas/plugin.example.yaml
 #
-# Manifest contract: packages/core/schemas/plugin.schema.json
-# Worked example:    packages/core/schemas/plugin.example.yaml
-# Design rationale:  docs/decisions/0007-plugin-protocol.md
+# For the design rationale behind why these fields exist:
+#   docs/decisions/0007-plugin-protocol.md
 #
-# This minimal shape is what `neurodock plugin scaffold` would emit.
-# It is valid against plugin.schema.json: every required field is
-# present, and no optional field is included.
+# The "neurodock plugin scaffold" command would write something close to
+# this file. Every required field is present, no optional ones are.
+# ==============================================================================
 
 schema_version: "0.1.0"
 name: "minimal-example"
@@ -18,7 +23,8 @@ description: "Minimal valid plugin manifest — replace with your one-sentence s
 license: "AGPL-3.0-or-later"
 trust:
   level: "experimental"
-  # NOTE: with trust.level = 'experimental' the substrate refuses this
-  # plugin by default. To install, either:
-  #   (a) bump trust.level to 'community' and add `source_url`, or
-  #   (b) opt in explicitly via `neurodock plugin trust <name> --once`.
+  # Heads up: with trust.level = "experimental" NeuroDock will refuse to
+  # load this plugin by default — that's a safety feature, not a bug.
+  # To get it loading, do one of:
+  #   (a) bump trust.level to "community" and add a "source_url", or
+  #   (b) opt in just this once: `neurodock plugin trust <name> --once`

@@ -11,6 +11,24 @@
 NeuroDock plugs into Claude Desktop / Claude Code / Cursor (any MCP-aware
 client). Local-first by default. No telemetry. AGPL-3.0-or-later.
 
+## How it fits together
+
+Quick picture before the install steps. Read left-to-right: you talk to Claude
+like normal, and Claude quietly calls NeuroDock's local tools to do the
+remembering, timing, and translating.
+
+```mermaid
+flowchart LR
+  user([You]) -->|chat| claude[Claude]
+  claude -->|tool call| mcp[NeuroDock MCP servers]
+  mcp -->|reads/writes| storage[(Local files<br/>~/.neurodock)]
+  mcp -->|result| claude
+  claude -->|reply| user
+```
+
+Everything runs on your laptop. Nothing leaves your machine unless you
+explicitly turn on a cloud option.
+
 ## Install
 
 ```sh
@@ -89,25 +107,56 @@ _(demo GIF coming — see [issue #27](https://github.com/tlennon-ie/neurodock/is
 
 ## What's inside
 
+NeuroDock is built around three pillars. Each pillar is made of small,
+independent packages that you can use one at a time or all together.
+
+```mermaid
+flowchart TB
+  subgraph cognitive[Cognitive substrate]
+    chrono[mcp-chronometric<br/>time + sessions]
+    graph[mcp-cognitive-graph<br/>memory]
+    frac[mcp-task-fractionator<br/>decomposition]
+  end
+  subgraph comms[Communication layer]
+    trans[mcp-translation<br/>tone + meetings]
+    ext[extension-browser<br/>Gmail, Slack, ...]
+  end
+  subgraph safety[Clinical guardrails]
+    guard[mcp-guardrail<br/>rumination / hyperfocus / sycophancy]
+    clin[clinical<br/>heuristic library]
+  end
+  skills[skills/<br/>six markdown bundles] --> cognitive
+  skills --> comms
+  skills --> safety
+  cli[cli/<br/>install + manage] --> cognitive
+  cli --> comms
+  cli --> safety
+```
+
+<details>
+<summary>Prefer the directory tree? Open this.</summary>
+
 ```
 neurodock/
 ├── packages/
-│ ├── mcp-chronometric/ Time + session + break management
-│ ├── mcp-cognitive-graph/ Persistent memory + entity recall (SQLite)
+│ ├── mcp-chronometric/      Time + session + break management
+│ ├── mcp-cognitive-graph/   Persistent memory + entity recall (SQLite)
 │ ├── mcp-task-fractionator/ Decompose vague goals into atomic tasks
-│ ├── mcp-translation/ Corporate-speak translator (MCP + browser ext)
-│ ├── mcp-guardrail/ Rumination / hyperfocus / sycophancy detectors
-│ ├── skills/ Six SKILL.md bundles activating on phrases
-│ ├── extension-browser/ WXT-built Chrome / Firefox / Edge extension
-│ ├── native-host/ Optional native messaging host (extension <-> profile.yaml)
-│ ├── cli/ `npx neurodock init` and friends
-│ ├── core/ Shared types, profile schema, plugin spec
-│ ├── clinical/ Heuristic library for the guardrail server
-│ └── evals/ Eval harness + corpus contribution pipeline
-├── docs/ Astro Starlight site (deploys to docs.neurodock.org)
-├── plugins/ Drop your own plugins here; auto-discovered
-└── profiles/ Curated profile presets
+│ ├── mcp-translation/       Corporate-speak translator (MCP + browser ext)
+│ ├── mcp-guardrail/         Rumination / hyperfocus / sycophancy detectors
+│ ├── skills/                Six SKILL.md bundles activating on phrases
+│ ├── extension-browser/     WXT-built Chrome / Firefox / Edge extension
+│ ├── native-host/           Optional native messaging host (extension <-> profile.yaml)
+│ ├── cli/                   `npx neurodock init` and friends
+│ ├── core/                  Shared types, profile schema, plugin spec
+│ ├── clinical/              Heuristic library for the guardrail server
+│ └── evals/                 Eval harness + corpus contribution pipeline
+├── docs/                    Astro Starlight site (deploys to docs.neurodock.org)
+├── plugins/                 Drop your own plugins here; auto-discovered
+└── profiles/                Curated profile presets
 ```
+
+</details>
 
 ## Status
 

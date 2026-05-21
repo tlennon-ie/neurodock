@@ -1,8 +1,27 @@
 # @neurodock/extension-browser
 
-NeuroDock browser extension. Manifest V3. Chrome, Edge, Firefox. Built with [WXT](https://wxt.dev).
+The NeuroDock browser extension. Same translation prompts as `mcp-translation`, but available right inside Gmail, Slack, Linear, Notion, GitHub, Docs, and Outlook so you don't have to switch tabs to ask "what does this actually mean?". Manifest V3. Chrome, Edge, Firefox. Built with [WXT](https://wxt.dev).
 
-This package delivers Area 2 (communication translation) per .
+This is the communication-layer surface of NeuroDock.
+
+## Where your text goes
+
+You write or select text in your browser. The extension sends it to one of five providers — your choice in the popup. The dashed lines are the cloud ones; you have to turn those on explicitly. The default is `ollama` (runs on your own laptop) or `mock` (no network at all).
+
+```mermaid
+flowchart LR
+  popup[Extension popup] --> select[Provider selector]
+  select --> ollama[ollama<br/><i>local, default</i>]
+  select -.-> anth[anthropic<br/><i>cloud, opt-in</i>]
+  select -.-> openai[openai<br/><i>cloud, opt-in</i>]
+  select -.-> router[openrouter<br/><i>cloud, opt-in</i>]
+  select --> mock[mock<br/><i>no network at all</i>]
+  ollama --> result([Translation result])
+  anth --> result
+  openai --> result
+  router --> result
+  mock --> result
+```
 
 ## What it does (v0.0.2)
 

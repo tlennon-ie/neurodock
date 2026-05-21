@@ -17,8 +17,8 @@ rewrites Claude Desktop's MCP config, restarting the app, and a sample
 conversation that exercises the chronometric and cognitive-graph servers.
 
 Start here if you want to actually use NeuroDock day-to-day. The walkthrough
-mirrors `TESTING_LOCAL.md` but is tightened for the Claude Desktop happy path
-and includes a realistic sample dialogue.
+mirrors `TESTING_LOCAL.md` but is tightened for the most common Claude Desktop
+flow and includes a realistic sample dialogue.
 
 ### `founders-morning-brief/`
 

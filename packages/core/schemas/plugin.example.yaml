@@ -1,50 +1,68 @@
-# NeuroDock Plugin — worked example (fictional Hiberno-English language pack).
+# ==============================================================================
+# WELCOME — THIS IS A WORKED EXAMPLE OF A PLUGIN MANIFEST
+# ==============================================================================
+# Plugins are how NeuroDock grows without us having to change the core. This
+# file shows every field you can put in your own plugin's "plugin.yaml" file.
 #
-# This file is illustrative. It is NOT installed by `npx neurodock init`;
-# it documents the full shape of a plugin.yaml manifest so contributors
-# can copy it as a starting point.
+# You don't need to use every field. Most of them are optional. Copy this
+# file as a starting point and delete anything you don't need.
 #
-# Manifest contract: packages/core/schemas/plugin.schema.json
-# Design rationale:  docs/decisions/0007-plugin-protocol.md
+# WHERE THE CONTRACT LIVES (for the curious):
+#   packages/core/schemas/plugin.schema.json     — the machine-checkable rules
+#   docs/decisions/0007-plugin-protocol.md       — the "why" behind the rules
 #
-# Discovery: the substrate walks plugins/<name>/plugin.yaml (in-repo) and
-# $XDG_DATA_HOME/neurodock/plugins/<name>/plugin.yaml (per-user) at init.
-# No central registry is required in v0.1.0; the Phase 3 federated registry
-# at plugins.neurodock.org is opt-in and indexes signed manifests.
+# HOW PLUGINS GET FOUND:
+#   When NeuroDock starts, it looks in two places for plugins:
+#     1. plugins/<your-plugin>/plugin.yaml   (lives inside this repo)
+#     2. ~/.local/share/neurodock/plugins/<your-plugin>/plugin.yaml
+#        (lives on your own computer, just for you)
+#   No central server. No sign-up. No registry to publish to.
 #
-# Forward-compatibility: unknown keys at any nesting level are preserved
-# by loaders, not stripped. A v0.1.0 install can round-trip a v0.2.0
-# manifest without data loss.
+# WILL UPGRADING BREAK MY PLUGIN?
+#   No. If we add new fields in a future version, older versions of NeuroDock
+#   will leave them alone instead of stripping them out. You can edit your
+#   plugin on a new install, swap back to an old one, and not lose anything.
+# ==============================================================================
 
-# Required. Plugin manifest schema version this file targets. Loaders
-# accept any version; they only warn when the file is newer than they
-# understand.
+# Leave this as "0.1.0". It just tells NeuroDock which version of the plugin
+# format you're using. If you're newer than NeuroDock, you'll get a warning,
+# not an error.
 schema_version: "0.1.0"
 
-# Required. Globally unique within `type`. Kebab-case. Reverse-DNS
-# prefixes (e.g. "org-eobrien-...") are RECOMMENDED for community
-# plugins; not enforced in v0.1.0.
+# ------------------------------------------------------------------------------
+# 1. WHO THIS PLUGIN IS (Required)
+# ------------------------------------------------------------------------------
+# A short, unique name. Lowercase, dashes between words.
+# Tip: starting it with your handle (e.g. "org-eobrien-...") helps avoid
+# clashes with other contributors' plugins. Not required.
 name: "ie-corporate-translation"
 
-# Required. One of:
-#   skill | mcp-server | profile | translation-pack | language-pack | theme
-#
-# 'language-pack' shadows existing translation prompts for the manifest's
-# `locale`. 'translation-pack' is a domain bundle (engineering review,
-# legal correspondence, etc.) that may target any locale. 'theme'
-# bundles design-system-keeper-approved visual variants.
+# What kind of plugin is this? Pick one:
+#   skill              — adds a Claude skill (a markdown file with triggers)
+#   mcp-server         — adds a new MCP server with new tools
+#   profile            — adds a profile preset users can copy
+#   translation-pack   — adds translation prompts for a domain (legal, sales...)
+#   language-pack      — adds prompts for a non-US-English workplace culture
+#   theme              — adds a visual theme for UI surfaces
 type: "language-pack"
 
-# Required. Strict semver. Patch/minor bumps in v0.1.x MUST be additive.
+# Your plugin's version number. Use semver (e.g. "0.2.1"). Bumping the
+# patch (third) number means "small fix, nothing broke". Bumping the minor
+# (middle) means "added a new feature, nothing broke". Bumping the major
+# (first) means "I changed something that might break people". Try not to
+# bump the major in 0.1.x unless you really have to.
 version: "0.2.1"
 
-# Required. One-sentence human description shown in plugin listings.
-# Must not make clinical claims (per ETHICS commitment 1).
+# A one-sentence description of what this plugin does. This is what people
+# see in plugin listings. Don't make clinical claims here — say what the
+# plugin DOES, not what it TREATS.
 description: "Hiberno-English to neutral corporate English for ND professionals — direct decoding of indirect Irish workplace register without flattening voice."
 
-# Optional. Plugin authors. At least one maintainer is RECOMMENDED for
-# community plugins so the substrate can surface a contact in trust
-# prompts.
+# ------------------------------------------------------------------------------
+# 2. WHO MADE IT (Optional but appreciated)
+# ------------------------------------------------------------------------------
+# Listing at least one maintainer helps when something needs fixing.
+# "role" is whatever makes sense — maintainer, reviewer, lived-experience reviewer.
 authors:
   - name: "Eoin O'Brien"
     handle: "@eobrien"
@@ -53,23 +71,33 @@ authors:
     handle: "@sionb"
     role: "reviewer" # lived-experience reviewer
 
-# Optional. Neurotype targeting. Empty / absent = agnostic (auto-activates
-# for every user). Non-empty intersection with profile.identity.neurotypes
-# = auto-activate. Empty intersection = installed but not auto-activated;
-# the user can enable it manually.
+# ------------------------------------------------------------------------------
+# 3. WHO IS THIS PLUGIN FOR? (Optional)
+# ------------------------------------------------------------------------------
+# Which neurotypes does this plugin help? Leave the list empty (or remove
+# this block) if it works for everyone — most plugins do.
+#
+# If a user's profile lists any of these neurotypes, NeuroDock turns this
+# plugin on for them automatically. If not, they can still turn it on by
+# hand — your plugin isn't blocked, just not on by default.
 neurotypes:
   - "adhd"
   - "audhd"
   - "asd"
 
-# REQUIRED for type 'language-pack' and 'translation-pack'. BCP 47 tags.
-# Substrate prefers locale-matched plugins over locale-agnostic ones
-# when both apply.
+# Which spoken-language / workplace cultures is this plugin for?
+# REQUIRED if type is "language-pack" or "translation-pack".
+# Use BCP 47 tags ("en-IE" = Irish English, "ja-JP" = Japanese, etc.)
 locale:
   - "en-IE"
-  - "en-GB" # ie-IE register often surfaces in en-GB workplaces too
+  - "en-GB" # Irish-English register often shows up in UK workplaces too
 
-# Optional. Hard runtime requirements.
+# ------------------------------------------------------------------------------
+# 4. WHAT THIS PLUGIN NEEDS TO RUN (Optional)
+# ------------------------------------------------------------------------------
+# If your plugin needs a specific version of NeuroDock or another MCP server,
+# say so here. NeuroDock will skip loading your plugin (cleanly) if any of
+# these aren't around.
 requires:
   substrate_version: ">=0.1.0"
   mcp_servers:
@@ -78,15 +106,18 @@ requires:
   skills: []
   plugins: []
 
-# Required-shape (may be empty array). Assets this plugin exposes to
-# the substrate. Each `path` is sandboxed: it MUST resolve inside the
-# plugin's directory after normalisation.
+# ------------------------------------------------------------------------------
+# 5. WHAT YOUR PLUGIN PROVIDES
+# ------------------------------------------------------------------------------
+# This is the actual content your plugin ships. Each entry points at a file
+# inside your plugin's directory. All paths are relative — your plugin can't
+# reach outside its own folder. That's a deliberate safety rule.
 provides:
   - type: "language-prompt-override"
     id: "translate-incoming-en-ie"
     path: "./prompts/translate-incoming.md"
-    # Optional per-asset predicate. Defaults to inheriting manifest-level
-    # neurotypes + locale. When present, overrides for this asset only.
+    # You can narrow when a single file applies, separate from the
+    # whole-plugin neurotypes/locale settings above.
     applies_to:
       locale: ["en-IE", "en-GB"]
 
@@ -101,19 +132,23 @@ provides:
   - type: "translation-prompt"
     id: "decode-grand"
     path: "./prompts/idioms/decode-grand.md"
-    # "Grand" in Hiberno-English ranges from "excellent" to "this is
-    # not fine and we are not going to discuss it further." Worth its
-    # own prompt.
+    # "Grand" in Hiberno-English can mean anything from "excellent" to
+    # "this is not fine and we are not going to discuss it further." It
+    # earns its own prompt.
 
-# Required. Trust + provenance.
+# ------------------------------------------------------------------------------
+# 6. WHERE THIS PLUGIN CAME FROM (Required)
+# ------------------------------------------------------------------------------
+# This is the "trust" block. It tells NeuroDock how much social process has
+# touched this plugin so it knows whether to prompt the user before activating.
 #
-# Four-tier ladder (see ADR 0007):
-#   official     — NeuroDock council-published; installs without prompting
-#   verified     — signed by a verified contributor (council keyring);
-#                  installs without prompting
-#   community    — author-signed; provenance recorded but not vouched;
-#                  prompts the user per profile preference
-#   experimental — unsigned; substrate refuses by default
+# Levels:
+#   official     — published by the NeuroDock maintainer; installs silently
+#   verified     — signed against the maintainer keyring; installs silently
+#   community    — your own plugin, author-signed; user gets a one-time prompt
+#   experimental — unsigned; NeuroDock refuses by default unless user opts in
+#
+# Most contributor plugins are "community". That's a good thing.
 trust:
   level: "community"
   signature: |
@@ -123,12 +158,18 @@ trust:
   keyring_fingerprint: "A1B2 C3D4 E5F6 7890 1234 5678 9ABC DEF0 1234 5678"
   source_url: "https://github.com/eobrien/ie-corporate-translation"
 
-# Required. SPDX identifier. Must be on the v0.1.0 whitelist
-# (AGPL-3.0-or-later-compatible). Non-whitelisted licenses refuse to
-# load with a 'license_not_allowed' error.
+# ------------------------------------------------------------------------------
+# 7. LICENSE (Required)
+# ------------------------------------------------------------------------------
+# Your plugin's licence. Must be one of the allowed-list licences (they all
+# play nicely with AGPL-3.0). If you pick one that isn't on the list,
+# NeuroDock will refuse to load the plugin with a clear "license_not_allowed"
+# error so nothing silently fails.
 license: "AGPL-3.0-or-later"
 
-# Optional. Discovery surface.
+# ------------------------------------------------------------------------------
+# 8. WHERE PEOPLE CAN LEARN MORE (Optional)
+# ------------------------------------------------------------------------------
 homepage: "https://hiberno-translate.example.org"
 repository: "https://github.com/eobrien/ie-corporate-translation"
 keywords:
@@ -137,12 +178,16 @@ keywords:
   - "corporate"
   - "indirect-speech"
 
-# Optional. Lifecycle hooks. v0.1.0 sandbox refuses to run hooks unless
-# trust.level in {'official', 'verified'}. Community plugins MAY declare
-# hooks; they will be ignored until the hook sandbox lands in Phase 3.
+# ------------------------------------------------------------------------------
+# 9. LIFECYCLE HOOKS (Optional, advanced)
+# ------------------------------------------------------------------------------
+# Scripts that run on install/uninstall. For safety, NeuroDock will only
+# run these for "official" or "verified" plugins right now. You can declare
+# them for a community plugin — they'll just sit there politely ignored
+# until the safer hook sandbox lands.
 hooks:
-  on_install: "./install.sh" # idempotent setup; no network, no out-of-dir writes
-  on_uninstall: "./uninstall.sh" # cleanup of any plugin-local state
+  on_install: "./install.sh" # idempotent; no network, no writing outside the plugin dir
+  on_uninstall: "./uninstall.sh" # clean up anything you created locally
 
-# Optional. Forward-compat declarations. Reserved.
+# Reserved for future use. Leave empty.
 compatibility: {}

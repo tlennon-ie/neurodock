@@ -5,6 +5,23 @@ description: The MCP servers that externalise executive function. Five shipped i
 
 The substrate is the layer of MCP servers and skills that externalise executive function — time awareness, persistent memory, task decomposition, communication translation, and clinical safety. Five MCP servers shipped in `v0.2.1` and are installable from PyPI. Each is small, single-purpose, and independently versioned.
 
+## How the five servers relate
+
+Each server does one thing. They don't import each other — they communicate by passing plain data through your MCP client. The diagram shows what each one is responsible for and how a skill might use them together.
+
+```mermaid
+flowchart TB
+  client([Claude / Cursor / your MCP client])
+  client --> chrono[mcp-chronometric<br/>What time is it? Am I in a session?]
+  client --> graph[mcp-cognitive-graph<br/>What did I decide last week?]
+  client --> frac[mcp-task-fractionator<br/>Break this goal into small tasks]
+  client --> trans[mcp-translation<br/>What does this email actually mean?]
+  client --> guard[mcp-guardrail<br/>Am I ruminating? Hyperfocusing?]
+  chrono --> store[(~/.neurodock<br/>local files)]
+  graph --> store
+  frac --> store
+```
+
 ## What an MCP server is
 
 The Model Context Protocol (MCP) is a standard for connecting language models to external tools and data. An MCP server exposes a set of named **tools** with typed inputs and outputs. Any MCP-aware client (Claude Desktop, Claude Code, Cursor, others) can call those tools at the model's request.

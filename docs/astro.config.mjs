@@ -1,6 +1,7 @@
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import sitemap from "@astrojs/sitemap";
+import mermaid from "astro-mermaid";
 
 // NeuroDock documentation site.
 // Tech stack and visual language pinned by plan.md §2 and §4.
@@ -11,6 +12,13 @@ export default defineConfig({
   site: "https://docs.neurodock.org",
   integrations: [
     sitemap(),
+    // Render ```mermaid code blocks as SVG diagrams. Client-side render
+    // (no Playwright dependency) using mermaid.js loaded from a CDN.
+    // Reduced motion respected via mermaid's `theme: 'base'` defaults.
+    mermaid({
+      theme: "neutral",
+      autoTheme: true,
+    }),
     starlight({
       title: "NeuroDock",
       description:

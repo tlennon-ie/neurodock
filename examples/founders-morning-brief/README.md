@@ -1,6 +1,30 @@
 # founders-morning-brief
 
-A 5-minute morning ritual for solo founders and small-team operators. Pulls from all three NeuroDock pillars — chronometric (time and sessions), cognitive graph (memory of yesterday), task fractionator (today's next moves) — and the substrate's profile layer. Calm, not hustle. The brief respects your bandwidth; it does not 10x your output.
+A 5-minute morning ritual for solo founders and small-team operators. Pulls from all three NeuroDock pillars — chronometric (time and sessions), cognitive graph (memory of yesterday), task fractionator (today's next moves) — and the substrate's profile layer. Calm, not hustle. The brief respects your bandwidth; it does not push you to do more.
+
+## The morning brief at a glance
+
+You paste one prompt. Claude calls the four tools below in order. The result is one short summary, one focus session anchored to a stated intent, and a break nudge later in the day. The diagram shows what's actually happening behind the chat window.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant You
+  participant Claude
+  participant Chrono as mcp-chronometric
+  participant Graph as mcp-cognitive-graph
+  participant Frac as mcp-task-fractionator
+  You->>Claude: "Good morning, brief me"
+  Claude->>Chrono: get_time_context()
+  Chrono-->>Claude: day, energy zone, last session
+  Claude->>Graph: weekly_rollup()
+  Graph-->>Claude: yesterday's open threads
+  Claude->>Frac: decompose / next_one per project
+  Frac-->>Claude: top 3 next actions
+  Claude->>You: short brief + ask which to start
+  You->>Claude: "start with X"
+  Claude->>Chrono: mark_session_start(intent: X)
+```
 
 ## Who this is for
 
@@ -200,9 +224,9 @@ A common chain:
 
 ## A note on tone
 
-This walkthrough avoids hustle vocabulary on purpose. The morning brief is a 5-minute calm ritual, not a 10x-your-output rallying cry. If the brief ever lectures you, congratulates you, or asks "shall we crush today?", that is a bug — file an issue. The substrate is built for sustainable working, not maximum output.
+This walkthrough avoids hustle vocabulary on purpose. The morning brief is a 5-minute calm ritual, not a "let's smash today" rallying cry. If the brief ever lectures you, congratulates you, or asks "shall we crush today?", that is a bug — please file an issue. The substrate is built for sustainable working, not maximum output.
 
-The brief is also explicitly NOT a productivity scorecard. It will not enumerate yesterday's incomplete items, calculate a completion percentage, or compare today to last Tuesday. Those are anti-features. Founders who run themselves on scorecards burn out; founders who run themselves on continuity ship longer. NeuroDock picks continuity.
+The brief is also explicitly NOT a scorecard. It will not enumerate yesterday's incomplete items, calculate a completion percentage, or compare today to last Tuesday. Those things are deliberately left out. Founders who run themselves on scorecards burn out; founders who run themselves on continuity ship for longer. NeuroDock picks continuity.
 
 ## See also
 

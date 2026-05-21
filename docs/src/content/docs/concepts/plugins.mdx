@@ -7,6 +7,26 @@ A plugin is how NeuroDock grows without forking. The substrate exposes six exten
 
 After this page you will know why plugins exist as a separate concept from in-tree skills, how the trust ladder works, and how profile composability decides what activates for whom.
 
+## How a plugin gets loaded
+
+When NeuroDock starts, it walks every plugin directory it knows about, checks each one, and only then turns it on. The diagram below shows what happens for one plugin. If any step fails, the plugin is skipped (cleanly) and you see why.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant FS as Filesystem walk
+  participant Manifest as plugin.yaml
+  participant Trust as Trust check
+  participant Profile as Your profile
+  participant Substrate as NeuroDock
+  FS->>Manifest: read plugin.yaml
+  Manifest->>Manifest: validate against schema
+  Manifest->>Trust: check trust level + license
+  Trust->>Profile: does this match your neurotypes / locale?
+  Profile->>Substrate: activate (or wait for opt-in)
+  Substrate-->>FS: ready
+```
+
 ## Why plugins exist as a distinct concept
 
 The project's `packages/` directory holds the first-party substrate — the small set of MCP servers and skills the maintainer ships and reviews directly. That directory is intentionally narrow. If every contribution had to land in `packages/`, the project would either accumulate scope creep until the maintainer burned out, or it would reject contributions that did not fit the narrow first-party scope.
