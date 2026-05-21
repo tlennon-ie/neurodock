@@ -1,22 +1,27 @@
 ---
 title: CLI
-description: The neurodock command-line interface. init, doctor, profile.
+description: The neurodock command-line interface. Eleven commands across six groups, shipped in @neurodock/cli 0.3.0.
 ---
 
-:::caution[Phase 1 — in development]
-The `neurodock` CLI is being built by a parallel agent in `packages/cli/`. This page documents the **intended** interface. Commands may not all be implemented yet. Where the CLI is unavailable, MCP servers can be configured manually per their per-client guides.
+:::note[CLI status]
+`@neurodock/cli` `0.3.0` is shipped to npm. Eleven commands across six groups (`init`, `install-all`, `examples`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`). The CLI is the lowest-friction onboarding path: `npx neurodock install-all` should take a fresh install from zero to a working substrate in under fifteen minutes.
 :::
-
-The CLI is the lowest-friction onboarding path: `npx neurodock init` should take a fresh install from zero to a working substrate in under fifteen minutes.
 
 ## Commands
 
 | Command | Job |
 |---|---|
-| `neurodock init` | Detect installed MCP clients, scaffold the profile, register the three substrate servers. |
-| `neurodock doctor` | Verify the install. Profile is readable, all servers start, embedding backend reachable. |
-| `neurodock profile validate` | Check `~/.neurodock/profile.yaml` for typos and out-of-range values. |
-| `neurodock profile show` | Print the loaded profile with defaults applied, so you see what the substrate actually uses. |
+| [`neurodock init`](#neurodock-init) | Detect installed MCP clients, scaffold the profile, register the five substrate servers. |
+| [`neurodock install-all`](#neurodock-install-all) | One-command install: detect `uv` or `pip`, install the six Python packages, then run `init`. |
+| [`neurodock examples`](#neurodock-examples) | Print copy-pasteable prompts that exercise every wired NeuroDock MCP tool. |
+| [`neurodock doctor`](#neurodock-doctor) | Verify the install. Profile readable, all servers start, embedding backend reachable. |
+| [`neurodock validate`](#neurodock-validate) | Ajv-driven schema validation against the canonical profile schema. |
+| [`neurodock update`](#neurodock-update) | Refresh existing NeuroDock MCP entries in detected client configs. |
+| [`neurodock uninstall`](#neurodock-uninstall) | Reverse what `init` did. Preserves data unless `--purge`. |
+| [`neurodock host install`](#neurodock-host-install) | Register the optional Chrome Native Messaging host with installed browsers. |
+| [`neurodock host uninstall`](#neurodock-host-uninstall) | Remove the native messaging host manifests / registry pointers. |
+| [`neurodock profile show`](#neurodock-profile-show) | Print the loaded profile with loader defaults applied. |
+| [`neurodock profile validate`](#neurodock-profile-validate) | Validate `~/.neurodock/profile.yaml` against the schema. |
 
 ### `neurodock init`
 
@@ -24,19 +29,68 @@ The CLI is the lowest-friction onboarding path: `npx neurodock init` should take
 npx neurodock init
 ```
 
-Flags:
+Detect Claude Desktop, Claude Code, and Cursor; scaffold `~/.neurodock/profile.yaml`; register the five substrate MCP servers in each detected client.
 
-- `--dry-run` — print every file that would be created or modified without touching anything.
-- `--profile-path <path>` — non-standard location for the profile (mirrors `$NEURODOCK_PROFILE_PATH`).
-- `--no-register` — write the profile but skip MCP-client registration.
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | Restrict to `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--profile <id>` | `example` | Use `example` (richer) or `minimal` (smaller) preset. |
+| `--dry-run` | `false` | Print every file that would be created or modified without touching anything. |
+| `--yes` | `false` | Answer yes to all prompts (idempotent re-runs, collisions). |
 
-What it does:
+Exit codes: `0` on success.
 
-1. Detects Claude Desktop, Claude Code, and Cursor installs.
-2. Prompts for `display_name` (default: `$USER` / `%USERNAME%`) and at least one entry for `neurotypes`.
-3. Writes a minimal profile to the resolved profile path.
-4. Registers the three substrate MCP servers with each detected client.
-5. Prints a summary of changes.
+Example:
+
+```bash
+npx neurodock init --client claude-desktop --profile minimal --dry-run
+```
+
+### `neurodock install-all`
+
+```bash
+npx neurodock install-all
+```
+
+The one-command first-time install. Detects whether `uv` is on PATH (preferred) and falls back to `python -m pip`, installs the six Python MCP servers (`neurodock-mcp-chronometric`, `neurodock-mcp-cognitive-graph`, `neurodock-mcp-task-fractionator`, `neurodock-mcp-translation`, `neurodock-mcp-guardrail`, `neurodock-evals`), verifies each entrypoint with `<command> --help`, and then runs `neurodock init` to wire MCP clients. Collapses six `pip install` lines plus an `init` into one.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--profile <id>` | `example` | `minimal` or `example`. |
+| `--installer <id>` | `auto` | `uv`, `pip`, or `auto`. |
+| `--skip-install` | `false` | Skip the Python install step; only run `init`. |
+| `--yes` | `false` | Answer yes to all prompts. |
+| `--dry-run` | `false` | Print what would happen without writing. |
+
+Exit codes: `0` on success; `1` if any entrypoint is missing from PATH; `2` if `init` fails.
+
+Example:
+
+```bash
+npx neurodock install-all --installer uv --yes
+```
+
+### `neurodock examples`
+
+```bash
+neurodock examples
+```
+
+Print a copy-pasteable prompt cheat-sheet that exercises every wired NeuroDock MCP tool. Detects which servers are wired across all detected client configs and prints 2–3 example prompts per server, each annotated with the underlying tool name. Honours `NO_COLOR` / `FORCE_COLOR`.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--server <name>` | — | Filter to a single server (e.g. `neurodock-chronometric`). |
+| `--json` | `false` | Print the example data as JSON for scripting. |
+
+Exit codes: `0` on success.
+
+Example:
+
+```bash
+neurodock examples --server neurodock-guardrail
+```
 
 ### `neurodock doctor`
 
@@ -44,26 +98,89 @@ What it does:
 neurodock doctor
 ```
 
+Checklist diagnostic. Each line is `PASS`, `FAIL`, or `SKIP` with a short reason.
+
 Checks:
 
-- Profile path resolves and the file parses.
-- All three MCP servers start under their configured command.
-- Embedding backend is reachable (Ollama with the configured model, or `fastembed-py` fallback).
-- SQLite store at `~/.neurodock/store.sqlite` is writable.
+- Node >= 22.
+- `uv` available (skip if absent — `pip` fallback is acceptable).
+- Python available.
+- Profile presence and schema validity.
+- Client config JSON syntax for each detected client.
+- NeuroDock server wiring in each detected client.
 
-Failures are explained with the next action to take. No fix-it-for-you magic — every step is overt.
+Exit codes: `0` if all checks pass; `1` otherwise.
 
-### `neurodock profile validate`
+### `neurodock validate`
 
 ```bash
-neurodock profile validate
+neurodock validate
 ```
 
-Returns:
+Ajv-driven schema validation against `packages/core/schemas/profile.schema.json`. Reports field-path violations with `file:line` references.
 
-- **OK** when every known field is within range and no unknown keys are present.
-- **Warnings** for unknown keys (with "did you mean…" hints), preserved because of the forward-compat rule.
-- **Errors** for out-of-range integers, malformed enums, or missing required fields under `identity`.
+| Flag | Default | Meaning |
+|---|---|---|
+| `--file <path>` | resolved profile path | Validate an alternate file. |
+| `--strict` | `false` | Also flag unknown keys (default allows forward-compat extras, per ADR 0004). |
+
+Exit codes: `0` if valid; `1` if missing, unparseable, or invalid.
+
+### `neurodock update`
+
+```bash
+neurodock update
+```
+
+Re-runs the install adapters and rewrites stale NeuroDock MCP entries (version drift, command/args/cwd changes) in Claude Desktop, Claude Code, and Cursor configs. Non-NeuroDock entries and unrelated top-level keys round-trip untouched.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--dry-run` | `false` | Print the diff without writing anything. |
+
+Exit codes: `0` on success.
+
+### `neurodock uninstall`
+
+```bash
+neurodock uninstall
+```
+
+Reverses what `init` did. Removes NeuroDock MCP entries from each client config while preserving customisations. Asks (interactively) whether to delete `~/.neurodock/profile.yaml` and `~/.neurodock/cognitive-graph.sqlite`; defaults to no.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--dry-run` | `false` | Print the diff without writing. |
+| `--yes` | `false` | Skip interactive prompts (still preserves data unless `--purge`). |
+| `--purge` | `false` | Also delete `~/.neurodock/profile.yaml` and `cognitive-graph.sqlite`. |
+
+Exit codes: `0` on success.
+
+### `neurodock host install`
+
+```bash
+neurodock host install
+```
+
+Register the optional NeuroDock native messaging host (`com.neurodock.profile`) with installed browsers so the [browser extension](https://github.com/tlennon-ie/neurodock/tree/main/packages/extension-browser) can read and write `~/.neurodock/profile.yaml` directly. Per-platform manifest dispatch lives in `@neurodock/native-host`.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--extension-id <id>` | — | Browser extension id allowed to connect. Repeatable. |
+
+Exit codes: `0` on success.
+
+### `neurodock host uninstall`
+
+```bash
+neurodock host uninstall
+```
+
+Remove the native messaging host manifests and (on Windows) the registry pointers. No flags.
+
+Exit codes: `0` on success.
 
 ### `neurodock profile show`
 
@@ -71,18 +188,44 @@ Returns:
 neurodock profile show
 ```
 
-Prints the loaded profile with loader-applied defaults filled in. Useful for confirming what the substrate actually reads, since defaults are not written into the file on disk.
+Print the loaded profile with loader-applied defaults filled in. Useful for confirming what the substrate actually reads, since defaults are not written into the file on disk.
 
-## Exit codes
+Exit codes: `0` on success; `1` if no profile is found at the resolved path.
+
+### `neurodock profile validate`
+
+```bash
+neurodock profile validate
+```
+
+Validate `~/.neurodock/profile.yaml` against the canonical schema. Returns the same checks as the top-level `validate` command but scoped to the resolved profile path with no file/strict flags.
+
+Exit codes: `0` if valid; `1` if missing or invalid.
+
+## Global flags
+
+| Flag | Meaning |
+|---|---|
+| `-v, --version` | Print the CLI version (`0.3.0`). |
+| `-h, --help` | Show help for the program or a subcommand. |
+
+## Environment
+
+| Variable | Effect |
+|---|---|
+| `NEURODOCK_PROFILE_PATH` | Override the default profile location. |
+| `NO_COLOR` / `FORCE_COLOR` | Disable or force ANSI colour output. |
+
+## Exit codes (general convention)
 
 | Code | Meaning |
 |---|---|
 | 0 | Success. |
-| 1 | User-actionable failure (bad input, missing profile, validation error). |
-| 2 | Environment failure (server failed to start, store unwritable). |
-| 64 | CLI usage error (bad flag, unknown command). |
+| 1 | User-actionable failure (bad input, missing profile, validation error, missing entrypoint on PATH). |
+| 2 | Init failure during `install-all` (Python packages installed but client wiring failed). |
 
 ## What's next
 
 - [Installation](/getting-started/installation/) for the end-to-end install flow.
 - [Profile schema](/reference/profile-schema/) for the file `init` writes.
+- [`@neurodock/cli` CHANGELOG](https://github.com/tlennon-ie/neurodock/blob/main/packages/cli/CHANGELOG.md) for per-release detail.

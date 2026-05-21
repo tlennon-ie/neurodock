@@ -1,0 +1,52 @@
+---
+title: Bundled profile presets
+description: The nine profile presets shipped in v0.2.1. Six neurotype-shaped, three state-or-profession-shaped.
+---
+
+NeuroDock `v0.2.1` ships nine curated profile presets in [`profiles/`](https://github.com/tlennon-ie/neurodock/tree/main/profiles). Copy one to `~/.neurodock/profile.yaml` (or `extends:` it once the loader's preset-extension story lands) to get a sensible bundle without hand-authoring every field.
+
+See [Concepts: profiles](/concepts/profiles/) for how `extends:` composition works and why every default is on the safer ND-friendly side.
+
+## Neurotype-shaped presets
+
+These presets declare a neurotype and activate the matching skills.
+
+| Preset | For | `max_chunk_size` | `hyperfocus_break_minutes` | `end_of_day_local` |
+|---|---|---|---|---|
+| [`adhd`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/adhd.yaml) | ADHD: distractibility, time-blindness, hyperfocus episodes. | 5 | 75 | unset (user-tunable) |
+| [`audhd`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/audhd.yaml) | AuDHD as first-class identity (not sum-of-parts). Combined ADHD break-cadence and autism-leaning directness. | 5 | 75 | `18:30` |
+| [`ocd`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/ocd.yaml) | OCD: strictest guardrail configuration. Activates `ocd-decision-finalizer` to refuse repeat-validation loops. | 5 | 75 | unset (user-tunable) |
+| [`dyslexic`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/dyslexic.yaml) | Dyslexia: short lists, answer-first output, font hint clients can honour. | 4 | 90 | unset (user-tunable) |
+| [`dyspraxia`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/dyspraxia.yaml) | Dyspraxia: motor-planning load, fewer mouse gestures, tighter break cadence. | 4 | 60 | unset (user-tunable) |
+
+## State-shaped and profession-shaped presets
+
+These presets declare **no** neurotype (`identity.neurotypes: []`) and are designed to overlay on top of a neurotype preset by copying blocks across.
+
+| Preset | For | `max_chunk_size` | `hyperfocus_break_minutes` | `end_of_day_local` |
+|---|---|---|---|---|
+| [`burnout-recovery`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/burnout-recovery.yaml) | Active burnout recovery, four-to-six-week window. Aggressive guardrails, firm-early EOD. See [I'm tired](/getting-started/im-tired/). | 3 | 45 | `16:30` |
+| [`low-stimulation`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/low-stimulation.yaml) | Overwhelm episode, sensory-overload day, high-stakes deliverable week. Temporary swap-in shape. | 3 | 60 | unset (user-tunable) |
+| [`educator-semester`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/educator-semester.yaml) | Teachers, lecturers, TAs, instructional designers on semester cadence. | 5 | 75 | `17:00` |
+| [`student-university`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/student-university.yaml) | University / college students: lecture blocks, library sessions, deadline clusters, exam-period rhythm warp. | 5 | 90 | `22:00` |
+
+## How to use one
+
+```bash
+# macOS / Linux
+mkdir -p ~/.neurodock && cp profiles/adhd.yaml ~/.neurodock/profile.yaml
+```
+
+```powershell
+# Windows PowerShell
+New-Item -ItemType Directory -Force ~/.neurodock | Out-Null
+Copy-Item profiles/adhd.yaml ~/.neurodock/profile.yaml
+```
+
+Then restart your MCP client. `neurodock profile show` prints the resolved profile with defaults applied so you can confirm what the substrate actually reads.
+
+## What's next
+
+- [Concepts: profiles](/concepts/profiles/) for the consent-gate and forward-compat rationale.
+- [Profile schema reference](/reference/profile-schema/) for every field, every default, every constraint.
+- [Getting started: profile](/getting-started/profile/) for practical edits and common gotchas.

@@ -1,0 +1,48 @@
+---
+title: FAQ
+description: Short answers to questions people actually ask before installing NeuroDock.
+---
+
+Direct answers. If a question is missing, [open an issue](https://github.com/tlennon-ie/neurodock/issues).
+
+## What is MCP?
+
+The Model Context Protocol. An open standard for connecting language models to external tools and data. An MCP server exposes named tools with typed inputs and outputs; an MCP-aware client (Claude Desktop, Claude Code, Cursor) calls those tools when the model asks for them. NeuroDock ships five MCP servers — none of them are model-specific.
+
+## Do I need to know Python?
+
+No. You need Python *installed* (3.11+) so the substrate's MCP servers can run, but you do not need to read or write Python to use NeuroDock. Skills are markdown, profiles are YAML, install is one command.
+
+## Will this work without Claude Desktop?
+
+Yes. The substrate is vendor-neutral. Claude Code and Cursor are both supported out of the box. Any MCP-aware client works — the wire protocol is the boundary, not any particular vendor. See the [substrate concept page](/concepts/substrate/) for why.
+
+## Is my data sent anywhere?
+
+No, by default. Local-first is the default in three independent consent gates: embeddings, telemetry, and OS idle detection. Each is opt-in per scope. Choosing `cloud_*` for embeddings triggers a visible session-start notice every time you launch a client. The substrate has no remote endpoint to send to. See [profiles](/concepts/profiles/#why-local-first).
+
+## What happens if I delete `~/.neurodock/`?
+
+You lose your profile, your cognitive graph, and your local session state. The MCP server entries in your client configs survive (they only point at `uvx`-installed packages), so you can re-run `neurodock init` and start over with a fresh profile. Nothing in `~/.neurodock/` is sent off your machine, so there is nothing to "delete from the cloud".
+
+## Do I need a diagnosis to use the ADHD/autistic skills?
+
+No. Self-identification is sufficient. The profile's `identity.neurotypes` field is a self-ID list, never a diagnosis claim. This is a manifesto property — see [manifesto §3](/manifesto/#3-lived-experience-review-is-decisive).
+
+## Which neurotype preset should I use if I'm AuDHD?
+
+`profiles/audhd.yaml`. AuDHD is a first-class enum value in the schema, not a sum-of-parts. The preset activates ADHD-tuned skills (`adhd-daily-planner`, `hyperfocus-formatter`) AND autism-leaning skills (`asd-meeting-translator`, `audhd-context-recovery`) at the same time, with chunk-size and break cadence tuned for the combined load. See the [profiles reference](/reference/profiles/).
+
+## Why doesn't `neurodock` work after `pip install`?
+
+The CLI is on npm, not PyPI. The Python packages (`neurodock-mcp-chronometric`, `neurodock-mcp-cognitive-graph`, etc.) install via `uv` or `pip`; the CLI installs via `npx` or a global `npm install -g @neurodock/cli`. The simplest one-liner is:
+
+```bash
+npx @neurodock/cli install-all
+```
+
+That detects `uv` or `pip` and installs the six Python MCP servers, then wires your MCP clients. See the [CLI reference](/reference/cli/#neurodock-install-all).
+
+## How do I add more plugins?
+
+Plugins live in two places: in-tree at `plugins/<name>/` (review by PR) and out-of-tree at `~/.neurodock/plugins/<name>/` (no project-side review). The substrate auto-discovers any directory with a valid `plugin.yaml` in either location. See the [plugins concept page](/concepts/plugins/) and the [bundled plugins reference](/reference/plugins/) for the 15 plugins shipped in `v0.2.1`.

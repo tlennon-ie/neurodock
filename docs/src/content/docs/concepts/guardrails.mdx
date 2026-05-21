@@ -16,13 +16,13 @@ It is the only substrate area whose tool changes require sign-off from both the 
 
 ## The three detectors
 
-The Phase 1 schemas are locked at `v0.1.0`. The runtime ships in two phases: `check_rumination` is live in Phase 2; `check_hyperfocus` and `check_sycophancy` ship as schema-only stubs that return `DETECTOR_NOT_YET_IMPLEMENTED` until the clinical-advisor field study endorses thresholds in Phase 3.
+All three detectors are live as of `mcp-guardrail` `v0.0.2` (48 tests). The schemas remain locked at `v0.1.0` per [ADR 0006](/decisions/0006-guardrail/); the runtime now implements every detector the schema reserves.
 
-| Detector | Phase | Heuristic (v0.1.0) | Default thresholds |
+| Detector | Status | Heuristic (v0.1.0) | Default thresholds |
 |---|---|---|---|
-| [`check_rumination`](/reference/mcp-servers/guardrail/#check_rumination) | 2 (live) | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
-| [`check_hyperfocus`](/reference/mcp-servers/guardrail/#check_hyperfocus) | 3 (schema-only) | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
-| [`check_sycophancy`](/reference/mcp-servers/guardrail/#check_sycophancy) | 3 (schema-only) | reserved (four named patterns) | tbd by clinical advisor |
+| [`check_rumination`](/reference/mcp-servers/guardrail/#check_rumination) | live | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
+| [`check_hyperfocus`](/reference/mcp-servers/guardrail/#check_hyperfocus) | live | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
+| [`check_sycophancy`](/reference/mcp-servers/guardrail/#check_sycophancy) | live | four named patterns (praise-without-evidence, escalating-validation, reassurance-seeking, agreement-without-counter) | profile-tunable |
 
 ### Rumination
 
@@ -56,7 +56,7 @@ Every guardrail tool obeys these rules. They are inherited from [ADR 0006](/deci
 
 A skill calls a guardrail tool, reads the structured response, and decides whether to surface the detection, defer it, or ignore it. The server never decides for the skill, and the skill never decides for the user.
 
-The `ocd-decision-finalizer` skill is the Phase 2 reference consumer of `check_rumination`. It surfaces detections as a short footer line, quotes the prior matching prompts verbatim with their similarity scores, and offers each override token as a literal user-typeable command. It never rephrases the override tokens — they are part of the user-autonomy contract.
+The `ocd-decision-finalizer` skill is the reference consumer of `check_rumination`. It surfaces detections as a short footer line, quotes the prior matching prompts verbatim with their similarity scores, and offers each override token as a literal user-typeable command. It never rephrases the override tokens — they are part of the user-autonomy contract.
 
 ## What's next
 

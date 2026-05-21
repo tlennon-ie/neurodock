@@ -22,11 +22,13 @@ All three pillars are live on `main` and installable from npm + PyPI. See [`CHAN
 
 ### Substrate
 
-Three MCP servers, all published to PyPI:
+Five MCP servers, all published to PyPI:
 
 - [`mcp-chronometric`](/reference/mcp-servers/chronometric/) `v0.0.1` — time, session, and break management.
 - [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) `v0.0.2` — persistent entity memory and recall, local-first, with a 4-rung resolution cascade (exact → alias → fuzzy → embedding).
 - [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) `v0.0.2` — decompose vague goals into atomic 5–90 minute tasks (ISO 8601 duration parsing).
+- [`mcp-translation`](/reference/mcp-servers/translation/) `v0.0.1` — deterministic-baseline-plus-LLM-envelope tools for incoming subtext, outgoing tone, and meeting briefs.
+- [`mcp-guardrail`](/reference/mcp-servers/guardrail/) `v0.0.2` — rumination, hyperfocus, and sycophancy detectors. All three live.
 
 Six skills compose those servers into daily-use workflows:
 
@@ -35,11 +37,11 @@ Six skills compose those servers into daily-use workflows:
 - [`ocd-decision-finalizer`](/reference/skills/ocd-decision-finalizer/) — refuse to re-validate a closed decision.
 - [`hyperfocus-formatter`](/reference/skills/hyperfocus-formatter/) — "Answer First" output shaping.
 - [`visual-organizer`](/reference/skills/visual-organizer/) — Mermaid for overwhelm states.
-- `asd-meeting-translator` — transcript → four-section brief with verbatim ambiguity quotes.
+- [`asd-meeting-translator`](/reference/skills/asd-meeting-translator/) — transcript → four-section brief with verbatim ambiguity quotes.
 
 ### Communication layer
 
-`mcp-translation` `v0.0.1` ships a deterministic baseline plus an LLM refinement envelope, both behind one MCP contract. Bidirectional translation of corporate communication: literal-translate incoming subtext, tone-check outgoing messages, structure meeting transcripts. Real provider wiring (Ollama, Anthropic, OpenAI) is on the [Q3 2026 roadmap](https://github.com/tlennon-ie/neurodock/blob/main/ROADMAP.md#next--q3-2026).
+`mcp-translation` `v0.0.1` ships a deterministic baseline plus an LLM refinement envelope, both behind one MCP contract. Bidirectional translation of corporate communication: literal-translate incoming subtext, tone-check outgoing messages, structure meeting transcripts. The browser extension (`@neurodock/extension-browser` `v0.0.2`) wires four real LLM providers — Ollama (local default), Anthropic, OpenAI, and OpenRouter (including `openrouter/auto`) — plus a deterministic mock lane for development.
 
 ### Guardrails
 

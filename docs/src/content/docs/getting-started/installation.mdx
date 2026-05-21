@@ -37,7 +37,7 @@ The installer:
 
 1. Detects your installed MCP clients.
 2. Writes a default profile to `~/.neurodock/profile.yaml` (you will be prompted for `display_name` and `neurotypes`).
-3. Registers the three substrate MCP servers with each detected client.
+3. Registers the five substrate MCP servers with each detected client.
 4. Prints a summary of what was changed.
 
 :::note[CLI status]
@@ -56,14 +56,16 @@ npx neurodock init --dry-run
 
 ### Claude Desktop
 
-Claude Desktop reads `claude_desktop_config.json` (location varies by OS). `neurodock init` writes the three MCP server entries automatically. To verify, look for:
+Claude Desktop reads `claude_desktop_config.json` (location varies by OS). `neurodock init` writes the five MCP server entries automatically. To verify, look for:
 
 ```json
 {
   "mcpServers": {
     "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
     "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
-    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] }
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] },
+    "neurodock-translation": { "command": "uvx", "args": ["neurodock-mcp-translation"] },
+    "neurodock-guardrail": { "command": "uvx", "args": ["neurodock-mcp-guardrail"] }
   }
 }
 ```
@@ -76,7 +78,7 @@ Claude Code reads MCP server configuration from `.claude/settings.json` (project
 
 ### Cursor
 
-Cursor reads MCP configuration through its settings pane. `neurodock init` writes the same three server entries to its config file.
+Cursor reads MCP configuration through its settings pane. `neurodock init` writes the same five server entries to its config file.
 
 ## Verify the install
 
@@ -84,10 +86,10 @@ Cursor reads MCP configuration through its settings pane. `neurodock init` write
 neurodock doctor
 ```
 
-`doctor` checks: profile is readable and schema-valid, all three MCP servers start, embedding backend is reachable. Failures are explained with the next action to take.
+`doctor` checks: profile is readable and schema-valid, all five MCP servers start, embedding backend is reachable. Failures are explained with the next action to take.
 
 ## What's next
 
 - [Run your first skill](/getting-started/first-skill/) — `/morning-brief` in Claude Desktop, end-to-end.
 - [Edit your profile](/getting-started/profile/) — turn on or off skills, set thresholds, change consent gates.
-- [Read the substrate concept page](/concepts/substrate/) — what those three MCP servers actually do.
+- [Read the substrate concept page](/concepts/substrate/) — what those five MCP servers actually do.

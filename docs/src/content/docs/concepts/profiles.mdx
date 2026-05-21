@@ -44,7 +44,7 @@ The forward-compat rule is the central correctness property of the schema. See [
 A profile MAY declare `extends:` to inherit from a preset bundled with the `profiles/` package:
 
 ```yaml
-extends: "presets/adhd-engineer"
+extends: "profiles/adhd"
 identity:
   display_name: "T"
   neurotypes: ["adhd"]
@@ -52,7 +52,7 @@ identity:
 
 The preset's fields are merged shallowly with the local file winning on every key. `v0.1` supports **single-level extension only**; deep chaining (preset extending preset) is deferred to a future RFC.
 
-This lets curated presets (`profiles/adhd-engineer`, `profiles/audhd-founder`, etc.) ship sensible bundles without forcing users to hand-author every field.
+The nine bundled presets — `adhd`, `audhd`, `ocd`, `dyslexic`, `dyspraxia`, `low-stimulation`, `burnout-recovery`, `educator-semester`, `student-university` — ship sensible bundles without forcing users to hand-author every field. See the [profiles reference](/reference/profiles/) for a one-line summary of each.
 
 ## No PII
 

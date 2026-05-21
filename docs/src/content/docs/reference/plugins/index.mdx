@@ -1,0 +1,43 @@
+---
+title: Bundled plugins
+description: The 15 plugins shipped in-tree in v0.2.1. Eight skill plugins and seven translation packs.
+---
+
+NeuroDock `v0.2.1` ships 15 plugins in-tree at [`plugins/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins). Eight are skill plugins (one of which is the example/template); seven are translation packs for `mcp-translation`.
+
+See [Concepts: plugins](/concepts/plugins/) for how the substrate auto-discovers them and how the trust ladder works.
+
+## Skill plugins
+
+Each skill plugin lives in `plugins/<name>/` and declares its triggers, MCP dependencies, and `neurotypes` in `plugin.yaml`. All skill plugins are markdown — no compilation step.
+
+| Name | Who it's for |
+|---|---|
+| [`skill-software-engineer-daily`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-software-engineer-daily) | IC software engineers running daily rhythm: code-review prep, deep-work decomposition, async standups. |
+| [`skill-eng-manager-1on1`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-eng-manager-1on1) | Engineering managers and staff+ ICs with mentees: 1:1 prep, sprint-review decomposition, blameless postmortems. |
+| [`skill-pm-stakeholder-juggle`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-pm-stakeholder-juggle) | Product managers juggling stakeholders: stakeholder maps, decision audits with anti-rumination footer, verdict-first exec summaries. |
+| [`skill-lawyer-matter`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-lawyer-matter) | Lawyers, in-house counsel, paralegals juggling matters: matter briefs, deadline windows, legal-register translation. |
+| [`skill-civil-servant-briefing`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-civil-servant-briefing) | Civil servants, policy professionals, NGO programme staff: structured briefing notes, consultation synthesis, meeting-marathon mode. |
+| [`skill-researcher-litreview`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-researcher-litreview) | Academic and industry researchers doing lit reviews: decomposed reading lists, paper-and-author entity recall, author bibliographies. |
+| [`skill-writer-long-form`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-writer-long-form) | Writers working on essays, chapters, dissertations, screenplays: time-budgeted scene decomposition, character recall, rumination defence. |
+| [`example-skill-pomodoro`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/example-skill-pomodoro) | Template / reference for first-time skill-plugin authors. Use as the starting point when scaffolding your own. |
+
+## Translation packs
+
+A translation pack ships prompt overrides for `mcp-translation`. Each pack tunes the base prompts for a specific domain, professional register, or cultural-language norm. See [Plugin type — translation-pack](/contribute/plugin-types/translation-pack/) for the contract.
+
+| Name | Register | Who it's for |
+|---|---|---|
+| [`translation-customer-support`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-customer-support) | Domain: customer-support escalation / de-escalation. | Support agents and anyone new to customer-facing work who can't yet tell whether "this is unacceptable" wants an apology, an escalation, or a refund. |
+| [`translation-healthcare`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-healthcare) | Domain: clinical-team handover register (SBAR, MDT, ED triage). | ND clinicians, paralegals reading medical records, social workers in case conferences. Translates the register, not a diagnostic tool. |
+| [`translation-legal`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-legal) | Domain: legal-profession idiom (in-house counsel, BigLaw, British-firm correspondence). | ND professionals who can't read the subtext of "happy to discuss further" or "as a matter of housekeeping" without help. |
+| [`translation-sales`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-sales) | Domain: enterprise sales, CS, procurement idiom. | ND professionals (and anyone not quota-fluent) who can't tell whether "interesting" is enthusiasm or a polite no. |
+| [`translation-hiberno-english`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-hiberno-english) | Locale: Hiberno-English (Irish workplaces). | ND professionals — and anyone working with Irish colleagues — who read "I might do that" as a maybe when it almost always means no. |
+| [`translation-german-directness`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-german-directness) | Locale: German workplace directness norms. | ND professionals working across German-speaking workplaces who keep reading aggression into what is, in target register, simply clear communication. |
+| [`translation-japanese-keigo`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-japanese-keigo) | Locale: Japanese keigo (sonkeigo, kenjougo, teineigo). | ND professionals working in or with Japanese workplaces who can miss substantive content behind soft refusals, omissions, and vertical-register choices. |
+
+## What's next
+
+- [Concepts: plugins](/concepts/plugins/) for the trust ladder and profile-composability model.
+- [Plugin manifest reference](/reference/plugin-manifest/) for the field-by-field schema.
+- [Write a plugin](/contribute/write-a-plugin/) for the contributor walkthrough.

@@ -1,9 +1,9 @@
 ---
 title: Substrate
-description: The MCP servers that externalise executive function. Three shipped in v0.2.1.
+description: The MCP servers that externalise executive function. Five shipped in v0.2.1.
 ---
 
-The substrate is the layer of MCP servers and skills that externalise executive function — time awareness, persistent memory, task decomposition. Three MCP servers shipped in `v0.2.1` and are installable from PyPI. Each is small, single-purpose, and independently versioned.
+The substrate is the layer of MCP servers and skills that externalise executive function — time awareness, persistent memory, task decomposition, communication translation, and clinical safety. Five MCP servers shipped in `v0.2.1` and are installable from PyPI. Each is small, single-purpose, and independently versioned.
 
 ## What an MCP server is
 
@@ -17,13 +17,15 @@ NeuroDock's substrate is a set of MCP servers, not a wrapper around any one mode
 - **Auditable.** Tool calls are visible in the client. Every nudge, every recall, every decomposition is inspectable.
 - **Composable.** Skills compose tool calls; tools compose into skills. Nothing is a monolith.
 
-## The three substrate servers
+## The five substrate servers
 
 | Server | Tools | Job |
 |---|---|---|
 | [`mcp-chronometric`](/reference/mcp-servers/chronometric/) | `get_time_context`, `mark_session_start`, `mark_session_end`, `request_break_if_needed`, `idle_status` | Externalise time and session awareness. |
 | [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) | `recall_entity`, `record_fact`, `recall_decisions`, `weekly_rollup` | Externalise memory: people, projects, decisions, concepts. |
 | [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) | `decompose`, `next_one` | Externalise decomposition: vague goal in, atomic tasks out. |
+| [`mcp-translation`](/reference/mcp-servers/translation/) | `translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting` | Translate corporate-communication ambiguity and structure meeting transcripts. |
+| [`mcp-guardrail`](/reference/mcp-servers/guardrail/) | `check_rumination`, `check_hyperfocus`, `check_sycophancy` | Clinical-safety detectors. Stateless, override-first. |
 
 Each tool's input and output schema lives at `packages/<server>/schemas/*.schema.json` and is the source of truth.
 

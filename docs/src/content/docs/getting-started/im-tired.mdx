@@ -1,0 +1,41 @@
+---
+title: I'm tired. Just tell me what to do.
+description: One file to copy. One command to run. The rest of the docs can wait.
+---
+
+NeuroDock has a preset for this state. Copy one file. Run one command. Stop reading.
+
+## 1. Copy the burnout-recovery preset
+
+From a clone of the repo:
+
+```bash
+# macOS / Linux
+mkdir -p ~/.neurodock && cp profiles/burnout-recovery.yaml ~/.neurodock/profile.yaml
+```
+
+```powershell
+# Windows PowerShell
+New-Item -ItemType Directory -Force ~/.neurodock | Out-Null
+Copy-Item profiles/burnout-recovery.yaml ~/.neurodock/profile.yaml
+```
+
+If you do not have the repo cloned, the preset lives at [`profiles/burnout-recovery.yaml`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/burnout-recovery.yaml). Save it as `~/.neurodock/profile.yaml`.
+
+## 2. Restart Claude
+
+Quit and reopen Claude Desktop (or your MCP-aware client). That is the whole install step.
+
+## 3. What changes
+
+The burnout-recovery preset is opinionated about three things:
+
+- **Rumination check refuses earlier.** The OCD-style finality response fires on re-validation requests so you stop re-litigating closed decisions.
+- **End-of-day is 16:30 local.** Hyperfocus nudges quote that time back to you verbatim. You can override, but you will see it every time.
+- **Max chunk size is 3.** Lists are short. Output is small. You can scan without scrolling.
+
+The full preset also tightens the hyperfocus break cadence (45 minutes instead of 60–90) and sets motion to `reduced`. Every value is documented at the top of [`profiles/burnout-recovery.yaml`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/burnout-recovery.yaml).
+
+---
+
+The rest of the docs can wait. Come back in four to six weeks. If you still need this preset then, that is important information — escalate from "tooling adjustment" to "human support" (therapist, GP, time off, manager conversation).

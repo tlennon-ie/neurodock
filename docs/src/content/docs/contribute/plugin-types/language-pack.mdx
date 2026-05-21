@@ -35,7 +35,7 @@ plugins/<your-pack>/
 └── README.md
 ```
 
-The `locales/messages.json` block is for the substrate's own UI strings as they relate to this language (notice text, consent prompts, error messages from the server). UI strings follow the ICU MessageFormat convention used by the docs site and the browser extension — see .
+The `locales/messages.json` block is for the substrate's own UI strings as they relate to this language (notice text, consent prompts, error messages from the server). UI strings follow the [ICU MessageFormat](https://unicode-org.github.io/icu/userguide/format_parse/messages/) convention used by the docs site and the browser extension.
 
 ## Locale declaration
 
@@ -71,4 +71,4 @@ Like translation packs, language packs ship a versioned, consented, anonymised e
 
 - [Plugin type — translation-pack](/contribute/plugin-types/translation-pack/) for the domain-and-relationship counterpart.
 - [Plugin manifest reference](/reference/plugin-manifest/) for the full `language_pack` block.
--  for the broader communication-layer architecture and the four contribution lanes.
+- [ADR 0005 — Translation tool design](/decisions/0005-translation/) for the broader communication-layer architecture and the four contribution lanes.

@@ -64,7 +64,7 @@ export default defineConfig({
         minHeadingLevel: 2,
         maxHeadingLevel: 3,
       },
-      // Sidebar order: Getting started, Concepts, Reference, Decisions, Contribute, Ethics.
+      // Sidebar order: Manifesto, Getting started, Concepts, Reference, Decisions, Contribute, Ethics, FAQ.
       sidebar: [
         {
           label: "Manifesto",
@@ -73,6 +73,10 @@ export default defineConfig({
         {
           label: "Getting started",
           items: [
+            {
+              label: "I'm tired. Just tell me what to do.",
+              link: "/getting-started/im-tired/",
+            },
             { label: "Installation", link: "/getting-started/installation/" },
             {
               label: "Your first skill",
@@ -150,6 +154,8 @@ export default defineConfig({
             },
             { label: "Profile schema", link: "/reference/profile-schema/" },
             { label: "Plugin manifest", link: "/reference/plugin-manifest/" },
+            { label: "Bundled plugins", link: "/reference/plugins/" },
+            { label: "Bundled profile presets", link: "/reference/profiles/" },
             { label: "CLI", link: "/reference/cli/" },
           ],
         },
@@ -221,6 +227,7 @@ export default defineConfig({
           ],
         },
         { label: "Ethics", link: "/ethics/" },
+        { label: "FAQ", link: "/faq/" },
       ],
       // Honour prefers-reduced-motion at the platform level.
       // Starlight ships minimal animation; overrides.css strips remaining transitions.

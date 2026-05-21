@@ -5,7 +5,7 @@ description: Domain-specific and relationship-specific prompt overrides for mcp-
 
 A `type: translation-pack` plugin ships prompt overrides for `mcp-translation`, the communication-layer MCP server. Translation packs let the server speak the dialect of a specific domain (engineering review, legal correspondence, customer success) or a specific relationship (founder-to-board, manager-to-direct-report, contractor-to-client). The base server handles general corporate ambiguity; a translation pack tunes it for a context the base prompts cannot match.
 
-Translation packs are one of the four contribution lanes for the communication layer described in . They are deliberately the highest-leverage lane for non-coders: a translation pack is YAML and prose, not code.
+Translation packs are one of the four contribution lanes for the communication layer described in [ADR 0005](/decisions/0005-translation/). They are deliberately the highest-leverage lane for non-coders: a translation pack is YAML and prose, not code.
 
 **Prerequisites:** comfortable editing YAML, comfortable writing prompt overrides, ideally fluent in the domain you are packing for.
 
@@ -73,4 +73,4 @@ Translation packs that target a neurotype's specific communication needs (e.g. a
 
 - [Plugin type — language-pack](/contribute/plugin-types/language-pack/) for the cultural-register counterpart.
 - [Plugin manifest reference](/reference/plugin-manifest/) for the manifest schema.
--  for the broader communication-layer architecture.
+- [ADR 0005 — Translation tool design](/decisions/0005-translation/) for the broader communication-layer architecture.
