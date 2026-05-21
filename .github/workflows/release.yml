@@ -12,6 +12,10 @@ concurrency:
 permissions:
   contents: write
   id-token: write
+  # changesets/action needs to read pull requests to detect a pending
+  # 'Version Packages' PR vs publish-direct mode. Without this it errors
+  # with 'Resource not accessible by integration' on tag-triggered runs.
+  pull-requests: write
 
 jobs:
   npm:

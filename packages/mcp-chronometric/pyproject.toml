@@ -6,6 +6,12 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "AGPL-3.0-or-later" }
 authors = [{ name = "NeuroDock contributors" }]
+dependencies = [
+    "fastmcp>=3.3.0",
+    "pydantic>=2.7",
+    "pyyaml>=6.0",
+    "tzdata>=2024.1; sys_platform == 'win32'",
+]
 
 [project.urls]
 Homepage = "https://neurodock.org/"
@@ -13,12 +19,6 @@ Documentation = "https://docs.neurodock.org/"
 Repository = "https://github.com/tlennon-ie/neurodock"
 Issues = "https://github.com/tlennon-ie/neurodock/issues"
 Changelog = "https://github.com/tlennon-ie/neurodock/blob/main/packages/mcp-chronometric/CHANGELOG.md"
-dependencies = [
-    "fastmcp>=3.3.0",
-    "pydantic>=2.7",
-    "pyyaml>=6.0",
-    "tzdata>=2024.1; sys_platform == 'win32'",
-]
 
 [project.optional-dependencies]
 test = [
