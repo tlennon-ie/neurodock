@@ -44,6 +44,10 @@ import { buildPrompt } from "./prompt-builder.js";
 import { parseAndValidate } from "./validation.js";
 import type { Provider, ProviderRequest } from "./providers/provider.js";
 import { createOllamaProvider } from "./providers/ollama.js";
+import {
+  createLMStudioProvider,
+  LMSTUDIO_DEFAULT_BASE_URL,
+} from "./providers/lmstudio.js";
 import { createAnthropicProvider } from "./providers/anthropic.js";
 import { createOpenAIProvider } from "./providers/openai.js";
 import { createOpenRouterProvider } from "./providers/openrouter.js";
@@ -53,6 +57,10 @@ const SCHEMA_VERSION = "0.1.0";
 
 const DEFAULT_MODELS = {
   ollama: "llama3.2:3b",
+  // LM Studio: model slug depends on what the user has loaded. We leave
+  // it empty by default so the popup nudges the user toward "Refresh
+  // models" rather than guessing.
+  lmstudio: "",
   anthropic: "claude-haiku-4-5",
   openai: "gpt-4o-mini",
   // OpenRouter's auto-router picks the best model per query; users can
@@ -95,11 +103,9 @@ export async function translate<T = unknown>(
     provider = cloud.provider;
     model = cloud.model;
   } else {
-    provider = createOllamaProvider({ endpoint: profile.localEndpoint });
-    model =
-      profile.localModel.length > 0
-        ? profile.localModel
-        : DEFAULT_MODELS.ollama;
+    const local = buildLocalProvider(profile);
+    provider = local.provider;
+    model = local.model;
     fallbackOnError = "endpoint_unreachable";
   }
 
@@ -133,7 +139,7 @@ export async function translate<T = unknown>(
         provider:
           profile.mode === "cloud"
             ? profile.cloudProvider ?? "unknown"
-            : "ollama",
+            : profile.localProvider,
         model,
       },
       timestamp,
@@ -164,6 +170,36 @@ export async function translate<T = unknown>(
     mockMode: providerResult.provenance.provider === "mock",
     provenance: providerResult.provenance,
     timestamp,
+  };
+}
+
+function buildLocalProvider(profile: ExtensionProfile): {
+  provider: Provider;
+  model: string;
+} {
+  if (profile.localProvider === "lmstudio") {
+    const baseUrl =
+      profile.localEndpoint.length > 0 &&
+      profile.localEndpoint !== "http://localhost:11434"
+        ? profile.localEndpoint
+        : LMSTUDIO_DEFAULT_BASE_URL;
+    return {
+      provider: createLMStudioProvider({
+        baseUrl,
+        apiKey: profile.localApiKey,
+      }),
+      model:
+        profile.localModel.length > 0
+          ? profile.localModel
+          : DEFAULT_MODELS.lmstudio,
+    };
+  }
+  return {
+    provider: createOllamaProvider({ endpoint: profile.localEndpoint }),
+    model:
+      profile.localModel.length > 0
+        ? profile.localModel
+        : DEFAULT_MODELS.ollama,
   };
 }
 
@@ -297,10 +333,7 @@ export function buildProviderFromProfile(
     if (typeof resolved === "string") return { error: resolved };
     return { provider: resolved.provider, model: resolved.model };
   }
-  return {
-    provider: createOllamaProvider({ endpoint: profile.localEndpoint }),
-    model: profile.localModel || DEFAULT_MODELS.ollama,
-  };
+  return buildLocalProvider(profile);
 }
 
 function getErrorMessage(cause: unknown): string {

@@ -72,6 +72,20 @@ export function startSelectionWatcher(
   doc.addEventListener("focusin", focusHandler, true);
   doc.addEventListener("focusout", blurHandler, true);
 
+  // Initial sweep: if an editable is ALREADY focused when the content
+  // script loads (a common case on SPAs like Gmail or Slack where the
+  // compose box is auto-focused before our document_idle injection
+  // runs), we never receive a `focusin` event for it. Without this the
+  // floating Translate button stays hidden until the user clicks
+  // elsewhere and back. Defer one microtask so the React island has
+  // mounted before we fire the callback.
+  queueMicrotask(() => {
+    const active = doc.activeElement;
+    if (isEditableElement(active)) {
+      options.onEditableFocus(active);
+    }
+  });
+
   // SPA navigation re-injection. The single mutation observer per page.
   const observer = new MutationObserver(() => {
     const active = doc.activeElement;

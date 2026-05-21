@@ -1,5 +1,82 @@
 # @neurodock/extension-browser
 
+## 0.0.3
+
+### Added
+
+- **LM Studio as a 5th provider.** LM Studio is now a first-class local
+  lane alongside Ollama. The Settings tab exposes a "Local LM Studio"
+  radio; the provider hits LM Studio's OpenAI-compatible endpoint
+  (default `http://localhost:1234/v1`) with SSE streaming via
+  `POST /chat/completions`. No API key is required for the default
+  unauthenticated server; an optional `apiKey` is available under
+  Advanced for users running LM Studio behind a reverse proxy.
+- **Model-list fetching ("Refresh models" button).** Every provider that
+  exposes a listing endpoint now ships a `fetchModels()` helper and a
+  dropdown in Settings. No more typing model slugs from memory.
+  - Ollama: `GET {baseUrl}/api/tags` → `models[].name`
+  - LM Studio: `GET {baseUrl}/models` → `data[].id`
+  - OpenAI: `GET https://api.openai.com/v1/models` → `data[].id`
+    (filtered to chat-completion-eligible models when the listing
+    contains any)
+  - OpenRouter: `GET https://openrouter.ai/api/v1/models` → `data[].id`,
+    with `openrouter/auto` always offered as the first option even when
+    absent from the upstream listing
+  - Anthropic: no listing endpoint exists; the extension keeps a
+    hardcoded supported list (`claude-opus-4-7`, `claude-sonnet-4-6`,
+    `claude-haiku-4-5-20251001`, `claude-haiku-4-5`). Refresh re-reads
+    the constant; new releases require an extension update.
+- `ExtensionProfile` gains `localProvider: "ollama" | "lmstudio"` and
+  `localApiKey: string | null`. Defaults are `ollama` / `null` so
+  existing profiles upgrade cleanly.
+
+### Fixed
+
+- **Cloud provider radio buttons (OpenRouter, Anthropic, OpenAI) are
+  clickable again.** The radios appeared to "snap back" to Local Ollama
+  because `selectedModeFromProfile` derived the active option from
+  `profile.mode`, which only flips to `cloud` after a key is saved.
+  Clicking a cloud option with no stored key staged the provider intent
+  but the radio render still showed `local`. The fix surfaces the staged
+  cloud provider in the UI as soon as it is selected, while still
+  honouring the v0.0.2 privacy contract (mode only flips to `cloud`
+  after a key is stored).
+- **Floating "Translate" button now appears on supported sites.** On SPAs
+  like Gmail and Slack the compose box is focused before the content
+  script's `document_idle` injection runs, so neither `focusin` nor the
+  mutation observer fired for it. The selection watcher now performs an
+  initial sweep of `document.activeElement` after mounting, restoring
+  the button. The button is also rendered in mock mode — previously
+  there was no explicit gate but the missing initial sweep made it
+  invisible whenever the user landed on a page with an already-focused
+  composer.
+
+### Manifest / CSP
+
+`wxt.config.ts` adds `http://localhost:1234` and `http://127.0.0.1:1234`
+to the MV3 `content_security_policy.extension_pages` `connect-src`
+directive so the service worker can reach LM Studio. The existing
+`optional_host_permissions` entries for `http://localhost/*` and
+`http://127.0.0.1/*` already cover the new port.
+
+### Tests
+
+- New `tests/unit/providers/lmstudio.test.ts` covers streaming happy
+  path, optional API key, 401, 404 model-not-found, unreachable, and
+  non-streaming fallback, plus model-list fetch happy / empty / failure
+  paths.
+- New `tests/unit/providers/models.test.ts` covers each provider's
+  model fetcher (Ollama, LM Studio, OpenAI, OpenRouter, Anthropic
+  constant), the auto-router prepend rule for OpenRouter, and the
+  central `fetchModels()` dispatch.
+- `tests/unit/settings-tab.test.tsx` gains regression tests asserting
+  that clicking the OpenRouter / Anthropic / OpenAI radios stages the
+  provider intent and that LM Studio selection routes the local lane.
+- `tests/unit/selectionWatcher.test.ts` gains an initial-sweep
+  regression so the floating button bug cannot return silently.
+
+Test count: 66 → 98.
+
 ## 0.0.2
 
 ### Added

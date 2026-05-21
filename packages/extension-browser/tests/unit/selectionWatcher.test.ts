@@ -62,6 +62,27 @@ describe("selectionWatcher", () => {
     handle.disconnect();
   });
 
+  it("fires onEditableFocus on the initial sweep when an editable is already focused", async () => {
+    // Regression for v0.0.3: the floating Translate button never appeared
+    // on sites like Gmail compose because the editable was focused BEFORE
+    // the content script loaded, so neither `focusin` nor the mutation
+    // observer fired for it.
+    const ta = document.createElement("textarea");
+    document.body.appendChild(ta);
+    ta.focus();
+    // Sanity: the focus event has already fired and the watcher does not
+    // exist yet, so the natural focusin path will not catch this.
+    const onFocus = vi.fn();
+    const handle = startSelectionWatcher(document, {
+      onEditableFocus: onFocus,
+      onEditableBlur: vi.fn(),
+    });
+    // Allow the queued microtask to run.
+    await Promise.resolve();
+    expect(onFocus).toHaveBeenCalledWith(ta);
+    handle.disconnect();
+  });
+
   it("does not fire focus callback for non-editable elements", () => {
     const span = document.createElement("span");
     span.tabIndex = 0;

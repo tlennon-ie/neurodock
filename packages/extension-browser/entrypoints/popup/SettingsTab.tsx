@@ -1,9 +1,10 @@
 /**
  * SettingsTab.tsx
  *
- * Popup Settings tab for v0.0.2. Lets the user pick the provider, set
- * the Ollama endpoint, paste a cloud API key, and verify the
- * configuration via the Test button.
+ * Popup Settings tab. Lets the user pick the provider (Ollama, LM Studio,
+ * Anthropic, OpenAI, OpenRouter, or Mock), configure endpoints and keys,
+ * fetch the available models for a dropdown, and verify the configuration
+ * via the Test button.
  *
  * Privacy rules baked into this UI:
  *
@@ -11,15 +12,26 @@
  *    until "Save" is clicked. After save, the field is replaced with a
  *    masked preview (`••••last4`) and "Replace" / "Clear" controls. The
  *    plaintext key never round-trips back to the DOM.
- *  - The API key persists to `chrome.storage.local` ONLY — never
- *    `sync`.
- *  - Switching to cloud mode requires both a provider AND a saved API
- *    key.
+ *  - API keys persist to `chrome.storage.local` ONLY — never `sync`.
  *  - The default Mode remains Local Ollama. Mock is a developer-only
  *    explicit choice.
+ *
+ * v0.0.3 fixes:
+ *  - Cloud radios are now always clickable. Selecting one immediately
+ *    stages the provider intent so the corresponding fieldset appears
+ *    even before a key has been saved. (Previously the radio appeared
+ *    to "snap back" because the active mode was derived purely from
+ *    `profile.mode`, which only flips to `cloud` after a key is stored.)
+ *  - LM Studio is offered as a fifth provider.
+ *  - Each provider that exposes a `/models`-style endpoint gets a
+ *    "Refresh models" button that populates a dropdown.
  */
 import React, { useCallback, useMemo, useState } from "react";
 import type { ExtensionMode, ExtensionProfile } from "../../src/lib/types.js";
+import {
+  fetchModels,
+  type ModelFetchableProvider,
+} from "../../src/lib/providers/models.js";
 import { ProviderTest } from "./ProviderTest.js";
 
 export interface SettingsTabProps {
@@ -29,17 +41,20 @@ export interface SettingsTabProps {
 
 const DEFAULT_MODELS: Record<string, string> = {
   ollama: "llama3.2:3b",
+  lmstudio: "",
   anthropic: "claude-haiku-4-5",
   openai: "gpt-4o-mini",
-  // OpenRouter's auto-router; users can override with any model slug
-  // from https://openrouter.ai/models.
   openrouter: "openrouter/auto",
 };
+
+const LMSTUDIO_DEFAULT_BASE_URL = "http://localhost:1234/v1";
+const OLLAMA_DEFAULT_BASE_URL = "http://localhost:11434";
 
 type CloudProviderId = "anthropic" | "openai" | "openrouter";
 
 type SelectedMode =
-  | "local"
+  | "local-ollama"
+  | "local-lmstudio"
   | "cloud-anthropic"
   | "cloud-openai"
   | "cloud-openrouter"
@@ -47,13 +62,15 @@ type SelectedMode =
 
 function selectedModeFromProfile(profile: ExtensionProfile): SelectedMode {
   if (profile.mode === "mock") return "mock";
-  if (profile.mode === "cloud" && profile.cloudProvider === "anthropic")
-    return "cloud-anthropic";
-  if (profile.mode === "cloud" && profile.cloudProvider === "openai")
-    return "cloud-openai";
-  if (profile.mode === "cloud" && profile.cloudProvider === "openrouter")
-    return "cloud-openrouter";
-  return "local";
+  // Cloud intent: surface whichever cloud provider has been staged, even
+  // if no key is saved yet. This is the fix for the "OpenRouter radio
+  // isn't clickable" bug — previously cloud-* selections only surfaced
+  // when `mode === "cloud"`, which requires a saved key.
+  if (profile.cloudProvider === "anthropic") return "cloud-anthropic";
+  if (profile.cloudProvider === "openai") return "cloud-openai";
+  if (profile.cloudProvider === "openrouter") return "cloud-openrouter";
+  if (profile.localProvider === "lmstudio") return "local-lmstudio";
+  return "local-ollama";
 }
 
 function cloudProviderFromSelected(
@@ -73,9 +90,28 @@ export function SettingsTab({
 
   const setSelected = useCallback(
     async (next: SelectedMode) => {
-      if (next === "local") {
+      if (next === "local-ollama") {
         await onChange({
           mode: "local" as ExtensionMode,
+          localProvider: "ollama",
+          // If switching back from LM Studio, restore the Ollama default
+          // endpoint so users do not see a stale `:1234/v1` URL.
+          localEndpoint:
+            profile.localProvider === "lmstudio"
+              ? OLLAMA_DEFAULT_BASE_URL
+              : profile.localEndpoint,
+          cloudProvider: null,
+        });
+        return;
+      }
+      if (next === "local-lmstudio") {
+        await onChange({
+          mode: "local" as ExtensionMode,
+          localProvider: "lmstudio",
+          localEndpoint:
+            profile.localProvider === "lmstudio"
+              ? profile.localEndpoint
+              : LMSTUDIO_DEFAULT_BASE_URL,
           cloudProvider: null,
         });
         return;
@@ -85,19 +121,29 @@ export function SettingsTab({
         return;
       }
       const cloudProvider = cloudProviderFromSelected(next);
-      if (cloudProvider === null) {
-        // Defensive; should be unreachable because `next` is exhausted.
-        return;
-      }
+      if (cloudProvider === null) return;
       const fallbackModel = DEFAULT_MODELS[cloudProvider] ?? "";
-      const willEnableCloud = profile.cloudApiKey !== null;
+      // Stage the cloud provider intent. Mode only flips to "cloud"
+      // once a key is saved (the privacy contract from v0.0.2 still
+      // holds). Until then, the cloud panel is visible so the user can
+      // paste a key without first having to defeat the radio control.
       await onChange({
-        mode: willEnableCloud ? ("cloud" as ExtensionMode) : profile.mode,
         cloudProvider,
         cloudModel: profile.cloudModel ?? fallbackModel,
+        mode:
+          profile.cloudApiKey !== null
+            ? ("cloud" as ExtensionMode)
+            : profile.mode,
       });
     },
-    [onChange, profile.cloudApiKey, profile.cloudModel, profile.mode],
+    [
+      onChange,
+      profile.cloudApiKey,
+      profile.cloudModel,
+      profile.localEndpoint,
+      profile.localProvider,
+      profile.mode,
+    ],
   );
 
   return (
@@ -115,8 +161,12 @@ export function SettingsTab({
 
       <ModeSelector selected={selected} onChange={setSelected} />
 
-      {selected === "local" ? (
-        <LocalSettings profile={profile} onChange={onChange} />
+      {selected === "local-ollama" ? (
+        <LocalOllamaSettings profile={profile} onChange={onChange} />
+      ) : null}
+
+      {selected === "local-lmstudio" ? (
+        <LocalLMStudioSettings profile={profile} onChange={onChange} />
       ) : null}
 
       {cloudProviderFromSelected(selected) !== null ? (
@@ -150,9 +200,14 @@ function ModeSelector({
 }: ModeSelectorProps): React.ReactElement {
   const options: { value: SelectedMode; label: string; help: string }[] = [
     {
-      value: "local",
+      value: "local-ollama",
       label: "Local Ollama",
       help: "Default. Text never leaves your device. Requires Ollama running locally.",
+    },
+    {
+      value: "local-lmstudio",
+      label: "Local LM Studio",
+      help: "Text never leaves your device. Requires LM Studio running and serving on localhost:1234.",
     },
     {
       value: "cloud-anthropic",
@@ -195,6 +250,7 @@ function ModeSelector({
             checked={selected === opt.value}
             onChange={() => void onChange(opt.value)}
             className="mt-1"
+            data-testid={`mode-radio-${opt.value}`}
           />
           <span className="flex flex-col">
             <span className="font-medium">{opt.label}</span>
@@ -206,15 +262,15 @@ function ModeSelector({
   );
 }
 
-interface LocalSettingsProps {
+interface LocalProviderProps {
   readonly profile: ExtensionProfile;
   readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void>;
 }
 
-function LocalSettings({
+function LocalOllamaSettings({
   profile,
   onChange,
-}: LocalSettingsProps): React.ReactElement {
+}: LocalProviderProps): React.ReactElement {
   return (
     <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
       <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
@@ -226,22 +282,136 @@ function LocalSettings({
           type="url"
           value={profile.localEndpoint}
           onChange={(e) => void onChange({ localEndpoint: e.target.value })}
-          placeholder="http://localhost:11434"
+          placeholder={OLLAMA_DEFAULT_BASE_URL}
           className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
           data-testid="local-endpoint-input"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-xs text-neutral-500">Model</span>
-        <input
-          type="text"
-          value={profile.localModel}
-          onChange={(e) => void onChange({ localModel: e.target.value })}
-          placeholder="llama3.2:3b"
-          className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
-          data-testid="local-model-input"
-        />
-      </label>
+      <ModelPicker
+        provider="ollama"
+        baseUrl={profile.localEndpoint || OLLAMA_DEFAULT_BASE_URL}
+        apiKey={null}
+        currentModel={profile.localModel}
+        defaultModel={DEFAULT_MODELS.ollama ?? ""}
+        modelKey="localModel"
+        onChange={onChange}
+        testIdPrefix="local"
+      />
+    </fieldset>
+  );
+}
+
+function LocalLMStudioSettings({
+  profile,
+  onChange,
+}: LocalProviderProps): React.ReactElement {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [pendingKey, setPendingKey] = useState("");
+  const hasStoredKey = profile.localApiKey !== null;
+  const last4 = profile.localApiKey?.slice(-4) ?? "";
+
+  const saveKey = useCallback(async () => {
+    if (pendingKey.length === 0) return;
+    await onChange({ localApiKey: pendingKey });
+    setPendingKey("");
+  }, [onChange, pendingKey]);
+
+  const clearKey = useCallback(async () => {
+    await onChange({ localApiKey: null });
+  }, [onChange]);
+
+  const endpoint =
+    profile.localEndpoint && profile.localEndpoint !== OLLAMA_DEFAULT_BASE_URL
+      ? profile.localEndpoint
+      : LMSTUDIO_DEFAULT_BASE_URL;
+
+  return (
+    <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
+      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+        Local LM Studio
+      </legend>
+      <p className="m-0 text-xs text-neutral-500">
+        Start LM Studio, load a model, and switch the Server tab to{" "}
+        <code className="font-mono">Running</code>. The default base URL is{" "}
+        <code className="font-mono">{LMSTUDIO_DEFAULT_BASE_URL}</code>.
+      </p>
+      <ModelPicker
+        provider="lmstudio"
+        baseUrl={endpoint}
+        apiKey={profile.localApiKey}
+        currentModel={profile.localModel}
+        defaultModel={DEFAULT_MODELS.lmstudio ?? ""}
+        modelKey="localModel"
+        onChange={onChange}
+        testIdPrefix="lmstudio"
+      />
+      <details
+        className="text-sm"
+        open={showAdvanced}
+        onToggle={(e) => setShowAdvanced((e.target as HTMLDetailsElement).open)}
+      >
+        <summary className="cursor-pointer text-xs text-neutral-500">
+          Advanced (custom base URL, optional API key)
+        </summary>
+        <div className="mt-2 flex flex-col gap-2">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-xs text-neutral-500">Base URL</span>
+            <input
+              type="url"
+              value={endpoint}
+              onChange={(e) => void onChange({ localEndpoint: e.target.value })}
+              placeholder={LMSTUDIO_DEFAULT_BASE_URL}
+              className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+              data-testid="lmstudio-base-url-input"
+            />
+          </label>
+          <div className="flex flex-col gap-1 text-sm">
+            <span className="text-xs text-neutral-500">
+              API key (only if you put LM Studio behind a reverse proxy)
+            </span>
+            {hasStoredKey ? (
+              <div className="flex items-center gap-2">
+                <code
+                  className="border border-neutral-300 bg-neutral-50 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-950"
+                  data-testid="lmstudio-api-key-masked"
+                >
+                  ••••{last4}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => void clearKey()}
+                  className="text-xs underline"
+                  data-testid="lmstudio-api-key-clear"
+                >
+                  Clear
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="password"
+                  value={pendingKey}
+                  onChange={(e) => setPendingKey(e.target.value)}
+                  placeholder="optional"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+                  data-testid="lmstudio-api-key-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => void saveKey()}
+                  disabled={pendingKey.length === 0}
+                  className="border border-neutral-300 bg-white px-2 py-1 text-xs disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
+                  data-testid="lmstudio-api-key-save"
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </details>
     </fieldset>
   );
 }
@@ -264,6 +434,13 @@ function modelHint(providerId: CloudProviderId): string | null {
       "Use `openrouter/auto` for auto-routing, or any model slug from " +
       "openrouter.ai/models (e.g. anthropic/claude-3-5-sonnet, " +
       "meta-llama/llama-3.3-70b-instruct)."
+    );
+  }
+  if (providerId === "anthropic") {
+    return (
+      "Anthropic does not expose a models endpoint. Refresh loads the " +
+      "extension's hardcoded supported list; new releases require an " +
+      "extension update."
     );
   }
   return null;
@@ -301,22 +478,21 @@ function CloudSettings({
       <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
         Cloud {providerId}
       </legend>
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-xs text-neutral-500">Model</span>
-        <input
-          type="text"
-          value={profile.cloudModel ?? ""}
-          onChange={(e) => void onChange({ cloudModel: e.target.value })}
-          placeholder={DEFAULT_MODELS[providerId]}
-          className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
-          data-testid="cloud-model-input"
-        />
-        {modelHint(providerId) ? (
-          <span className="text-xs text-neutral-500">
-            {modelHint(providerId)}
-          </span>
-        ) : null}
-      </label>
+      <ModelPicker
+        provider={providerId}
+        baseUrl={null}
+        apiKey={profile.cloudApiKey}
+        currentModel={profile.cloudModel ?? ""}
+        defaultModel={DEFAULT_MODELS[providerId] ?? ""}
+        modelKey="cloudModel"
+        onChange={onChange}
+        testIdPrefix="cloud"
+      />
+      {modelHint(providerId) ? (
+        <span className="text-xs text-neutral-500">
+          {modelHint(providerId)}
+        </span>
+      ) : null}
       <div className="flex flex-col gap-1 text-sm">
         <span className="text-xs text-neutral-500">API key</span>
         {hasStoredKey ? (
@@ -366,4 +542,134 @@ function CloudSettings({
       </div>
     </fieldset>
   );
+}
+
+interface ModelPickerProps {
+  readonly provider: ModelFetchableProvider;
+  readonly baseUrl: string | null;
+  readonly apiKey: string | null;
+  readonly currentModel: string;
+  readonly defaultModel: string;
+  readonly modelKey: "localModel" | "cloudModel";
+  readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void>;
+  readonly testIdPrefix: string;
+}
+
+type FetchState =
+  | { readonly status: "idle" }
+  | { readonly status: "loading" }
+  | { readonly status: "ok"; readonly models: readonly string[] }
+  | { readonly status: "fail"; readonly message: string };
+
+function ModelPicker({
+  provider,
+  baseUrl,
+  apiKey,
+  currentModel,
+  defaultModel,
+  modelKey,
+  onChange,
+  testIdPrefix,
+}: ModelPickerProps): React.ReactElement {
+  const [state, setState] = useState<FetchState>({ status: "idle" });
+
+  const onRefresh = useCallback(async () => {
+    setState({ status: "loading" });
+    try {
+      const models = await fetchModels({
+        provider,
+        baseUrl,
+        apiKey,
+      });
+      setState({ status: "ok", models });
+    } catch (cause: unknown) {
+      const message = cause instanceof Error ? cause.message : "Unknown error";
+      setState({
+        status: "fail",
+        message: friendlyFetchError(provider, message),
+      });
+    }
+  }, [apiKey, baseUrl, provider]);
+
+  const handleModelChange = useCallback(
+    (value: string) => {
+      void onChange({ [modelKey]: value } as Partial<ExtensionProfile>);
+    },
+    [modelKey, onChange],
+  );
+
+  const models = state.status === "ok" ? state.models : [];
+  const showDropdown = state.status === "ok" && models.length > 0;
+
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <span className="text-xs text-neutral-500">Model</span>
+      <div className="flex items-center gap-2">
+        {showDropdown ? (
+          <select
+            value={currentModel}
+            onChange={(e) => handleModelChange(e.target.value)}
+            className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+            data-testid={`${testIdPrefix}-model-select`}
+          >
+            {currentModel && !models.includes(currentModel) ? (
+              <option value={currentModel}>{currentModel} (current)</option>
+            ) : null}
+            {models.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={currentModel}
+            onChange={(e) => handleModelChange(e.target.value)}
+            placeholder={defaultModel}
+            className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+            data-testid={`${testIdPrefix}-model-input`}
+          />
+        )}
+        <button
+          type="button"
+          onClick={() => void onRefresh()}
+          disabled={state.status === "loading"}
+          className="border border-neutral-300 bg-white px-2 py-1 text-xs disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
+          data-testid={`${testIdPrefix}-model-refresh`}
+        >
+          {state.status === "loading" ? "Loading…" : "Refresh models"}
+        </button>
+      </div>
+      {state.status === "ok" && models.length === 0 ? (
+        <span className="text-xs text-neutral-500">
+          No models found. Load a model first, then try again.
+        </span>
+      ) : null}
+      {state.status === "fail" ? (
+        <span
+          className="text-warn-light dark:text-warn-dark text-xs"
+          data-testid={`${testIdPrefix}-model-error`}
+        >
+          {state.message}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function friendlyFetchError(
+  provider: ModelFetchableProvider,
+  raw: string,
+): string {
+  if (/UNREACHABLE/i.test(raw)) {
+    return (
+      `Couldn't reach ${provider}. Check the URL is correct and the ` +
+      `server is running.`
+    );
+  }
+  if (/AUTH_FAILED|API_KEY_MISSING|API.*KEY.*MISSING/i.test(raw)) {
+    return `Couldn't authenticate with ${provider}. Check your API key.`;
+  }
+  return raw;
 }

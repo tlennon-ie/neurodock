@@ -35,8 +35,10 @@ const STORAGE_KEY = "neurodock.profile.v1";
 
 const DEFAULT_PROFILE: ExtensionProfile = Object.freeze({
   mode: "local",
+  localProvider: "ollama",
   localEndpoint: "http://localhost:11434",
   localModel: "llama3.2:3b",
+  localApiKey: null,
   cloudProvider: null,
   cloudModel: null,
   cloudApiKey: null,
@@ -236,6 +238,7 @@ function normaliseMode(input: Partial<ExtensionProfile>): ExtensionMode {
 function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
   return {
     mode: normaliseMode(input),
+    localProvider: input.localProvider === "lmstudio" ? "lmstudio" : "ollama",
     localEndpoint:
       typeof input.localEndpoint === "string" && input.localEndpoint.length > 0
         ? input.localEndpoint
@@ -244,6 +247,10 @@ function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
       typeof input.localModel === "string" && input.localModel.length > 0
         ? input.localModel
         : DEFAULT_PROFILE.localModel,
+    localApiKey:
+      typeof input.localApiKey === "string" && input.localApiKey.length > 0
+        ? input.localApiKey
+        : null,
     cloudProvider:
       typeof input.cloudProvider === "string" && input.cloudProvider.length > 0
         ? input.cloudProvider

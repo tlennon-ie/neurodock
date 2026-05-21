@@ -17,17 +17,19 @@ import { defineConfig } from "wxt";
  *   origins are requested via `optional_host_permissions` only when the
  *   user explicitly enables a cloud provider in Settings.
  *
- * v0.0.2 CSP additions: the MV3
+ * v0.0.3 CSP additions: the MV3
  * `content_security_policy.extension_pages` `connect-src` allow-list
  * now includes:
  *   - http://localhost:11434 and http://127.0.0.1:11434 (Ollama)
+ *   - http://localhost:1234  and http://127.0.0.1:1234  (LM Studio)
  *   - https://api.anthropic.com
  *   - https://api.openai.com
  *   - https://openrouter.ai
  *
  * No `eval`, no inline scripts. The Anthropic and OpenAI SDKs both
  * support browser-context fetch and stream parsing without dynamic
- * code evaluation. OpenRouter is hit via plain `fetch` (no SDK).
+ * code evaluation. OpenRouter and LM Studio are hit via plain `fetch`
+ * (no SDK).
  */
 export default defineConfig({
   srcDir: ".",
@@ -70,6 +72,8 @@ export default defineConfig({
         "connect-src 'self' " +
         "http://localhost:11434 " +
         "http://127.0.0.1:11434 " +
+        "http://localhost:1234 " +
+        "http://127.0.0.1:1234 " +
         "https://api.anthropic.com " +
         "https://api.openai.com " +
         "https://openrouter.ai;",

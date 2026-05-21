@@ -8,8 +8,10 @@ function baseProfile(
 ): ExtensionProfile {
   return {
     mode: "local",
+    localProvider: "ollama",
     localEndpoint: "http://localhost:11434",
     localModel: "llama3.2:3b",
+    localApiKey: null,
     cloudProvider: null,
     cloudModel: null,
     cloudApiKey: null,
@@ -20,12 +22,14 @@ function baseProfile(
 }
 
 describe("SettingsTab", () => {
-  it("renders the four mode options with Local Ollama as the default", () => {
+  it("renders the six mode options with Local Ollama as the default", () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
     render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
     expect(screen.getByLabelText(/Local Ollama/)).toBeChecked();
+    expect(screen.getByLabelText(/Local LM Studio/)).not.toBeChecked();
     expect(screen.getByLabelText(/Cloud Anthropic/)).not.toBeChecked();
     expect(screen.getByLabelText(/Cloud OpenAI/)).not.toBeChecked();
+    expect(screen.getByLabelText(/Cloud OpenRouter/)).not.toBeChecked();
     expect(screen.getByLabelText(/Mock/)).not.toBeChecked();
   });
 
@@ -91,13 +95,6 @@ describe("SettingsTab", () => {
 
   it("saves a typed key and switches to cloud mode", async () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
-    // To render the cloud-anthropic fieldset we need
-    // selectedModeFromProfile() to return "cloud-anthropic" — which means
-    // mode === "cloud" AND cloudProvider === "anthropic". In real flow
-    // the user selects the Cloud Anthropic radio first; mode stays local
-    // (because no key yet) and provider is staged. We approximate the
-    // "form visible" state by passing the cloud-provider sentinel even
-    // without a key.
     render(
       <SettingsTab
         profile={baseProfile({
@@ -130,5 +127,115 @@ describe("SettingsTab", () => {
     expect(screen.getByTestId("provider-test-button")).toHaveTextContent(
       /Test connection/,
     );
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // v0.0.3 regression — cloud radios must be clickable even without a
+  // saved API key. Previously the radios appeared to "snap back" because
+  // selectedModeFromProfile derived the active option from `profile.mode`
+  // (which is only `cloud` after a key is saved).
+  // ──────────────────────────────────────────────────────────────────
+
+  it("clicking Cloud OpenRouter stages the provider intent immediately", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    fireEvent.click(screen.getByTestId("mode-radio-cloud-openrouter"));
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ cloudProvider: "openrouter" }),
+      );
+    });
+    // mode must stay non-cloud until a key is saved (privacy contract).
+    const call = onChange.mock.calls[0]?.[0] as Partial<ExtensionProfile>;
+    expect(call.mode).not.toBe("cloud");
+  });
+
+  it("clicking Cloud Anthropic stages the provider intent immediately", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    fireEvent.click(screen.getByTestId("mode-radio-cloud-anthropic"));
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ cloudProvider: "anthropic" }),
+      );
+    });
+  });
+
+  it("clicking Cloud OpenAI stages the provider intent immediately", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    fireEvent.click(screen.getByTestId("mode-radio-cloud-openai"));
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({ cloudProvider: "openai" }),
+      );
+    });
+  });
+
+  it("Cloud OpenRouter radio appears checked once the provider is staged, before any key is saved", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          mode: "local",
+          cloudProvider: "openrouter",
+          cloudModel: "openrouter/auto",
+          cloudApiKey: null,
+        })}
+        onChange={onChange}
+      />,
+    );
+    expect(screen.getByLabelText(/Cloud OpenRouter/)).toBeChecked();
+    expect(screen.getByLabelText(/Local Ollama/)).not.toBeChecked();
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // v0.0.3 — LM Studio support.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("clicking Local LM Studio switches localProvider to lmstudio", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    fireEvent.click(screen.getByTestId("mode-radio-local-lmstudio"));
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          mode: "local",
+          localProvider: "lmstudio",
+          localEndpoint: "http://localhost:1234/v1",
+        }),
+      );
+    });
+  });
+
+  it("LM Studio panel exposes a base-URL field under Advanced", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          localProvider: "lmstudio",
+          localEndpoint: "http://localhost:1234/v1",
+        })}
+        onChange={onChange}
+      />,
+    );
+    // LM Studio model picker is rendered, with the refresh button.
+    expect(screen.getByTestId("lmstudio-model-refresh")).toBeInTheDocument();
+  });
+
+  it("LM Studio optional API key is masked after save", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          localProvider: "lmstudio",
+          localEndpoint: "http://localhost:1234/v1",
+          localApiKey: "sk-lm-abcd1234",
+        })}
+        onChange={onChange}
+      />,
+    );
+    const masked = screen.getByTestId("lmstudio-api-key-masked");
+    expect(masked).toHaveTextContent(/••••1234/);
   });
 });

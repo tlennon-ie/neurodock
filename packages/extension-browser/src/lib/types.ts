@@ -16,6 +16,8 @@ export type ExtensionMode = "local" | "cloud" | "mock";
  * `chrome.storage.local` (never `sync` — credentials are device-local).
  *
  * - `ollama`     : local-mode HTTP provider (default).
+ * - `lmstudio`   : local-mode OpenAI-compatible provider for LM Studio
+ *                  (default endpoint `http://localhost:1234/v1`).
  * - `anthropic`  : cloud-mode provider via @anthropic-ai/sdk.
  * - `openai`     : cloud-mode provider via the official `openai` package.
  * - `openrouter` : cloud-mode provider via OpenRouter's OpenAI-compatible
@@ -24,6 +26,7 @@ export type ExtensionMode = "local" | "cloud" | "mock";
  */
 export type ProviderId =
   | "ollama"
+  | "lmstudio"
   | "anthropic"
   | "openai"
   | "openrouter"
@@ -54,8 +57,20 @@ export type TargetRegister =
 
 export interface ExtensionProfile {
   readonly mode: ExtensionMode;
+  /**
+   * Which local provider to use when `mode === "local"`. Defaults to
+   * `ollama` for backwards compatibility. `lmstudio` routes the local
+   * lane to LM Studio's OpenAI-compatible API instead.
+   */
+  readonly localProvider: "ollama" | "lmstudio";
   readonly localEndpoint: string;
   readonly localModel: string;
+  /**
+   * Optional API key for LM Studio when running behind a reverse proxy
+   * that requires auth. The default LM Studio server is unauthenticated
+   * so this is typically null.
+   */
+  readonly localApiKey: string | null;
   readonly cloudProvider: string | null;
   readonly cloudModel: string | null;
   /**
