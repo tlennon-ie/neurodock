@@ -45,10 +45,13 @@ export function buildPrompt({ tool, input }: PromptInputs): string {
   return `${rendered}${SUFFIX_HEADER}\`\`\`json\n${schema}\n\`\`\`\n`;
 }
 
-function renderTemplate(template: string, input: Record<string, unknown>): string {
+function renderTemplate(
+  template: string,
+  input: Record<string, unknown>,
+): string {
   return template.replace(
     /(?<!\{)\{([a-z_][a-z0-9_]*)\}(?!\})/g,
-    (_match, key: string) => stringify(input[key])
+    (_match, key: string) => stringify(input[key]),
   );
 }
 

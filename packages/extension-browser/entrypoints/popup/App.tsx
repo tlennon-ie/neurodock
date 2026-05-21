@@ -189,10 +189,7 @@ function HomeTab({
 }: HomeTabProps): React.ReactElement {
   return (
     <>
-      <section
-        aria-labelledby="status-heading"
-        className="flex flex-col gap-2"
-      >
+      <section aria-labelledby="status-heading" className="flex flex-col gap-2">
         <h2
           id="status-heading"
           className="font-heading m-0 text-base font-medium"
@@ -271,8 +268,8 @@ function HistoryPanel({
       </label>
       {profile.historyEnabled && history.length === 0 ? (
         <p className="text-xs text-neutral-500">
-          No translations yet. Right-click selected text on a supported site
-          to start.
+          No translations yet. Right-click selected text on a supported site to
+          start.
         </p>
       ) : null}
       {profile.historyEnabled && history.length > 0 ? (

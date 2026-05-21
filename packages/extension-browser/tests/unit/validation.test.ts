@@ -41,13 +41,12 @@ describe("validation", () => {
   });
 
   it("extracts JSON from a fenced markdown block", () => {
-    const raw =
-      "Here is the output:\n```json\n{\"ok\":true}\n```\n\nThanks!";
+    const raw = 'Here is the output:\n```json\n{"ok":true}\n```\n\nThanks!';
     expect(extractJson(raw)).toBe('{"ok":true}');
   });
 
   it("extracts JSON from raw prose with trailing braces", () => {
-    expect(extractJson("Sure! {\"a\":1}")).toBe('{"a":1}');
+    expect(extractJson('Sure! {"a":1}')).toBe('{"a":1}');
   });
 
   it("reports parse error on broken JSON", () => {

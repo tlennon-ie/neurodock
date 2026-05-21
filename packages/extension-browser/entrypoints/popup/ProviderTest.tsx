@@ -45,8 +45,7 @@ export function ProviderTest({
       const preview = result.text.slice(0, 80);
       setState({ status: "ok", preview });
     } catch (cause: unknown) {
-      const message =
-        cause instanceof Error ? cause.message : "Unknown error";
+      const message = cause instanceof Error ? cause.message : "Unknown error";
       setState({ status: "fail", message });
     }
   }, [profile]);

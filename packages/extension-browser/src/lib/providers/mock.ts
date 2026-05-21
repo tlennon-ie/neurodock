@@ -32,7 +32,7 @@ export function createMockProvider(options: MockOptions): Provider {
 
 export function buildMockData(
   tool: TranslationTool,
-  reason: string
+  reason: string,
 ): Record<string, unknown> {
   const noteHeader =
     "[MOCK] This response is a deterministic placeholder. Configure local " +
@@ -40,7 +40,7 @@ export function buildMockData(
     `(reason: ${reason})`;
   const evalSlice = `packages/evals/corpora/translation/${tool.replace(
     "_",
-    "/"
+    "/",
   )}/v0.1.0/mock.jsonl`;
   const provenance = {
     mode: "local",

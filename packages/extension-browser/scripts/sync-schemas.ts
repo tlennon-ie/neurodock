@@ -14,7 +14,10 @@ const SOURCE_DIR = resolve(PKG_ROOT, "..", "mcp-translation", "schemas");
 const LIB_TARGET = resolve(PKG_ROOT, "src", "lib", "schemas");
 const PUBLIC_TARGET = resolve(PKG_ROOT, "public", "schemas");
 
-interface SyncResult { copied: string[]; skipped: string[]; }
+interface SyncResult {
+  copied: string[];
+  skipped: string[];
+}
 
 const EXPECTED_SCHEMAS = [
   "translate_incoming.schema.json",
@@ -27,7 +30,7 @@ export function syncSchemas(): SyncResult {
   if (!existsSync(SOURCE_DIR)) {
     throw new Error(
       `sync-schemas: source dir not found at ${SOURCE_DIR}. ` +
-        `Is packages/mcp-translation present in the workspace?`
+        `Is packages/mcp-translation present in the workspace?`,
     );
   }
   mkdirSync(LIB_TARGET, { recursive: true });
@@ -36,7 +39,10 @@ export function syncSchemas(): SyncResult {
   const copied: string[] = [];
   const skipped: string[] = [];
   for (const name of EXPECTED_SCHEMAS) {
-    if (!available.has(name)) { skipped.push(name); continue; }
+    if (!available.has(name)) {
+      skipped.push(name);
+      continue;
+    }
     const src = join(SOURCE_DIR, name);
     copyFileSync(src, join(LIB_TARGET, name));
     copyFileSync(src, join(PUBLIC_TARGET, name));
@@ -57,7 +63,11 @@ if (isMain()) {
   // eslint-disable-next-line no-console
   console.log(
     `[sync-schemas] copied ${result.copied.length} schema(s)` +
-      (result.skipped.length > 0 ? `; skipped ${result.skipped.join(", ")}` : "")
+      (result.skipped.length > 0
+        ? `; skipped ${result.skipped.join(", ")}`
+        : ""),
   );
-  if (result.copied.length === 0) { process.exit(1); }
+  if (result.copied.length === 0) {
+    process.exit(1);
+  }
 }

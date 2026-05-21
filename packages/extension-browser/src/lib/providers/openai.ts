@@ -18,7 +18,7 @@ export interface OpenAIOptions {
 export function createOpenAIProvider(options: OpenAIOptions): Provider {
   if (options.apiKey.length === 0) {
     throw new Error(
-      "OPENAI_API_KEY_MISSING: Set an OpenAI API key in Settings."
+      "OPENAI_API_KEY_MISSING: Set an OpenAI API key in Settings.",
     );
   }
   const client =
@@ -29,8 +29,9 @@ export function createOpenAIProvider(options: OpenAIOptions): Provider {
     if (options.disableStreaming === true) {
       return completeNonStreaming(client, request);
     }
-    try { return await completeStreaming(client, request); }
-    catch (cause: unknown) {
+    try {
+      return await completeStreaming(client, request);
+    } catch (cause: unknown) {
       if (isStreamUnsupported(cause)) {
         return completeNonStreaming(client, request);
       }
@@ -42,7 +43,7 @@ export function createOpenAIProvider(options: OpenAIOptions): Provider {
 
 async function completeStreaming(
   client: OpenAI,
-  request: ProviderRequest
+  request: ProviderRequest,
 ): Promise<ProviderResult> {
   const stream = await client.chat.completions.create(
     {
@@ -51,7 +52,7 @@ async function completeStreaming(
       response_format: { type: "json_object" },
       messages: [{ role: "user", content: request.prompt }],
     },
-    { signal: request.signal }
+    { signal: request.signal },
   );
   let text = "";
   for await (const chunk of stream) {
@@ -69,7 +70,7 @@ async function completeStreaming(
 
 async function completeNonStreaming(
   client: OpenAI,
-  request: ProviderRequest
+  request: ProviderRequest,
 ): Promise<ProviderResult> {
   let completion;
   try {
@@ -80,9 +81,11 @@ async function completeNonStreaming(
         response_format: { type: "json_object" },
         messages: [{ role: "user", content: request.prompt }],
       },
-      { signal: request.signal }
+      { signal: request.signal },
     );
-  } catch (cause: unknown) { throw normaliseOpenAIError(cause); }
+  } catch (cause: unknown) {
+    throw normaliseOpenAIError(cause);
+  }
   const text = completion.choices?.[0]?.message?.content ?? "";
   if (text.length > 0) request.onToken?.(text);
   return {
@@ -101,12 +104,12 @@ function normaliseOpenAIError(cause: unknown): Error {
     const msg = cause.message;
     if (/401|unauthorized|invalid.*api.*key/i.test(msg)) {
       return new Error(
-        "OPENAI_AUTH_FAILED: API key was rejected. Check Settings."
+        "OPENAI_AUTH_FAILED: API key was rejected. Check Settings.",
       );
     }
     if (/429|rate.?limit/i.test(msg)) {
       return new Error(
-        "OPENAI_RATE_LIMITED: Too many requests. Wait and retry."
+        "OPENAI_RATE_LIMITED: Too many requests. Wait and retry.",
       );
     }
     return new Error(`OPENAI_ERROR: ${msg}`);

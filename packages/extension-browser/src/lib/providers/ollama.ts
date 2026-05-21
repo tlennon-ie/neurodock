@@ -40,7 +40,7 @@ export function createOllamaProvider(options: OllamaOptions): Provider {
     } catch (cause: unknown) {
       throw new Error(
         `OLLAMA_UNREACHABLE: ${endpoint} did not respond. ` +
-          `Is Ollama running? (${getErrorMessage(cause)})`
+          `Is Ollama running? (${getErrorMessage(cause)})`,
       );
     }
     if (!response.ok) {
@@ -57,7 +57,7 @@ export function createOllamaProvider(options: OllamaOptions): Provider {
 
 async function consumeNdjson(
   response: Response,
-  onToken?: (delta: string) => void
+  onToken?: (delta: string) => void,
 ): Promise<string> {
   if (!response.body) {
     const raw = await response.text();
@@ -76,21 +76,33 @@ async function consumeNdjson(
     buffer = lines.pop() ?? "";
     for (const line of lines) {
       const delta = parseLine(line);
-      if (delta.length > 0) { out += delta; onToken?.(delta); }
+      if (delta.length > 0) {
+        out += delta;
+        onToken?.(delta);
+      }
     }
   }
   if (buffer.length > 0) {
     const delta = parseLine(buffer);
-    if (delta.length > 0) { out += delta; onToken?.(delta); }
+    if (delta.length > 0) {
+      out += delta;
+      onToken?.(delta);
+    }
   }
   return out;
 }
 
-function aggregateLines(raw: string, onToken?: (delta: string) => void): string {
+function aggregateLines(
+  raw: string,
+  onToken?: (delta: string) => void,
+): string {
   let out = "";
   for (const line of raw.split("\n")) {
     const delta = parseLine(line);
-    if (delta.length > 0) { out += delta; onToken?.(delta); }
+    if (delta.length > 0) {
+      out += delta;
+      onToken?.(delta);
+    }
   }
   return out;
 }
@@ -102,7 +114,9 @@ function parseLine(line: string): string {
     const obj = JSON.parse(trimmed) as { response?: unknown };
     if (typeof obj.response === "string") return obj.response;
     return "";
-  } catch { return ""; }
+  } catch {
+    return "";
+  }
 }
 
 function getErrorMessage(cause: unknown): string {

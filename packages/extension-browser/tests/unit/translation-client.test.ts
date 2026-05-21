@@ -32,7 +32,7 @@ describe("translation-client", () => {
   it("falls back to a labelled mock when local Ollama is unreachable", async () => {
     const res = await translate(
       { tool: "check_tone", input: { text: "ok" } },
-      { profile: baseProfile }
+      { profile: baseProfile },
     );
     expect(res.ok).toBe(true);
     expect(res.mockMode).toBe(true);
@@ -104,7 +104,7 @@ describe("translation-client", () => {
     };
     const res = await translate(
       { tool: "check_tone", input: { text: "Fix it now." } },
-      { profile, providerOverride: fakeProvider }
+      { profile, providerOverride: fakeProvider },
     );
     expect(res.ok).toBe(true);
     expect(res.error).toBeNull();
@@ -134,7 +134,7 @@ describe("translation-client", () => {
     };
     const res = await translate(
       { tool: "translate_incoming", input: { text: "hi" } },
-      { profile, providerOverride: fakeProvider }
+      { profile, providerOverride: fakeProvider },
     );
     expect(res.ok).toBe(false);
     expect(res.error).toMatch(/LLM_OUTPUT_VALIDATION_FAILED/);

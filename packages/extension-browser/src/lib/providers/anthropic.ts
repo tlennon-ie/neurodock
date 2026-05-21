@@ -23,7 +23,7 @@ const MAX_TOKENS = 2048;
 export function createAnthropicProvider(options: AnthropicOptions): Provider {
   if (options.apiKey.length === 0) {
     throw new Error(
-      "ANTHROPIC_API_KEY_MISSING: Set an Anthropic API key in Settings."
+      "ANTHROPIC_API_KEY_MISSING: Set an Anthropic API key in Settings.",
     );
   }
   const client =
@@ -34,8 +34,9 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
     if (options.disableStreaming === true) {
       return completeNonStreaming(client, request);
     }
-    try { return await completeStreaming(client, request); }
-    catch (cause: unknown) {
+    try {
+      return await completeStreaming(client, request);
+    } catch (cause: unknown) {
       if (isStreamUnsupported(cause)) {
         return completeNonStreaming(client, request);
       }
@@ -47,7 +48,7 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
 
 async function completeStreaming(
   client: Anthropic,
-  request: ProviderRequest
+  request: ProviderRequest,
 ): Promise<ProviderResult> {
   const stream = client.messages.stream(
     {
@@ -55,7 +56,7 @@ async function completeStreaming(
       max_tokens: MAX_TOKENS,
       messages: [{ role: "user", content: request.prompt }],
     },
-    { signal: request.signal }
+    { signal: request.signal },
   );
   stream.on("text", (delta: string) => {
     if (delta.length > 0) request.onToken?.(delta);
@@ -70,7 +71,7 @@ async function completeStreaming(
 
 async function completeNonStreaming(
   client: Anthropic,
-  request: ProviderRequest
+  request: ProviderRequest,
 ): Promise<ProviderResult> {
   let response;
   try {
@@ -80,9 +81,11 @@ async function completeNonStreaming(
         max_tokens: MAX_TOKENS,
         messages: [{ role: "user", content: request.prompt }],
       },
-      { signal: request.signal }
+      { signal: request.signal },
     );
-  } catch (cause: unknown) { throw normaliseAnthropicError(cause); }
+  } catch (cause: unknown) {
+    throw normaliseAnthropicError(cause);
+  }
   const text = extractText(response);
   if (text.length > 0) request.onToken?.(text);
   return {
@@ -91,8 +94,13 @@ async function completeNonStreaming(
   };
 }
 
-interface AnthropicTextBlock { readonly type: string; readonly text?: string; }
-interface AnthropicMessageLike { readonly content?: readonly AnthropicTextBlock[]; }
+interface AnthropicTextBlock {
+  readonly type: string;
+  readonly text?: string;
+}
+interface AnthropicMessageLike {
+  readonly content?: readonly AnthropicTextBlock[];
+}
 
 function extractText(message: AnthropicMessageLike): string {
   if (!message.content) return "";
@@ -112,12 +120,12 @@ function normaliseAnthropicError(cause: unknown): Error {
     const msg = cause.message;
     if (/401|unauthorized|invalid.*api.*key/i.test(msg)) {
       return new Error(
-        "ANTHROPIC_AUTH_FAILED: API key was rejected. Check Settings."
+        "ANTHROPIC_AUTH_FAILED: API key was rejected. Check Settings.",
       );
     }
     if (/429|rate.?limit/i.test(msg)) {
       return new Error(
-        "ANTHROPIC_RATE_LIMITED: Too many requests. Wait and retry."
+        "ANTHROPIC_RATE_LIMITED: Too many requests. Wait and retry.",
       );
     }
     return new Error(`ANTHROPIC_ERROR: ${msg}`);

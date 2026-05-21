@@ -4,7 +4,7 @@ import { SettingsTab } from "../../entrypoints/popup/SettingsTab.js";
 import type { ExtensionProfile } from "../../src/lib/types.js";
 
 function baseProfile(
-  overrides: Partial<ExtensionProfile> = {}
+  overrides: Partial<ExtensionProfile> = {},
 ): ExtensionProfile {
   return {
     mode: "local",
@@ -40,11 +40,11 @@ describe("SettingsTab", () => {
           cloudApiKey: null,
         })}
         onChange={onChange}
-      />
+      />,
     );
     expect(screen.getByTestId("cloud-api-key-input")).toBeInTheDocument();
     expect(
-      screen.queryByTestId("cloud-api-key-masked")
+      screen.queryByTestId("cloud-api-key-masked"),
     ).not.toBeInTheDocument();
   });
 
@@ -59,7 +59,7 @@ describe("SettingsTab", () => {
           cloudApiKey: "sk-ant-abcdef1234",
         })}
         onChange={onChange}
-      />
+      />,
     );
     const masked = screen.getByTestId("cloud-api-key-masked");
     expect(masked).toHaveTextContent(/••••1234/);
@@ -78,7 +78,7 @@ describe("SettingsTab", () => {
           cloudApiKey: "sk-openai-xxxx",
         })}
         onChange={onChange}
-      />
+      />,
     );
     fireEvent.click(screen.getByTestId("cloud-api-key-clear"));
     await waitFor(() => {
@@ -107,7 +107,7 @@ describe("SettingsTab", () => {
           cloudApiKey: null,
         })}
         onChange={onChange}
-      />
+      />,
     );
     fireEvent.change(screen.getByTestId("cloud-api-key-input"), {
       target: { value: "sk-ant-new-key" },
@@ -119,7 +119,7 @@ describe("SettingsTab", () => {
           cloudProvider: "anthropic",
           cloudApiKey: "sk-ant-new-key",
           mode: "cloud",
-        })
+        }),
       );
     });
   });
@@ -128,7 +128,7 @@ describe("SettingsTab", () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
     render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
     expect(screen.getByTestId("provider-test-button")).toHaveTextContent(
-      /Test connection/
+      /Test connection/,
     );
   });
 });
