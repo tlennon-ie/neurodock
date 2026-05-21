@@ -22,7 +22,7 @@ export default defineConfig({
     starlight({
       title: "NeuroDock",
       description:
-        "Open-source, MCP-native, vendor-neutral, local-first cognitive substrate for neurodivergent professionals.",
+        "Local-first cognitive substrate for neurodivergent professionals. Memory, time, and a guardrail that refuses to amplify rumination. MCP-native. No telemetry.",
       logo: {
         // Single neutral hue. No gradients. Logomark to be added by design-system-keeper.
         src: "./src/assets/logo-placeholder.svg",

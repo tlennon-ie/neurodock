@@ -1,6 +1,8 @@
 # NeuroDock
 
-> **Open-source, MCP-native, vendor-neutral, local-first cognitive substrate for neurodivergent people.**
+> **A cognitive substrate that remembers, paces, and refuses.**
+>
+> Built with neurodivergent professionals, not for them. Local-first, MCP-native, AGPL-3.0-or-later.
 
 ## 5-second TL;DR
 

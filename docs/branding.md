@@ -125,106 +125,131 @@ Word count: 78. Designed to drop into the docs index hero, the `@neurodock/cli` 
 
 ---
 
-## 3. Hero image briefs (3 prompts for `/higgsfield-generate`)
+## 3. Brand-asset prompts (icon / logomark / wordmark — for `/higgsfield-generate`)
+
+> **First-pass note:** the original prompts here were photographic still-lifes (Kinfolk / Apartamento register) — useful for marketing moodboards but useless as actual brand assets. An app needs an **icon** that survives at 16×16, a **logomark** that works on both light and dark surfaces, and a **wordmark** that pairs with the mark. The prompts below target those three deliverables directly.
 
 ### 3.1 Shared constraints — every prompt
 
-Every prompt must include this avoid clause verbatim, because the cliché list is what most "AI tool" hero images get wrong:
+Every prompt must include this avoid clause verbatim:
 
-> **Avoid:** people's faces visible, screens or monitors or phones showing UI, corporate stock-photo aesthetic, glass office, whiteboard meeting, brain-with-cogs cliché, lightbulb moment, puzzle pieces, motion blur, chromatic aberration, neon, holographic, multiple competing colours, text or wordmarks rendered in the image, hands holding phones, headsets, hoodies, "founder portrait" framing.
+> **Avoid:** photorealism, 3D rendering, gradients, neon, holographic, bevel, drop-shadow, skeuomorphism, brain-with-cogs cliché, lightbulb, puzzle pieces, infinity loop, geometric over-complication. No fine detail that disappears at 16px. No more than two colours. No serifs unless the wordmark explicitly calls for them. No "AI" symbolism (no circuit traces, no scanlines, no nodes-and-edges flourish).
 
-> **Use a single neutral accent colour if any — desaturated slate-blue around `#5a6a8f` (sRGB) — consistent with `docs/public/og-image.svg`. Otherwise off-white, warm wood, paper, and natural shadow.**
+> **Palette:** a single foreground in **desaturated slate-blue `#5a6a8f`** on a clean **off-white `#f6f4ee`** background (or the inverse for dark-mode variants). The accent matches `docs/public/og-image.svg`.
 
-Format request for all three: **square (1:1)** or **3:2 landscape** at high resolution; documentary / still-life register, not advertising.
+> **Style:** flat vector. Geometric. Two colours max. Designed to read as a recognisable mark at 16px, 48px, 128px, AND 1024px without losing identity.
 
-### 3.2 Prompt 1 — Calm-clinical-but-warm (substrate angle)
+### 3.2 Prompt 1 — App icon (the primary mark)
 
-```
-A clean still-life on a warm pale wood surface, soft natural window light from
-the upper left, late morning. Centre: a small neat stack of three blank index
-cards held by a thin neutral paper-band, slightly offset so the edges show.
-To the right of the cards: a small brass-and-glass sand-timer (hourglass)
-lying on its side, sand paused. Behind both, a single folded sheet of cream
-paper with a faint horizontal rule line, the paper catching the light at the
-fold. Shallow depth of field, focus on the cards. Documentary editorial still-
-life style, in the register of a quiet design magazine: Kinfolk, Apartamento,
-Cereal magazine. Composition uses negative space; the subjects sit in the
-lower-left third with calm empty space above. Single neutral accent: a thin
-slate-blue (#5a6a8f) thread on the paper-band around the cards — that is the
-only colour, everything else is paper, wood, and warm shadow. No people. No
-hands. No screens. No text. No diagrams. No brain shapes. No cogs. No
-puzzle pieces. No motion blur, no chromatic aberration. Real photographic
-texture; no CGI sheen.
-```
-
-Intent: this is the substrate image. The cards stand in for memory, the hourglass for time, the paper for translation/notes. Visually says "calm tools that help you remember things" without showing any UI.
-
-### 3.3 Prompt 2 — Cognitive augmentation as craft (workbench angle)
+**Goal:** the icon that ships in the Chrome extension toolbar, the docs site favicon, and the GitHub social card. Square. Recognisable at 16×16. Survives without context.
 
 ```
-A documentary-style overhead shot of a wooden workbench in afternoon light.
-On the bench: an open spiral-bound notebook, the left page with hand-drawn
-arrows and small bracketed annotations (no readable words — abstract pen
-marks only), the right page partly filled with a hand-drawn flowchart in
-neat blue-grey ink, three connected boxes. To the right of the notebook,
-a small wooden card-index drawer with brass label-holders, slightly open,
-a few unlabelled white cards visible. A blunt pencil sits across the
-notebook spine. A single piece of unbleached cotton string runs diagonally
-across the lower-right corner of the composition, suggesting tied-together
-work. Warm overhead window light, soft shadows. Editorial photography in
-the register of a craft-magazine workshop feature — Real Simple, The Gentle-
-woman, or a Japanese stationery catalogue. Texture is paramount: visible
-grain of the wood, slight fibre of the paper. No people, no hands visible
-in frame; the bench is mid-task and unattended. No screens. No phones. No
-keyboards. No text legible anywhere. No "lightbulb moment" cliché. No
-brain illustration. Single accent colour is the slate-blue (#5a6a8f) of
-the flowchart ink — every other tone is wood, paper, and warm shadow.
+Flat vector app icon, square 1024×1024, designed for an open-source
+neurodivergent-supportive AI tool called NeuroDock. Concept: a stylised
+geometric monogram — the letters "n" and "d" interlocked as one continuous
+soft-cornered shape, set inside a rounded-square container with generous
+internal padding (iOS / Chrome extension icon shape, ~22% corner radius).
+The interlocking implies "things held together calmly," not "complexity."
+Single colour foreground: desaturated slate-blue (#5a6a8f). Single colour
+background: warm off-white (#f6f4ee). Two colours only. Crisp geometric
+construction with consistent stroke weight. No gradients, no shadows, no
+3D, no bevels, no glow, no texture. No serifs. The mark should read clearly
+at 16×16 pixels and survive as a flat silhouette without context. Style
+register: design system app icons in the lineage of Notion, Linear, Raycast,
+1Password — calm, geometric, single-accent, immediately legible. Not
+"corporate tech" (no abstract spheres, no fragmentation). No brain shapes,
+no lightbulbs, no cogs, no neural-network lines, no AI symbolism. Centred,
+balanced negative space around the monogram.
 ```
 
-Intent: this is the "tool that helps you think, not for you" image. The annotations and the card-index together suggest an externalised executive function without showing software at all.
+Intent: this is the one image that has to work. It becomes the Chrome extension icon (16/32/48/128px), the GitHub social card mark, the docs favicon, and the only thing most users see.
 
-### 3.4 Prompt 3 — Neurodivergent-led software (quiet desk angle)
+### 3.3 Prompt 2 — Horizontal logomark + wordmark lockup
+
+**Goal:** the header banner — mark on the left, "NeuroDock" wordmark to the right of it. For the docs site header, the GitHub README banner, the npm package readme.
 
 ```
-A medium-wide eye-level photograph of a quiet personal desk in late
-afternoon — golden-hour window light raking across the right side. On the
-desk: a short stack of two or three well-used books spine-out (no readable
-titles — slight wear, cloth binding), a small terracotta pot with a leafy
-trailing plant (string-of-hearts or pothos), a plain off-white ceramic mug
-half-full of black coffee, a small notepad open to a page showing a
-hand-drawn flow diagram — three small boxes connected by arrows, drawn in
-slate-blue (#5a6a8f) pen. A pair of round wire-frame reading glasses
-folded on top of the notepad. The diagram is the only synthetic structure
-in the frame; everything else is lived-in domestic. Style register:
-documentary editorial photography of a writer's or scholar's desk — not
-a tech founder's setup, not a "creator workspace" Instagram aesthetic.
-Think Apartamento magazine interiors, or a New Yorker writer-at-home
-feature. Soft natural light, no studio flash, no rim lighting. No screens
-visible: no laptop, no monitor, no phone. No people, no hands. No
-brand logos, no readable text, no wordmarks. No motion blur, no
-chromatic aberration. Single neutral accent: the slate-blue diagram ink;
-everything else is wood, paper, plant, ceramic, warm shadow.
+Flat vector horizontal lockup, 1600×400 canvas, off-white background
+(#f6f4ee). Left half: a small flat-vector logomark, ~280px wide, rendered
+in desaturated slate-blue (#5a6a8f). The mark is a clean geometric "n-d"
+monogram inside a soft-cornered square — calm, balanced, readable at small
+sizes. Right of the mark, separated by generous horizontal padding (~120px
+gap): the wordmark "NeuroDock" set in a clean sans-serif typeface in
+matching slate-blue (#5a6a8f). Suggested typeface lineage: Inter, Söhne,
+or Atkinson Hyperlegible (the project's body font) — modern, humanist,
+slightly rounded, high legibility for dyslexic readers, no decorative
+flourishes. Mark and wordmark are vertically centred and visually aligned;
+the wordmark cap-height matches roughly 60% of the mark height. The "N"
+and "D" in "NeuroDock" are capitalised; everything else lowercase. NO
+tagline rendered in the image. NO underline, NO decorative line beneath.
+Two colours only: slate-blue on warm off-white. Flat vector, no
+gradients, no shadows, no bevels, no 3D. Generous horizontal whitespace
+on both sides of the lockup so the image can be cropped or padded.
 ```
 
-Intent: this is the "built with, not for" image. The substrate is invisible — what you see is a person's actual workspace, with one small marker (the Mermaid-style diagram) that says "this person uses NeuroDock" without selling them anything.
+Intent: the docs header, the GitHub README badge, the npm hero. Pairs with the slogan in copy but doesn't render it in pixels (text-in-image rots fast and breaks i18n).
 
-### 3.5 Generated image candidates
+### 3.4 Prompt 3 — Alternative concept (substrate-stack mark)
 
-**Status: not generated this session.**
+**Goal:** a different mark concept to choose between. Same target sizes as Prompt 1, different visual metaphor — the substrate-stack instead of the monogram.
 
-The `/higgsfield-generate` skill was listed as available, but the underlying
-`mcp__higgsfield__*` tool schemas could not be loaded in this session
-(ToolSearch queries for `higgsfield`, `nano-banana`, and `image generation`
-returned no Higgsfield tools). **The three prompts above are written ready-
-to-paste — generation needs a manual follow-up.**
+```
+Flat vector app icon, square 1024×1024, alternative concept for the same
+NeuroDock brand. Concept: three offset rectangles stacked diagonally — the
+top-right rectangle slightly forward, the bottom-left slightly back —
+suggesting three layers held loosely together. A single thin horizontal
+line (a "thread") passes across all three rectangles at the same height,
+binding them. The rectangles imply "memory cards" or "structured layers";
+the thread implies "the substrate that holds them together." Single
+colour: desaturated slate-blue (#5a6a8f) foreground on warm off-white
+(#f6f4ee) background. Two colours total. Flat vector. Set inside a soft
+rounded-square container (same ~22% corner radius as Prompt 1 for icon-
+shape consistency). The mark must read at 16×16 — so use no more than
+three rectangles, no internal detail inside the rectangles, and a thread
+weight thick enough to survive scaling. No gradients, no shadows, no
+3D, no bevels, no texture, no AI symbolism. Style register: calm
+geometric marks in the lineage of Things 3, Bear, Craft, Reflect —
+single-concept, single-colour, recognisable instantly. Centred, balanced
+composition with even padding inside the rounded-square container.
+```
 
-To run them when the MCP is available, recommended approach:
+Intent: an alternative to the monogram. If the "nd" interlock from Prompt 1 reads as too abstract or doesn't survive at 16px, this substrate-stack metaphor is more literal to what the product does.
 
-- **Model:** `nano-banana-2` (per the higgsfield-generate skill default).
-  Image-only brief, no character/identity continuity needed across the
-  three, so the default is correct.
-- **Aspect ratio:** start with 1:1 (square) for social-card use, optionally
-  re-run the winners at 3:2 landscape for the docs hero.
+### 3.5 Generation status + recommended command
+
+**Status: not generated this session — account at 0.3 credits, generation refused with `not_enough_credits` on first attempt.**
+
+When credits are topped up, run each prompt with:
+
+```sh
+# Prompt 1 — App icon (the primary mark)
+higgsfield generate create gpt_image_2 \
+  --prompt "<paste full Prompt 1 text>" \
+  --aspect_ratio 1:1 \
+  --resolution 2k \
+  --wait
+
+# Prompt 2 — Horizontal lockup
+higgsfield generate create gpt_image_2 \
+  --prompt "<paste full Prompt 2 text>" \
+  --aspect_ratio 4:1 \
+  --resolution 2k \
+  --wait
+
+# Prompt 3 — Substrate-stack alternative
+higgsfield generate create gpt_image_2 \
+  --prompt "<paste full Prompt 3 text>" \
+  --aspect_ratio 1:1 \
+  --resolution 2k \
+  --wait
+```
+
+Recommended model: **`gpt_image_2`** (NOT nano-banana-2). The higgsfield model catalog flags `gpt_image_2` as "default for graphic design, UI, banners, typography" — exactly what brand assets need. Nano-banana is tuned for stylized / character / cartoon work and will lean illustrative when we want flat-vector geometric.
+
+Iteration order: generate Prompt 1 first. If the monogram comes back as cartoon or 3D, tighten the "flat vector" / "no 3D" clauses before spending budget on 2 and 3. If Prompt 1 fails the 16px-survival test, fall back to Prompt 3 (substrate-stack) which has stronger geometric primitives.
+
+Once a winner is picked, the raster output is the source for `docs/public/favicon.svg`, `packages/extension-browser/public/icon/{16,32,48,128}.png`, and the docs site `hero.image`. Hand-tracing the raster into a clean SVG is a 30-minute job in Figma / Affinity / Inkscape — don't ship the raster as the final logo.
+
 - **Iteration order:** generate Prompt 1 first; it has the strictest
   composition (still life), which is the best signal of whether the
   avoid-clause is being honoured. If Prompt 1 comes back with text in
