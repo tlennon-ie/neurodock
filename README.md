@@ -142,7 +142,7 @@ independent packages that you can use one at a time or all together.
 flowchart TB
   subgraph cognitive[Cognitive substrate]
     chrono[mcp-chronometric<br/>time + sessions]
-    graph[mcp-cognitive-graph<br/>memory]
+    cgraph[mcp-cognitive-graph<br/>memory]
     frac[mcp-task-fractionator<br/>decomposition]
   end
   subgraph comms[Communication layer]
