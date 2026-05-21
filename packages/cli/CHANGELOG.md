@@ -1,5 +1,37 @@
 # @neurodock/cli changelog
 
+## 0.4.0
+
+### Added
+
+- `neurodock plugin` command group for managing plugins under
+  `~/.neurodock/plugins/` per ADR 0007. Six subcommands:
+  - `plugin add <source>` — install a plugin from a local directory.
+    Validates `plugin.yaml` against `plugin.schema.json` before copying
+    into `~/.neurodock/plugins/<name>/`. Flags: `--yes`, `--dry-run`,
+    `--force`. Exit codes: 0 ok, 1 source invalid, 2 already-installed
+    without `--force`, 3 schema validation failure.
+  - `plugin remove <name>` (alias: `uninstall`) — remove an installed
+    plugin. Flags: `--yes`, `--dry-run`.
+  - `plugin list` — list installed plugins with their enabled state.
+    `--json` for machine-readable output.
+  - `plugin enable <name>` — activate an installed plugin by writing a
+    `.enabled` marker file into the plugin directory. The substrate's
+    filesystem walk (per ADR 0007) treats marker presence as the
+    single source of truth for activation; no central registry file
+    is maintained.
+  - `plugin disable <name>` — remove the `.enabled` marker without
+    deleting the plugin files.
+  - `plugin validate <source>` — schema-validate a plugin manifest
+    without installing. `--json` flag for scripting. Exit codes: 0
+    valid, 1 invalid, 2 `plugin.yaml` missing.
+- New tests: `tests/plugin-add.test.ts`, `tests/plugin-remove.test.ts`,
+  `tests/plugin-list.test.ts`, `tests/plugin-enable.test.ts`,
+  `tests/plugin-disable.test.ts`, `tests/plugin-validate.test.ts`.
+- `pluginsDir(env)` helper in `lib/paths.ts` resolves to
+  `<profileDir>/plugins/` so tests that set `NEURODOCK_PROFILE_PATH`
+  get an isolated plugin tree for free.
+
 ## 0.3.0
 
 ### Added
@@ -23,7 +55,7 @@
   via the existing `colorEnabled()` helper.
 - New tests: `tests/install-all.test.ts`, `tests/examples.test.ts`.
 
-## 0.2.0 (unreleased)
+## 0.2.0
 
 ### Added
 

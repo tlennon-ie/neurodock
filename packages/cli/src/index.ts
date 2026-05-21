@@ -10,10 +10,18 @@ import { runUninstall } from "./commands/uninstall.js";
 import { runHostInstall, runHostUninstall } from "./commands/host.js";
 import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
 import { runExamples } from "./commands/examples.js";
+import {
+  runPluginAdd,
+  runPluginRemove,
+  runPluginList,
+  runPluginEnable,
+  runPluginDisable,
+  runPluginValidate,
+} from "./commands/plugin.js";
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.3.0";
+export const CLI_VERSION = "0.4.0";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -323,6 +331,113 @@ export function buildProgram(): Command {
         );
       }
       process.exit(0);
+    });
+
+  const pluginCmd = program
+    .command("plugin")
+    .description(
+      "manage NeuroDock plugins under ~/.neurodock/plugins/ (see ADR 0007)",
+    );
+
+  pluginCmd
+    .command("add <source>")
+    .description(
+      "install a plugin from a local directory into ~/.neurodock/plugins/<name>/",
+    )
+    .option("--yes", "skip the overwrite prompt; refuse without --force", false)
+    .option(
+      "--dry-run",
+      "print what would happen without writing anything",
+      false,
+    )
+    .option(
+      "--force",
+      "overwrite an existing install of the same plugin name",
+      false,
+    )
+    .action(
+      async (
+        source: string,
+        opts: { yes: boolean; dryRun: boolean; force: boolean },
+      ) => {
+        const r = await runPluginAdd({
+          source,
+          yes: opts.yes === true,
+          dryRun: opts.dryRun === true,
+          force: opts.force === true,
+        });
+        for (const m of r.messages) print(m);
+        process.exit(r.exitCode);
+      },
+    );
+
+  pluginCmd
+    .command("remove <name>")
+    .alias("uninstall")
+    .description("remove an installed plugin from ~/.neurodock/plugins/")
+    .option("--yes", "skip the confirmation prompt", false)
+    .option(
+      "--dry-run",
+      "print what would happen without writing anything",
+      false,
+    )
+    .action(async (name: string, opts: { yes: boolean; dryRun: boolean }) => {
+      const r = await runPluginRemove({
+        name,
+        yes: opts.yes === true,
+        dryRun: opts.dryRun === true,
+      });
+      for (const m of r.messages) print(m);
+      process.exit(r.exitCode);
+    });
+
+  pluginCmd
+    .command("list")
+    .description(
+      "list plugins installed under ~/.neurodock/plugins/ and their enabled state",
+    )
+    .option("--json", "print machine-readable output", false)
+    .action(async (opts: { json: boolean }) => {
+      const r = await runPluginList({ json: opts.json === true });
+      for (const m of r.messages) print(m);
+      process.exit(0);
+    });
+
+  pluginCmd
+    .command("enable <name>")
+    .description(
+      "activate an installed plugin (writes a .enabled marker file the substrate reads)",
+    )
+    .action(async (name: string) => {
+      const r = await runPluginEnable({ name });
+      for (const m of r.messages) print(m);
+      process.exit(r.exitCode);
+    });
+
+  pluginCmd
+    .command("disable <name>")
+    .description(
+      "deactivate an installed plugin (removes the .enabled marker; keeps files)",
+    )
+    .action(async (name: string) => {
+      const r = await runPluginDisable({ name });
+      for (const m of r.messages) print(m);
+      process.exit(r.exitCode);
+    });
+
+  pluginCmd
+    .command("validate <source>")
+    .description(
+      "validate a plugin manifest without installing (checks plugin.yaml against plugin.schema.json)",
+    )
+    .option("--json", "print machine-readable output", false)
+    .action(async (source: string, opts: { json: boolean }) => {
+      const r = await runPluginValidate({
+        source,
+        json: opts.json === true,
+      });
+      for (const m of r.messages) print(m);
+      process.exit(r.exitCode);
     });
 
   return program;

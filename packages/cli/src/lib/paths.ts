@@ -31,6 +31,19 @@ export function profileDir(env: EnvSnapshot = readEnv()): string {
   return join(env.home, ".neurodock");
 }
 
+/**
+ * Root directory for installed plugins. Resolves to
+ * `<profileDir>/plugins/` so test sandboxes that set
+ * `NEURODOCK_PROFILE_PATH` get an isolated plugin tree for free.
+ *
+ * v0.1.0 per ADR 0007: the substrate auto-discovers any
+ * `<pluginsDir>/<name>/plugin.yaml` it finds; a sibling `.enabled` marker
+ * file (managed by `neurodock plugin enable/disable`) gates activation.
+ */
+export function pluginsDir(env: EnvSnapshot = readEnv()): string {
+  return join(profileDir(env), "plugins");
+}
+
 function dirOf(filePath: string): string {
   const idx = Math.max(filePath.lastIndexOf("/"), filePath.lastIndexOf("\\"));
   return idx <= 0 ? "." : filePath.slice(0, idx);
