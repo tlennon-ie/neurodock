@@ -1,8 +1,26 @@
-# NeuroDock
+<p align="center">
+  <img src="./assets/icon-512.png" alt="NeuroDock" width="180">
+</p>
 
-> **A cognitive substrate that remembers, paces, and refuses.**
->
-> Built with neurodivergent professionals, not for them. Local-first, MCP-native, AGPL-3.0-or-later.
+<h1 align="center">NeuroDock</h1>
+
+<p align="center"><em>A cognitive substrate that remembers, paces, and refuses. Built with neurodivergent professionals, not for them.</em></p>
+
+<p align="center">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-1f1f1f.svg" alt="License AGPL-3.0-or-later"></a>
+  <img src="https://img.shields.io/badge/python-3.11%2B-1f1f1f.svg" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/node-22%2B-1f1f1f.svg" alt="Node 22+">
+  <a href="https://www.npmjs.com/package/@neurodock/cli"><img src="https://img.shields.io/npm/v/@neurodock/cli?label=%40neurodock%2Fcli&color=1f1f1f" alt="@neurodock/cli on npm"></a>
+  <a href="https://pypi.org/project/neurodock-mcp-chronometric/"><img src="https://img.shields.io/pypi/v/neurodock-mcp-chronometric?label=pypi%3A%20mcp-servers&color=1f1f1f" alt="neurodock-mcp-* on PyPI"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/cross--platform-macos%20%C2%B7%20linux%20%C2%B7%20windows-1f1f1f.svg" alt="Cross-platform">
+  <img src="https://img.shields.io/badge/MCP-native-1f1f1f.svg" alt="MCP-native">
+  <img src="https://img.shields.io/badge/local--first-default-1f1f1f.svg" alt="Local-first by default">
+  <img src="https://img.shields.io/badge/telemetry-none-1f1f1f.svg" alt="No telemetry">
+  <img src="https://img.shields.io/badge/self--ID-sufficient-1f1f1f.svg" alt="Self-ID sufficient">
+</p>
 
 ## 5-second TL;DR
 

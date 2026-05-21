@@ -24,11 +24,10 @@ export default defineConfig({
       description:
         "Local-first cognitive substrate for neurodivergent professionals. Memory, time, and a guardrail that refuses to amplify rumination. MCP-native. No telemetry.",
       logo: {
-        // Single neutral hue. No gradients. Logomark to be added by design-system-keeper.
-        src: "./src/assets/logo-placeholder.svg",
+        src: "./src/assets/logo.png",
         replacesTitle: false,
       },
-      favicon: "/favicon.svg",
+      favicon: "/icon/128.png",
       // OpenGraph + Twitter social card. SVG is intentional: GitHub's
       // social-card preview server and most messaging clients accept it,
       // and we avoid shipping a rasterised duplicate that drifts from
