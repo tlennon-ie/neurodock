@@ -1,0 +1,114 @@
+# NeuroDock Plugin — skill-writer-long-form
+#
+# A skill for writers working on long-form work: essays, chapters, novels,
+# technical books, dissertations, screenplays. Three activation paths:
+#   1. Plan today's writing block (N hours): decompose into scene/section-
+#      shaped atomic tasks via mcp-task-fractionator. Time-budget-driven,
+#      NOT word-count-driven (word counts are a content-mill metric and
+#      anti-pattern for writers in actual flow).
+#   2. Who is <character/source/concept>: surface prior notes, established
+#      traits, internal contradictions via mcp-cognitive-graph. Names the
+#      contradictions out loud rather than smoothing them over.
+#   3. Am I ruminating on chapter <N>: defer to mcp-guardrail's
+#      check_rumination heuristic against recent prompts about that
+#      chapter; if detected, return the verbatim closing line and refuse
+#      to re-validate.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# mcp-task-fractionator and mcp-cognitive-graph are HARD requirements:
+# the time-block planner and the entity recall are the load-bearing tools
+# for flows 1 and 2 respectively, and there is no useful degraded mode.
+# mcp-guardrail is SOFT: flow 3 is the load-bearing ND-supportive flow and
+# requires the rumination check, but the skill still installs and exposes
+# flows 1 and 2 when the guardrail server is absent — flow 3 then surfaces
+# a structured one-line message rather than fabricating a check.
+#
+# This skill is NOT a content-mill tool. It does not measure success in
+# words per hour, does not coach the user to "write faster", and refuses
+# to praise editing as a virtue when the rumination check fires. See
+# README.md for the framing.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-writer-long-form"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Long-form writing skill: plan a writing block in scene-shaped tasks, recall what the graph remembers about a character or source, or check whether you are ruminating on a chapter. Not a word-count tracker."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. Long-form writing is profession-shaped, not
+# neurotype-shaped. The rumination check in flow 3 is generally useful for
+# anyone who edits the same chapter for the fifth time in a week — it is
+# not "an ADHD skill" or "an OCD skill". See README.md for the framing.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: the decompose tool is the load-bearing piece of
+    # the writing-block planner in flow 1. Without it, the time budget
+    # cannot be broken into scene-shaped atomic tasks.
+    - name: "neurodock-task-fractionator"
+      version: ">=0.0.1"
+    # Hard requirement: the cognitive graph is the load-bearing piece of
+    # flow 2. The "who is X" question is meaningless without persistent
+    # entity memory — there is no useful fallback to "I do not know who X
+    # is" that justifies the trigger. We refuse to run in degraded mode.
+    - name: "neurodock-cognitive-graph"
+      version: ">=0.0.1"
+    # Note: mcp-guardrail (check_rumination) is required for flow 3 but
+    # is declared optional in SKILL.md frontmatter rather than as a hard
+    # requirement here. Flow 3 is the load-bearing ND-supportive flow and
+    # the skill MUST refuse to fabricate a rumination check when the
+    # server is absent — see SKILL.md "Flow C — am I ruminating".
+
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-writer-long-form"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-writer-long-form"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-writer-long-form"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "writing"
+  - "long-form"
+  - "novel"
+  - "essay"
+  - "chapter"
+  - "technical-book"
+  - "anti-rumination"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

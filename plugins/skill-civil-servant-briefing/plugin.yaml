@@ -1,0 +1,100 @@
+# NeuroDock Plugin — skill-civil-servant-briefing
+#
+# A skill for civil servants, policy professionals, and NGO programme staff.
+# Three activation paths:
+#   1. Draft a public-service briefing note in the canonical Background /
+#      Current position / Options / Recommendation / Risks structure, decomposed
+#      via mcp-task-fractionator with a section-by-section page budget.
+#   2. Synthesise stakeholder consultation responses into a structured map of
+#      who supports / who objects / where the principled disagreements lie,
+#      drawn verbatim from mcp-cognitive-graph. No editorial framing.
+#   3. Meeting-marathon mode: temporarily raises chronometric hyperfocus
+#      thresholds for a sitting-day with 6+ meetings. Default-restore-at-EOD.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# The cognitive-graph and task-fractionator integrations are hard requirements
+# because flows 1 and 2 cannot meaningfully degrade. The chronometric
+# integration is soft — flow 3 confirms the threshold change in text even when
+# the MCP is unavailable, so the user always knows what the skill agreed to.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-civil-servant-briefing"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Civil-servant skill: draft a briefing note in the canonical structure, synthesise stakeholder consultation responses, or set meeting-marathon thresholds for a sitting-day. Not a policy-advocacy tool."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. Drafting briefing notes, mapping stakeholders, and
+# protecting a marathon day from premature break nudges are profession-shaped,
+# not neurotype-shaped. Any civil servant, policy adviser, or NGO programme
+# manager can use this. We do not claim it is "an ADHD skill" or "an ASD skill".
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: the decompose tool is the load-bearing piece of the
+    # briefing-note path. Without it, flow 1 cannot produce a budgeted section
+    # plan.
+    - name: "neurodock-task-fractionator"
+      version: ">=0.0.1"
+    # Hard requirement: the stakeholder-synthesis path is, by design, pure
+    # structured recall. Without the graph there is nothing to synthesise from
+    # and the skill MUST NOT invent stakeholder positions.
+    - name: "neurodock-cognitive-graph"
+      version: ">=0.0.1"
+    # Soft integration: flow 3 confirms the marathon threshold change in text
+    # whether or not the chronometric MCP is connected. When available, the
+    # skill marks the session so the substrate's break nudges respect the
+    # marathon thresholds; when unavailable, the skill still emits the
+    # structured confirmation so the user knows what was agreed.
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-civil-servant-briefing"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-civil-servant-briefing"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-civil-servant-briefing"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "civil-service"
+  - "policy"
+  - "briefing-note"
+  - "stakeholder-consultation"
+  - "ngo"
+  - "public-service"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

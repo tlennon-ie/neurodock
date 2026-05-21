@@ -1,0 +1,102 @@
+# NeuroDock Plugin — skill-pm-stakeholder-juggle
+#
+# A skill for product managers juggling many stakeholders across many
+# projects. Three activation paths:
+#   1. "who cares about <feature>" → recall_entity against the feature
+#      and render a stakeholder map (proposers, blockers, endorsers).
+#   2. "audit my decisions on <project>" → recall_decisions in temporal
+#      order, with an anti-rumination closing line for the OCD-prone PM
+#      who re-litigates closed calls.
+#   3. "exec summary for <topic>, max <N> words" → call decompose to
+#      shape a verdict-first 4-bullet exec summary within the word budget.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# Both MCP servers are HARD requirements. neurodock-cognitive-graph is
+# load-bearing for flows 1 and 2; neurodock-task-fractionator is
+# load-bearing for flow 3 (decompose shapes the exec summary). There is
+# no useful degraded mode for either side — the skill refuses to
+# activate when either server is unavailable.
+#
+# This skill is NOT a performance-management tool, not a stakeholder
+# "manipulation" planner, and not a sentiment analyser. It helps the
+# ND PM see the political shape of their work — it does not pretend
+# that shape isn't there.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-pm-stakeholder-juggle"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Product-manager skill: render a stakeholder map for a feature, audit decisions on a project in temporal order with an anti-rumination close, or shape a verdict-first exec summary within a word budget. Not a performance tool."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. PM work — tracking who proposed what, who blocked
+# what, who endorsed what, and writing crisp exec summaries — is
+# profession-shaped, not neurotype-shaped. The anti-rumination close on
+# Flow B is helpful to OCD-prone PMs in particular but the skill itself
+# does not claim a neurotype. We do not market it as "an OCD skill" or
+# "an ADHD skill". See README.md for the framing.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: recall_entity and recall_decisions are the
+    # load-bearing tools for Flow A and Flow B respectively. Without
+    # them, the skill would either be a no-op or a hallucination risk.
+    - name: "neurodock-cognitive-graph"
+      version: ">=0.0.1"
+    # Hard requirement: decompose is the load-bearing tool for Flow C.
+    # The skill uses it to shape the exec summary into atomic bullets
+    # before applying the word budget.
+    - name: "neurodock-task-fractionator"
+      version: ">=0.0.1"
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-pm-stakeholder-juggle"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-pm-stakeholder-juggle"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-pm-stakeholder-juggle"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "product-management"
+  - "stakeholder-map"
+  - "decision-audit"
+  - "exec-summary"
+  - "pm"
+  - "anti-rumination"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

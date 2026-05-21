@@ -1,0 +1,98 @@
+# NeuroDock Plugin — skill-lawyer-matter
+#
+# A skill for lawyers, in-house counsel, and paralegals juggling multiple
+# matters at once. Three activation paths:
+#   1. Brief on a specific client/matter from prior context in the graph.
+#   2. Surface deadlines within a forward window from facts tagged "deadline:".
+#   3. Apply the translation-legal pack to an incoming email (literal subtext
+#      plus register classification), or fall back to an in-skill literal pass.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# Pairs with translation-legal as a soft dependency. The dependency is declared
+# in SKILL.md frontmatter with optional: true and gated behind an availability
+# check at activation time; without translation-legal installed, the skill
+# falls back to an in-skill literal translation prompt (see SKILL.md Flow C).
+# Pairing is documented in README.md for users who want the full experience.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-lawyer-matter"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Lawyer/paralegal matter-management skill: brief a matter from prior context, run a forward-window deadline check, or translate an incoming email. Workflow tool for legal professionals — not legal advice."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. Matter-juggling, deadline tracking, and reading hedged
+# correspondence are profession-shaped, not neurotype-shaped. Any lawyer or
+# paralegal can use it. We do not claim it is "an ADHD skill" or "an ASD
+# skill". See README.md for the framing and ETHICS commitment 1.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: the matter-brief and deadline-check flows both depend
+    # on recall_entity / facts-tagged-with-"deadline:" / recall_decisions.
+    # Without the cognitive graph the skill has no source of truth.
+    - name: "neurodock-cognitive-graph"
+      version: ">=0.0.1"
+    # Soft integration: mcp-translation is declared in SKILL.md frontmatter
+    # with optional: true. The skill falls back to an in-prompt literal
+    # translation when the server (and the translation-legal pack on top of
+    # it) is not available — see SKILL.md "Flow C" fallback path.
+  skills: []
+  plugins: []
+  # Note on translation-legal: the schema's requires.plugins[] does not carry
+  # an `optional` flag, so we do NOT declare translation-legal here — a soft
+  # dependency in this slot would still gate loading on its presence. Instead
+  # the pairing is declared in SKILL.md frontmatter and documented in README.md.
+  # If the schema gains an `optional` field for requires.plugins in a future
+  # minor version, move the declaration here.
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-lawyer-matter"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-lawyer-matter"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-lawyer-matter"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "legal"
+  - "lawyer"
+  - "paralegal"
+  - "in-house-counsel"
+  - "matter-management"
+  - "deadlines"
+  - "litigation"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}

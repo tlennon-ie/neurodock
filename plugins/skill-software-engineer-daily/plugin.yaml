@@ -1,0 +1,102 @@
+# NeuroDock Plugin — skill-software-engineer-daily
+#
+# A skill for individual-contributor software engineers running their daily
+# working rhythm. Three activation paths:
+#   1. Prep a code review on a PR or file by recalling prior reviewer
+#      comments and decisions from the cognitive graph.
+#   2. Plan a deep-work block of N hours by decomposing the open work via
+#      mcp-task-fractionator into 3–5 atomic engineering tasks.
+#   3. Write an async standup (Yesterday / Today / Blockers) from
+#      yesterday's recorded facts and open sessions via weekly_rollup.
+#
+# Manifest contract: ../../packages/core/schemas/plugin.schema.json
+# Design rationale:  ../../docs/decisions/0007-plugin-protocol.md
+#
+# Both neurodock-cognitive-graph and neurodock-task-fractionator are HARD
+# requirements: the review-prep and standup flows are load-bearing on the
+# graph, the deep-work flow is load-bearing on the decomposer. There is no
+# useful degraded mode for any of the three flows. neurodock-chronometric
+# is a soft integration declared in SKILL.md frontmatter; it adds session
+# bracketing for users who want it and is skipped silently when absent.
+
+# --- Required ---------------------------------------------------------------
+
+schema_version: "0.1.0"
+
+name: "skill-software-engineer-daily"
+
+type: "skill"
+
+version: "0.1.0"
+
+description: "Software-engineer IC daily flow: prep a code review from prior comments, plan a deep-work block of N hours, or write an async standup from recorded facts. Not a 10x productivity tool."
+
+license: "AGPL-3.0-or-later"
+
+# --- Authors ----------------------------------------------------------------
+
+authors:
+  - name: "NeuroDock contributors"
+    role: "maintainer"
+
+# --- Neurotype targeting ----------------------------------------------------
+#
+# Empty by design. The work this skill helps with — reviewing code, doing
+# focused engineering work, communicating progress asynchronously — is
+# profession-shaped, not neurotype-shaped. Any IC software engineer can
+# use it. We do not claim it is "an ADHD focus tool" or "an ASD code
+# review aid". See README.md for the framing.
+neurotypes: []
+
+# --- Runtime requirements ---------------------------------------------------
+
+requires:
+  substrate_version: ">=0.1.0"
+  mcp_servers:
+    # Hard requirement: the cognitive graph is load-bearing for the
+    # review-prep flow (recall_entity over a PR or file surfaces prior
+    # comments and decisions) and the standup flow (weekly_rollup pulls
+    # yesterday's facts and open sessions). Refusing to run without it
+    # avoids inventing reviewer comments or fabricating yesterday's work.
+    - name: "neurodock-cognitive-graph"
+      version: ">=0.0.1"
+    # Hard requirement: decompose is the load-bearing tool for the
+    # deep-work-block flow. Without it, a time-budgeted plan cannot be
+    # produced from the open work.
+    - name: "neurodock-task-fractionator"
+      version: ">=0.0.1"
+    # neurodock-chronometric is soft — declared in SKILL.md frontmatter
+    # with optional: true. It adds session bracketing around a deep-work
+    # block for users who want it; the skill degrades by skipping the
+    # bracketing when it is unavailable.
+  skills: []
+  plugins: []
+
+# --- Provided assets --------------------------------------------------------
+
+provides:
+  - type: "skill"
+    id: "skill-software-engineer-daily"
+    path: "./SKILL.md"
+
+# --- Trust + provenance -----------------------------------------------------
+
+trust:
+  level: "community"
+  source_url: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-software-engineer-daily"
+
+# --- Discovery surface ------------------------------------------------------
+
+homepage: "https://github.com/tlennon-ie/neurodock/tree/main/plugins/skill-software-engineer-daily"
+repository: "https://github.com/tlennon-ie/neurodock"
+keywords:
+  - "software-engineering"
+  - "code-review"
+  - "deep-work"
+  - "standup"
+  - "individual-contributor"
+  - "daily"
+
+# --- Forward-compat reservation ---------------------------------------------
+
+compatibility: {}
