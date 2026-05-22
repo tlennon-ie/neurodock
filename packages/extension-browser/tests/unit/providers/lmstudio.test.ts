@@ -3,6 +3,7 @@ import {
   createLMStudioProvider,
   fetchLMStudioModels,
   LMSTUDIO_DEFAULT_BASE_URL,
+  normaliseLMStudioBaseUrl,
 } from "../../../src/lib/providers/lmstudio.js";
 
 interface CapturedRequest {
@@ -40,7 +41,56 @@ function buildJsonResponse(status: number, body: unknown): Response {
   });
 }
 
+describe("normaliseLMStudioBaseUrl", () => {
+  it("appends /v1 when the user pastes the bare server URL", () => {
+    expect(normaliseLMStudioBaseUrl("http://localhost:1234")).toBe(
+      "http://localhost:1234/v1",
+    );
+  });
+
+  it("strips a trailing slash before deciding", () => {
+    expect(normaliseLMStudioBaseUrl("http://localhost:1234/")).toBe(
+      "http://localhost:1234/v1",
+    );
+  });
+
+  it("leaves URLs that already end in /v1 untouched", () => {
+    expect(normaliseLMStudioBaseUrl("http://localhost:1234/v1")).toBe(
+      "http://localhost:1234/v1",
+    );
+  });
+
+  it("handles a non-localhost host (LAN, Tailscale, APIPA)", () => {
+    expect(normaliseLMStudioBaseUrl("http://169.254.83.107:1234")).toBe(
+      "http://169.254.83.107:1234/v1",
+    );
+  });
+
+  it("falls back to the default when given an empty string", () => {
+    expect(normaliseLMStudioBaseUrl("")).toBe("http://localhost:1234/v1");
+  });
+});
+
 describe("lmstudio provider", () => {
+  it("appends /v1 when the user supplies a bare base URL (regression: 'OK got 0 chars' bug)", async () => {
+    const captured: CapturedRequest[] = [];
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      captured.push({ url, init });
+      return buildSseResponse(['{"ok":true}']);
+    }) as unknown as typeof fetch;
+
+    const provider = createLMStudioProvider({
+      baseUrl: "http://localhost:1234",
+      fetchImpl: fakeFetch,
+    });
+    await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "qwen2.5-7b-instruct",
+    });
+    expect(captured[0]!.url).toBe("http://localhost:1234/v1/chat/completions");
+  });
+
   it("streams SSE deltas and aggregates text via onToken", async () => {
     const captured: CapturedRequest[] = [];
     const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {

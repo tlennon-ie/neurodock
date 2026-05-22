@@ -45,10 +45,44 @@ export interface LMStudioOptions {
 
 export const LMSTUDIO_DEFAULT_BASE_URL = "http://localhost:1234/v1";
 
+/**
+ * LM Studio's OpenAI-compatible API lives under `/v1`. The Settings UI
+ * surfaces the full URL (`http://host:1234/v1`) as the default and the
+ * docs are explicit about it, but users routinely paste in just
+ * `http://localhost:1234` from LM Studio's "Server running at" banner.
+ *
+ * Without `/v1`, the resulting `POST /chat/completions` hits LM Studio's
+ * root router. Recent LM Studio versions answer that with HTTP 200 and a
+ * "Unexpected endpoint or method" body, which our SSE parser silently
+ * turns into an empty string — and the Test button cheerfully reports
+ * "OK — got 0 chars back". Several hours of confused users later, the
+ * fix is to defensively normalise the base URL.
+ *
+ * Rules:
+ *  - strip trailing slashes
+ *  - if the path component does not already end in `/v1` (any case), append it
+ *  - leave anything past `/v1` alone (e.g. `/v1/openai/` would be exotic but
+ *    if a user typed it, respect them)
+ */
+export function normaliseLMStudioBaseUrl(input: string): string {
+  const trimmed = input.trim().replace(/\/+$/, "");
+  if (trimmed.length === 0) return LMSTUDIO_DEFAULT_BASE_URL;
+  try {
+    const u = new URL(trimmed);
+    if (!/\/v1$/i.test(u.pathname)) {
+      u.pathname = `${u.pathname.replace(/\/+$/, "")}/v1`;
+    }
+    // Drop trailing slash again in case URL re-introduced one.
+    return u.toString().replace(/\/+$/, "");
+  } catch {
+    // Bare strings without a scheme fall through to a string append.
+    return /\/v1$/i.test(trimmed) ? trimmed : `${trimmed}/v1`;
+  }
+}
+
 export function createLMStudioProvider(options: LMStudioOptions): Provider {
-  const baseUrl = (options.baseUrl || LMSTUDIO_DEFAULT_BASE_URL).replace(
-    /\/+$/,
-    "",
+  const baseUrl = normaliseLMStudioBaseUrl(
+    options.baseUrl || LMSTUDIO_DEFAULT_BASE_URL,
   );
   const apiKey = options.apiKey ?? null;
   const f = options.fetchImpl ?? fetch.bind(globalThis);
@@ -165,9 +199,8 @@ export async function fetchLMStudioModels(options: {
   readonly signal?: AbortSignal;
   readonly hasPermission?: (baseUrl: string) => Promise<boolean>;
 }): Promise<string[]> {
-  const baseUrl = (options.baseUrl || LMSTUDIO_DEFAULT_BASE_URL).replace(
-    /\/+$/,
-    "",
+  const baseUrl = normaliseLMStudioBaseUrl(
+    options.baseUrl || LMSTUDIO_DEFAULT_BASE_URL,
   );
   if (options.hasPermission) {
     const allowed = await options.hasPermission(baseUrl);

@@ -73,6 +73,21 @@ export function ProviderTest({
         model: resolved.model,
       });
       const preview = result.text.slice(0, 80);
+      // A successful HTTP 200 with empty body is *not* a success — it
+      // usually means LM Studio answered an unknown endpoint (URL is
+      // missing `/v1`) or no model is loaded and the request fell
+      // through with a 200 + empty `choices` array. Report the
+      // actionable cause instead of the misleading "OK — got 0 chars".
+      if (preview.length === 0) {
+        const isLmStudio = profile.localProvider === "lmstudio";
+        setState({
+          status: "fail",
+          message: isLmStudio
+            ? "Got HTTP 200 with no model output. Either no model is loaded in LM Studio (Server tab → Load model, or enable JIT loading), or the Base URL is missing the `/v1` suffix."
+            : "Got HTTP 200 with no model output. Check that a model is loaded and the Base URL points at the provider's API root.",
+        });
+        return;
+      }
       setState({ status: "ok", preview });
     } catch (cause: unknown) {
       const message = cause instanceof Error ? cause.message : "Unknown error";

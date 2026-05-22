@@ -32,6 +32,48 @@ The installer writes these snippets for you. They are shown here so you can veri
 
 Every MCP-aware client uses the same `mcpServers` block; the only thing that varies is **where** the config file lives.
 
+<style>{`
+  /* Inline-icon treatment for the per-client tabs. Starlight's TabItem
+     'label' prop only accepts a string, so we cannot embed JSX inside
+     the tab label itself. Instead we wrap the Tabs block in
+     .nd-mcp-tabs and target each tab by position to inject the client
+     icon as a CSS ::before pseudo-element on the <a role="tab"> link.
+     The icon is hidden from assistive tech via aria-hidden behaviour
+     (decorative background-image, not <img>), and the human-readable
+     label text on the <a> still drives screen-reader output. */
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab > a::before {
+    content: "";
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-right: 0.45rem;
+    vertical-align: text-bottom;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab:nth-child(1) > a::before {
+    background-image: url("/mcp-clients/claude.png");
+  }
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab:nth-child(2) > a::before {
+    background-image: url("/mcp-clients/claude.png");
+  }
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab:nth-child(3) > a::before {
+    background-image: url("/mcp-clients/cursor.png");
+  }
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab:nth-child(4) > a::before {
+    background-image: url("/mcp-clients/perplexity.png");
+  }
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab:nth-child(5) > a::before {
+    background-image: url("/mcp-clients/openclaw.png");
+  }
+  .nd-mcp-tabs starlight-tabs ul[role="tablist"] li.tab:nth-child(6) > a::before {
+    background-image: url("/mcp-clients/hermes.png");
+  }
+`}</style>
+
+<div class="nd-mcp-tabs">
+
 <Tabs>
 <TabItem label="Claude Desktop">
 
@@ -166,6 +208,8 @@ Hermes Agent supports the standard MCP stdio protocol. Consult Hermes's document
 
 </TabItem>
 </Tabs>
+
+</div>
 
 :::tip[Don't see your client?]
 Any MCP-aware client that supports stdio subprocess servers can use NeuroDock. The registration block above is the [standard MCP form](https://modelcontextprotocol.io/) — only the config file path differs per client. If you wire up a new client successfully, please [open a PR](https://github.com/tlennon-ie/neurodock/blob/main/CONTRIBUTING.md) so the next person finds the recipe ready-made.
