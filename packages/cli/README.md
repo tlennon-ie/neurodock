@@ -2,16 +2,16 @@
 
 The `neurodock` installer and diagnostic CLI for [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.
 
-Status: **v0.4.3**.
+Status: **v0.5.0**.
 
 ## Quickstart
 
 ```bash
 # From a published package:
-npx --yes @neurodock/cli install-all
+npx --yes @neurodock/cli@latest install-all
 
 # Or step-by-step, also from npm:
-npx --yes @neurodock/cli init
+npx --yes @neurodock/cli@latest init
 
 # From a fresh clone of the monorepo:
 pnpm install
@@ -38,7 +38,8 @@ install, `install-all` runs the `pip install` step automatically.
 | `neurodock init`             | Install MCP servers into Claude Desktop / Claude Code / Cursor (the wiring half of `install-all`).                         |
 | `neurodock doctor`           | Diagnose your install — profile validity, client wiring, tool availability.                                                |
 | `neurodock validate`         | Schema-validate a profile file (`~/.neurodock/profile.yaml` by default).                                                   |
-| `neurodock update`           | Re-run install adapters; rewrite stale NeuroDock MCP entries in client configs. Non-NeuroDock entries are preserved.       |
+| `neurodock update`           | Upgrade NeuroDock to the latest version — re-installs the six MCP servers via pip/uv and re-wires client configs.          |
+| `neurodock sync`             | Re-shape stale NeuroDock MCP entries in existing client configs. No package upgrade. Non-NeuroDock entries are preserved.  |
 | `neurodock uninstall`        | Reverse `init` — remove NeuroDock MCP entries from each client config. Optionally purge `~/.neurodock/`.                   |
 | `neurodock examples`         | Print a copy-pasteable prompt cheat-sheet that exercises every wired NeuroDock MCP tool.                                   |
 | `neurodock host install`     | Register the optional Chrome Native Messaging host so the browser extension can read `~/.neurodock/profile.yaml` directly. |
@@ -92,21 +93,47 @@ What `init` does, in order:
 Idempotent. Re-running with no changes is a no-op. Collisions on a previous
 key are skipped unless `--yes` is supplied.
 
-### `neurodock validate` / `update` / `uninstall`
+### `neurodock update`
+
+```
+neurodock update [--client=claude-desktop|claude-code|cursor|all] \
+                 [--profile=minimal|example] \
+                 [--installer=uv|pip|auto] \
+                 [--skip-install] [--yes] [--dry-run] [--no-native-host]
+```
+
+One-command upgrade. Same code path as `install-all` — re-runs
+`pip install --upgrade` (or `uv tool install`) for every NeuroDock MCP
+server, re-wires the detected MCP clients, and re-registers the
+optional native-messaging host. Exit codes match `install-all`:
+`0` ok, `1` an entrypoint is missing from PATH, `2` init failed.
+
+### `neurodock sync`
+
+```
+neurodock sync [--client <id>] [--dry-run]
+```
+
+Re-shape stale NeuroDock MCP entries in existing client configs
+(version drift, command/args/cwd changes) without upgrading any
+packages. Non-NeuroDock entries round-trip untouched. Useful when the
+desired wiring shape changed but you don't need a package upgrade.
+
+Before 0.5.0 this lived under `neurodock update`. The verb moved
+because users typed `neurodock update` expecting a version upgrade.
+
+### `neurodock validate` / `uninstall`
 
 ```
 neurodock validate [--file <path>] [--strict]
-neurodock update [--client <id>] [--dry-run]
 neurodock uninstall [--client <id>] [--yes] [--purge] [--dry-run]
 ```
 
 `validate` runs Ajv against `profile.schema.json` and reports field-path
-violations. `update` rewrites stale NeuroDock MCP entries (version drift,
-command/args/cwd changes); non-NeuroDock entries round-trip untouched.
-`uninstall` removes NeuroDock entries from every detected client config;
-asks (interactively) whether to delete `~/.neurodock/profile.yaml` and
-`~/.neurodock/cognitive-graph.sqlite` (default: no). `--purge` deletes
-those without prompting.
+violations. `uninstall` removes NeuroDock entries from every detected
+client config; asks (interactively) whether to delete
+`~/.neurodock/profile.yaml` and `~/.neurodock/cognitive-graph.sqlite`
+(default: no). `--purge` deletes those without prompting.
 
 ### `neurodock examples`
 

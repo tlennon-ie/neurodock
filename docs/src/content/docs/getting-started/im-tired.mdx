@@ -8,7 +8,7 @@ Three steps. Don't think. Don't read ahead.
 ## 1. Run this
 
 ```sh
-npx --yes @neurodock/cli install-all
+npx --yes @neurodock/cli@latest install-all
 ```
 
 ## 2. Copy the burnout-recovery preset
@@ -35,7 +35,7 @@ That's the whole install.
 <details>
 <summary>What does this command do? (Read only if you have energy)</summary>
 
-`npx --yes @neurodock/cli install-all` installs the five NeuroDock MCP servers from PyPI using `uvx`, then writes the MCP-server registration block into your detected client's config (Claude Desktop, Claude Code, or Cursor). You don't have to clone the repo. You don't have to read the per-client setup. The CLI figures it out.
+`npx --yes @neurodock/cli@latest install-all` installs the five NeuroDock MCP servers from PyPI using `uvx`, then writes the MCP-server registration block into your detected client's config (Claude Desktop, Claude Code, or Cursor). You don't have to clone the repo. You don't have to read the per-client setup. The CLI figures it out.
 
 The profile copy step writes a single YAML file to `~/.neurodock/profile.yaml`. Every MCP server reads it on startup. You can edit it later, or you can leave it alone.
 

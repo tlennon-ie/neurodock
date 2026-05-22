@@ -1,10 +1,10 @@
 ---
 title: CLI
-description: The neurodock command-line interface. Seventeen commands across seven groups, shipped in @neurodock/cli 0.4.3.
+description: The neurodock command-line interface. Eighteen commands across seven groups, shipped in @neurodock/cli 0.5.0.
 ---
 
 :::note[CLI status]
-`@neurodock/cli` `0.4.3` is shipped to npm. Seventeen commands across seven groups (`init`, `install-all`, `examples`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, `plugin add/remove/list/enable/disable/validate`). The CLI is the lowest-friction onboarding path: `npx neurodock install-all` should take a fresh install from zero to a working substrate in under five minutes.
+`@neurodock/cli` `0.5.0` is shipped to npm. Eighteen commands across seven groups (`init`, `install-all`, `examples`, `doctor`, `validate`, `update`, `sync`, `uninstall`, `host install/uninstall`, `profile show/validate`, `plugin add/remove/list/enable/disable/validate`). The CLI is the lowest-friction onboarding path: `npx --yes @neurodock/cli@latest install-all` should take a fresh install from zero to a working substrate in under five minutes.
 :::
 
 ## Commands
@@ -16,7 +16,8 @@ description: The neurodock command-line interface. Seventeen commands across sev
 | [`neurodock examples`](#neurodock-examples) | Print copy-pasteable prompts that exercise every wired NeuroDock MCP tool. |
 | [`neurodock doctor`](#neurodock-doctor) | Verify the install. Profile readable, all servers start, embedding backend reachable. |
 | [`neurodock validate`](#neurodock-validate) | Ajv-driven schema validation against the canonical profile schema. |
-| [`neurodock update`](#neurodock-update) | Refresh existing NeuroDock MCP entries in detected client configs. |
+| [`neurodock update`](#neurodock-update) | Upgrade NeuroDock — re-installs the six MCP servers via pip/uv and re-wires clients. |
+| [`neurodock sync`](#neurodock-sync) | Re-shape stale NeuroDock MCP entries in client configs without upgrading packages. |
 | [`neurodock uninstall`](#neurodock-uninstall) | Reverse what `init` did. Preserves data unless `--purge`. |
 | [`neurodock host install`](#neurodock-host-install) | Register the optional Chrome Native Messaging host with installed browsers. |
 | [`neurodock host uninstall`](#neurodock-host-uninstall) | Remove the native messaging host manifests / registry pointers. |
@@ -138,7 +139,29 @@ Exit codes: `0` if valid; `1` if missing, unparseable, or invalid.
 neurodock update
 ```
 
-Re-runs the install adapters and rewrites stale NeuroDock MCP entries (version drift, command/args/cwd changes) in Claude Desktop, Claude Code, and Cursor configs. Non-NeuroDock entries and unrelated top-level keys round-trip untouched.
+Upgrades NeuroDock to the latest version. Same code path as `install-all` — re-runs `pip install --upgrade` (or `uv tool install`) for every NeuroDock MCP server, re-wires the detected MCP clients, and re-registers the optional native-messaging host. This is the verb users look for when they want a version bump.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--profile <id>` | `example` | `minimal` or `example`. |
+| `--installer <id>` | `auto` | `uv`, `pip`, or `auto`. |
+| `--skip-install` | `false` | Skip the Python upgrade step (only re-wire clients). |
+| `--yes` | `false` | Answer yes to all prompts. |
+| `--dry-run` | `false` | Print what would happen without writing. |
+| `--no-native-host` | n/a | Skip re-registering the optional native-messaging host. |
+
+Exit codes: `0` ok; `1` an entrypoint is missing from PATH after install; `2` init failed.
+
+Before `0.5.0`, `neurodock update` only re-shaped client configs (without upgrading packages). That behaviour moved to [`neurodock sync`](#neurodock-sync).
+
+### `neurodock sync`
+
+```bash
+neurodock sync
+```
+
+Re-shape stale NeuroDock MCP entries in existing client configs (version drift, command/args/cwd changes) without upgrading any packages. Non-NeuroDock entries and unrelated top-level keys round-trip untouched. Useful when the desired wiring shape changed but you don't need a package upgrade.
 
 | Flag | Default | Meaning |
 |---|---|---|
@@ -291,7 +314,7 @@ Exit codes: `0` if valid; non-zero otherwise.
 
 | Flag | Meaning |
 |---|---|
-| `-v, --version` | Print the CLI version (`0.4.3`). |
+| `-v, --version` | Print the CLI version (`0.5.0`). |
 | `-h, --help` | Show help for the program or a subcommand. |
 
 ## Environment

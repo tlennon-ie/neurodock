@@ -45,13 +45,13 @@ Everything runs on your laptop. Nothing leaves your machine unless you
 explicitly turn on a cloud option.
 
 <p align="center">
-  <img src="./assets/branding/onboarding-3-steps.svg" alt="Install NeuroDock in three steps: 1) Run npx @neurodock/cli install-all (under 5 minutes). 2) Full-quit Claude with Cmd+Q or Ctrl+Q so it re-reads its MCP config (30 seconds). 3) Start talking to Claude — for example, ask 'What was I working on yesterday?'" width="100%">
+  <img src="./assets/branding/onboarding-3-steps.svg" alt="Install NeuroDock in three steps: 1) Run npx @neurodock/cli@latest install-all (under 5 minutes). 2) Full-quit Claude with Cmd+Q or Ctrl+Q so it re-reads its MCP config (30 seconds). 3) Start talking to Claude — for example, ask 'What was I working on yesterday?'" width="100%">
 </p>
 
 ## Install
 
 ```sh
-npx --yes @neurodock/cli install-all
+npx --yes @neurodock/cli@latest install-all
 ```
 
 One command. It pip-installs the five MCP servers (plus the `neurodock-evals`
@@ -81,6 +81,12 @@ Claude calls the MCP tools under the hood; you just talk.
 
 Requires Python 3.11+ and Node 22+. Works on macOS, Linux, Windows.
 
+> **Why `@latest`?** If you previously ran `npm install -g @neurodock/cli`,
+> npx will silently reuse that older global install instead of fetching the
+> current version — and old versions don't have `install-all`. The `@latest`
+> tag forces npx to resolve against the npm registry every time. Same reason
+> we use it on `update`.
+
 <details>
 <summary><strong>Want to install it step-by-step instead?</strong></summary>
 
@@ -97,7 +103,7 @@ pip install neurodock-mcp-chronometric neurodock-mcp-cognitive-graph neurodock-m
 **2. Wire them into your MCP-aware client**
 
 ```sh
-npx --yes @neurodock/cli init
+npx --yes @neurodock/cli@latest init
 ```
 
 Detects Claude Desktop, Claude Code, or Cursor and writes the server
@@ -111,21 +117,43 @@ that Claude calls over stdio; the CLI is separate. Two ways to run it:
 
 ```sh
 # Option A — run via npx, no install
-npx --yes @neurodock/cli doctor
+npx --yes @neurodock/cli@latest doctor
 
 # Option B — install once, call 'neurodock' from anywhere
 npm install -g @neurodock/cli
 neurodock doctor
 ```
 
-`@neurodock/cli` exposes: `init`, `doctor`, `validate`, `update`, `uninstall`,
-`host install`, `host uninstall`, `profile show`, `profile validate`,
-`install-all`, `examples`, `plugin add/remove/list/enable/disable/validate`.
+`@neurodock/cli` exposes: `init`, `doctor`, `validate`, `update`, `sync`,
+`uninstall`, `host install`, `host uninstall`, `profile show`,
+`profile validate`, `install-all`, `examples`,
+`plugin add/remove/list/enable/disable/validate`.
 
 Want to see it work without installing from PyPI/npm at all?
 `TESTING_LOCAL.md` walks through the from-clone path.
 
 </details>
+
+## Update
+
+```sh
+npx --yes @neurodock/cli@latest update
+```
+
+One command. Upgrades all six MCP servers (`pip install --upgrade` /
+`uv tool install`), refreshes your wired client configs, and
+re-registers the optional native-messaging host. Same flags as
+`install-all` (`--client`, `--profile`, `--installer`, `--dry-run`,
+`--no-native-host`, `--yes`).
+
+The browser extension auto-updates through the Chrome / Firefox / Edge
+store; sideloaded users `git pull` and rebuild.
+
+> Full-quit Claude after updating so it re-reads its MCP config — same
+> as first install.
+
+Just want to re-shape client configs without touching package versions?
+Use `neurodock sync`.
 
 ## See it in action
 
@@ -236,9 +264,10 @@ npm + PyPI. Latest substrate tag: `v0.2.4`.
 
 ### CLI + browser surface (npm)
 
-- **`@neurodock/cli` 0.4.3** — 17 verbs across 7 groups: `init`, `install-all`,
-  `examples`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`,
-  `profile show/validate`, `plugin add/remove/list/enable/disable/validate`.
+- **`@neurodock/cli` 0.5.0** — 18 verbs across 7 groups: `init`, `install-all`,
+  `examples`, `doctor`, `validate`, `update`, `sync`, `uninstall`,
+  `host install/uninstall`, `profile show/validate`,
+  `plugin add/remove/list/enable/disable/validate`.
 - **`@neurodock/core` 0.0.1** — profile schema and plugin protocol manifests
   (JSON Schema 2020-12).
 - **`@neurodock/native-host` 0.1.0** — optional Chrome Native Messaging host

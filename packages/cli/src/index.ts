@@ -6,6 +6,7 @@ import { runDoctor } from "./commands/doctor.js";
 import { runProfileValidate, runProfileShow } from "./commands/profile.js";
 import { runValidate, formatViolation } from "./commands/validate.js";
 import { runUpdate } from "./commands/update.js";
+import { runSync } from "./commands/sync.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { runHostInstall, runHostUninstall } from "./commands/host.js";
 import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
@@ -21,7 +22,7 @@ import {
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.4.3";
+export const CLI_VERSION = "0.5.0";
 
 export function buildProgram(): Command {
   const program = new Command();
@@ -235,7 +236,65 @@ export function buildProgram(): Command {
   program
     .command("update")
     .description(
-      "re-run install adapters to refresh existing NeuroDock MCP entries",
+      "upgrade NeuroDock to the latest version (re-installs MCP servers and re-wires clients)",
+    )
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
+    .option("--profile <id>", "minimal | example", "example")
+    .option("--installer <id>", "uv | pip | auto", "auto")
+    .option(
+      "--skip-install",
+      "skip the Python upgrade step (only re-wire clients)",
+      false,
+    )
+    .option(
+      "--yes",
+      "answer yes to all prompts (idempotent re-runs, collisions)",
+      false,
+    )
+    .option(
+      "--dry-run",
+      "print what would happen without writing anything",
+      false,
+    )
+    .option(
+      "--no-native-host",
+      "skip re-registering the optional native-messaging host",
+    )
+    .action(
+      async (opts: {
+        client: string;
+        profile: string;
+        installer: string;
+        skipInstall: boolean;
+        yes: boolean;
+        dryRun: boolean;
+        nativeHost: boolean;
+      }) => {
+        const client = validateClient(opts.client);
+        const profile = validateProfile(opts.profile);
+        const installer = validateInstaller(opts.installer);
+        const r = await runUpdate({
+          client,
+          profile,
+          installer,
+          skipInstall: opts.skipInstall === true,
+          yes: opts.yes === true,
+          dryRun: opts.dryRun === true,
+          noNativeHost: opts.nativeHost === false,
+        });
+        for (const m of r.messages) print(m);
+        process.exit(r.exitCode);
+      },
+    );
+
+  program
+    .command("sync")
+    .description(
+      "re-shape NeuroDock MCP entries in existing client configs (no package upgrade)",
     )
     .option(
       "--client <id>",
@@ -245,7 +304,7 @@ export function buildProgram(): Command {
     .option("--dry-run", "print the diff without writing anything", false)
     .action(async (opts: { client: string; dryRun: boolean }) => {
       const client = validateClient(opts.client);
-      const r = await runUpdate({ client, dryRun: opts.dryRun === true });
+      const r = await runSync({ client, dryRun: opts.dryRun === true });
       for (const m of r.messages) print(m);
       process.exit(0);
     });

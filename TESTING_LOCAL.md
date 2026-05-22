@@ -13,7 +13,7 @@ enough.
 ## Fast path — one command
 
 ```sh
-npx --yes @neurodock/cli install-all
+npx --yes @neurodock/cli@latest install-all
 ```
 
 That single command:

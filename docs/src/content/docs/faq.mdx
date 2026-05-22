@@ -61,7 +61,7 @@ Things that trip people up most often, and what to try first.
 The CLI is on npm, not PyPI. The Python packages (`neurodock-mcp-chronometric`, `neurodock-mcp-cognitive-graph`, etc.) install via `uv` or `pip`; the CLI installs via `npx` or a global `npm install -g @neurodock/cli`. The simplest one-liner is:
 
 ```bash
-npx @neurodock/cli install-all
+npx --yes @neurodock/cli@latest install-all
 ```
 
 That detects `uv` or `pip` and installs the six Python MCP servers, then wires your MCP clients. See the [CLI reference](/reference/cli/#neurodock-install-all).

@@ -8,14 +8,14 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 ## The one-liner
 
 ```sh
-npx --yes @neurodock/cli install-all
+npx --yes @neurodock/cli@latest install-all
 ```
 
 ## 30-second TL;DR
 
 That one command installs the five NeuroDock MCP servers from PyPI (via `uvx`), detects which MCP-aware clients you have (Claude Desktop, Claude Code, Cursor), and writes the server registration block into each of their config files. Then you restart your client and the tools appear.
 
-This is the developer preview (`@neurodock/cli v0.4.3`). The substrate is at `v0.2.1` and all five MCP servers are live on PyPI.
+This is the developer preview (`@neurodock/cli v0.5.0`). The substrate is at `v0.2.1` and all five MCP servers are live on PyPI.
 
 :::caution[Quit fully — close-window is not enough]
 Claude only reads its MCP config **at startup**. Closing the window does not restart the process. You must fully quit:
@@ -270,7 +270,7 @@ npx neurodock init --dry-run
 `--dry-run` prints every file that *would* be created or modified without touching anything. Useful for review, useful for CI.
 
 :::note[CLI status]
-The `@neurodock/cli` package is shipped (`v0.4.3`) and exposes `init`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, plus the `install-all` and `examples` ergonomics shortcuts and the `plugin add/remove/list/enable/disable/validate` subcommands. See the [CLI reference](/reference/cli/) for the full command surface.
+The `@neurodock/cli` package is shipped (`v0.5.0`) and exposes `init`, `doctor`, `validate`, `update`, `sync`, `uninstall`, `host install/uninstall`, `profile show/validate`, plus the `install-all` and `examples` ergonomics shortcuts and the `plugin add/remove/list/enable/disable/validate` subcommands. See the [CLI reference](/reference/cli/) for the full command surface.
 :::
 
 </details>

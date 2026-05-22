@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runUpdate } from "../src/commands/update.js";
+import { runSync } from "../src/commands/sync.js";
 
 function makeSandbox(): { home: string; cwd: string; cleanup: () => void } {
   const root = mkdtempSync(join(tmpdir(), "neurodock-update-"));
@@ -34,7 +34,7 @@ const STALE_NEURODOCK_ENTRY = {
   args: ["run", "stale-entrypoint-from-old-version"],
 };
 
-describe("neurodock update", () => {
+describe("neurodock sync", () => {
   let sandbox: ReturnType<typeof makeSandbox>;
   beforeEach(() => {
     sandbox = makeSandbox();
@@ -63,7 +63,7 @@ describe("neurodock update", () => {
       "utf8",
     );
 
-    const r = await runUpdate(
+    const r = await runSync(
       { client: "claude-code", dryRun: true },
       {
         envOverrides: {
@@ -116,7 +116,7 @@ describe("neurodock update", () => {
       "utf8",
     );
 
-    const r = await runUpdate(
+    const r = await runSync(
       { client: "claude-code", dryRun: false },
       {
         envOverrides: {
@@ -165,7 +165,7 @@ describe("neurodock update", () => {
       "utf8",
     );
 
-    const r = await runUpdate(
+    const r = await runSync(
       { client: "claude-code", dryRun: false },
       {
         envOverrides: {
@@ -194,7 +194,7 @@ describe("neurodock update", () => {
       ),
       "utf8",
     );
-    const r = await runUpdate(
+    const r = await runSync(
       { client: "claude-code", dryRun: false },
       {
         envOverrides: {
@@ -214,7 +214,7 @@ describe("neurodock update", () => {
   });
 
   it("reports nothing-to-update when no client configs exist", async () => {
-    const r = await runUpdate(
+    const r = await runSync(
       { client: "all", dryRun: false },
       {
         envOverrides: {

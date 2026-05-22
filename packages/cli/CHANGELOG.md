@@ -1,5 +1,33 @@
 # @neurodock/cli changelog
 
+## 0.5.0
+
+### Changed (breaking)
+
+- `neurodock update` now upgrades NeuroDock to the latest version
+  (re-installs the six MCP servers via `pip install --upgrade` or
+  `uv tool install` and re-wires clients). Previously, `update` only
+  re-shaped client config JSON without touching package versions —
+  which confused users who expected `update` to behave like every
+  other CLI's `update` verb.
+- The previous behavior moved to a new verb: `neurodock sync`. Same
+  flags (`--client`, `--dry-run`), same code path, same semantics.
+- The new `update` command accepts the same flags as `install-all`
+  (`--client`, `--profile`, `--installer`, `--skip-install`, `--yes`,
+  `--dry-run`, `--no-native-host`).
+
+### Added
+
+- README now has a dedicated `## Update` section documenting the
+  one-liner: `npx --yes @neurodock/cli update`.
+
+### Migration
+
+If you scripted against `neurodock update --client X --dry-run` to
+reconcile client configs, rename the call to `neurodock sync` — the
+old flags still work there. If you wanted package upgrades, the new
+`neurodock update` is what you were looking for.
+
 ## 0.4.3
 
 ### Changed
