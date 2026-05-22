@@ -272,22 +272,59 @@ function HistoryPanel({
           start.
         </p>
       ) : null}
-      {profile.historyEnabled && history.length > 0 ? (
-        <ul className="m-0 flex max-h-48 list-none flex-col gap-1 overflow-auto p-0 text-xs">
-          {history.map((entry) => (
-            <li
-              key={entry.id}
-              className="border-b border-neutral-200 pb-1 dark:border-neutral-800"
-            >
-              <div className="font-mono">{entry.tool}</div>
-              <div className="text-neutral-500">
-                {entry.timestamp} · {entry.mode}
-                {entry.mockMode ? " · mock" : ""}
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      {profile.historyEnabled && history.length > 0
+        ? (() => {
+            // A "silent fallback" is when the user configured a real
+            // provider (ollama, lmstudio, openai, anthropic, openrouter)
+            // but the translation client could not reach it and quietly
+            // answered with the deterministic mock. The history row
+            // surfaces the fallback inline; if the most recent entry
+            // shows one, we also surface a one-line banner so the user
+            // realises *why* responses are coming back as "mock".
+            const fellBack = (entry: HistoryEntry): boolean =>
+              entry.mockMode === true &&
+              typeof entry.provider === "string" &&
+              entry.provider !== "mock";
+            const latest = history[0];
+            const latestFallback = latest ? fellBack(latest) : false;
+            return (
+              <>
+                {latestFallback && latest ? (
+                  <div className="mb-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+                    <strong>Heads up:</strong> your selected provider (
+                    <code>{latest.provider}</code>) was unreachable, so the
+                    extension fell back to the mock provider. Open Settings →
+                    Test to diagnose.
+                  </div>
+                ) : null}
+                <ul className="m-0 flex max-h-48 list-none flex-col gap-1 overflow-auto p-0 text-xs">
+                  {history.map((entry) => {
+                    const providerLabel = entry.provider ?? "unknown";
+                    const fallbackHere = fellBack(entry);
+                    return (
+                      <li
+                        key={entry.id}
+                        className="border-b border-neutral-200 pb-1 dark:border-neutral-800"
+                      >
+                        <div className="font-mono">{entry.tool}</div>
+                        <div className="text-neutral-500">
+                          {entry.timestamp} · {entry.mode} ·{" "}
+                          {fallbackHere ? (
+                            <span className="text-amber-700 dark:text-amber-300">
+                              {providerLabel} → mock (fallback)
+                            </span>
+                          ) : (
+                            providerLabel
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            );
+          })()
+        : null}
     </div>
   );
 }

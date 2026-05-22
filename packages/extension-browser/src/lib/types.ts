@@ -145,6 +145,14 @@ export interface HistoryEntry {
   readonly timestamp: string;
   readonly mode: ExtensionMode;
   readonly mockMode: boolean;
+  /**
+   * The provider that actually answered. Mirrors `ModelProvenance.provider`
+   * so the popup can distinguish "user picked Mock" from "user picked
+   * Ollama but Ollama was unreachable, fell back to mock". Optional for
+   * backwards compatibility with entries written before this field
+   * existed; missing means "unknown".
+   */
+  readonly provider?: string;
   readonly inputPreview: string;
   readonly outputSummary: string;
 }

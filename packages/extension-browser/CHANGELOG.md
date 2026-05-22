@@ -1,5 +1,33 @@
 # @neurodock/extension-browser
 
+## 0.0.5
+
+### Changed
+
+- **History row now shows which provider actually answered.** The third
+  column of every history entry used to display `local · mock` even when
+  the user had Ollama or LM Studio selected and a real call had been
+  attempted, because the row never stored the actual provider. It now
+  records `provenance.provider` alongside `mode` and `mockMode`, so
+  rows read e.g. `local · ollama` for a healthy local call, `local ·
+mock` for an explicit mock-mode selection, or `local · ollama → mock
+(fallback)` when the configured provider was unreachable and the
+  extension gracefully fell back to the deterministic mock.
+- **Silent-fallback banner.** When the most recent history entry is a
+  fallback (configured provider failed, mock answered instead), the
+  popup surfaces a single-line amber banner above the history list
+  pointing the user at Settings → Test to diagnose. Closes the most
+  common confusion thread (users reading `· mock` and assuming the
+  extension is permanently broken when in reality their local provider
+  is just not running).
+
+### Migration
+
+- `HistoryEntry` gains an optional `provider?: string` field. Existing
+  entries written by 0.0.4 keep working — readers treat a missing
+  field as `unknown` and the fallback heuristic only fires when the
+  field is present.
+
 ## 0.0.4
 
 ### Added

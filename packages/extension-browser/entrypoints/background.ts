@@ -105,6 +105,7 @@ async function runTranslate(
         timestamp: response.timestamp,
         mode: profile.mode,
         mockMode: response.mockMode,
+        provider: response.provenance.provider,
         inputPreview,
         outputSummary: summariseOutput(response),
       });
