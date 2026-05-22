@@ -15,7 +15,7 @@
 
   <text x="62" y="62" font-size="20" font-weight="700" letter-spacing="5" fill="#1F8A8A">ONBOARDING</text>
   <text x="60" y="106" font-size="44" font-weight="800" letter-spacing="-0.8" fill="#22303F">Install NeuroDock in <tspan fill="#1F8A8A">3 steps</tspan></text>
-  <text x="1858" y="98" text-anchor="end" font-size="20" font-weight="300" fill="#5C6B78">no credentials Â· no trial Â· no waiting</text>
+  <text x="1858" y="98" text-anchor="end" font-size="20" font-weight="300" fill="#5C6B78">no credentials · no trial · no waiting</text>
 
   <g>
     <rect x="70" y="130" width="540" height="350" rx="22" fill="#E4F2EF" stroke="#1F8A8A" stroke-width="2"/>
@@ -54,12 +54,12 @@
     <text x="840" y="208" font-size="16" font-weight="700" letter-spacing="2" fill="#9A742F">STEP 2</text>
     <text x="840" y="244" font-size="33" font-weight="800" fill="#22303F">Restart Claude</text>
     <rect x="736" y="276" width="468" height="44" rx="9" fill="#3A2E12"/>
-    <text x="758" y="304" font-size="17" font-family="'Courier New', monospace" fill="#E8C98A">Full quit â Cmd+Q  /  Ctrl+Q</text>
+    <text x="758" y="304" font-size="17" font-family="'Courier New', monospace" fill="#E8C98A">Full quit — Cmd+Q  /  Ctrl+Q</text>
     <rect x="736" y="340" width="468" height="104" rx="14" fill="#FFFFFF" stroke="#B0863F" stroke-width="2"/>
     <circle cx="772" cy="392" r="18" fill="#B0863F"/>
     <text x="772" y="400" text-anchor="middle" font-size="24" font-weight="800" fill="#FFFFFF">!</text>
     <text x="804" y="382" font-size="17" font-weight="700" fill="#22303F">This step matters.</text>
-    <text x="804" y="408" font-size="16" font-weight="400" fill="#5C6B78">Claude reads its config at startup â</text>
+    <text x="804" y="408" font-size="16" font-weight="400" fill="#5C6B78">Claude reads its config at startup —</text>
     <text x="804" y="430" font-size="16" font-weight="400" fill="#5C6B78">a full quit is required, not a window close.</text>
   </g>
 
@@ -78,7 +78,7 @@
     <rect x="1366" y="340" width="468" height="104" rx="14" fill="#FFFFFF" stroke="#4FA07E" stroke-width="2"/>
     <text x="1390" y="376" font-size="14" font-weight="700" letter-spacing="1.5" fill="#357056">CLAUDE REMEMBERS</text>
     <text x="1390" y="404" font-size="16" font-weight="400" fill="#5C6B78">"Yesterday you were drafting the Q3</text>
-    <text x="1390" y="426" font-size="16" font-weight="400" fill="#5C6B78">roadmap â want to pick that back up?"</text>
+    <text x="1390" y="426" font-size="16" font-weight="400" fill="#5C6B78">roadmap — want to pick that back up?"</text>
   </g>
 
   <line x1="60" y1="500" x2="1860" y2="500" stroke="#D4DBE1" stroke-width="1.4"/>

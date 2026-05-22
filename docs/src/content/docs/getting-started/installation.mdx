@@ -30,10 +30,20 @@ Then reopen. This is the #1 silent failure.
 
 The installer writes these snippets for you. They are shown here so you can verify what landed, or hand-edit if you skipped `install-all`.
 
+Every MCP-aware client uses the same `mcpServers` block; the only thing that varies is **where** the config file lives.
+
 <Tabs>
 <TabItem label="Claude Desktop">
 
-Claude Desktop reads `claude_desktop_config.json` (location varies by OS). After `install-all`, you should see:
+<img src="/mcp-clients/claude.png" alt="Claude" width="48" height="48" style="margin-bottom: 0.5rem;" />
+
+Claude Desktop reads `claude_desktop_config.json`:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+After `install-all`, you should see:
 
 ```json
 {
@@ -51,6 +61,8 @@ Restart Claude Desktop after install (full quit — see callout above).
 
 </TabItem>
 <TabItem label="Claude Code">
+
+<img src="/mcp-clients/claude.png" alt="Claude Code" width="48" height="48" style="margin-bottom: 0.5rem;" />
 
 Claude Code reads MCP server configuration from `.claude/settings.json` (project-local) or the global equivalent. `install-all` will offer to register the servers globally; you can decline and add per-project later.
 
@@ -71,7 +83,9 @@ The registration block is the same shape:
 </TabItem>
 <TabItem label="Cursor">
 
-Cursor reads MCP configuration through its settings pane. `install-all` writes the same five server entries to its config file:
+<img src="/mcp-clients/cursor.png" alt="Cursor" width="48" height="48" style="margin-bottom: 0.5rem;" />
+
+Cursor reads MCP configuration from `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` in any project folder. `install-all` writes the global file:
 
 ```json
 {
@@ -88,7 +102,74 @@ Cursor reads MCP configuration through its settings pane. `install-all` writes t
 Restart Cursor after install.
 
 </TabItem>
+<TabItem label="Perplexity">
+
+<img src="/mcp-clients/perplexity.png" alt="Perplexity" width="48" height="48" style="margin-bottom: 0.5rem;" />
+
+Perplexity's desktop app (Comet) is gaining MCP support; check [Perplexity's MCP docs](https://docs.perplexity.ai/guides/mcp-server) for the current configuration path. When supported, the block shape is the standard MCP form:
+
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
+    "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] },
+    "neurodock-translation": { "command": "uvx", "args": ["neurodock-mcp-translation"] },
+    "neurodock-guardrail": { "command": "uvx", "args": ["neurodock-mcp-guardrail"] }
+  }
+}
+```
+
+`install-all` does not auto-detect Perplexity yet. Paste the block manually into whatever location Perplexity documents.
+
+</TabItem>
+<TabItem label="OpenClaw">
+
+<img src="/mcp-clients/openclaw.png" alt="OpenClaw" width="48" height="48" style="margin-bottom: 0.5rem;" />
+
+OpenClaw is an open-source MCP-aware client. NeuroDock's substrate is vendor-neutral — any client that speaks the MCP stdio protocol works. Consult OpenClaw's documentation for the exact config file path and paste the registration block:
+
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
+    "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] },
+    "neurodock-translation": { "command": "uvx", "args": ["neurodock-mcp-translation"] },
+    "neurodock-guardrail": { "command": "uvx", "args": ["neurodock-mcp-guardrail"] }
+  }
+}
+```
+
+`install-all` does not auto-detect OpenClaw yet — contributions welcome at [github.com/tlennon-ie/neurodock](https://github.com/tlennon-ie/neurodock/issues).
+
+</TabItem>
+<TabItem label="Hermes">
+
+<img src="/mcp-clients/hermes.png" alt="Hermes Agent" width="48" height="48" style="margin-bottom: 0.5rem;" />
+
+Hermes Agent supports the standard MCP stdio protocol. Consult Hermes's documentation for its config file location, then paste:
+
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
+    "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] },
+    "neurodock-translation": { "command": "uvx", "args": ["neurodock-mcp-translation"] },
+    "neurodock-guardrail": { "command": "uvx", "args": ["neurodock-mcp-guardrail"] }
+  }
+}
+```
+
+`install-all` does not auto-detect Hermes yet — contributions welcome.
+
+</TabItem>
 </Tabs>
+
+:::tip[Don't see your client?]
+Any MCP-aware client that supports stdio subprocess servers can use NeuroDock. The registration block above is the [standard MCP form](https://modelcontextprotocol.io/) — only the config file path differs per client. If you wire up a new client successfully, please [open a PR](https://github.com/tlennon-ie/neurodock/blob/main/CONTRIBUTING.md) so the next person finds the recipe ready-made.
+:::
 
 ## Verify the install
 

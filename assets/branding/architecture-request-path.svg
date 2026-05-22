@@ -16,9 +16,9 @@
   <rect width="1600" height="1000" fill="url(#dots)"/>
 
   <text x="70" y="86" font-size="20" font-weight="700" letter-spacing="5" fill="#1F8A8A">ARCHITECTURE</text>
-  <text x="1530" y="86" text-anchor="end" font-size="17" font-weight="600" letter-spacing="3" fill="#9AA6B0">NEURODOCK Â· HOW IT WORKS</text>
+  <text x="1530" y="86" text-anchor="end" font-size="17" font-weight="600" letter-spacing="3" fill="#9AA6B0">NEURODOCK · HOW IT WORKS</text>
   <text x="68" y="150" font-size="50" font-weight="800" letter-spacing="-1" fill="#22303F">How NeuroDock <tspan fill="#1F8A8A">works</tspan></text>
-  <text x="70" y="188" font-size="25" font-weight="300" fill="#5C6B78">your machine, your data â the full request path</text>
+  <text x="70" y="188" font-size="25" font-weight="300" fill="#5C6B78">your machine, your data — the full request path</text>
   <line x1="70" y1="210" x2="1530" y2="210" stroke="#D4DBE1" stroke-width="1.4"/>
 
   <g>
@@ -38,7 +38,7 @@
   <g>
     <rect x="490" y="240" width="420" height="132" rx="18" fill="#FFFFFF" stroke="#1F8A8A" stroke-width="2.4"/>
     <text x="700" y="296" text-anchor="middle" font-size="27" font-weight="800" fill="#22303F">Claude</text>
-    <text x="700" y="330" text-anchor="middle" font-size="17" font-weight="400" fill="#6B7884">Desktop Â· Code Â· Cursor</text>
+    <text x="700" y="330" text-anchor="middle" font-size="17" font-weight="400" fill="#6B7884">Desktop · Code · Cursor</text>
   </g>
 
   <line x1="700" y1="372" x2="700" y2="402" stroke="#9AA6B0" stroke-width="3"/>
@@ -132,7 +132,7 @@
       <path d="M0 24 a20 6 0 0 0 40 0" fill="none" stroke="#1F8A8A" stroke-width="3"/>
     </g>
     <text x="820" y="718" text-anchor="middle" font-size="23" font-weight="800" fill="#1A6E72">~/.neurodock</text>
-    <text x="820" y="748" text-anchor="middle" font-size="16" font-weight="400" fill="#557079">profiles Â· skills Â· data â all stored on your machine</text>
+    <text x="820" y="748" text-anchor="middle" font-size="16" font-weight="400" fill="#557079">profiles · skills · data — all stored on your machine</text>
   </g>
 
   <path d="M1260 726 L1545 726 L1545 306 L912 306" fill="none" stroke="#1F8A8A" stroke-width="2.6" stroke-dasharray="2 9" stroke-linecap="round"/>
