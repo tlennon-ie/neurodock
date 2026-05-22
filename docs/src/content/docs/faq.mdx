@@ -7,6 +7,8 @@ Direct answers. If a question is missing, [open an issue](https://github.com/tle
 
 ## What is this for
 
+The basics. What NeuroDock is, what it plugs into, and what you need before you start.
+
 ### What is MCP?
 
 The Model Context Protocol. An open standard for connecting language models to external tools and data. An MCP server exposes named tools with typed inputs and outputs; an MCP-aware client (Claude Desktop, Claude Code, Cursor) calls those tools when the model asks for them. NeuroDock ships five MCP servers — none of them are model-specific.
@@ -24,6 +26,8 @@ Yes. The substrate is vendor-neutral. Claude Code and Cursor are both supported 
 `profiles/audhd.yaml`. AuDHD is a first-class enum value in the schema, not a sum-of-parts. The preset activates ADHD-tuned skills (`adhd-daily-planner`, `hyperfocus-formatter`) AND autism-leaning skills (`asd-meeting-translator`, `audhd-context-recovery`) at the same time, with chunk-size and break cadence tuned for the combined load. See the [profiles reference](/reference/profiles/).
 
 ## Privacy & safety
+
+What leaves your machine, what doesn't, and how the consent model is built.
 
 ### Is my data sent anywhere?
 
@@ -50,6 +54,8 @@ No. Self-identification is sufficient. The profile's `identity.neurotypes` field
 
 ## Errors & bugs
 
+Things that trip people up most often, and what to try first.
+
 ### Why doesn't `neurodock` work after `pip install`?
 
 The CLI is on npm, not PyPI. The Python packages (`neurodock-mcp-chronometric`, `neurodock-mcp-cognitive-graph`, etc.) install via `uv` or `pip`; the CLI installs via `npx` or a global `npm install -g @neurodock/cli`. The simplest one-liner is:
@@ -61,6 +67,8 @@ npx @neurodock/cli install-all
 That detects `uv` or `pip` and installs the six Python MCP servers, then wires your MCP clients. See the [CLI reference](/reference/cli/#neurodock-install-all).
 
 ## Adding my own prompts / plugins
+
+How to extend NeuroDock with your own skills, prompts, and plugin directories.
 
 ### How do I add more plugins?
 

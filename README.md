@@ -33,21 +33,20 @@ client). Local-first by default. No telemetry. AGPL-3.0-or-later.
 
 ## How it fits together
 
-Quick picture before the install steps. Read left-to-right: you talk to Claude
-like normal, and Claude quietly calls NeuroDock's local tools to do the
-remembering, timing, and translating.
+You chat with Claude exactly like normal. Under the hood, Claude calls
+NeuroDock's local MCP servers; they read and write your local store; the
+result flows back into Claude's reply.
 
-```mermaid
-flowchart LR
-  user([You]) -->|chat| claude[Claude]
-  claude -->|tool call| mcp[NeuroDock MCP servers]
-  mcp -->|reads/writes| storage[(Local files<br/>~/.neurodock)]
-  mcp -->|result| claude
-  claude -->|reply| user
-```
+<p align="center">
+  <img src="./assets/branding/architecture-request-path.svg" alt="Request path: you talk to Claude; Claude calls five NeuroDock MCP servers (chronometric, cognitive-graph, task-fractionator, translation, guardrail) plus the evals harness; they read and write ~/.neurodock on your local machine; results flow back into Claude's reply. All local by default, no telemetry, your data stays your data." width="100%">
+</p>
 
 Everything runs on your laptop. Nothing leaves your machine unless you
 explicitly turn on a cloud option.
+
+<p align="center">
+  <img src="./assets/branding/onboarding-3-steps.svg" alt="Install NeuroDock in three steps: 1) Run npx @neurodock/cli install-all (under 5 minutes). 2) Full-quit Claude with Cmd+Q or Ctrl+Q so it re-reads its MCP config (30 seconds). 3) Start talking to Claude — for example, ask 'What was I working on yesterday?'" width="100%">
+</p>
 
 ## Install
 
