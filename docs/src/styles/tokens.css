@@ -12,49 +12,16 @@
  *   - Line-height >= 1.65 in body copy.
  *   - prefers-reduced-motion is honoured below.
  *
- * Font files are NOT bundled in this repo. See public/fonts/README.md
- * for the expected files and SIL Open Font License attribution requirements.
+ * Fonts are vendored via @fontsource npm packages (SIL Open Font License 1.1).
+ * Astro/Vite bundles the woff2 files into /_astro/ with content-hashed names
+ * during build; no /fonts/* round-trip and no missing-file 404s.
  */
 
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/atkinson-hyperlegible-regular.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/atkinson-hyperlegible-italic.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("/fonts/atkinson-hyperlegible-bold.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Lexend";
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url("/fonts/lexend-variable.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "JetBrains Mono";
-  font-style: normal;
-  font-weight: 400 700;
-  font-display: swap;
-  src: url("/fonts/jetbrains-mono-variable.woff2") format("woff2");
-}
+@import "@fontsource/atkinson-hyperlegible/400.css";
+@import "@fontsource/atkinson-hyperlegible/400-italic.css";
+@import "@fontsource/atkinson-hyperlegible/700.css";
+@import "@fontsource-variable/lexend";
+@import "@fontsource-variable/jetbrains-mono";
 
 :root {
   /* Type stack */

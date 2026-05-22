@@ -5,18 +5,28 @@ description: Run the morning brief skill end-to-end in Claude Desktop. About fiv
 
 After this page you will have run one NeuroDock skill end-to-end and seen the substrate work as a chain: chronometric → cognitive-graph → `adhd-daily-planner`.
 
-<figure style="margin: 1.5rem 0; max-width: 720px;">
-  <img
-    src="/images/morning-brief-loop.gif"
-    alt="TODO(issue-27): Replace with looping GIF of /morning-brief running in Claude Desktop — user types the slash command, tool calls flash by (get_time_context, recall_decisions), and the formatted brief appears."
-    width="720"
-    style="width: 100%; height: auto; border: 1px solid var(--sl-color-gray-5); border-radius: 0.5rem; background: var(--sl-color-gray-6);"
-    loading="lazy"
-  />
-  <figcaption style="font-size: 0.85rem; color: var(--sl-color-gray-3); margin-top: 0.5rem;">
-    Placeholder — short loop video of the <code>/morning-brief</code> interaction. Tracked in issue #27.
-  </figcaption>
-</figure>
+```mermaid
+sequenceDiagram
+  autonumber
+  participant You
+  participant Claude
+  participant Chrono as mcp-chronometric
+  participant Graph as mcp-cognitive-graph
+  participant Skill as adhd-daily-planner
+
+  You->>Claude: /morning-brief
+  Claude->>Chrono: get_time_context()
+  Chrono-->>Claude: { local_time, day, energy_zone }
+  Claude->>Graph: recall_decisions(project, since)
+  Graph-->>Claude: [] (empty on first run)
+  Claude->>Skill: assemble brief
+  Skill-->>Claude: 1-paragraph brief + 1-3 priorities
+  Claude-->>You: morning brief
+```
+
+<figcaption style="font-size: 0.85rem; color: var(--sl-color-gray-3); margin-top: -0.75rem; margin-bottom: 1.5rem;">
+  What `/morning-brief` does under the hood. A short screen-capture demo is tracked in <a href="https://github.com/tlennon-ie/neurodock/issues/27">issue #27</a>.
+</figcaption>
 
 ## Prerequisites
 

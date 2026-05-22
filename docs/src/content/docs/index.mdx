@@ -19,27 +19,68 @@ NeuroDock is an AI toolkit that handles scheduling, memory, and focus boundaries
 
 ## The three pillars
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+<style>{`
+  .nd-pillars {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+    align-items: stretch;
+  }
+  .nd-pillar {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .nd-pillar h3 {
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.375rem;
+    line-height: 1.2;
+    /* Prevent the H3 from hyphenating "Communication" / "Guardrails"
+       mid-syllable on narrow card widths. */
+    hyphens: none;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+  .nd-pillar-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+  .nd-pillar p {
+    margin: 0;
+  }
+`}</style>
 
-<div style="border: 1px solid var(--sl-color-gray-5); border-radius: 0.5rem; padding: 1.25rem;">
+<div class="nd-pillars">
 
-### 🧱 Substrate
+<div class="nd-pillar">
+
+<span class="nd-pillar-icon" aria-hidden="true">🧱</span>
+
+### Substrate
 
 Five MCP servers and a handful of skills that externalise executive function — time, memory, and task decomposition — so you don't have to hold them in your head.
 
 </div>
 
-<div style="border: 1px solid var(--sl-color-gray-5); border-radius: 0.5rem; padding: 1.25rem;">
+<div class="nd-pillar">
 
-### 💬 Communication
+<span class="nd-pillar-icon" aria-hidden="true">💬</span>
+
+### Communication
 
 A translation layer that reads the subtext in incoming messages and checks the tone of outgoing ones. Same MCP contract, deterministic baseline plus optional LLM refinement.
 
 </div>
 
-<div style="border: 1px solid var(--sl-color-gray-5); border-radius: 0.5rem; padding: 1.25rem;">
+<div class="nd-pillar">
 
-### 🛟 Guardrails
+<span class="nd-pillar-icon" aria-hidden="true">🛟</span>
+
+### Guardrails
 
 A guardrail layer that refuses to amplify rumination, validate hyperfocus spirals, or sycophantically agree with you. Transparent thresholds. You stay in charge.
 
@@ -47,7 +88,7 @@ A guardrail layer that refuses to amplify rumination, validate hyperfocus spiral
 
 </div>
 
-## What you can do today (v0.2.1)
+## What you can do today
 
 All three pillars are live on `main` and installable from npm + PyPI. See [`CHANGELOG.md`](https://github.com/tlennon-ie/neurodock/blob/main/CHANGELOG.md) for the per-package version index.
 
@@ -55,11 +96,11 @@ All three pillars are live on `main` and installable from npm + PyPI. See [`CHAN
 
 Five MCP servers, all published to PyPI:
 
-- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) `v0.0.1` — time, session, and break management.
-- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) `v0.0.2` — persistent entity memory and recall, local-first, with a 4-rung resolution cascade (exact → alias → fuzzy → embedding).
-- [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) `v0.0.2` — decompose vague goals into atomic 5–90 minute tasks (ISO 8601 duration parsing).
-- [`mcp-translation`](/reference/mcp-servers/translation/) `v0.0.1` — deterministic-baseline-plus-LLM-envelope tools for incoming subtext, outgoing tone, and meeting briefs.
-- [`mcp-guardrail`](/reference/mcp-servers/guardrail/) `v0.0.2` — rumination, hyperfocus, and sycophancy detectors. All three live.
+- [`mcp-chronometric`](/reference/mcp-servers/chronometric/) `v0.0.2` — time, session, and break management.
+- [`mcp-cognitive-graph`](/reference/mcp-servers/cognitive-graph/) `v0.0.3` — persistent entity memory and recall, local-first, with a 4-rung resolution cascade (exact → alias → fuzzy → embedding).
+- [`mcp-task-fractionator`](/reference/mcp-servers/task-fractionator/) `v0.0.3` — decompose vague goals into atomic 5–90 minute tasks (ISO 8601 duration parsing).
+- [`mcp-translation`](/reference/mcp-servers/translation/) `v0.0.2` — deterministic-baseline-plus-LLM-envelope tools for incoming subtext, outgoing tone, and meeting briefs.
+- [`mcp-guardrail`](/reference/mcp-servers/guardrail/) `v0.0.3` — rumination, hyperfocus, and sycophancy detectors. All three live.
 
 Six skills compose those servers into daily-use workflows:
 
@@ -72,11 +113,11 @@ Six skills compose those servers into daily-use workflows:
 
 ### Communication layer
 
-`mcp-translation` `v0.0.1` ships a deterministic baseline plus an LLM refinement envelope, both behind one MCP contract. Bidirectional translation of corporate communication: literal-translate incoming subtext, tone-check outgoing messages, structure meeting transcripts. The browser extension (`@neurodock/extension-browser` `v0.0.2`) wires four real LLM providers — Ollama (local default), Anthropic, OpenAI, and OpenRouter (including `openrouter/auto`) — plus a deterministic mock lane for development.
+`mcp-translation` `v0.0.2` ships a deterministic baseline plus an LLM refinement envelope, both behind one MCP contract. Bidirectional translation of corporate communication: literal-translate incoming subtext, tone-check outgoing messages, structure meeting transcripts. The browser extension (`@neurodock/extension-browser` `v0.0.4`) wires five real LLM providers — Ollama (local default), LM Studio, Anthropic, OpenAI, and OpenRouter (including `openrouter/auto`) — plus a deterministic mock lane for development. Non-localhost local providers (e.g. LM Studio bound to a LAN address) are gated behind a per-host `chrome.permissions` runtime grant.
 
 ### Guardrails
 
-`mcp-guardrail` `v0.0.2` ships all three detectors live: rumination, hyperfocus, and sycophancy (48 tests). Transparent, user-configured, overridable. Thresholds live in the user's profile under `guardrails`.
+`mcp-guardrail` `v0.0.3` ships all three detectors live: rumination, hyperfocus, and sycophancy (48 tests). Transparent, user-configured, overridable. Thresholds live in the user's profile under `guardrails`.
 
 ## Principles
 

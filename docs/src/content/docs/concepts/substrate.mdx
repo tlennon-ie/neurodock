@@ -82,7 +82,7 @@ See the [decisions index](/decisions/) for the full set of design ADRs.
 
 ## What is NOT in the substrate
 
-- **No LLM call from inside a substrate server.** The user's MCP client is the only LLM boundary. The cognitive graph's `weekly_rollup` and the fractionator's decomposition both use local heuristics. LLM-assisted variants are an envelope on the caller side — see `mcp-translation` `v0.0.1` for the deterministic-plus-LLM-envelope pattern.
+- **No LLM call from inside a substrate server.** The user's MCP client is the only LLM boundary. The cognitive graph's `weekly_rollup` and the fractionator's decomposition both use local heuristics. LLM-assisted variants are an envelope on the caller side — see `mcp-translation` `v0.0.2` for the deterministic-plus-LLM-envelope pattern.
 - **No remote storage.** SQLite + `sqlite-vec` lives at `~/.neurodock/store.sqlite`. SQLCipher is the opt-in at-rest encryption layer.
 - **No telemetry.** The substrate has no remote endpoint to send to.
 
