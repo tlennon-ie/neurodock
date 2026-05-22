@@ -1,5 +1,19 @@
 # @neurodock/extension-browser
 
+## 0.0.6
+
+### Fixed
+
+- **LM Studio translations no longer fail with HTTP 400.** The provider
+  was unconditionally sending `response_format: { type: "json_object" }`,
+  which LM Studio's OpenAI-compat API rejects with
+  `'response_format.type' must be 'json_schema' or 'text'`. Every
+  translation through LM Studio errored before reaching the model. Now
+  we send `{ type: "text" }` and rely on `validation.ts`'s `extractJson`
+  to pull the JSON object out of the model's response (same path the
+  Ollama provider already takes). OpenAI and OpenRouter still send
+  `json_object` — they support it.
+
 ## 0.0.5
 
 ### Changed

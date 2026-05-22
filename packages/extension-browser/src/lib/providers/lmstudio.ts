@@ -115,11 +115,16 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
   ): Promise<Response> {
     await ensurePermitted();
     const url = `${baseUrl}/chat/completions`;
+    // LM Studio's OpenAI-compat API rejects response_format.type === 'json_object'
+    // (returns HTTP 400 "must be 'json_schema' or 'text'"). The translation
+    // prompts already instruct the model to return JSON, and validation.ts'
+    // extractJson handles raw-text responses, so 'text' is correct here.
+    // OpenAI/OpenRouter keep 'json_object' in their own provider files.
     const body = JSON.stringify({
       model: request.model,
       messages: [{ role: "user", content: request.prompt }],
       stream,
-      response_format: { type: "json_object" },
+      response_format: { type: "text" },
     });
     let res: Response;
     try {
