@@ -6,6 +6,19 @@ to [semantic versioning](https://semver.org/spec/v2.0.0.html). Schemas under
 `schemas/` are versioned independently against `v0.1.0` of the contract; the
 package implements that contract.
 
+## [0.0.3] - 2026-05-22
+
+### Changed
+
+- README rewritten for the PyPI surface. ADR references switched from relative
+  paths under `../../docs/decisions/` (which rendered as 404s on pypi.org) to
+  absolute GitHub URLs. Same fix shipped across all five NeuroDock MCP server
+  READMEs in this release cycle.
+- Added `[project.urls]` block to `pyproject.toml` so the PyPI sidebar shows
+  Homepage, Documentation, Repository, Issues, and Changelog links.
+
+No behaviour change. Same tools, same schemas, same wire contract.
+
 ## [0.0.2] — 2026-05-17
 
 Completes the `recall_entity` resolution cascade by adding the `fuzzy` and

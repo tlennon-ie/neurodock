@@ -19,3 +19,6 @@ overrides:
   "@astrojs/sitemap": "^3.7.2"
   "@astrojs/starlight>@astrojs/sitemap": "^3.7.2"
   "yaml": "^2.8.3"
+  # uuid <11.1.1 is a transitive dep with a security advisory.
+  # node-notifier still pulls uuid@8.3.2. Force the patched version.
+  "uuid": "^11.1.1"

@@ -5,6 +5,19 @@ All notable changes to `neurodock-mcp-translation` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning per .
 
+## [0.0.2] - 2026-05-22
+
+### Changed
+
+- README rewritten for the PyPI surface. ADR references switched from relative
+  paths under `../../docs/decisions/` (which rendered as 404s on pypi.org) to
+  absolute GitHub URLs. Same fix shipped across all five NeuroDock MCP server
+  READMEs in this release cycle.
+- Added `[project.urls]` block to `pyproject.toml` so the PyPI sidebar shows
+  Homepage, Documentation, Repository, Issues, and Changelog links.
+
+No behaviour change. Same tools, same schemas, same wire contract.
+
 ## [0.0.1] - 2026-05-17
 
 ### Added

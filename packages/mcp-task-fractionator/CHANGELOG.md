@@ -4,6 +4,19 @@ All notable changes to this package will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3] - 2026-05-22
+
+### Changed
+
+- README rewritten for the PyPI surface. ADR references switched from relative
+  paths under `../../docs/decisions/` (which rendered as 404s on pypi.org) to
+  absolute GitHub URLs. Same fix shipped across all five NeuroDock MCP server
+  READMEs in this release cycle.
+- Added `[project.urls]` block to `pyproject.toml` so the PyPI sidebar shows
+  Homepage, Documentation, Repository, Issues, and Changelog links.
+
+No behaviour change. Same tools, same schemas, same wire contract.
+
 ## [0.0.1] — 2026-05-15
 
 ### Added

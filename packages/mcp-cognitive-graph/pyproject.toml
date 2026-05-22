@@ -1,6 +1,6 @@
 [project]
 name = "neurodock-mcp-cognitive-graph"
-version = "0.0.2"
+version = "0.0.3"
 description = "NeuroDock cognitive graph MCP server — persistent entity memory and recall."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -17,6 +17,13 @@ dependencies = [
     "fastembed>=0.4",
     "numpy>=1.26",
 ]
+
+[project.urls]
+Homepage = "https://neurodock.org/"
+Documentation = "https://docs.neurodock.org/"
+Repository = "https://github.com/tlennon-ie/neurodock"
+Issues = "https://github.com/tlennon-ie/neurodock/issues"
+Changelog = "https://github.com/tlennon-ie/neurodock/blob/main/packages/mcp-cognitive-graph/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [

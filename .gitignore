@@ -189,3 +189,4 @@ tmp/
 # !uv.lock
 # (intentionally not listed above so they're tracked)
 icon-high*
+changes.md
