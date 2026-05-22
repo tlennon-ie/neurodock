@@ -50,6 +50,12 @@ importers:
       '@fontsource/atkinson-hyperlegible':
         specifier: ^5.2.8
         version: 5.2.8
+      '@fontsource/comic-neue':
+        specifier: ^5.2.7
+        version: 5.2.7
+      '@fontsource/opendyslexic':
+        specifier: ^5.2.5
+        version: 5.2.5
       astro:
         specifier: ^6.3.6
         version: 6.3.6(@types/node@24.12.4)(jiti@2.7.0)(lightningcss@1.32.0)(rollup@4.60.4)(tsx@4.22.3)(yaml@2.9.0)
@@ -1120,6 +1126,12 @@ packages:
 
   '@fontsource/atkinson-hyperlegible@5.2.8':
     resolution: {integrity: sha512-HciLcJ5DIK/OVOdo71EbEN4NnvDFlp6/SpAxtcbWf2aAdcsOuPqITxj5KNEXb48qSPSdnnZdGGnSJChPKi3/bA==}
+
+  '@fontsource/comic-neue@5.2.7':
+    resolution: {integrity: sha512-tNi0Nxbz0QMwHvZWJSP5G0SXq8CeX5b+K3l3q/afPmJ/WlQ+i3/NfOYWBzsojCZko1lNplfmjbsOGMuBs4WmcA==}
+
+  '@fontsource/opendyslexic@5.2.5':
+    resolution: {integrity: sha512-NNS9aaPQx2TlaTvb3vTEjw3xz8lKj23mBc+6rM00mSNFDygdoll0/nLMHFtDKKrBT6sMfY6TFFPOR0D9ktdspg==}
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -6785,6 +6797,10 @@ snapshots:
   '@fontsource-variable/lexend@5.2.11': {}
 
   '@fontsource/atkinson-hyperlegible@5.2.8': {}
+
+  '@fontsource/comic-neue@5.2.7': {}
+
+  '@fontsource/opendyslexic@5.2.5': {}
 
   '@iconify/types@2.0.0': {}
 

@@ -13,13 +13,15 @@
  *
  * Storage contract:
  *   - localStorage key: `neurodockFont`
- *   - Allowed values:   `atkinson` | `lexend` | `system`
+ *   - Allowed values:   `atkinson` | `lexend` | `opendyslexic` | `comic` | `system`
  *   - Default (unset):  `atkinson` (Atkinson Hyperlegible)
  *
  * Class hooks on <html>:
- *   - `font-atkinson`  → body uses Atkinson Hyperlegible (default)
- *   - `font-lexend`    → body uses Lexend (ADHD-friendlier rhythm)
- *   - `font-system`    → body uses system UI stack
+ *   - `font-atkinson`     → body uses Atkinson Hyperlegible (default)
+ *   - `font-lexend`       → body uses Lexend (ADHD-friendlier rhythm)
+ *   - `font-opendyslexic` → body uses OpenDyslexic (b/d, p/q distinct)
+ *   - `font-comic`        → body uses Comic Neue (low visual rhythm)
+ *   - `font-system`       → body uses system UI stack
  *
  * The CSS variables `--sl-font` and `--sl-font-system` are re-bound
  * in src/styles/tokens.css under each `:root.font-*` selector.
@@ -71,6 +73,8 @@ const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
     >
       <option value="atkinson">Atkinson Hyperlegible</option>
       <option value="lexend">Lexend (ADHD)</option>
+      <option value="opendyslexic">OpenDyslexic</option>
+      <option value="comic">Comic Neue</option>
       <option value="system">System default</option>
     </select>
   </label>
@@ -85,7 +89,7 @@ const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
 <script is:inline>
   (function () {
     var KEY = 'neurodockFont';
-    var ALLOWED = { atkinson: 1, lexend: 1, system: 1 };
+    var ALLOWED = { atkinson: 1, lexend: 1, opendyslexic: 1, comic: 1, system: 1 };
     var stored;
     try {
       stored = localStorage.getItem(KEY);
@@ -94,7 +98,7 @@ const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
     }
     var choice = stored && ALLOWED[stored] ? stored : 'atkinson';
     var root = document.documentElement;
-    root.classList.remove('font-atkinson', 'font-lexend', 'font-system');
+    root.classList.remove('font-atkinson', 'font-lexend', 'font-opendyslexic', 'font-comic', 'font-system');
     root.classList.add('font-' + choice);
   })();
 </script>
@@ -104,11 +108,11 @@ const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
   // applied by the inline pre-paint script above; this only handles
   // user-driven changes and cross-tab sync.
   const KEY = 'neurodockFont';
-  const ALLOWED = new Set(['atkinson', 'lexend', 'system']);
+  const ALLOWED = new Set(['atkinson', 'lexend', 'opendyslexic', 'comic', 'system']);
 
   function apply(choice: string) {
     const root = document.documentElement;
-    root.classList.remove('font-atkinson', 'font-lexend', 'font-system');
+    root.classList.remove('font-atkinson', 'font-lexend', 'font-opendyslexic', 'font-comic', 'font-system');
     root.classList.add('font-' + choice);
   }
 
