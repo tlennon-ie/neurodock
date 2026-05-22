@@ -3,6 +3,12 @@ title: 0004 — Profile schema design
 description: Why the profile is permissive YAML with forward-compat round-trip preservation.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** The profile is read by every server, every skill, and the CLI; it carries three consent gates and must evolve every quarter without breaking older loaders.
+**Decision:** Nested YAML with permissive forward-compat (`additionalProperties: true` at every level). Loaders accept unknown keys, preserve them on round-trip, and validate known keys strictly.
+**Impact:** A `v0.1` loader reading a `v0.2` profile preserves unknown keys; defaults are loader-applied; one consent surface — never per-skill configs.
+:::
+
 > **Source:** `docs/decisions/0004-profile-schema-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered and the seventeen binding design decisions.
 
 - **Status:** Proposed
@@ -17,11 +23,16 @@ The profile at `~/.neurodock/profile.yaml` is read by every MCP server, every sk
 
 Adopt **nested YAML with permissive forward-compat** (`additionalProperties: true` at every nesting level). Loaders accept unknown keys, preserve them on round-trip, and validate known keys strictly. A separate `neurodock profile validate` CLI command surfaces typos.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 Alternatives rejected:
 
 - **Flat TOML config** — ecosystem precedent is YAML; TOML's strict typing works against forward-compat.
 - **Nested YAML with strict schema** — breaks every quarter when a new field lands; downgrades silently lose data.
 - **Per-skill configs** — fragments consent across N files; defeats the "Claude that knows me" experience.
+
+</details>
 
 ## Cross-cutting rules established here
 

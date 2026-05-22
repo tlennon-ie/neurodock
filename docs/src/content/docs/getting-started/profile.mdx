@@ -5,50 +5,92 @@ description: Edit your profile to tune NeuroDock to your rhythms. The single sou
 
 The profile is one YAML file at `~/.neurodock/profile.yaml`. Every MCP server reads it. Every skill respects it. Editing it changes the substrate's behaviour immediately — no restart required.
 
-After this page you will know which blocks the profile contains, where the defaults come from, and the forward-compatibility rule that governs changes.
+The fastest way to learn this file is to read it. Below is the friendly-commented example we ship as `packages/core/schemas/profile.example.yaml`. The comments are the explanation; you don't need to bounce between this page and a separate field reference.
 
-## Where the profile lives
-
-In precedence order (highest wins):
-
-1. `$NEURODOCK_PROFILE_PATH` (test/CI override)
-2. `$XDG_CONFIG_HOME/neurodock/profile.yaml` (Linux convention)
-3. `~/.neurodock/profile.yaml` (the default per )
-4. `./profile.yaml` (project-local — lowest precedence)
-
-## The five blocks
+## Your profile, with comments
 
 ```yaml
+# ==============================================================================
+# WELCOME TO YOUR NEURODOCK PROFILE
+# ==============================================================================
+# Think of this as a quick instruction manual to teach the app how your brain works.
+#
+# TIPS FOR FILLING THIS OUT:
+# - Take your time. You don't have to finish it all at once.
+# - Almost everything is OPTIONAL. If you aren't sure, just leave it as is.
+# - Your data is safe. Nothing leaves your computer without your permission.
+# - You can always come back and change these later. You can't break anything.
+# ==============================================================================
+
+# Leave this exactly as "0.1.0". It just helps the app read this file.
+schema_version: "0.1.0"
+
+# ------------------------------------------------------------------------------
+# 1. WHO YOU ARE (Required)
+# ------------------------------------------------------------------------------
 identity:
+  # What should we call you? A nickname or even just a single letter is fine.
   display_name: "T"
-  neurotypes: ["adhd", "asd"]
+
+  # Which of these describe you?
+  # Self-ID is enough — you do NOT need a diagnosis to use any feature.
+  # Allowed: adhd | asd | audhd | ocd | dyslexia | dyspraxia | tourette | other
+  neurotypes:
+    - "adhd"
+    - "asd"
+
+# ------------------------------------------------------------------------------
+# 2. HOW YOU LIKE TO READ & WORK (Optional)
+# ------------------------------------------------------------------------------
 preferences:
+  # answer_first | conventional | bullet_first
   output_format: "answer_first"
+  # Range 1..20. 5 is the ADHD-tuned manifesto value.
   max_chunk_size: 5
+  # atkinson_hyperlegible | lexend | system_default
   reading_font_hint: "atkinson_hyperlegible"
+  # reduced | system | full
   motion: "reduced"
+
+# ------------------------------------------------------------------------------
+# 3. TIME & FOCUS ALERTS (Optional)
+# ------------------------------------------------------------------------------
 chronometric:
+  # Range 15..240. Default 90.
   hyperfocus_break_minutes: 90
+  # 24-hour local time. Hyperfocus nudges quote this verbatim after this time.
   end_of_day_local: "18:30"
+  # auto_close | error
+  session_overlap_policy: "auto_close"
+
+# ------------------------------------------------------------------------------
+# 4. GENTLE NUDGES (Optional)
+# ------------------------------------------------------------------------------
 guardrails:
+  # Range 1..20. Default 3 identical-ish prompts inside the window below.
   rumination_threshold: 3
+  # Range 5..1440 minutes. Default 90.
+  rumination_window_minutes: 90
+  # off | warn | refuse
   sycophancy_check: "warn"
+
+# ------------------------------------------------------------------------------
+# 5. PRIVACY (Optional)
+# ------------------------------------------------------------------------------
 privacy:
+  # local | cloud_voyage | cloud_openai (cloud options trigger a session-start notice)
   embeddings: "local"
+  # off | local_otel_only | full
   telemetry: "off"
+  # false (default) | true — only `true` lets idle_status return real data
+  os_idle_consent: false
 ```
 
-- **`identity`** — the only required block. Self-identified `neurotypes`; diagnosis is never asked for.
-- **`preferences`** — output format, chunk size, font hint, motion. All defaulted by the loader.
-- **`chronometric`** — break thresholds, end-of-day cut-off. Read by `mcp-chronometric` and the hyperfocus monitor.
-- **`guardrails`** — rumination window and threshold, sycophancy posture. Read by `mcp-guardrail` `v0.0.2` (all three detectors live) and surfaced through the `sycophancy_check` field.
-- **`privacy`** — three independent consent gates: embeddings (local vs cloud), telemetry, and OS idle access.
-
-Full field-level reference: [profile schema](/reference/profile-schema/). Rationale: [ADR 0004](/decisions/0004-profile/).
+Copy the full friendly version (with every comment) from [`packages/core/schemas/profile.example.yaml`](https://github.com/tlennon-ie/neurodock/blob/main/packages/core/schemas/profile.example.yaml).
 
 ## The minimal profile
 
-Only `identity` is required. The minimum valid file:
+If even the example feels like a lot, this is the smallest valid file:
 
 ```yaml
 identity:
@@ -57,6 +99,74 @@ identity:
 ```
 
 Everything else uses safe defaults: `motion: reduced`, `output_format: answer_first`, `embeddings: local`, `telemetry: off`, `os_idle_consent: false`.
+
+## Where the profile lives
+
+In precedence order (highest wins):
+
+1. `$NEURODOCK_PROFILE_PATH` (test/CI override)
+2. `$XDG_CONFIG_HOME/neurodock/profile.yaml` (Linux convention)
+3. `~/.neurodock/profile.yaml` (the default)
+4. `./profile.yaml` (project-local — lowest precedence)
+
+## The five blocks, expanded
+
+If the inline comments are enough, you can skip this section. Open the block you care about.
+
+<details>
+<summary>What goes in <code>identity</code>? (Open if curious)</summary>
+
+The only required block. Self-identified `neurotypes`; diagnosis is never asked for. `display_name` is whatever the substrate should call you — a nickname, a single letter, your initials, all fine. `additional_notes` is an optional free-text field that's only surfaced when a skill explicitly asks; it is never logged or transmitted.
+
+**`neurotypes: ["audhd"]` is its own value, not `["adhd", "asd"]`.** AuDHD is treated as a first-class identity because the lived experience differs from either alone.
+
+</details>
+
+<details>
+<summary>What goes in <code>preferences</code>? (Open if curious)</summary>
+
+Output format, chunk size, font hint, motion. All defaulted by the loader, so the block is optional in full.
+
+- `output_format`: `answer_first` (verdict first, reasoning after — ADHD triage), `conventional`, or `bullet_first`.
+- `max_chunk_size`: Range 1..20. Default 7 (Miller's number). 5 is the ADHD-tuned manifesto value.
+- `reading_font_hint`: `atkinson_hyperlegible` (evidence-based for dyslexia), `lexend` (evidence-based for ADHD), or `system_default`.
+- `motion`: `reduced` (default; safest for vestibular sensitivity), `system` (match OS), or `full`.
+
+</details>
+
+<details>
+<summary>What goes in <code>chronometric</code>? (Open if curious)</summary>
+
+Break thresholds, end-of-day cut-off. Read by `mcp-chronometric` and the hyperfocus monitor.
+
+- `hyperfocus_break_minutes`: Range 15..240. Default 90. Re-anchors the "nudge" rung in the 60/+30/+60 escalation ladder; the ladder shape itself is fixed.
+- `end_of_day_local`: 24-hour clock, no timezone. The chronometric server applies your system timezone. When set, the hyperfocus nudge gets stricter after this time.
+- `zones`: advanced — re-draw your personal energy bands during the day. Leave commented out unless you specifically want to override the default clock-band heuristic.
+- `session_overlap_policy`: `auto_close` (default, charitable) or `error`.
+
+</details>
+
+<details>
+<summary>What goes in <code>guardrails</code>? (Open if curious)</summary>
+
+Rumination window and threshold, sycophancy posture. Read by `mcp-guardrail` `v0.0.2` (all three detectors live) and surfaced through the `sycophancy_check` field. Heuristics are public and auditable in `ETHICS.md`; detection never blocks silently.
+
+- `rumination_threshold`: Range 1..20. Default 3 semantically-similar questions inside the window.
+- `rumination_window_minutes`: Range 5..1440. Default 90.
+- `sycophancy_check`: `off`, `warn` (default — flag it, you decide), or `refuse` (refuse to send the over-validating draft).
+
+</details>
+
+<details>
+<summary>What goes in <code>privacy</code>? (Open if curious)</summary>
+
+Three independent consent gates: embeddings (local vs cloud), telemetry, and OS idle access.
+
+- `embeddings`: `local` (default; uses fastembed), `cloud_voyage` (Voyage AI, opt-in, triggers a visible "cloud" notice), or `cloud_openai`. Setting `embeddings: cloud_*` triggers a persistent session-start notice every time you launch a client.
+- `telemetry`: `off` (default — nothing collected), `local_otel_only` (local-only OpenTelemetry traces; nothing leaves), or `full` (reserved for a future ADR; do not use yet).
+- `os_idle_consent`: `false` by default. **`true` is the only way `idle_status` returns real data.** Without it, the tool succeeds but always reports `consent_granted: false`. This is by design — see [ADR 0001](/decisions/0001-chronometric/).
+
+</details>
 
 ## Forward compatibility
 
@@ -70,21 +180,18 @@ This means you can edit your profile on a newer install, downgrade temporarily, 
 
 ## Validating after edits
 
-```bash
+```sh
 neurodock profile validate
 ```
 
 Surfaces typos (which permissive parsing would otherwise swallow), out-of-range values, and unknown keys with "did you mean…" hints. Run after every edit.
-
-## Common gotchas
-
-- **`neurotypes: ["audhd"]` is its own value, not `["adhd", "asd"]`.** AuDHD is treated as a first-class identity because the lived experience differs from either alone.
-- **`end_of_day_local` is local-time, no timezone.** The chronometric server applies your system timezone.
-- **`os_idle_consent: true` is the only way `idle_status` returns real data.** Without it, the tool succeeds but always reports `consent_granted: false`. This is by design — see [ADR 0001](/decisions/0001-chronometric/).
-- **Setting `embeddings: cloud_*` triggers a persistent session-start notice** every time you launch a client. Local-first is the default for a reason.
 
 ## What's next
 
 - [Run your first skill](/getting-started/first-skill/) if you have not already.
 - [Substrate concepts](/concepts/substrate/) to understand what each MCP server does.
 - [Guardrails](/concepts/guardrails/) for what the `guardrails` block controls.
+
+---
+
+Want the strict JSON Schema? See [`packages/core/schemas/profile.schema.json`](https://github.com/tlennon-ie/neurodock/blob/main/packages/core/schemas/profile.schema.json).

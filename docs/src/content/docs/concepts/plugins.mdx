@@ -5,7 +5,37 @@ description: How the substrate is extended without forking it. Manifest, trust l
 
 A plugin is how NeuroDock grows without forking. The substrate exposes six extension points — skills, MCP servers, profile presets, translation packs, language packs, themes — and every extension declares itself through a single `plugin.yaml` manifest. There is no plugin runtime, no compiler, no central server: a plugin is content the substrate reads, and the substrate composes it against the user's profile.
 
-After this page you will know why plugins exist as a separate concept from in-tree skills, how the trust ladder works, and how profile composability decides what activates for whom.
+Pick the path that matches what you want to do right now. The rest of the page is the conceptual model; you only need it if you want it.
+
+## I just want to install a plugin
+
+You have a plugin (yours or someone else's) sitting in a directory. You want it active. Three commands:
+
+```sh
+neurodock plugin add <path-to-plugin-directory>
+neurodock plugin enable <name>
+neurodock plugin list
+```
+
+`plugin add` copies the plugin into `~/.neurodock/plugins/`. `plugin enable` writes a small marker file so the substrate activates it on next start. `plugin list` shows you what is installed and which entries are enabled. To remove or pause: `neurodock plugin remove <name>` or `neurodock plugin disable <name>`.
+
+**Where pre-built plugins live.** The repository ships a `plugins/` directory with skill plugins (`example-skill-pomodoro`, `skill-civil-servant-briefing`, `skill-eng-manager-1on1`, `skill-lawyer-matter`, `skill-pm-stakeholder-juggle`, `skill-researcher-litreview`, `skill-software-engineer-daily`, `skill-writer-long-form`) and translation packs (`translation-customer-support`, `translation-german-directness`, `translation-healthcare`, `translation-hiberno-english`, `translation-japanese-keigo`, `translation-legal`, `translation-sales`). Point `plugin add` at any of those directories to install it.
+
+See the [CLI reference](/reference/cli/) for every flag and exit code.
+
+## I want to build a new plugin from scratch
+
+Start with the contributor walkthrough — it shows you the minimum manifest, the directory layout, and the validation step before you commit anything.
+
+- [Write a plugin](/contribute/write-a-plugin/) — the step-by-step walkthrough, including the six plugin types and the choice between in-tree and out-of-tree distribution.
+- [Plugin manifest reference](/reference/plugin-manifest/) — every field in `plugin.yaml`, every default, every constraint.
+- [ADR 0007](/decisions/0007-plugin-protocol/) — the design rationale, the trust ladder, and the decisions that bind every plugin author.
+
+Validate your manifest before installing with `neurodock plugin validate <path>`.
+
+---
+
+The rest of this page covers the conceptual model behind plugins. Read it if you want to understand the trust ladder and profile composability; skip it if you just wanted the commands.
 
 ## How a plugin gets loaded
 

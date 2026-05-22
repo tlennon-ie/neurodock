@@ -3,6 +3,12 @@ title: 0001 — Chronometric tool design
 description: Why mcp-chronometric is five small tools, not one large one.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** `mcp-chronometric` is the first substrate MCP server; its tool shape sets the precedent every later server will follow.
+**Decision:** Five small single-purpose tools (`get_time_context`, `mark_session_start`, `mark_session_end`, `request_break_if_needed`, `idle_status`) with server-side state; no single `get_status` god-tool.
+**Impact:** Each tool is independently versioned, testable, and consent-gated. Session state lives in the server, never in the LLM prompt — binding doctrine for every later server.
+:::
+
 > **Source:** `docs/decisions/0001-chronometric-tool-design.md` is the canonical artefact. This page is a short summary for in-site navigation; read the full ADR for the alternatives considered, the design choices that bind future servers, and the open questions.
 
 - **Status:** Proposed
@@ -17,7 +23,12 @@ description: Why mcp-chronometric is five small tools, not one large one.
 
 Adopt the **five-tool decomposition**: `get_time_context`, `mark_session_start`, `mark_session_end`, `request_break_if_needed`, `idle_status`. Each is independently versioned, independently testable, independently mockable. State (`session_id`, `prior_intent`, last-prompt-at) lives in the server, never in the LLM prompt.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 The alternative — one large `get_status` tool returning everything in one shot — was rejected because consent gating becomes muddled, side effects mix with reads, and versioning becomes brittle.
+
+</details>
 
 ## Cross-cutting rules established here
 

@@ -3,6 +3,12 @@ title: 0005 — Translation tool design
 description: Four single-purpose tools instead of one overloaded analyzer. No LLM SDK inside the server. Verbatim-anchor enforcement for meeting briefs.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** Four distinct communication jobs — decode incoming, score outgoing tone, rewrite outgoing, brief a meeting — collapsed into one tool would make versioning brittle and consent-gating muddled.
+**Decision:** Four single-purpose tools (`translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`), no LLM SDK inside the server, verbatim-anchor enforcement on `brief_meeting`.
+**Impact:** Each job versions independently against its own eval slice; substrate-wide vendor-neutrality is now doctrine; meeting briefs can't fabricate quoted spans.
+:::
+
 > **Source:** `docs/decisions/0005-translation-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered, the binding design decisions, and the implementer's notes.
 
 - **Status:** Proposed
@@ -19,11 +25,16 @@ The user stories partition cleanly into four jobs: decode an incoming message, s
 
 Adopt **Option B: four-tool decomposition** — `translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`. Each maps one-to-one with a user story; each is independently versionable; each is independently testable against its own eval slice.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 Alternatives rejected:
 
 - **One tool `analyze_message(direction, ...)`** — mixes two concepts in one parameter. Versioning becomes brittle (a meeting-brief change forces a major bump on tone-check). LLM invocation is harder with an overloaded discriminator.
 - **One tool per channel (`translate_slack`, `translate_gmail`, ...)** — channel is a parameter, not a tool boundary. Combinatorial explosion: 4 jobs × 8 channels = 32 tools.
 - **A pipeline tool (`translate_then_rewrite`)** — stateful pipelines belong to skills, not servers. The caller composes more flexibly.
+
+</details>
 
 ## Cross-cutting rules established here
 

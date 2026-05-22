@@ -7,6 +7,20 @@ The guardrail layer is the substrate's clinical safety pillar. It sits between a
 
 It is the only substrate area whose tool changes require sign-off from both the maintainer and a clinical reviewer. Every choice on this page is documented in [ETHICS.md](https://github.com/tlennon-ie/neurodock/blob/main/ETHICS.md) and in [ADR 0006](/decisions/0006-guardrail/).
 
+## The rules, in plain numbers
+
+No hidden heuristics. These are the exact thresholds that decide when a guardrail fires.
+
+| Detector | What trips it | Default values |
+|---|---|---|
+| **Rumination** | 3 prompts of the same shape within 90 minutes (Jaccard word-overlap similarity ≥ 0.55 against your recent prompts). | window 90 min · count 3 · similarity 0.55 |
+| **Hyperfocus** | A continuous session crossing the elapsed-time ladder. Crossing your stated `end_of_day_local` bumps you up one rung. | 60 min (`gentle`) → +30 min (`nudge`) → +60 min (`hard`) |
+| **Sycophancy** | A candidate LLM response containing praise-without-evidence, escalating validation, or unchallenged agreement — **or** your recent messages showing repeated reassurance-seeking on the same decision. | four named patterns · profile-tunable |
+
+:::caution[How firing works]
+Every firing surfaces a plain-language reason and a non-empty list of override options. Nothing is silently blocked, rewritten, or hidden. You always get to keep going if you want to — see the flow below.
+:::
+
 ## How a guardrail intervenes
 
 A guardrail never silently blocks anything. The flow below shows what happens when a check fires: it always returns a reason, an override option, and lets you keep going if you want.
@@ -32,7 +46,7 @@ flowchart TD
 
 ## The three detectors
 
-All three detectors are live as of `mcp-guardrail` `v0.0.2` (48 tests). The schemas remain locked at `v0.1.0` per [ADR 0006](/decisions/0006-guardrail/); the runtime now implements every detector the schema reserves.
+All three detectors are live as of `mcp-guardrail` `v0.0.3`. The schemas remain locked at `v0.1.0` per [ADR 0006](/decisions/0006-guardrail/); the runtime now implements every detector the schema reserves.
 
 | Detector | Status | Heuristic (v0.1.0) | Default thresholds |
 |---|---|---|---|

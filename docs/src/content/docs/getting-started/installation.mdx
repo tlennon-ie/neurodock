@@ -3,73 +3,37 @@ title: Installation
 description: Install NeuroDock locally and wire it into Claude Desktop, Claude Code, or Cursor in under fifteen minutes.
 ---
 
-After this page you will have a working NeuroDock install (v0.2.1 developer preview): the substrate's MCP servers running locally, a profile on disk, and one MCP-aware client (Claude Desktop, Claude Code, or Cursor) talking to them.
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## The whole install at a glance
+## The one-liner
 
-Four steps. The whole thing takes about five minutes. The diagram below is the map; everything after it is the detail.
-
-```mermaid
-flowchart LR
-  step1[1. pip install<br/>MCP servers] --> step2[2. npx neurodock init<br/>wire your client]
-  step2 --> step3[3. Restart Claude<br/><b>full quit</b>]
-  step3 --> step4[4. Tools appear<br/>in your chat]
+```sh
+npx --yes @neurodock/cli install-all
 ```
 
-The "full quit" in step 3 is the #1 silent failure — Claude only reads its MCP config at startup, so a window-close isn't enough. Cmd+Q on macOS, or kill from the tray on Windows.
+## 30-second TL;DR
 
-## Prerequisites
+That one command installs the five NeuroDock MCP servers from PyPI (via `uvx`), detects which MCP-aware clients you have (Claude Desktop, Claude Code, Cursor), and writes the server registration block into each of their config files. Then you restart your client and the tools appear.
 
-- **Node.js 22 or newer.** Check with `node --version`.
-- **Python 3.11 or newer.** Check with `python --version`.
-- **`uv`** for Python workspace management. Install from [astral.sh/uv](https://docs.astral.sh/uv/).
-- **An MCP-aware client.** Claude Desktop, Claude Code, or Cursor. The substrate is vendor-neutral; any client that speaks MCP works.
+This is the developer preview (`@neurodock/cli v0.4.3`). The substrate is at `v0.2.1` and all five MCP servers are live on PyPI.
 
-Optional but recommended for local-first embeddings:
+:::caution[Quit fully — close-window is not enough]
+Claude only reads its MCP config **at startup**. Closing the window does not restart the process. You must fully quit:
 
-- **Ollama** with the `nomic-embed-text-v1.5` model pulled. The cognitive graph falls back to `fastembed-py` if Ollama is unavailable.
+- **macOS:** `Cmd+Q` (or `Claude → Quit Claude` from the menu bar).
+- **Windows:** right-click the Claude icon in the **system tray** and choose **Quit**.
 
-## From a clone (recommended for the developer preview)
-
-```bash
-git clone https://github.com/tlennon-ie/neurodock.git
-cd neurodock
-pnpm install
-uv sync
-```
-
-Both workspaces install in parallel — Node packages via `pnpm`, Python packages via `uv`.
-
-## Run the installer
-
-```bash
-npx neurodock init
-```
-
-The installer:
-
-1. Detects your installed MCP clients.
-2. Writes a default profile to `~/.neurodock/profile.yaml` (you will be prompted for `display_name` and `neurotypes`).
-3. Registers the five substrate MCP servers with each detected client.
-4. Prints a summary of what was changed.
-
-:::note[CLI status]
-The `@neurodock/cli` package is shipped (`v0.3.0`) and exposes `init`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, plus the `install-all` and `examples` ergonomics shortcuts. See the [CLI reference](/reference/cli/) for the full command surface.
+Then reopen. This is the #1 silent failure.
 :::
-
-### Preview before writing
-
-```bash
-npx neurodock init --dry-run
-```
-
-`--dry-run` prints every file that *would* be created or modified without touching anything. Useful for review, useful for CI.
 
 ## Per-client configuration
 
-### Claude Desktop
+The installer writes these snippets for you. They are shown here so you can verify what landed, or hand-edit if you skipped `install-all`.
 
-Claude Desktop reads `claude_desktop_config.json` (location varies by OS). `neurodock init` writes the five MCP server entries automatically. To verify, look for:
+<Tabs>
+<TabItem label="Claude Desktop">
+
+Claude Desktop reads `claude_desktop_config.json` (location varies by OS). After `install-all`, you should see:
 
 ```json
 {
@@ -83,23 +47,108 @@ Claude Desktop reads `claude_desktop_config.json` (location varies by OS). `neur
 }
 ```
 
-Restart Claude Desktop after install.
+Restart Claude Desktop after install (full quit — see callout above).
 
-### Claude Code
+</TabItem>
+<TabItem label="Claude Code">
 
-Claude Code reads MCP server configuration from `.claude/settings.json` (project-local) or the global equivalent. `neurodock init` will offer to register the servers globally; you can decline and add per-project later.
+Claude Code reads MCP server configuration from `.claude/settings.json` (project-local) or the global equivalent. `install-all` will offer to register the servers globally; you can decline and add per-project later.
 
-### Cursor
+The registration block is the same shape:
 
-Cursor reads MCP configuration through its settings pane. `neurodock init` writes the same five server entries to its config file.
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
+    "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] },
+    "neurodock-translation": { "command": "uvx", "args": ["neurodock-mcp-translation"] },
+    "neurodock-guardrail": { "command": "uvx", "args": ["neurodock-mcp-guardrail"] }
+  }
+}
+```
+
+</TabItem>
+<TabItem label="Cursor">
+
+Cursor reads MCP configuration through its settings pane. `install-all` writes the same five server entries to its config file:
+
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": { "command": "uvx", "args": ["neurodock-mcp-chronometric"] },
+    "neurodock-cognitive-graph": { "command": "uvx", "args": ["neurodock-mcp-cognitive-graph"] },
+    "neurodock-task-fractionator": { "command": "uvx", "args": ["neurodock-mcp-task-fractionator"] },
+    "neurodock-translation": { "command": "uvx", "args": ["neurodock-mcp-translation"] },
+    "neurodock-guardrail": { "command": "uvx", "args": ["neurodock-mcp-guardrail"] }
+  }
+}
+```
+
+Restart Cursor after install.
+
+</TabItem>
+</Tabs>
 
 ## Verify the install
 
-```bash
+```sh
 neurodock doctor
 ```
 
 `doctor` checks: profile is readable and schema-valid, all five MCP servers start, embedding backend is reachable. Failures are explained with the next action to take.
+
+## Prerequisites
+
+- **Node.js 22 or newer.** Check with `node --version`.
+- **Python 3.11 or newer.** Check with `python --version`.
+- **`uv`** for Python workspace management. Install from [astral.sh/uv](https://docs.astral.sh/uv/). `uvx` is the per-tool launcher that ships with `uv`.
+- **An MCP-aware client.** Claude Desktop, Claude Code, or Cursor. The substrate is vendor-neutral; any client that speaks MCP works.
+
+Optional but recommended for local-first embeddings:
+
+- **Ollama** with the `nomic-embed-text-v1.5` model pulled. The cognitive graph falls back to `fastembed-py` if Ollama is unavailable.
+
+<details>
+<summary>Manual install (from a clone)</summary>
+
+If you'd rather build from source, or you want to hack on the substrate:
+
+```sh
+git clone https://github.com/tlennon-ie/neurodock.git
+cd neurodock
+pnpm install
+uv sync
+```
+
+Both workspaces install in parallel — Node packages via `pnpm`, Python packages via `uv`.
+
+Then run the installer from the clone:
+
+```sh
+npx neurodock init
+```
+
+The installer:
+
+1. Detects your installed MCP clients.
+2. Writes a default profile to `~/.neurodock/profile.yaml` (you will be prompted for `display_name` and `neurotypes`).
+3. Registers the five substrate MCP servers with each detected client.
+4. Prints a summary of what was changed.
+
+### Preview before writing
+
+```sh
+npx neurodock init --dry-run
+```
+
+`--dry-run` prints every file that *would* be created or modified without touching anything. Useful for review, useful for CI.
+
+:::note[CLI status]
+The `@neurodock/cli` package is shipped (`v0.4.3`) and exposes `init`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, plus the `install-all` and `examples` ergonomics shortcuts and the `plugin add/remove/list/enable/disable/validate` subcommands. See the [CLI reference](/reference/cli/) for the full command surface.
+:::
+
+</details>
 
 ## What's next
 

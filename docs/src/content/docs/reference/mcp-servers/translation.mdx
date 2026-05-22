@@ -3,10 +3,19 @@ title: mcp-translation
 description: Communication and translation as an MCP server. Four tools, four schemas, no LLM SDK inside the server.
 ---
 
+## Tools at a glance
+
+| Tool | What it takes | What it returns | Why your brain cares |
+|---|---|---|---|
+| `translate_incoming` | `{ text, channel?, thread_context?, target_language? }` | explicit ask, ranked subtext hypotheses, ambiguity spans, recommended next action | reads the "happy to discuss further" you've been staring at for ten minutes and tells you whether it's a soft no or a real opening — without you having to mask-rehearse seven interpretations |
+| `check_tone` | `{ text, baseline_messages?, target_register?, channel? }` | scores on directness, warmth, urgency; flagged phrases | shows you that your draft reads as 92/100 urgent when your usual baseline is 40 — useful when the social-meter in your head is offline |
+| `rewrite_outgoing` | `{ text, target_register, preserve_terms? }` | rewritten text, preserved/unpreserved terms, diff summary | lets you keep the ticket IDs and jargon verbatim while a tool handles the register shift you find exhausting |
+| `brief_meeting` | `{ transcript, me, project?, speakers? }` | my asks / others' asks / decisions / ambiguous items (with verbatim quotes) | turns ninety minutes of transcript into the four lists you actually need; ambiguous items are quoted character-for-character so nothing is invented |
+
 `mcp-translation` decodes corporate ambiguity. It is the substrate's communication-layer server: it scores tone, rewrites for register, decodes incoming subtext, and briefs meeting transcripts. The server itself contains **no LLM SDK** — every tool returns a deterministic baseline plus a structured prompt the caller's MCP client executes against its configured model.
 
 - **Package:** `packages/mcp-translation/`
-- **Version:** `0.0.1` (developer preview, deterministic baseline + LLM-refinement prompt envelope)
+- **Version:** `0.0.2`
 - **Schemas:** `packages/mcp-translation/schemas/*.schema.json`
 - **ADR:** [0005 — Translation tool design](/decisions/0005-translation/)
 - **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-translation/v0.1.0/`
@@ -29,7 +38,7 @@ Per [ADR 0005 §2](/decisions/0005-translation/), the server imports no `anthrop
 
 The caller MAY use the deterministic analysis alone (no LLM required) or feed `prompt_for_llm_refinement.content` to its configured model and replace the deterministic block with the refined response. This makes the server useful without a connected LLM and vendor-neutral when one is connected.
 
-## Tools
+## Tools (detailed contract)
 
 | Tool | Input | Output |
 |---|---|---|
@@ -89,10 +98,10 @@ Convert a transcript into a four-section brief: asks of the recipient, asks the 
 
 ## Versioning
 
-- v0.0.1 envelopes wrap the v0.1.0 wire contract. The envelope collapses to the wire contract once Phase 2 LLM-refinement flow is the default path.
+- v0.0.2 envelopes wrap the v0.1.0 wire contract. The envelope collapses to the wire contract once Phase 2 LLM-refinement flow is the default path.
 - Additive-only within the `v0.1.x` line. Channel enum, target-register enum, and error codes are closed at v0.1.0; additions are minor bumps.
 
-## Known limitations (v0.0.1)
+## Known limitations (v0.0.2)
 
 - English-only deterministic heuristics. BCP-47 `target_language` is accepted but only passed through to the prompt template.
 - No `model_provenance` from a real LLM. The deterministic analysis sets `mode="unknown"` on every response; a connected MCP client populates this in the refined response.

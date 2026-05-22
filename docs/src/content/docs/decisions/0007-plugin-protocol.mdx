@@ -3,6 +3,12 @@ title: 0007 — Plugin protocol design
 description: One plugin.yaml manifest, six plugin types, four-tier trust ladder, SPDX whitelist. Filesystem discovery; federated registry indexes the same manifests in Phase 3.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** Six plugin types across Python and TypeScript ecosystems need one consistent discovery contract that works air-gapped, expresses trust without a central authority, and protects the AGPL license boundary.
+**Decision:** One `plugin.yaml` manifest with JSON Schema validation, six plugin types, a four-tier trust ladder, an SPDX license whitelist enforced at load, and filesystem-based discovery — the same manifests the Phase 3 federated registry will index.
+**Impact:** Forward-compat is paramount (`additionalProperties: true` at every level); plugins are sandboxed against path-escape; license-incompatible plugins refuse to load; the registry never becomes a single-point-of-merge-conflict.
+:::
+
 > **Source:** `docs/decisions/0007-plugin-protocol.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered, the ten binding decisions, and the implementer's notes.
 
 - **Status:** Proposed
@@ -19,11 +25,16 @@ Three properties make the contract load-bearing: six plugin types across two eco
 
 Adopt **Option B: dedicated `plugin.yaml` manifest with JSON Schema validation.** Schema lives at `packages/core/schemas/plugin.schema.json`. Discovery is filesystem-based in v0.1.0; the federated registry indexes the same manifests in Phase 3.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 Alternatives rejected:
 
 - **Ad-hoc plugin discovery (no manifest)** — can't express cross-cutting metadata (trust, license, neurotypes, locale).
 - **Reuse `package.json` or `pyproject.toml`** — couples manifest to language ecosystems; profiles and language packs have neither.
 - **One global registry file** — single-point-of-merge-conflict; breaks the drop-a-directory air-gapped install.
+
+</details>
 
 ## Ten binding design decisions
 

@@ -131,3 +131,43 @@
     --nd-transition-duration: 120ms;
   }
 }
+
+/*
+ * Font-hinting switcher (src/overrides/SiteTitle.astro).
+ *
+ * The header dropdown writes a class onto <html>; these selectors re-bind
+ * `--sl-font` and `--sl-font-system` so the entire site picks up the new
+ * font without a reload. The default (no class / `font-atkinson`) matches
+ * the :root values above; we still declare it explicitly so the
+ * cascade is deterministic regardless of how/when the class arrives.
+ *
+ * Storage contract lives in src/overrides/SiteTitle.astro:
+ *   localStorage.neurodockFont = 'atkinson' | 'lexend' | 'system'
+ */
+:root.font-atkinson {
+  --sl-font:
+    "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --sl-font-system:
+    "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+}
+
+:root.font-lexend {
+  /* Lexend is normally reserved for headings; when the user opts in we
+     promote it to body too. Atkinson stays as the immediate fallback so
+     missing-glyph runs (e.g. emoji, IPA) degrade gracefully. */
+  --sl-font:
+    "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --sl-font-system: "Lexend", "Atkinson Hyperlegible", system-ui, sans-serif;
+}
+
+:root.font-system {
+  /* Pure platform UI stack — no bundled fonts. Helpful on slow networks
+     and for users who already have a hinting setup they trust. */
+  --sl-font:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --sl-font-system:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}

@@ -3,7 +3,40 @@ title: audhd-context-recovery
 description: A /resume command that reconstructs yesterday's mental state from the cognitive graph for AuDHD users returning to work.
 ---
 
+:::tip[How to invoke this skill]
+Any of these triggers a context recovery:
+
+- `/resume`
+- `/where-was-i`
+- "where was I"
+- "what was I working on"
+:::
+
 > Source: `packages/skills/audhd-context-recovery/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
+
+Think of this skill as the **Save / Resume State** snapshot for a working context. Yesterday's session saved facts and decisions into the cognitive graph. Today, `/resume` reads them back so you can pick up the thread without rebuilding it from scratch.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant You as You
+    participant Skill as audhd-context-recovery
+    participant Graph as mcp-cognitive-graph
+    participant Clock as mcp-chronometric
+
+    Note over You,Graph: SAVE — yesterday's session
+    You->>Skill: works on Project X
+    Skill->>Graph: record_fact(decision · blocker · open thread)
+    Skill->>Graph: recall_decisions (snapshot last intent)
+
+    Note over You,Graph: RESUME — this morning
+    You->>Skill: /resume
+    Skill->>Clock: get_time_context (how long since last session)
+    Skill->>Graph: recall_entity (active project)
+    Skill->>Graph: recall_decisions (since=yesterday)
+    Graph-->>Skill: open items + last stated intent
+    Skill-->>You: "Yesterday you were on X. Three open items. Last intent: …"
+```
 
 A skill that reconstructs yesterday's (or last-Friday's) mental state from the cognitive graph: open decisions, blockers, recent facts, the last stated session intent. Designed for AuDHD users returning to work after context loss.
 

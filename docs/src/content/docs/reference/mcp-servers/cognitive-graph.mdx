@@ -3,14 +3,49 @@ title: mcp-cognitive-graph
 description: Persistent memory and recall. Four tools. Local SQLite + sqlite-vec. No LLM call inside the server.
 ---
 
+## Tools at a glance
+
+| Tool | What it takes | What it returns | Why your brain cares |
+|---|---|---|---|
+| `recall_entity` | a name or alias (typo-tolerant) | the entity, related facts, and how it was matched | you typed "Sara" but the project lead is "Sarah" — the graph still finds her, and tells you it used an alias so you don't second-guess it |
+| `record_fact` | `{ subject, predicate, object }` | canonical `fact_id`, dedup flag, auto-created entities | offloads the working-memory job of holding "I told Mark Tuesday" so your prefrontal cortex isn't a sticky note |
+| `recall_decisions` | `{ project, since? }` | recent decisions, newest first | answers "what did we actually agree last Thursday" without forcing you to scroll three chat clients |
+| `weekly_rollup` | `{ project? }` | seven-day snapshot: decisions, blockers, next actions | the Monday-morning catch-up your brain doesn't have to assemble from scratch — built from the facts already in the graph |
+
+## Alias resolution cascade
+
+A name lookup falls through four rungs until something matches. The output records which rung answered, so a downstream skill can say "I think you meant Sarah" instead of silently swapping the name.
+
+```mermaid
+flowchart TB
+  nq([Query: 'Sara']) --> nexact{Exact match?}
+  nexact -- yes --> nhit[Sarah · resolution: exact]
+  nexact -- no --> nalias{Known alias?}
+  nalias -- 'Sara → Sarah' --> nhit2[Sarah · resolution: alias]
+  nalias -- no --> nfuzzy{Fuzzy ≥ threshold?}
+  nfuzzy -- yes --> nhit3[Sarah · resolution: fuzzy + score]
+  nfuzzy -- no --> nembed{Embedding cosine ≥ threshold?}
+  nembed -- yes --> nhit4[Sarah · resolution: embedding + score]
+  nembed -- no --> nnull[null · first-class return]
+  classDef hit fill:#e6f4ea,stroke:#1b5e20,color:#1b5e20
+  classDef miss fill:#eef2f7,stroke:#334155,color:#334155
+  class nhit,nhit2,nhit3,nhit4 hit
+  class nnull miss
+```
+
+`null` is a first-class return. Skills MUST handle it; the server never hallucinates a closest-match.
+
+## Server card
+
 `mcp-cognitive-graph` is the persistence backbone of the substrate. It externalises the user's working memory of people, projects, decisions, and concepts into a typed-edge property graph queried by name rather than by structured key.
 
 - **Package:** `packages/mcp-cognitive-graph/`
+- **Version:** `0.0.3`
 - **Schemas:** `packages/mcp-cognitive-graph/schemas/*.schema.json`
 - **ADR:** [0002 — Cognitive graph tool design](/decisions/0002-cognitive-graph/)
 - **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-cognitive-graph/v0.1.0/`
 
-## Tools
+## Tools (detailed contract)
 
 | Tool | Input | Output |
 |---|---|---|

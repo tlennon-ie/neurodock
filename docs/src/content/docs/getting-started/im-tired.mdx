@@ -1,32 +1,48 @@
 ---
 title: I'm tired. Just tell me what to do.
-description: One file to copy. One command to run. The rest of the docs can wait.
+description: One command. One file. Restart Claude. The rest of the docs can wait.
 ---
 
-NeuroDock has a preset for this state. Copy one file. Run one command. Stop reading.
+Three steps. Don't think. Don't read ahead.
 
-## 1. Copy the burnout-recovery preset
+## 1. Run this
 
-From a clone of the repo:
+```sh
+npx --yes @neurodock/cli install-all
+```
 
-```bash
+## 2. Copy the burnout-recovery preset
+
+```sh
 # macOS / Linux
-mkdir -p ~/.neurodock && cp profiles/burnout-recovery.yaml ~/.neurodock/profile.yaml
+mkdir -p ~/.neurodock && curl -fsSL https://raw.githubusercontent.com/tlennon-ie/neurodock/main/profiles/burnout-recovery.yaml -o ~/.neurodock/profile.yaml
 ```
 
 ```powershell
 # Windows PowerShell
 New-Item -ItemType Directory -Force ~/.neurodock | Out-Null
-Copy-Item profiles/burnout-recovery.yaml ~/.neurodock/profile.yaml
+Invoke-WebRequest -Uri https://raw.githubusercontent.com/tlennon-ie/neurodock/main/profiles/burnout-recovery.yaml -OutFile ~/.neurodock/profile.yaml
 ```
 
-If you do not have the repo cloned, the preset lives at [`profiles/burnout-recovery.yaml`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/burnout-recovery.yaml). Save it as `~/.neurodock/profile.yaml`.
+## 3. Restart Claude
 
-## 2. Restart Claude
+Full quit. Cmd+Q on macOS. Close from the system tray on Windows. Reopen.
 
-Quit and reopen Claude Desktop (or your MCP-aware client). That is the whole install step.
+That's the whole install.
 
-## 3. What changes
+---
+
+<details>
+<summary>What does this command do? (Read only if you have energy)</summary>
+
+`npx --yes @neurodock/cli install-all` installs the five NeuroDock MCP servers from PyPI using `uvx`, then writes the MCP-server registration block into your detected client's config (Claude Desktop, Claude Code, or Cursor). You don't have to clone the repo. You don't have to read the per-client setup. The CLI figures it out.
+
+The profile copy step writes a single YAML file to `~/.neurodock/profile.yaml`. Every MCP server reads it on startup. You can edit it later, or you can leave it alone.
+
+</details>
+
+<details>
+<summary>What changes in this profile? (Optional)</summary>
 
 The burnout-recovery preset is opinionated about three things:
 
@@ -36,6 +52,22 @@ The burnout-recovery preset is opinionated about three things:
 
 The full preset also tightens the hyperfocus break cadence (45 minutes instead of 60–90) and sets motion to `reduced`. Every value is documented at the top of [`profiles/burnout-recovery.yaml`](https://github.com/tlennon-ie/neurodock/blob/main/profiles/burnout-recovery.yaml).
 
+</details>
+
+<details>
+<summary>When should I revisit this? (Optional)</summary>
+
+If in four to six weeks you still feel you need this preset, that is important information. Escalate from "tooling adjustment" to "human support" (therapist, GP, time off, manager conversation). NeuroDock is a substrate, not a treatment.
+
+</details>
+
+<details>
+<summary>What this is NOT (Optional)</summary>
+
+This preset doesn't medicate you. It doesn't manage your inbox. It doesn't tell anyone you are using it. It just changes how the substrate paces output and how strict the guardrails are.
+
+</details>
+
 ---
 
-The rest of the docs can wait. Come back in four to six weeks. If you still need this preset then, that is important information — escalate from "tooling adjustment" to "human support" (therapist, GP, time off, manager conversation).
+The rest of the docs can wait. Come back in four to six weeks.

@@ -3,6 +3,19 @@ title: ocd-decision-finalizer
 description: On repeat-validation requests for the same decision, enforces a decision-finality response grounded in prior evidence.
 ---
 
+:::tip[How to invoke this skill]
+The skill activates on repeat-validation phrasing on a decision already recorded:
+
+- "should I really…"
+- "is this okay…"
+- "am I sure…"
+- "should we revisit…"
+:::
+
+:::note[Hard refusal is the feature]
+**Once a decision parameter is closed, the system explicitly blocks re-evaluation requests to protect your mental energy.** The skill surfaces the prior decision verbatim, names the evidence that backed it, and declines to re-analyse until *new* information appears. You can always override (`--override "fresh-context"`) — but the default is refusal, on purpose.
+:::
+
 > Source: `packages/skills/ocd-decision-finalizer/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
 
 A skill that intervenes when a user repeatedly asks for validation of a decision already made. Surfaces the prior decision verbatim with its timestamp, names the prior evidence, and declines further validation unless new information is provided. Hooks the guardrail layer.

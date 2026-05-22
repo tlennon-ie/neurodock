@@ -3,6 +3,18 @@ title: asd-meeting-translator
 description: Transcript → four-section brief with verbatim ambiguity quotes. Records decisions into the cognitive graph.
 ---
 
+:::tip[How to invoke this skill]
+Any of these activate the four-section brief:
+
+- `/brief`
+- `/meeting`
+- "summarize this meeting" / "summarise this meeting"
+- "what did we agree"
+- "what did I commit to"
+- attaching a `*.transcript.txt` or `*.meeting.md` file
+- pasting ≥ 200 lines of speaker-labelled prose with no specific instruction
+:::
+
 > Source: `packages/skills/asd-meeting-translator/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
 
 A skill that takes a meeting transcript and produces a four-section brief: decisions reached, asks of the user, asks of others, and ambiguous items quoted verbatim from the transcript. It also surfaces prior project decisions from the cognitive graph and writes the new decisions back into it. It does not interpret motivation, infer subtext, or fabricate asks — the `brief_meeting` server enforces verbatim anchoring and rejects fabrications with `VERBATIM_ANCHOR_FAILED`.

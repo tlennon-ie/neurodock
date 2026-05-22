@@ -5,6 +5,12 @@ description: Add an anonymised real-world message to the translation eval corpus
 
 > Source: the eval corpus lives at `packages/evals/corpora/`. `packages/evals/README.md` is canonical for the harness; this page is the contributor on-ramp.
 
+:::tip[Three steps, fifteen minutes]
+1. Format the YAML against [`packages/evals/schemas/example.schema.json`](https://github.com/tlennon-ie/neurodock/blob/main/packages/evals/schemas/example.schema.json).
+2. Run `uv run pytest packages/evals/tests/ -k corpus -v`.
+3. Open a PR titled `evals(translation): add <slug>`.
+:::
+
 The eval corpora are the most under-supplied resource in the project. Every contributed example improves how well the substrate handles real corporate ambiguity. It is also the lowest-friction way to contribute — fifteen minutes from "I want to add this" to "PR opened", no code, no Python toolchain.
 
 The translation corpus is the v0.0.1 contribution surface. Guardrail and other corpora open later (see `packages/evals/corpora/README.md`).

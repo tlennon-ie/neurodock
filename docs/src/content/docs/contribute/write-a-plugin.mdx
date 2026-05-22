@@ -5,6 +5,10 @@ description: The contributor's guide to shipping a NeuroDock plugin. Manifest, s
 
 Hello, you are welcome here. This page is the contributor's guide to shipping a plugin for NeuroDock. The on-ramp is the same fifteen-minute commitment described in `CONTRIBUTING.md`: from "I want to add this" to "PR opened" should fit inside a short focused block of attention. If you spend longer than that on the manifest itself, the documentation has failed and we want to hear about it.
 
+:::tip[Copy a working template]
+The fastest path is to copy an existing plugin and edit. Use [`plugins/example-skill-pomodoro/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/example-skill-pomodoro) for a skill-type plugin, or browse [`plugins/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins) for translation-pack examples (`translation-hiberno-english`, `translation-german-directness`, `translation-japanese-keigo`, `translation-legal`, `translation-healthcare`, etc.). Every plugin in `plugins/` is a working example.
+:::
+
 **Estimated time to first plugin:** 15 minutes.
 
 **Prerequisites:** comfortable with `git`, comfortable editing YAML. Per-type assets need the runtime appropriate to that type (Python for an MCP server, markdown for a skill, etc.) — each per-type subpage states its prerequisites explicitly.

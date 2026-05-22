@@ -7,6 +7,29 @@ description: How to contribute to NeuroDock. Skills, MCP servers, profile preset
 
 NeuroDock is built **by** neurodivergent contributors **using** the very system being built. Contribution should take fifteen minutes from "I want to add this" to "PR opened". If it takes longer, the documentation has failed.
 
+## Pick a lane first
+
+Skim these four lanes and pick the one that matches the time and energy you actually have right now. **Then** worry about setup. None of them are second-class.
+
+| Lane | Time | What fits here |
+|---|---|---|
+| **Drive-by** | ~15 minutes | Fix a typo, broken link, or stale reference. Improve an error message. Add a missing test case for an existing behaviour. **No dev environment required.** |
+| **One afternoon** | A focused session | Contribute a new skill (copy [`packages/skills/adhd-daily-planner/`](https://github.com/tlennon-ie/neurodock/tree/main/packages/skills/adhd-daily-planner)). Add a tool to an existing MCP server. Wire a new MCP client into `cli init`. |
+| **Multi-day** | Open an issue first | A new MCP server. A new CLI command. Architectural changes to `packages/core/`. Implementing one of the deferred detectors. Expect 2–4 review rounds. |
+| **No-code** | Any | Run the substrate for a week and file one issue. Review an open PR — lived-experience review is explicitly welcomed. Improve doc tone for clarity, accessibility, or warmth. Triage older issues. |
+
+See [`CONTRIBUTING.md`](https://github.com/tlennon-ie/neurodock/blob/main/CONTRIBUTING.md#four-pr-size-lanes) for the canonical lane definitions.
+
+## Your first contribution, in one command
+
+```bash
+git clone https://github.com/tlennon-ie/neurodock.git
+cd neurodock
+./scripts/dev-setup.sh
+```
+
+`dev-setup.sh` installs JS + Python dependencies, builds the workspace, and runs the test suites. Re-runnable after every `git pull`. Drive-by typo fixes do not need this; everything else does.
+
 ## Ways to contribute
 
 | What | Where | Best for |
@@ -37,9 +60,9 @@ Beyond the CC4 base, three explicit additions:
 ## First-time contributor checklist
 
 - [ ] Read the [manifesto](/manifesto/).
-- [ ] Open a `git clone` of `github.com/tlennon-ie/neurodock`.
-- [ ] Run `pnpm install && uv sync`.
-- [ ] Find the right contribution lane above.
+- [ ] `git clone` of `github.com/tlennon-ie/neurodock`.
+- [ ] Run `./scripts/dev-setup.sh` (drive-by typo fixes can skip this).
+- [ ] Pick the matching lane above.
 - [ ] Open a draft PR early. Drafts are welcome; perfect first PRs are not the bar.
 
 ## What's next

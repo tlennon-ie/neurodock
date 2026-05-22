@@ -1,0 +1,38 @@
+---
+title: Plugin types
+description: The six plugin types at a glance. Minimum files, working examples to copy, and a link to the full per-type guide.
+sidebar:
+  order: 0
+---
+
+NeuroDock has six plugin types. Pick one, copy the matching example, edit, ship. Every example below is a working plugin already in the repo.
+
+## The six types at a glance
+
+| Type | What it does | Minimum files | Example to copy |
+|---|---|---|---|
+| [`skill`](/contribute/plugin-types/skill/) | A markdown bundle that activates inside an MCP-aware client (Claude Code, Claude Desktop, Cursor) and ships independently of the core skills bundle. | `plugin.yaml`, `SKILL.md`, `tests/` (≥ 3 files) | [`plugins/example-skill-pomodoro/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/example-skill-pomodoro) |
+| [`mcp-server`](/contribute/plugin-types/mcp-server/) | A Model Context Protocol server exposing typed tools that any client and any skill can call. Python via FastMCP or TypeScript via the official SDK. | `plugin.yaml`, `schemas/` (JSON Schema per tool), `src/`, `tests/conformance/`, `pyproject.toml` (or `package.json`) | The first-party servers under [`packages/`](https://github.com/tlennon-ie/neurodock/tree/main/packages) (`mcp-chronometric`, `mcp-cognitive-graph`, etc.) are the structural reference. |
+| [`profile`](/contribute/plugin-types/profile/) | A curated profile preset users opt into via `extends:` in their own `profile.yaml`. | `plugin.yaml`, `profile.yaml` | The presets under [`profiles/`](https://github.com/tlennon-ie/neurodock/tree/main/profiles) (`adhd.yaml`, `audhd.yaml`, `low-stimulation.yaml`, `burnout-recovery.yaml`, etc.) — same shape, distributed in-tree rather than as plugins. |
+| [`translation-pack`](/contribute/plugin-types/translation-pack/) | Domain-specific or relationship-specific prompt overrides for `mcp-translation` (engineering review, legal correspondence, customer success). | `plugin.yaml`, `prompts/` (one or more of `literal_meaning.md`, `subtext.md`, `tone.md`), `eval/corpus.yaml`, `README.md` | [`plugins/translation-legal/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-legal), [`plugins/translation-customer-support/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-customer-support), [`plugins/translation-healthcare/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-healthcare), [`plugins/translation-sales/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-sales) |
+| [`language-pack`](/contribute/plugin-types/language-pack/) | Locale-specific corporate-culture translation prompts (Hiberno-English understatement, German directness, Japanese *keigo*). | `plugin.yaml`, `prompts/`, `eval/corpus.yaml`, `locales/messages.json`, `README.md` | [`plugins/translation-hiberno-english/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-hiberno-english), [`plugins/translation-german-directness/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-german-directness), [`plugins/translation-japanese-keigo/`](https://github.com/tlennon-ie/neurodock/tree/main/plugins/translation-japanese-keigo) |
+| [`theme`](/contribute/plugin-types/theme/) | A design-system-keeper-approved theme bundle: tokens plus CSS. Cannot disable accessibility constraints. | `plugin.yaml`, `tokens.css`, `overrides.css`, `a11y-audit.json` | No first-party theme plugin ships yet; the reference theme lives inside the docs site styles. The per-type guide documents the required token set. |
+
+Pick exactly one type per plugin. A plugin that wants to ship both a skill and an MCP server ships as two plugins in two directories.
+
+## Copy a minimal template
+
+For every type, the fastest path is:
+
+```bash
+cp -R plugins/<example-plugin> plugins/<your-plugin>
+# Edit plugin.yaml, the type-specific assets, and add your tests.
+```
+
+Then jump to the per-type page above for the asset checklist, the manifest fields specific to that type, and the lived-experience review rules that apply.
+
+## What's next
+
+- [Write a plugin](/contribute/write-a-plugin/) — the end-to-end guide that covers the manifest, the trust ladder, licensing, and distribution.
+- [Plugin manifest reference](/reference/plugin-manifest/) — the full v0.1.0 schema.
+- [ADR 0007 — Plugin protocol design](/decisions/0007-plugin-protocol/) — the design rationale for six types, four trust tiers, and SPDX whitelist.

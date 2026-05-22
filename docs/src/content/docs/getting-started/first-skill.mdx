@@ -5,31 +5,37 @@ description: Run the morning brief skill end-to-end in Claude Desktop. About fiv
 
 After this page you will have run one NeuroDock skill end-to-end and seen the substrate work as a chain: chronometric → cognitive-graph → `adhd-daily-planner`.
 
+<figure style="margin: 1.5rem 0; max-width: 720px;">
+  <img
+    src="/images/morning-brief-loop.gif"
+    alt="TODO(issue-27): Replace with looping GIF of /morning-brief running in Claude Desktop — user types the slash command, tool calls flash by (get_time_context, recall_decisions), and the formatted brief appears."
+    width="720"
+    style="width: 100%; height: auto; border: 1px solid var(--sl-color-gray-5); border-radius: 0.5rem; background: var(--sl-color-gray-6);"
+    loading="lazy"
+  />
+  <figcaption style="font-size: 0.85rem; color: var(--sl-color-gray-3); margin-top: 0.5rem;">
+    Placeholder — short loop video of the <code>/morning-brief</code> interaction. Tracked in issue #27.
+  </figcaption>
+</figure>
+
 ## Prerequisites
 
 - [Installation](/getting-started/installation/) is complete and `neurodock doctor` passes.
-- Claude Desktop is restarted and you can see the five NeuroDock MCP servers in its tool list.
+- Claude Desktop is restarted (full quit, not close-window) and you can see the five NeuroDock MCP servers in its tool list.
 
 ## Run it
 
-1. Open Claude Desktop.
-2. In a new chat, type:
+Open Claude Desktop, start a new chat, and type `/morning-brief`. That's it.
 
-   ```
-   /morning-brief
-   ```
+You should see:
 
-3. Watch the tool calls.
-
-You will see the chain run:
-
-- `get_time_context()` from `mcp-chronometric` — returns the current time, your energy zone, and how long since your last prompt.
-- `recall_decisions(project: ..., since: ...)` from `mcp-cognitive-graph` — pulls decisions made overnight, if any.
-- The `adhd-daily-planner` skill composes those into a one-paragraph brief plus 1–3 things that matter today.
+- A tool call to `get_time_context()` from `mcp-chronometric` returning the current time, your energy zone, and how long since your last prompt.
+- A tool call to `recall_decisions(project: ..., since: ...)` from `mcp-cognitive-graph` returning any decisions made overnight (empty on a fresh install).
+- A one-paragraph brief plus 1–3 things that matter today, assembled by the `adhd-daily-planner` skill.
 
 ## Expect the first run to be sparse
 
-The first time you run this, the cognitive graph is empty. The brief will say so plainly — something like:
+On a fresh install the cognitive graph is empty, and the brief will say so plainly — something like:
 
 > The cognitive graph has no decisions or open blockers recorded yet. That is expected on a fresh install. Today's brief is just the time context: morning peak, Friday, no open session.
 

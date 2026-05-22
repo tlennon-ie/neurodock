@@ -3,6 +3,12 @@ title: 0002 — Cognitive graph tool design
 description: Why mcp-cognitive-graph is a typed-edge property graph, not strict RDF or free-text-only.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** Persistence backbone must be forgiving on input, strict on output, additive as vocabulary grows, and local-first with no implicit remote fetches.
+**Decision:** Typed-edge property graph — a fact is `{subject, predicate, object, source?, confidence?}` with a closed predicate vocabulary; no strict RDF, no full-text-only, no single mega-`query` tool.
+**Impact:** Structured queries are cheap, the schema evolves additively, and no LLM call ever lives inside the server.
+:::
+
 > **Source:** `docs/decisions/0002-cognitive-graph-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the four alternatives considered and the nine binding design decisions.
 
 - **Status:** Proposed
@@ -17,11 +23,16 @@ description: Why mcp-cognitive-graph is a typed-edge property graph, not strict 
 
 Adopt the **typed-edge property graph**: a fact is `{subject, predicate, object, source?, confidence?}` where `predicate` is a controlled-vocabulary enum and `object` is either an entity reference or a literal.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 Alternatives rejected:
 
 - **Strict RDF triples** — forces every literal value to become its own entity; IRIs leak ontology into skill authors' code.
 - **Full-text-only** — loses structured queries like "what decisions were made on `neurodock` since 2026-05-01" without round-tripping through an LLM.
 - **One giant `query` tool** — conflates four different responsibilities; harder for the LLM to invoke correctly.
+
+</details>
 
 ## Cross-cutting rules established here
 

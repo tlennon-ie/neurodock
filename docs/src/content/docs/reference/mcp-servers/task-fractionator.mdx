@@ -3,14 +3,38 @@ title: mcp-task-fractionator
 description: Decompose vague goals into atomic 5-90 minute tasks. Two tools. Stateless. No LLM inside the server.
 ---
 
+## Tools at a glance
+
+| Tool | What it takes | What it returns | Why your brain cares |
+|---|---|---|---|
+| `decompose` | `{ goal, time_budget? }` | 3–12 atomic tasks with acceptance criteria and a one-paragraph rationale | converts the wall of "plan the migration" into things small enough that starting one is cheaper than avoiding it |
+| `next_one` | `{ project }` | exactly one task, plus reasoning and a confidence number | answers "what do I do right now" without re-deciding priorities — the choice fatigue moves out of your head and into the server |
+
+## Before / after
+
+The fractionator's whole job is the column-shift below: vague intent on the left, atomic moves on the right.
+
+| Before — vague goal | After — atomic tasks (with time budgets) |
+|---|---|
+| "Plan the migration." | 1. Inventory current staging DB schemas (PT20M) — acceptance: list of every table + row-count in a markdown file. |
+| | 2. Read the prod runbook end-to-end once (PT30M) — acceptance: bullet-list of every step that touches a write path. |
+| | 3. Draft the migration playbook headers only (PT15M) — acceptance: section titles, no body text. |
+| | 4. Identify the three riskiest steps (PT25M) — acceptance: each step has one rollback line. |
+| | 5. Sketch the rollback plan for step 1 only (PT30M) — acceptance: a checklist Sarah could follow if I were offline. |
+
+The rationale paragraph that ships with the response surfaces every assumption (timezone, what "end of week" meant, what was deliberately dropped) so the user can correct any one of them without re-running the decomposition.
+
+## Server card
+
 `mcp-task-fractionator` carves a vague goal into a small ordered list of atomic 5–90 minute tasks with explicit acceptance criteria and dependency edges. It is stateless — persistence is the caller's job, via `mcp-cognitive-graph`.
 
 - **Package:** `packages/mcp-task-fractionator/`
+- **Version:** `0.0.3`
 - **Schemas:** `packages/mcp-task-fractionator/schemas/*.schema.json`
 - **ADR:** [0003 — Task fractionator tool design](/decisions/0003-task-fractionator/)
 - **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-task-fractionator/v0.1.0/`
 
-## Tools
+## Tools (detailed contract)
 
 | Tool | Input | Output |
 |---|---|---|

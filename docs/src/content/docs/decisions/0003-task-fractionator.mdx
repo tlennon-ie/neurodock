@@ -3,6 +3,12 @@ title: 0003 — Task fractionator tool design
 description: Why mcp-task-fractionator is stateless and persists nothing.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** Carving a vague goal into atomic 5–90 minute tasks needs to be ADHD-startable (80%+ "I can start now"), without forking a second source of truth alongside the cognitive graph.
+**Decision:** Stateless server with cognitive-graph persistence — `decompose` returns task data; `next_one` reads pending tasks from `mcp-cognitive-graph`. Fractionator owns the algorithm; graph owns the state.
+**Impact:** No persistence duplication, no LLM call inside the server, and skills can freely interpose between carving and picking.
+:::
+
 > **Source:** `docs/decisions/0003-task-fractionator-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the three alternatives considered and the seven binding design decisions.
 
 - **Status:** Proposed
@@ -17,10 +23,15 @@ description: Why mcp-task-fractionator is stateless and persists nothing.
 
 Adopt the **stateless server with cognitive-graph persistence**: `decompose` returns a task list as data; `next_one` reads pending tasks from `mcp-cognitive-graph`. The fractionator owns the *decomposition algorithm*; the graph owns the *state*.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 Alternatives rejected:
 
 - **Stateful server with built-in persistence** — duplicates `mcp-cognitive-graph` and creates two sources of truth that drift.
 - **One combined `plan` tool** — conflates carving from picking; prevents skills from interposing between the two.
+
+</details>
 
 ## Cross-cutting rules established here
 

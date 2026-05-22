@@ -7,6 +7,12 @@ A skill is a scoped instruction-and-asset bundle that activates on specific trig
 
 After this page you will know what a skill contains, how triggers work, and what the six launch skills do.
 
+:::note[How skills relate to MCP servers]
+**MCP Server** (the data pipe) **+ LLM prompt** (the logic) **= Skill** (the helpful action)
+
+The MCP server exposes typed tools. The skill is a markdown bundle that tells the model when to call those tools and how to format the result. Neither half is useful alone.
+:::
+
 ## Anatomy of a skill
 
 A skill lives at `packages/skills/<name>/` and ships:

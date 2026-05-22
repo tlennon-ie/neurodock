@@ -1,10 +1,10 @@
 ---
 title: CLI
-description: The neurodock command-line interface. Eleven commands across six groups, shipped in @neurodock/cli 0.3.0.
+description: The neurodock command-line interface. Seventeen commands across seven groups, shipped in @neurodock/cli 0.4.3.
 ---
 
 :::note[CLI status]
-`@neurodock/cli` `0.3.0` is shipped to npm. Eleven commands across six groups (`init`, `install-all`, `examples`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`). The CLI is the lowest-friction onboarding path: `npx neurodock install-all` should take a fresh install from zero to a working substrate in under fifteen minutes.
+`@neurodock/cli` `0.4.3` is shipped to npm. Seventeen commands across seven groups (`init`, `install-all`, `examples`, `doctor`, `validate`, `update`, `uninstall`, `host install/uninstall`, `profile show/validate`, `plugin add/remove/list/enable/disable/validate`). The CLI is the lowest-friction onboarding path: `npx neurodock install-all` should take a fresh install from zero to a working substrate in under fifteen minutes.
 :::
 
 ## Commands
@@ -22,6 +22,12 @@ description: The neurodock command-line interface. Eleven commands across six gr
 | [`neurodock host uninstall`](#neurodock-host-uninstall) | Remove the native messaging host manifests / registry pointers. |
 | [`neurodock profile show`](#neurodock-profile-show) | Print the loaded profile with loader defaults applied. |
 | [`neurodock profile validate`](#neurodock-profile-validate) | Validate `~/.neurodock/profile.yaml` against the schema. |
+| [`neurodock plugin add`](#neurodock-plugin-add) | Install a plugin from a local directory into `~/.neurodock/plugins/`. |
+| [`neurodock plugin remove`](#neurodock-plugin-remove) | Remove an installed plugin. |
+| [`neurodock plugin list`](#neurodock-plugin-list) | List installed plugins and their enabled state. |
+| [`neurodock plugin enable`](#neurodock-plugin-enable) | Activate an installed plugin (writes the `.enabled` marker). |
+| [`neurodock plugin disable`](#neurodock-plugin-disable) | Deactivate an installed plugin (removes the `.enabled` marker; keeps files). |
+| [`neurodock plugin validate`](#neurodock-plugin-validate) | Validate a plugin manifest without installing. |
 
 ### `neurodock init`
 
@@ -202,11 +208,90 @@ Validate `~/.neurodock/profile.yaml` against the canonical schema. Returns the s
 
 Exit codes: `0` if valid; `1` if missing or invalid.
 
+### `neurodock plugin add`
+
+```bash
+neurodock plugin add <source>
+```
+
+Install a plugin from a local directory into `~/.neurodock/plugins/<name>/`. The `<source>` is a path to a directory containing a valid `plugin.yaml`. See [ADR 0007](/decisions/0007-plugins/) for the plugin contract.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--yes` | `false` | Skip the overwrite prompt; refuse without `--force`. |
+| `--dry-run` | `false` | Print what would happen without writing anything. |
+| `--force` | `false` | Overwrite an existing install of the same plugin name. |
+
+Exit codes: `0` on success; non-zero when the source is missing, the manifest fails validation, or the target exists without `--force`.
+
+### `neurodock plugin remove`
+
+```bash
+neurodock plugin remove <name>
+```
+
+Remove an installed plugin from `~/.neurodock/plugins/`. Aliased as `neurodock plugin uninstall`.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--yes` | `false` | Skip the confirmation prompt. |
+| `--dry-run` | `false` | Print what would happen without writing anything. |
+
+Exit codes: `0` on success.
+
+### `neurodock plugin list`
+
+```bash
+neurodock plugin list
+```
+
+List plugins installed under `~/.neurodock/plugins/` and their enabled state.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--json` | `false` | Print machine-readable output. |
+
+Exit codes: `0`.
+
+### `neurodock plugin enable`
+
+```bash
+neurodock plugin enable <name>
+```
+
+Activate an installed plugin. Writes a `.enabled` marker file the substrate reads at startup. No flags.
+
+Exit codes: `0` on success; non-zero if the plugin is not installed.
+
+### `neurodock plugin disable`
+
+```bash
+neurodock plugin disable <name>
+```
+
+Deactivate an installed plugin (removes the `.enabled` marker; keeps the files in place so re-enabling is one command). No flags.
+
+Exit codes: `0` on success; non-zero if the plugin is not installed.
+
+### `neurodock plugin validate`
+
+```bash
+neurodock plugin validate <source>
+```
+
+Validate a plugin manifest without installing. Checks `plugin.yaml` against `plugin.schema.json` and reports field-path violations.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--json` | `false` | Print machine-readable output. |
+
+Exit codes: `0` if valid; non-zero otherwise.
+
 ## Global flags
 
 | Flag | Meaning |
 |---|---|
-| `-v, --version` | Print the CLI version (`0.3.0`). |
+| `-v, --version` | Print the CLI version (`0.4.3`). |
 | `-h, --help` | Show help for the program or a subcommand. |
 
 ## Environment

@@ -3,10 +3,18 @@ title: mcp-guardrail
 description: Clinical guardrails MCP server. Three detectors — rumination, hyperfocus, sycophancy. Stateless, override-first, auditable.
 ---
 
+## Tools at a glance
+
+| Tool | What it takes | What it returns | Why your brain cares |
+|---|---|---|---|
+| `check_rumination` | `{ current_prompt, history, window_minutes?, threshold_count?, similarity_threshold? }` | `detected`, matched prior prompts, confidence, plain-language reason, non-empty override list | catches the fifth time you've reasked "is the migration plan okay" inside ninety minutes and offers an off-ramp instead of another reassurance hit |
+| `check_hyperfocus` | `{ chronometric_snapshot, session_id?, hyperfocus_break_minutes?, end_of_day_local?, escalation_thresholds? }` | `level` (none / gentle / nudge / hard), elapsed seconds, override tokens including `snooze-15m` and `commit-and-close` | escalates a quiet "you've been here a while" into something firmer at 120 minutes — without ever blocking you, because the user remains the authority |
+| `check_sycophancy` | `{ candidate_response?, recent_user_messages?, decision_context? }` | matched pattern, confidence, optional `counter_prompt` the caller may pass back to the model | spots the "great question!" loop and a chain of reassurance-seeking on the same decision before the model warps into a yes-machine |
+
 `mcp-guardrail` is the substrate's clinical layer. It exposes three detectors that flag patterns unmodified LLM interaction tends to amplify for neurodivergent users: rumination loops, unregulated hyperfocus, and sycophancy. It blocks nothing; every detection ships with a non-empty override list and a plain-language reason.
 
 - **Package:** `packages/mcp-guardrail/`
-- **Version:** `0.0.2` — all three detectors live (rumination, hyperfocus, sycophancy)
+- **Version:** `0.0.3` — all three detectors live (rumination, hyperfocus, sycophancy)
 - **Schemas:** `packages/mcp-guardrail/schemas/*.schema.json`
 - **ADR:** [0006 — Guardrail tool design](/decisions/0006-guardrail/)
 - **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-guardrail/v0.1.0/`
@@ -20,13 +28,13 @@ description: Clinical guardrails MCP server. Three detectors — rumination, hyp
 - **Override-token vocabulary is closed at v0.1.0.** New tokens require a minor bump and clinical sign-off per ADR 0006 §3 and §10.
 - **Heuristics are auditable.** Source for each heuristic lives in `packages/clinical/`. Changes require clinical sign-off per `ETHICS.md` commitment 3.
 
-## Tools
+## Tools (status & heuristics)
 
 | Tool | Status | Heuristic (v0.1.0) | Default thresholds |
 |---|---|---|---|
-| `check_rumination` | live (v0.0.1) | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
-| `check_hyperfocus` | live (v0.0.2) | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
-| `check_sycophancy` | live (v0.0.2) | pattern overlap (4 patterns) | similarity 0.5 |
+| `check_rumination` | live | `word_overlap_jaccard` | window 90 min, count 3, similarity 0.55 |
+| `check_hyperfocus` | live | `elapsed_threshold_with_eod` | 60 / 90 / 120 minutes |
+| `check_sycophancy` | live | pattern overlap (4 patterns) | similarity 0.5 |
 
 ### `check_rumination`
 
@@ -65,7 +73,7 @@ Classify hyperfocus escalation into a coarse level given a snapshot of the chron
 - `level` — enum: `none | gentle | nudge | hard`.
 - `override_options[].token` — closed enum includes `snooze-15m`, `snooze-once`, `commit-and-close`, `extend-end-of-day`.
 
-**Runtime (v0.0.2):** live. Returns a structured `{level, elapsed_seconds, confidence, reason, heuristic, override_options, ...}` advisory. Never blocks.
+**Runtime:** live. Returns a structured `{level, elapsed_seconds, confidence, reason, heuristic, override_options, ...}` advisory. Never blocks.
 
 ### `check_sycophancy`
 
@@ -83,7 +91,7 @@ Detect either over-validation patterns in a candidate LLM response, or repeated 
 - `counter_prompt` — string the calling skill may pass back to the model. The server NEVER calls a model itself.
 - `override_options[].token` — closed enum includes `i-want-validation` and `explain-the-match`.
 
-**Runtime (v0.0.2):** live. Returns a structured `{detected, pattern, confidence, reason, heuristic, override_options, counter_prompt?, ...}` advisory. The server NEVER calls a model itself — `counter_prompt` is a string the calling skill MAY pass back.
+**Runtime:** live. Returns a structured `{detected, pattern, confidence, reason, heuristic, override_options, counter_prompt?, ...}` advisory. The server NEVER calls a model itself — `counter_prompt` is a string the calling skill MAY pass back.
 
 ## Error codes
 

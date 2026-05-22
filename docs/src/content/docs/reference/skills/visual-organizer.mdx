@@ -3,9 +3,36 @@ title: visual-organizer
 description: Generates Mermaid diagrams when textual output is overwhelming or when the user asks for visual organisation.
 ---
 
+:::tip[How to invoke this skill]
+Any of these triggers a diagram:
+
+- `/visualize`
+- `/diagram`
+- "draw this out"
+- "make a diagram"
+- "i can't see the structure"
+- "make a mermaid chart of this"
+- "show me the flow visually"
+- "map out the relationships"
+:::
+
 > Source: `packages/skills/visual-organizer/SKILL.md` is the canonical artefact. Frontmatter and triggers may change before v0.1.
 
 A skill that turns dense text into a Mermaid diagram — flowchart, sequence, mindmap — when the user is overwhelmed by linear output or asks for visual organisation explicitly.
+
+## Example output
+
+A request like *"draw this out: I need to write the doc, get it reviewed, then publish it"* returns a single rendered Mermaid block of the shape below.
+
+```mermaid
+flowchart LR
+  ndraft[Write draft]
+  nreview[Get review]
+  npublish[Publish]
+  ndraft --> nreview --> npublish
+```
+
+The skill emits exactly one fenced Mermaid block. No experimental syntax. Every node label stays under 40 characters so the diagram is legible at a glance.
 
 ## Frontmatter summary
 

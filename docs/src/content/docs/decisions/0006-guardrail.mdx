@@ -3,6 +3,12 @@ title: 0006 — Guardrail tool design
 description: Three detector schemas locked at v0.1.0. Rumination live in Phase 2. Hyperfocus and sycophancy schema-only until Phase 3 field study endorses thresholds.
 ---
 
+:::tip[Bottom line up front]
+**Problem:** The clinical layer must surface signals about rumination, hyperfocus, and sycophancy without making treatment claims, silent blocks, or hidden heuristics — and the wire schema must lock now so Phase-2 consumer skills can commit before runtime heuristics are tuned.
+**Decision:** Three detector schemas locked at `v0.1.0`; word-overlap Jaccard for `check_rumination`; caller-supplied chronometric snapshots for `check_hyperfocus`; schema-only deployment for hyperfocus and sycophancy until the Phase 3 field study endorses thresholds; closed override-token vocabulary.
+**Impact:** The five ETHICS commitments become schema invariants — no treatment claims, no silent blocks, public heuristics, no aggregation, false-positive humility. Clinical-reviewer sign-off is now structural.
+:::
+
 > **Source:** `docs/decisions/0006-guardrail-tool-design.md` is the canonical artefact. This page is a short summary; read the full ADR for the alternatives considered, the seven binding decisions, the open questions, and the implementer's notes.
 
 :::note[Status update]
@@ -33,12 +39,17 @@ We adopt:
 6. **`x-clinical-review-required: true`** annotation on every schema, recording the standing requirement that changes require clinical sign-off.
 7. **`heuristic_source` path** recorded in each schema's `compatibility` block. The path is normative: the source code IS the auditable specification per `ETHICS.md` commitment 3.
 
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
 Alternatives rejected:
 
 - **Sentence-embedding cosine** for rumination v0.1.0 — deferred to v0.0.2 once `mcp-cognitive-graph`'s embedding stack stabilises. Model weights complicate the "heuristics are public" commitment.
 - **Topic modelling over recent prompts** — introduces unsupervised learning state, violates stateless-server principle, brittle on N=3 windows.
 - **Direct Python import of `neurodock-mcp-chronometric`** for hyperfocus — tightens two servers into one logical unit, violates composability.
 - **Free-form override tokens** — fragments user-autonomy contract across skills.
+
+</details>
 
 ## Cross-cutting rules established here
 

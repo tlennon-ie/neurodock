@@ -3,14 +3,49 @@ title: mcp-chronometric
 description: Time, session, and break management. Five tools. Five schemas. No remote calls.
 ---
 
-`mcp-chronometric` externalises time and session awareness so the LLM does not have to maintain that state across turns. It is the first substrate server (shipped in v0.2.1 at `v0.0.1`) and the precedent-setting design for every later substrate server.
+## Tools at a glance
+
+| Tool | What it takes | What it returns | Why your brain cares |
+|---|---|---|---|
+| `get_time_context` | nothing | local time, day, session length, `energy_zone` band | removes the executive-function tax of estimating how long you've been hyperfocused — the server tells you, you don't have to guess |
+| `mark_session_start` | `{ intent: string }` | `session_id`, `started_at`, optional auto-closed prior | makes your intent durable across the model's amnesia so a 3-hour session doesn't drift from "draft the migration plan" into "tune the regex" |
+| `mark_session_end` | optional `summary` | `session_id`, `ended_at`, ISO 8601 duration | closes the loop honestly; lets you see the real elapsed time instead of the time-blind estimate your brain produced |
+| `request_break_if_needed` | `{ threshold_minutes }` | `null` OR `{ elapsed, prior_intent, suggested_action }` | a structured "you've been at this 90 minutes, you said 30" — quoted back in your own words, not a productivity lecture |
+| `idle_status` | nothing | `{ consent_granted, os_idle_duration?, hyperfocus_signal }` | distinguishes "hyperfocused on another window" from "actually stepped away" so a nudge fires only when it's useful |
+
+## Escalation ladder
+
+The hyperfocus check escalates across three rungs of elapsed session time. Defaults are 60 / 90 / 120 minutes; the profile can rebalance them.
+
+```mermaid
+flowchart LR
+  nstart([Session start]) --> ng[60 min · gentle]
+  ng --> nn[90 min · nudge]
+  nn --> nh[120 min · hard]
+  nstart -.-> nnone[under 60 · level: none]
+  classDef gentle fill:#e6f4ea,stroke:#1b5e20,color:#1b5e20
+  classDef nudge fill:#fff4e5,stroke:#7a4f01,color:#7a4f01
+  classDef hard fill:#fde7e9,stroke:#7f1d1d,color:#7f1d1d
+  classDef none fill:#eef2f7,stroke:#334155,color:#334155
+  class ng gentle
+  class nn nudge
+  class nh hard
+  class nnone none
+```
+
+When `end_of_day_local` is set, the same elapsed times after that clock-time read one rung harder (gentle becomes nudge; nudge becomes hard). That is the `+30` and `+60` collapse described in ADR 0001.
+
+## Server card
+
+`mcp-chronometric` externalises time and session awareness so the LLM does not have to maintain that state across turns. It is the first substrate server and the precedent-setting design for every later substrate server.
 
 - **Package:** `packages/mcp-chronometric/`
+- **Version:** `0.0.2`
 - **Schemas:** `packages/mcp-chronometric/schemas/*.schema.json`
 - **ADR:** [0001 — Chronometric tool design](/decisions/0001-chronometric/)
 - **Schema `$id` prefix:** `https://schemas.neurodock.org/mcp-chronometric/v0.1.0/`
 
-## Tools
+## Tools (detailed contract)
 
 | Tool | Input | Output |
 |---|---|---|

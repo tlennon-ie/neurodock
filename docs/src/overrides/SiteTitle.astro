@@ -1,0 +1,224 @@
+---
+/*
+ * NeuroDock SiteTitle override.
+ *
+ * Renders the default Starlight site title PLUS a small font-hinting
+ * selector to the right of the title in the header bar.
+ *
+ * Why this lives here:
+ *   - Starlight's `components.SiteTitle` slot is the only override point
+ *     that renders inside the top header next to the logo without
+ *     fighting MobileMenuToggle / Search positioning.
+ *   - No client-side framework: vanilla <script> only.
+ *
+ * Storage contract:
+ *   - localStorage key: `neurodockFont`
+ *   - Allowed values:   `atkinson` | `lexend` | `system`
+ *   - Default (unset):  `atkinson` (Atkinson Hyperlegible)
+ *
+ * Class hooks on <html>:
+ *   - `font-atkinson`  → body uses Atkinson Hyperlegible (default)
+ *   - `font-lexend`    → body uses Lexend (ADHD-friendlier rhythm)
+ *   - `font-system`    → body uses system UI stack
+ *
+ * The CSS variables `--sl-font` and `--sl-font-system` are re-bound
+ * in src/styles/tokens.css under each `:root.font-*` selector.
+ *
+ * Reduced-motion:
+ *   - The <select> uses native UA controls. We strip any transition
+ *     when `prefers-reduced-motion: reduce`.
+ */
+import { logos } from 'virtual:starlight/user-images';
+import config from 'virtual:starlight/user-config';
+const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<div class="nd-site-title-wrapper sl-flex">
+  <a href={siteTitleHref} class="site-title sl-flex">
+    {
+      config.logo && logos.dark && (
+        <>
+          <img
+            class:list={{ 'light:sl-hidden print:hidden': !('src' in config.logo) }}
+            alt={config.logo.alt}
+            src={logos.dark.src}
+            width={logos.dark.width}
+            height={logos.dark.height}
+          />
+          {!('src' in config.logo) && (
+            <img
+              class="dark:sl-hidden print:block"
+              alt={config.logo.alt}
+              src={logos.light?.src}
+              width={logos.light?.width}
+              height={logos.light?.height}
+            />
+          )}
+        </>
+      )
+    }
+    <span class:list={{ 'sr-only': config.logo?.replacesTitle }} translate="no">
+      {siteTitle}
+    </span>
+  </a>
+
+  <label class="nd-font-switcher" aria-label="Font hinting">
+    <span class="sr-only">Font hinting</span>
+    <select
+      id="nd-font-select"
+      name="nd-font-select"
+      autocomplete="off"
+    >
+      <option value="atkinson">Atkinson Hyperlegible</option>
+      <option value="lexend">Lexend (ADHD)</option>
+      <option value="system">System default</option>
+    </select>
+  </label>
+</div>
+
+{/*
+  Inline blocking script: runs as early as possible so the chosen
+  font class is applied to <html> before the first paint, avoiding
+  a flash of unhinted text. Intentionally not type="module" so it
+  executes synchronously in document order.
+*/}
+<script is:inline>
+  (function () {
+    var KEY = 'neurodockFont';
+    var ALLOWED = { atkinson: 1, lexend: 1, system: 1 };
+    var stored;
+    try {
+      stored = localStorage.getItem(KEY);
+    } catch (_) {
+      stored = null;
+    }
+    var choice = stored && ALLOWED[stored] ? stored : 'atkinson';
+    var root = document.documentElement;
+    root.classList.remove('font-atkinson', 'font-lexend', 'font-system');
+    root.classList.add('font-' + choice);
+  })();
+</script>
+
+<script>
+  // Wire up the <select> after hydration. The initial class is already
+  // applied by the inline pre-paint script above; this only handles
+  // user-driven changes and cross-tab sync.
+  const KEY = 'neurodockFont';
+  const ALLOWED = new Set(['atkinson', 'lexend', 'system']);
+
+  function apply(choice: string) {
+    const root = document.documentElement;
+    root.classList.remove('font-atkinson', 'font-lexend', 'font-system');
+    root.classList.add('font-' + choice);
+  }
+
+  function init() {
+    const select = document.getElementById('nd-font-select') as HTMLSelectElement | null;
+    if (!select) return;
+    let current = 'atkinson';
+    try {
+      const stored = localStorage.getItem(KEY);
+      if (stored && ALLOWED.has(stored)) current = stored;
+    } catch (_) {
+      /* storage blocked — fall back to default */
+    }
+    select.value = current;
+    select.addEventListener('change', () => {
+      const v = select.value;
+      if (!ALLOWED.has(v)) return;
+      try {
+        localStorage.setItem(KEY, v);
+      } catch (_) {
+        /* storage blocked — apply for this session only */
+      }
+      apply(v);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
+
+<style>
+  @layer starlight.core {
+    .site-title {
+      align-items: center;
+      gap: var(--sl-nav-gap);
+      font-size: var(--sl-text-h4);
+      font-weight: 600;
+      color: var(--sl-color-text-accent);
+      text-decoration: none;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .site-title span {
+      overflow: hidden;
+    }
+    .site-title img {
+      height: calc(var(--sl-nav-height) - 2 * var(--sl-nav-pad-y));
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      object-position: 0 50%;
+    }
+  }
+
+  .nd-site-title-wrapper {
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .nd-font-switcher {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .nd-font-switcher select {
+    appearance: auto;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--sl-color-hairline);
+    background: var(--sl-color-bg-nav);
+    color: var(--sl-color-text);
+    line-height: 1.2;
+    /* Motion: keep the focus ring snappy. No animated transitions. */
+    transition: none;
+  }
+
+  .nd-font-switcher select:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 2px;
+  }
+
+  /* Hide the font switcher on narrow viewports — header is cramped. */
+  @media (max-width: 50rem) {
+    .nd-font-switcher {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nd-font-switcher select {
+      transition: none !important;
+    }
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
