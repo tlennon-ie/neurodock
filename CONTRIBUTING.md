@@ -158,6 +158,23 @@ git push -u origin feat/cli/morning-anchor
 
 Then open the PR. Releases pick up the changeset automatically.
 
+## Before opening a PR
+
+Run the version-impact pre-flight locally to see whether your diff
+expects a `package.json` / `pyproject.toml` bump, a CHANGELOG entry, or
+a docs cross-reference update:
+
+```bash
+bash .github/scripts/version-impact.sh
+```
+
+Same logic lives in the repo skill at `.claude/skills/version-impact/`
+(invokable as `/version-impact` from Claude Code), and the GitHub
+Actions workflow `pr-version-check.yml` runs it on every PR and posts
+the report as a sticky comment. The workflow is advisory — it never
+fails the build, it just tells you what looks missing so you can fix
+it before the maintainers ask.
+
 ## Process checklist
 
 Before you mark a PR ready for review:
@@ -166,3 +183,4 @@ Before you mark a PR ready for review:
 - [ ] Tests pass locally (`pnpm test`, `uv run pytest` where relevant).
 - [ ] Conventional commit message on the PR title (`feat:`, `fix:`, `docs:`).
 - [ ] PR description explains _why_, not just _what_.
+- [ ] Version-impact pre-flight clean, or any flagged items consciously left.

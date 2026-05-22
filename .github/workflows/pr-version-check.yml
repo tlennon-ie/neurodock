@@ -1,0 +1,92 @@
+name: PR version check
+
+# Advisory only. Reads the PR diff, classifies version-bump impact per
+# touched workspace package, and posts a sticky comment on the PR.
+# Never fails the build.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-version-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  assess:
+    name: Assess version impact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Ensure base ref is fetched
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          set -e
+          # actions/checkout fetches the merge commit only by default
+          # when fetch-depth is 0 it still benefits from an explicit
+          # `git fetch` for the base branch so `origin/$BASE` resolves.
+          git fetch --no-tags --depth=0 origin "$BASE":"refs/remotes/origin/$BASE" || true
+          git rev-parse --verify "origin/$BASE" >/dev/null || {
+            echo "::warning::could not resolve origin/$BASE — falling back to HEAD~1"
+          }
+
+      - name: Run version-impact assessment
+        id: assess
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+          HEAD_REF: HEAD
+        run: |
+          set -e
+          chmod +x .github/scripts/version-impact.sh
+          report_path="${RUNNER_TEMP}/version-impact.md"
+          bash .github/scripts/version-impact.sh > "$report_path"
+          # Echo to the run log for visibility.
+          echo "----- report -----"
+          cat "$report_path"
+          echo "----- /report -----"
+          {
+            echo "report_path=$report_path"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Post or update sticky PR comment
+        uses: actions/github-script@v7
+        env:
+          REPORT_PATH: ${{ steps.assess.outputs.report_path }}
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync(process.env.REPORT_PATH, 'utf8');
+            const marker = '<!-- pr-version-check -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+
+            // Sticky-comment pattern: find an existing comment with the
+            // marker and update in place, otherwise create a new one.
+            const { data: comments } = await github.rest.issues.listComments({
+              owner, repo, issue_number, per_page: 100,
+            });
+            const existing = comments.find(c =>
+              c.user && c.user.type === 'Bot' && c.body && c.body.includes(marker)
+            ) || comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner, repo, comment_id: existing.id, body,
+              });
+              core.info(`Updated existing comment ${existing.id}`);
+            } else {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number, body,
+              });
+              core.info('Created new sticky comment');
+            }
