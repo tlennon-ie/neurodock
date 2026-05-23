@@ -1,5 +1,87 @@
 # @neurodock/extension-browser
 
+## 0.0.15
+
+### Fixed — LM Studio vision
+
+0.0.14 unconditionally rejected image requests on the local LM Studio
+lane with `VISION_MODEL_REQUIRED`, and `translation-client.ts` caught
+that error and silently fell back to mock. Users running a real
+LLaVA / Qwen2-VL / MiniCPM-V model in LM Studio saw a "configured
+provider was unreachable, fell back to mock" banner — wrong message,
+real model never tried.
+
+Resolution: LM Studio provider now passes images through using the
+OpenAI-compatible multimodal `content` array. The user's model
+(whatever it is) decides whether it can handle the image — if it
+can't, LM Studio returns an HTTP 400 the user can act on, not a
+silent mock fallback. Same approach as OpenRouter pass-through.
+`translation-client.ts` also now refuses to mask `VISION_MODEL_REQUIRED`
+errors with mock fallbacks (the previous regex only excluded
+`_PERMISSION_REQUIRED`).
+
+Ollama still rejects image input for now — its `/api/chat` endpoint
+expects base64 `images` parameter and a URL→base64 fetch path needs
+to land alongside it. Ollama vision support tracks as a 0.0.16+ item.
+
+### Fixed — panel positioning + source preview clash
+
+0.0.13 anchored the panel using viewport-width math at render time —
+which mispositioned when the user scrolled, when the panel grew taller
+than expected, or when the host page injected its own layout
+transforms. The source-text preview block that sat above the panel
+had a 4%-opacity background that clashed with the host page's own
+background (Gmail's white, GitHub's dark, etc.) — visually unmoored.
+
+Resolution: panel position is now CSS-only — `position: fixed; top:
+16px; right: 16px;` with `max-height: 80vh; overflow-y: auto;` baked
+into `.neurodock-panel` in `mountIsland.ts`. No anchor math. Always
+sits in the top-right with a 16px gap on every viewport, scrolls
+internally if the content exceeds 80% of the viewport.
+
+The source-text preview moved into the panel itself as a styled
+section above the result body. It now sits on the panel background
+(same cream `#fafaf9` / dark `#262625`) and renders selected text as
+italic prose OR the image URL as monospaced text when the user
+right-clicked an image.
+
+### Fixed — misleading "History tab" reference in fallback notification
+
+The right-click-on-out-of-permission-page fallback notification said
+"open the popup → History tab to read the result" — but the popup has
+no "History" tab. History lives under Home. Message updated to
+"Open the popup → Home → History to read the result."
+
+### Added — Wipe history button
+
+The Home tab's History section now has a **Wipe history (N)** button
+next to the history toggle. Confirms before deleting. Lets users
+retain the history feature with a clean slate without disabling
+writes entirely. `clearHistory()` was already present in `storage.ts`
+since v0.0.1 but was never wired to the popup.
+
+### Changed — Mode summary shows the actual local provider + profile name
+
+The popup Home tab's status line previously hard-coded
+"Local Ollama (model)" — but a user on LM Studio saw the same string,
+suggesting their config wasn't applied. The status line now reads
+"Local LM Studio (model)" or "Local Ollama (model)" based on
+`profile.localProvider`. A second line ("Profile: <displayName>")
+makes the currently-loaded profile visible at a glance — useful
+after running `pnpx @neurodock/native-host install` to confirm the
+sync landed.
+
+### Changed — Host permissions panel surfaces always-granted hosts
+
+The Settings → Host permissions section previously listed only
+runtime-granted hosts (e.g. a LAN-hosted LM Studio). Users wondered
+why Gmail / Slack / Linear / etc. weren't listed despite being
+"supported sites". Now there's an expandable "Always-granted hosts"
+section listing all default-granted origins by category (local
+providers, cloud providers, supported sites). The runtime-granted
+list below is clearly labelled as "additional hosts you've granted
+at runtime".
+
 ## 0.0.14
 
 ### Added — image translation (requires a vision-capable model)

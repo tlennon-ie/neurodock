@@ -127,8 +127,12 @@ export async function translate<T = unknown>(
       // v0.0.4: when the local provider throws *_PERMISSION_REQUIRED,
       // do NOT fall back to a silent mock — surface the actionable error
       // so the user knows to grant the host permission from Settings.
+      // 0.0.15: same for VISION_MODEL_REQUIRED — if the user picked a
+      // text-only local model and tried to translate an image, falling
+      // back to mock hides the actual problem (wrong model) behind a
+      // generic "configured provider unreachable" banner.
       const message = getErrorMessage(cause);
-      if (!/_PERMISSION_REQUIRED/.test(message)) {
+      if (!/_PERMISSION_REQUIRED|VISION_MODEL_REQUIRED/.test(message)) {
         return mockResponseFromData<T>(
           request,
           timestamp,

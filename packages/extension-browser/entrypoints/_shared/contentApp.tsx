@@ -110,7 +110,6 @@ export function ContentApp({
   const buttonAnchor = activeEditable
     ? computeButtonAnchor(activeEditable)
     : null;
-  const panelAnchor = computePanelAnchor(activeEditable);
 
   return (
     <>
@@ -120,19 +119,24 @@ export function ContentApp({
         onActivate={onActivate}
       />
       {panelOpen ? (
+        // 0.0.15: panel position is now CSS-only (top-right of viewport
+        // with explicit right margin). Previous anchor-math approach
+        // depended on viewport-width math at render time and frequently
+        // mispositioned when the user scrolled or the panel grew taller
+        // than expected. Fixed positioning + max-height: 80vh +
+        // overflow-y in the .neurodock-panel CSS keeps the panel inside
+        // the viewport on every page width.
         <div
           style={{
             position: "fixed",
-            top: panelAnchor.top,
-            left: panelAnchor.left,
+            top: 16,
+            right: 16,
+            left: "auto",
+            bottom: "auto",
             pointerEvents: "auto",
             zIndex: 2147483647,
-            maxWidth: 360,
           }}
         >
-          {contextSourceText !== null ? (
-            <SourceTextPreview text={contextSourceText} />
-          ) : null}
           <Panel
             response={response}
             loading={loading}
@@ -140,6 +144,7 @@ export function ContentApp({
             cloudProvider={profile.cloudProvider}
             configuredProvider={resolveConfiguredProvider(profile)}
             onClose={onClosePanel}
+            sourceText={contextSourceText}
           />
         </div>
       ) : null}
@@ -176,55 +181,9 @@ function resolveConfiguredProvider(profile: ExtensionProfile): string | null {
   return profile.localProvider;
 }
 
-function computePanelAnchor(el: Editable | null): PanelAnchor {
-  // Right-click context-menu path: no editable is focused. Anchor the
-  // panel to the viewport top-right so the user actually sees it (the
-  // pre-0.0.7 fallback put it at -1000,-1000 which rendered off-screen
-  // even after the message dispatch was fixed).
-  //
-  // Panel CSS width is 420px (with max-width: 92vw fallback on narrow
-  // viewports). Anchor 16px from the right edge accounting for the
-  // possible vw-clamp so it never clips off-screen — the bug 0.0.12
-  // shipped with: left was hard-coded to `viewportWidth - 380` which
-  // matched the old 360px panel but undershot the new 420px width by
-  // 40px.
-  if (el === null) {
-    const viewportWidth =
-      typeof window !== "undefined" ? window.innerWidth : 800;
-    const panelWidth = Math.min(420, Math.floor(viewportWidth * 0.92));
-    return {
-      top: 16,
-      left: Math.max(16, viewportWidth - panelWidth - 16),
-    };
-  }
-  // Floating-button path: position the panel just to the right of the
-  // floating button anchor (existing behaviour).
-  const buttonAnchor = computeButtonAnchor(el);
-  return { top: buttonAnchor.top, left: buttonAnchor.left + 80 };
-}
-
-interface SourceTextPreviewProps {
-  readonly text: string;
-}
-
-function SourceTextPreview({
-  text,
-}: SourceTextPreviewProps): React.ReactElement {
-  return (
-    <div
-      data-testid="context-source-preview"
-      style={{
-        marginBottom: 6,
-        padding: "6px 8px",
-        background: "rgba(0,0,0,0.04)",
-        borderLeft: "3px solid rgba(0,0,0,0.2)",
-        fontSize: 12,
-        fontStyle: "italic",
-        maxHeight: 80,
-        overflow: "auto",
-      }}
-    >
-      {text}
-    </div>
-  );
-}
+// computePanelAnchor and SourceTextPreview deleted in 0.0.15:
+// - panel position is now CSS-only (fixed top-right + max-height: 80vh
+//   in mountIsland.ts), so per-render anchor math is unnecessary.
+// - the source-text preview moved into Panel itself as a styled section
+//   (matching the panel's own background) so it no longer clashes with
+//   the host page background (Gmail's white, GitHub's dark, etc.).

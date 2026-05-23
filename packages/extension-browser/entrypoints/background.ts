@@ -254,9 +254,10 @@ function notifyContextResultFallback(
   const host = safeHost(pageUrl);
   const where = host ? ` on ${host}` : "";
   const message = ok
-    ? `Done${where}. Open the extension popup to read the result (History tab).`
+    ? `Done${where}. NeuroDock's panel can't open on this site (no host ` +
+      `permission). Open the popup → Home → History to read the result.`
     : response.mockMode
-      ? `Configured provider was unreachable${where}; mock answered instead. Check Settings → Test.`
+      ? `Configured provider was unreachable${where}; mock answered instead. Check popup → Settings → Test.`
       : `Could not translate${where}. ${response.error ?? "Unknown error"}.`;
   try {
     create({

@@ -39,6 +39,13 @@ export interface PanelProps {
     | ExtensionProfile["localProvider"]
     | string
     | null;
+  /**
+   * 0.0.15: original text or image URL the user right-clicked. Rendered
+   * inside the panel (above the result) so it always sits on the panel
+   * background — previously SourceTextPreview was an unstyled sibling
+   * and clashed with the host page's background on Gmail / GitHub.
+   */
+  readonly sourceText?: string | null;
 }
 
 export function Panel({
@@ -48,6 +55,7 @@ export function Panel({
   cloudProvider,
   onClose,
   configuredProvider,
+  sourceText,
 }: PanelProps): React.ReactElement {
   const fellBack = detectFallback(response, configuredProvider);
   return (
@@ -102,9 +110,38 @@ export function Panel({
           fell back to the mock provider. Open Settings → Test to diagnose.
         </div>
       ) : null}
+      {sourceText && sourceText.length > 0 ? (
+        <SourcePreview text={sourceText} />
+      ) : null}
       {loading ? <p style={{ margin: 0 }}>Translating…</p> : null}
       {!loading && response ? <ResultBody response={response} /> : null}
       {response ? <ProvenanceLine response={response} /> : null}
+    </div>
+  );
+}
+
+function SourcePreview({ text }: { text: string }): React.ReactElement {
+  const isUrl = /^https?:\/\//.test(text) || text.startsWith("data:");
+  return (
+    <div
+      data-testid="context-source-preview"
+      style={{
+        marginBottom: 8,
+        padding: "6px 8px",
+        background: "rgba(0,0,0,0.05)",
+        borderLeft: "3px solid rgba(0,0,0,0.25)",
+        fontSize: 12,
+        fontStyle: isUrl ? "normal" : "italic",
+        maxHeight: 80,
+        overflow: "auto",
+        wordBreak: isUrl ? "break-all" : "normal",
+      }}
+    >
+      {isUrl ? (
+        <code style={{ fontFamily: "ui-monospace, monospace" }}>{text}</code>
+      ) : (
+        text
+      )}
     </div>
   );
 }

@@ -381,10 +381,40 @@ function HostPermissionsPanel(): React.ReactElement {
       <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
         Host permissions
       </legend>
+      <details className="m-0 text-xs text-neutral-500">
+        <summary className="cursor-pointer">
+          Always-granted hosts (click to view)
+        </summary>
+        <div className="mt-1 flex flex-col gap-0.5 pl-3">
+          <span>
+            <strong>Local providers:</strong>{" "}
+            <code className="font-mono">localhost</code>,{" "}
+            <code className="font-mono">127.0.0.1</code>
+          </span>
+          <span>
+            <strong>Cloud providers (when enabled):</strong>{" "}
+            <code className="font-mono">api.anthropic.com</code>,{" "}
+            <code className="font-mono">api.openai.com</code>,{" "}
+            <code className="font-mono">openrouter.ai</code>
+          </span>
+          <span>
+            <strong>Supported sites:</strong>{" "}
+            <code className="font-mono">mail.google.com</code>,{" "}
+            <code className="font-mono">app.slack.com</code>,{" "}
+            <code className="font-mono">linear.app</code>,{" "}
+            <code className="font-mono">*.notion.so</code>,{" "}
+            <code className="font-mono">*.notion.site</code>,{" "}
+            <code className="font-mono">github.com</code>,{" "}
+            <code className="font-mono">docs.google.com</code>,{" "}
+            <code className="font-mono">outlook.live.com</code>,{" "}
+            <code className="font-mono">outlook.office.com</code>,{" "}
+            <code className="font-mono">outlook.office365.com</code>
+          </span>
+        </div>
+      </details>
       <p className="m-0 text-xs text-neutral-500">
-        Default-granted: <code className="font-mono">localhost</code>,{" "}
-        <code className="font-mono">127.0.0.1</code>, the seven supported sites,
-        and your chosen cloud provider host.
+        The list below shows additional hosts you've granted at runtime (e.g. a
+        LAN-hosted LM Studio or Ollama).
       </p>
       {origins.length === 0 ? (
         <p

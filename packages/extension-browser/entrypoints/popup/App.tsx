@@ -19,7 +19,7 @@ import {
   type ProfileSyncStatus,
 } from "../../src/lib/profile.js";
 import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
-import { listHistory } from "../../src/lib/storage.js";
+import { listHistory, clearHistory } from "../../src/lib/storage.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
 
@@ -153,6 +153,27 @@ export function App(): React.ReactElement {
     setSaveError(null);
   }, []);
 
+  // 0.0.15: explicit "Clear history" surface in the Home tab. clearHistory()
+  // exists in storage.ts but was never wired to the popup, so users who
+  // turned history ON could never wipe it without disabling history (which
+  // also blocks future writes). Clear separates "stop writing" from "wipe
+  // what's there" so users can retain the feature with a clean slate.
+  const handleClearHistory = useCallback(async (): Promise<void> => {
+    if (typeof window !== "undefined" && typeof window.confirm === "function") {
+      const yes = window.confirm(
+        "Wipe all NeuroDock translation history? This cannot be undone.",
+      );
+      if (!yes) return;
+    }
+    try {
+      await clearHistory();
+      await refreshHistory();
+    } catch (cause: unknown) {
+      const msg = cause instanceof Error ? cause.message : "Clear failed";
+      setSaveError(msg);
+    }
+  }, [refreshHistory]);
+
   return (
     <main className="flex flex-col gap-4 p-4">
       <header>
@@ -191,6 +212,7 @@ export function App(): React.ReactElement {
           profile={profile}
           history={history}
           onToggleHistory={(enabled) => update({ historyEnabled: enabled })}
+          onClearHistory={handleClearHistory}
         />
       ) : (
         <SettingsTab profile={profile} onChange={update} />
@@ -292,12 +314,14 @@ interface HomeTabProps {
   readonly profile: ExtensionProfile;
   readonly history: readonly HistoryEntry[];
   readonly onToggleHistory: (enabled: boolean) => void;
+  readonly onClearHistory: () => Promise<void> | void;
 }
 
 function HomeTab({
   profile,
   history,
   onToggleHistory,
+  onClearHistory,
 }: HomeTabProps): React.ReactElement {
   return (
     <>
@@ -325,6 +349,7 @@ function HomeTab({
           profile={profile}
           history={history}
           onToggle={onToggleHistory}
+          onClear={onClearHistory}
         />
       </section>
     </>
@@ -336,6 +361,10 @@ interface ModeSummaryProps {
 }
 
 function ModeSummary({ profile }: ModeSummaryProps): React.ReactElement {
+  // 0.0.15: ModeSummary now reflects the actual local provider (Ollama vs
+  // LM Studio) and surfaces the display_name from the profile so a user
+  // who just ran the native-host sync can see at a glance which profile
+  // is currently loaded (#2 in the 2026-05-23 user feedback).
   let label: string;
   if (profile.mode === "mock") {
     label = "Mock (developer-only). No model is called.";
@@ -345,12 +374,23 @@ function ModeSummary({ profile }: ModeSummaryProps): React.ReactElement {
       `${profile.cloudModel ?? "no model"}). ` +
       "Text leaves your device.";
   } else {
-    label = `Local Ollama (${profile.localModel}). Text stays on your device.`;
+    const which = profile.localProvider === "lmstudio" ? "LM Studio" : "Ollama";
+    label = `Local ${which} (${
+      profile.localModel || "no model"
+    }). Text stays on your device.`;
   }
   return (
-    <p className="m-0 text-sm text-neutral-700 dark:text-neutral-300">
-      {label}
-    </p>
+    <div className="flex flex-col gap-0.5">
+      <p className="m-0 text-sm text-neutral-700 dark:text-neutral-300">
+        {label}
+      </p>
+      <p
+        className="m-0 text-xs text-neutral-500"
+        data-testid="profile-identity"
+      >
+        Profile: <strong>{profile.displayName || "you"}</strong>
+      </p>
+    </div>
   );
 }
 
@@ -358,12 +398,14 @@ interface HistoryPanelProps {
   readonly profile: ExtensionProfile;
   readonly history: readonly HistoryEntry[];
   readonly onToggle: (enabled: boolean) => void;
+  readonly onClear: () => Promise<void> | void;
 }
 
 function HistoryPanel({
   profile,
   history,
   onToggle,
+  onClear,
 }: HistoryPanelProps): React.ReactElement {
   return (
     <div className="flex flex-col gap-2">
@@ -378,10 +420,21 @@ function HistoryPanel({
           anywhere).
         </span>
       </label>
+      {history.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => void onClear()}
+          data-testid="clear-history"
+          className="self-start border border-neutral-300 bg-white px-2 py-0.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+          aria-label="Wipe all NeuroDock translation history"
+        >
+          Wipe history ({history.length})
+        </button>
+      ) : null}
       {profile.historyEnabled && history.length === 0 ? (
         <p className="text-xs text-neutral-500">
-          No translations yet. Right-click selected text on a supported site to
-          start.
+          No translations yet. Right-click selected text or an image on a
+          supported site to start.
         </p>
       ) : null}
       {profile.historyEnabled && history.length > 0

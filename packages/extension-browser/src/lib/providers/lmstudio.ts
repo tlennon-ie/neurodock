@@ -120,9 +120,27 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     // prompts already instruct the model to return JSON, and validation.ts'
     // extractJson handles raw-text responses, so 'text' is correct here.
     // OpenAI/OpenRouter keep 'json_object' in their own provider files.
+    //
+    // 0.0.15: when `images` is non-empty, build the OpenAI-compatible
+    // multimodal content array. LM Studio routes this to whatever the
+    // loaded model accepts — for vision-capable models (LLaVA-family,
+    // MiniCPM-V, Qwen2-VL, etc.) it works; for text-only models LM
+    // Studio responds with an HTTP 400 the user can act on. We do NOT
+    // gate on a model-name allowlist here because LM Studio model slugs
+    // are user-chosen and don't follow a stable naming convention.
+    const content =
+      request.images && request.images.length > 0
+        ? [
+            { type: "text", text: request.prompt },
+            ...request.images.map((url) => ({
+              type: "image_url" as const,
+              image_url: { url },
+            })),
+          ]
+        : request.prompt;
     const body = JSON.stringify({
       model: request.model,
-      messages: [{ role: "user", content: request.prompt }],
+      messages: [{ role: "user", content }],
       stream,
       response_format: { type: "text" },
     });
@@ -148,18 +166,6 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
   }
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
-    if (request.images && request.images.length > 0) {
-      // LM Studio supports vision via select GGUF models (LLaVA-family,
-      // MiniCPM-V, Qwen2-VL) but the API shape differs per model card.
-      // Phase 2 work — for now reject loudly so the user knows to switch
-      // to cloud mode rather than silently degrading the result.
-      throw new Error(
-        `VISION_MODEL_REQUIRED: image translation isn't yet supported on ` +
-          `the local LM Studio lane. Switch to cloud mode with a vision-` +
-          `capable model (gpt-4o-mini, claude-haiku-4-5) in the popup ` +
-          `Settings tab.`,
-      );
-    }
     if (options.disableStreaming === true) {
       return completeNonStreaming(request);
     }
