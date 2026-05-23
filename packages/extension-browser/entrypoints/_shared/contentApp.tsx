@@ -181,12 +181,20 @@ function computePanelAnchor(el: Editable | null): PanelAnchor {
   // panel to the viewport top-right so the user actually sees it (the
   // pre-0.0.7 fallback put it at -1000,-1000 which rendered off-screen
   // even after the message dispatch was fixed).
+  //
+  // Panel CSS width is 420px (with max-width: 92vw fallback on narrow
+  // viewports). Anchor 16px from the right edge accounting for the
+  // possible vw-clamp so it never clips off-screen — the bug 0.0.12
+  // shipped with: left was hard-coded to `viewportWidth - 380` which
+  // matched the old 360px panel but undershot the new 420px width by
+  // 40px.
   if (el === null) {
     const viewportWidth =
       typeof window !== "undefined" ? window.innerWidth : 800;
+    const panelWidth = Math.min(420, Math.floor(viewportWidth * 0.92));
     return {
       top: 16,
-      left: Math.max(16, viewportWidth - 380),
+      left: Math.max(16, viewportWidth - panelWidth - 16),
     };
   }
   // Floating-button path: position the panel just to the right of the

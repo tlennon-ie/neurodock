@@ -136,11 +136,18 @@ describe("ContentApp — right-click context-menu result listener", () => {
     expect(screen.getByTestId("context-source-preview").textContent).toContain(
       "circle back on this Q3",
     );
-    // Response data rendered inside the panel's <pre> JSON dump.
+    // 0.0.12+: Panel renders structured per-tool UI rather than dumping
+    // JSON. translate_incoming surfaces the explicit_ask as the TL;DR
+    // card at the top of the dialog (the highest-signal field for an ND
+    // reader — what was actually asked, before any analysis). Asserting
+    // on that proves the response data flowed through the validator and
+    // into the new TranslateIncomingView. The collapsible subtext list
+    // is closed by default — that's the deliberate "less noise upfront"
+    // UX choice and is covered by its own panel-test surface.
     const dialog = screen.getByRole("dialog", {
       name: /NeuroDock translation result/i,
     });
-    expect(dialog.textContent).toContain("deferring without commitment");
+    expect(dialog.textContent).toContain("let's circle back on this");
   });
 
   it("ignores messages of other types", () => {

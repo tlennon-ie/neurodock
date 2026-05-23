@@ -1,5 +1,56 @@
 # @neurodock/extension-browser
 
+## 0.0.13
+
+### Fixed
+
+- **Panel clipped off-screen on the right.** 0.0.12 widened the panel
+  from 360px → 420px but the right-click positioning math in
+  `contentApp.tsx` still subtracted only 380px from the viewport
+  width — so the panel rendered 40px past the right edge.
+  Resolution: anchor math now derives from the actual panel width
+  (`min(420, viewportWidth * 0.92) + 16px margin`) so the panel always
+  sits with a 16px right gap regardless of viewport.
+
+### Changed — Panel UX overhaul for ND readers
+
+The 0.0.12 panel rendered every schema field as its own section
+(`Explicit ask`, `Likely subtext`, `Unclear bits`, `Suggested next:
+acknowledge`) — readable JSON-by-another-name. A user with ADHD/AuDHD
+opens the panel wanting "tell me what to do", not "here's a structural
+analysis of the message". This release reorganises around the action
+gradient:
+
+- **TL;DR card** sits at the top. One sentence. Prefers the explicit
+  ask if there is one; falls back to the highest-confidence subtext;
+  finally falls back to "Informational message — no direct request."
+- **"Do this" card** sits second. Plain-English verb ("Just acknowledge
+  you've read it" instead of `acknowledge`), reason in muted text, and
+  the copyable draft reply if the model produced one. This is the
+  card the user actually acts on.
+- **"Why they probably wrote this"** subtext list is collapsed by
+  default. Only opened by users who want the analysis. Header carries
+  the count so collapsed state still communicates "there is more here
+  if you want it".
+- **"Worth checking"** ambiguity list is also collapsed by default.
+  Raw schema reasons (`vague_timeline`, `vague_referent`,
+  `unassigned_owner`, `hedged_commitment`, `deferred_topic`,
+  `contested`, `other`) are mapped to plain-English labels
+  ("Timing is fuzzy", "Unclear what they mean", "No owner named", …).
+  No raw enum names leak into the UI.
+- Action verbs (`reply`, `clarify`, `acknowledge`, `set_reminder`,
+  `escalate`, `ignore`, `defer`) get the same plain-English mapping.
+
+Voice rules: literal, plain, no clinical phrasing, no marketing.
+Action first, analysis second, raw schema names never. Default state
+is "minimum noise"; user opts in to detail.
+
+### Tests
+
+`contentApp-context-result.test.tsx` updated to assert on the TL;DR
+card content (the new highest-signal surface) rather than the
+now-collapsed subtext list. 197/197 still pass.
+
 ## 0.0.12
 
 ### Fixed — the panel finally renders structured human-readable UI

@@ -252,74 +252,252 @@ function TranslateIncomingView({
   const next = isRecord(data.recommended_next_action)
     ? (data.recommended_next_action as NextActionData)
     : null;
+
+  // Build the TL;DR — one sentence the user reads first. Priority:
+  // 1. Explicit ask if present (the literal request)
+  // 2. Highest-confidence subtext if no explicit ask
+  // 3. Fall back to "Informational — no action needed".
+  const tldr = buildTldr(explicitAsk, subtexts, next);
+
+  // ND-friendly: action goes FIRST, analysis is collapsible. Most users
+  // want "tell me what to do", not "explain the message structure".
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <Section label="Explicit ask">
-        <p style={{ margin: 0 }}>{explicitAsk ?? "(none stated)"}</p>
-      </Section>
+      <TldrCard text={tldr} />
+
+      {next ? <ActionCard next={next} /> : null}
 
       {subtexts.length > 0 ? (
-        <Section label="Likely subtext">
+        <Collapsible
+          label={`Why they probably wrote this (${subtexts.length})`}
+        >
           <ol
             style={{
-              margin: 0,
+              margin: "4px 0 0 0",
               paddingLeft: 18,
               display: "flex",
               flexDirection: "column",
               gap: 4,
             }}
           >
-            {subtexts.map((s, i) => (
+            {subtexts.slice(0, 5).map((s, i) => (
               <li key={i}>
                 {s.text} <ConfidenceBadge value={Number(s.confidence) || 0} />
               </li>
             ))}
           </ol>
-        </Section>
+        </Collapsible>
       ) : null}
 
       {ambiguity.length > 0 ? (
-        <Section label="Unclear bits">
+        <Collapsible label={`Worth checking (${ambiguity.length})`}>
           <ul
             style={{
-              margin: 0,
+              margin: "4px 0 0 0",
               paddingLeft: 18,
               display: "flex",
               flexDirection: "column",
-              gap: 4,
+              gap: 6,
             }}
           >
             {ambiguity.map((span, i) => (
               <li key={i}>
-                <strong>{span.reason ?? "unclear"}</strong>
-                {span.note ? `: ${span.note}` : null}
+                {humaniseAmbiguityReason(span.reason)}
+                {span.note ? <> — {span.note}</> : null}
               </li>
             ))}
           </ul>
-        </Section>
+        </Collapsible>
       ) : null}
-
-      {next ? <RecommendedNext next={next} /> : null}
     </div>
   );
 }
 
-function RecommendedNext({
-  next,
-}: {
-  next: NextActionData;
-}): React.ReactElement {
+function buildTldr(
+  explicitAsk: string | null,
+  subtexts: SubtextItem[],
+  next: NextActionData | null,
+): string {
+  if (explicitAsk !== null && explicitAsk.length > 0) {
+    return explicitAsk;
+  }
+  if (subtexts.length > 0 && typeof subtexts[0]!.text === "string") {
+    return subtexts[0]!.text;
+  }
+  if (next && typeof next.action === "string") {
+    const verb = humaniseAction(next.action);
+    return `Informational — ${verb}.`;
+  }
+  return "Informational message — no direct request.";
+}
+
+function humaniseAction(action: string): string {
+  switch (action.toLowerCase()) {
+    case "reply":
+      return "they want a reply";
+    case "clarify":
+      return "they want clarification";
+    case "acknowledge":
+      return "just acknowledge you've read it";
+    case "set_reminder":
+      return "set a reminder to revisit";
+    case "escalate":
+      return "escalate to the right person";
+    case "ignore":
+      return "no action needed";
+    case "defer":
+      return "defer for now, revisit later";
+    default:
+      return action;
+  }
+}
+
+function humaniseAmbiguityReason(reason: string | undefined): string {
+  switch ((reason ?? "").toLowerCase()) {
+    case "vague_timeline":
+      return "Timing is fuzzy";
+    case "vague_referent":
+      return "Unclear what they mean";
+    case "unassigned_owner":
+      return "No owner named";
+    case "hedged_commitment":
+      return "Commitment is hedged";
+    case "deferred_topic":
+      return "Topic deferred without resolution";
+    case "contested":
+      return "Disagreement in the thread";
+    case "other":
+      return "Worth a closer look";
+    default:
+      return "Worth a closer look";
+  }
+}
+
+function TldrCard({ text }: { text: string }): React.ReactElement {
+  return (
+    <div
+      style={{
+        padding: "10px 12px",
+        background: "rgba(0,0,0,0.04)",
+        borderLeft: "3px solid #56564f",
+        fontSize: 15,
+        lineHeight: 1.45,
+      }}
+      data-testid="panel-tldr"
+    >
+      {text}
+    </div>
+  );
+}
+
+function ActionCard({ next }: { next: NextActionData }): React.ReactElement {
   const action = typeof next.action === "string" ? next.action : "consider";
   const reason = typeof next.reason === "string" ? next.reason : "";
   const draft =
     typeof next.draft_reply === "string" && next.draft_reply.length > 0
       ? next.draft_reply
       : null;
+  const verb = humaniseAction(action);
   return (
-    <Section label={`Suggested next: ${action}`}>
-      {reason ? <p style={{ margin: 0 }}>{reason}</p> : null}
-      {draft ? <CopyableDraft text={draft} /> : null}
-    </Section>
+    <section
+      data-testid="panel-action"
+      style={{
+        padding: "10px 12px",
+        border: "1px solid rgba(0,0,0,0.18)",
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 4px 0",
+          fontSize: 12,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          opacity: 0.7,
+          fontWeight: 600,
+        }}
+      >
+        Do this
+      </h3>
+      <p style={{ margin: "0 0 6px 0", fontSize: 14, fontWeight: 600 }}>
+        {capitalise(verb)}
+      </p>
+      {reason ? (
+        <p style={{ margin: "0 0 8px 0", fontSize: 13, opacity: 0.85 }}>
+          {reason}
+        </p>
+      ) : null}
+      {draft ? (
+        <>
+          <h4
+            style={{
+              margin: "8px 0 4px 0",
+              fontSize: 11,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              opacity: 0.6,
+              fontWeight: 600,
+            }}
+          >
+            Draft reply
+          </h4>
+          <CopyableDraft text={draft} />
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+function capitalise(s: string): string {
+  if (s.length === 0) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function Collapsible({
+  label,
+  children,
+  defaultOpen = false,
+}: {
+  label: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}): React.ReactElement {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        style={{
+          all: "unset",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          fontSize: 13,
+          fontWeight: 600,
+          color: "inherit",
+          width: "100%",
+          padding: "4px 0",
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            display: "inline-block",
+            width: 10,
+            transform: open ? "rotate(90deg)" : "rotate(0deg)",
+            transition: "none",
+          }}
+        >
+          ▸
+        </span>
+        <span>{label}</span>
+      </button>
+      {open ? (
+        <div style={{ fontSize: 14, lineHeight: 1.5 }}>{children}</div>
+      ) : null}
+    </section>
   );
 }
 
