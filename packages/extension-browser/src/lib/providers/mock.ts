@@ -23,7 +23,7 @@ export function createMockProvider(options: MockOptions): Provider {
       provenance: {
         mode: "local",
         provider: "mock",
-        model: `neurodock-mock-${SCHEMA_VERSION}`,
+        model: `mock-stub (schema-v${SCHEMA_VERSION})`,
       },
     };
   }
@@ -45,7 +45,7 @@ export function buildMockData(
   const provenance = {
     mode: "local",
     provider: "mock",
-    model: `neurodock-mock-${SCHEMA_VERSION}`,
+    model: `mock-stub (schema-v${SCHEMA_VERSION})`,
   };
   if (tool === "translate_incoming") {
     return {

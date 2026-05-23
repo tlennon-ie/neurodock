@@ -1,5 +1,45 @@
 # @neurodock/extension-browser
 
+## 0.0.17
+
+### Fixed — LM Studio image input is now base64, not URL
+
+0.0.15+0.0.16 routed image translations to LM Studio with the OpenAI
+multimodal `{type:'image_url', image_url:{url:'https://...'}}` shape.
+That works on OpenAI proper — but LM Studio's OpenAI-compatible API
+rejects URL-source images with `'url' field must be a base64 encoded
+image`. The error didn't match `VISION_MODEL_REQUIRED` so
+`translation-client.ts` fell back to mock and the user saw a confused
+"configured provider was unreachable" banner.
+
+Resolution: the LM Studio provider now fetches each image URL itself
+(in the service-worker context where `host_permissions` bypass CORS),
+converts the response body to a base64 `data:` URL with the right MIME
+type, and sends THAT to LM Studio. The user's actual vision model
+(LLaVA-family, Qwen2-VL, MiniCPM-V, etc.) receives bytes it can read.
+
+Edge cases handled:
+
+- **`data:` URLs are passed through** unchanged (no double-encode).
+- **HTTP errors during fetch** raise `LMSTUDIO_IMAGE_FETCH_FAILED`
+  with the URL and HTTP status — actionable rather than opaque.
+  Specifically calls out auth-walled URLs (private repos, signed S3
+  links) which the model can't reach either.
+- **SVG images** trigger a `console.warn` because most vision models
+  can't process raw SVG bytes — the request still goes through (a few
+  models do handle SVG) but the user is told to expect a poor result
+  and try a PNG/JPEG instead.
+- **Large images** stream through `arrayBufferToBase64` with a 32k
+  chunk size to avoid `String.fromCharCode` stack overflows.
+
+### Changed — mock model identifier
+
+The mock provider's `model_provenance.model` field used to read
+`neurodock-mock-0.1.0`. The `0.1.0` was the MCP schema version (locked
+at v0.1.0 per ADR 0005), not the extension version (currently 0.0.17),
+which confused users into thinking the extension itself was v0.1.0.
+Renamed to `mock-stub (schema-v0.1.0)` so the label is self-describing.
+
 ## 0.0.16
 
 ### Fixed — CORS error when refreshing local-LLM model lists from the popup

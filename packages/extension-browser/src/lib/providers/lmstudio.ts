@@ -121,23 +121,26 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     // extractJson handles raw-text responses, so 'text' is correct here.
     // OpenAI/OpenRouter keep 'json_object' in their own provider files.
     //
-    // 0.0.15: when `images` is non-empty, build the OpenAI-compatible
-    // multimodal content array. LM Studio routes this to whatever the
-    // loaded model accepts — for vision-capable models (LLaVA-family,
-    // MiniCPM-V, Qwen2-VL, etc.) it works; for text-only models LM
-    // Studio responds with an HTTP 400 the user can act on. We do NOT
-    // gate on a model-name allowlist here because LM Studio model slugs
-    // are user-chosen and don't follow a stable naming convention.
-    const content =
-      request.images && request.images.length > 0
-        ? [
-            { type: "text", text: request.prompt },
-            ...request.images.map((url) => ({
-              type: "image_url" as const,
-              image_url: { url },
-            })),
-          ]
-        : request.prompt;
+    // 0.0.16: when `images` is non-empty, build the OpenAI-compatible
+    // multimodal content array AND convert every image URL to a base64
+    // data URL first. LM Studio's vision models reject http(s) URLs with
+    // `'url' field must be a base64 encoded image` even though the
+    // wider OpenAI spec accepts URLs. We fetch the image in the service
+    // worker (where host_permissions bypass CORS), convert to base64,
+    // and send as `data:` URL. Reuses request.signal so cancellation
+    // propagates.
+    let content: unknown = request.prompt;
+    if (request.images && request.images.length > 0) {
+      const parts: Array<
+        | { type: "text"; text: string }
+        | { type: "image_url"; image_url: { url: string } }
+      > = [{ type: "text", text: request.prompt }];
+      for (const imageUrl of request.images) {
+        const dataUrl = await fetchAsDataUrl(f, imageUrl, request.signal);
+        parts.push({ type: "image_url", image_url: { url: dataUrl } });
+      }
+      content = parts;
+    }
     const body = JSON.stringify({
       model: request.model,
       messages: [{ role: "user", content }],
@@ -416,6 +419,72 @@ function normaliseLMStudioError(status: number, detail: string): Error {
   const prefix = status > 0 ? `LMSTUDIO_HTTP_${status}` : "LMSTUDIO_ERROR";
   const body = detail.length > 0 ? `: ${detail}` : "";
   return new Error(`${prefix}${body}`);
+}
+
+/**
+ * Fetch an image (any URL) and convert it to a base64 `data:` URL the
+ * way LM Studio expects. The service worker has the relevant
+ * host_permissions so cross-origin fetches succeed; for `data:` URLs
+ * the conversion is a no-op pass-through.
+ *
+ * Throws a descriptive error rather than letting the upstream LM Studio
+ * 400 (`'url' field must be a base64 encoded image`) surface — that
+ * error confused users into thinking their vision model was broken.
+ */
+async function fetchAsDataUrl(
+  fetchImpl: typeof fetch,
+  url: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  if (url.startsWith("data:")) return url;
+  let res: Response;
+  try {
+    res = await fetchImpl(url, signal ? { signal } : {});
+  } catch (cause: unknown) {
+    throw new Error(
+      `LMSTUDIO_IMAGE_FETCH_FAILED: could not download ${url} to encode ` +
+        `for LM Studio (which only accepts base64 image input, not URLs). ` +
+        `(${getErrorMessage(cause)})`,
+    );
+  }
+  if (!res.ok) {
+    throw new Error(
+      `LMSTUDIO_IMAGE_FETCH_FAILED: ${url} returned ${res.status}. ` +
+        `If the URL requires auth (e.g. a private repo), the model can't ` +
+        `reach it either — try downloading the image and pasting a public URL.`,
+    );
+  }
+  const contentType =
+    res.headers.get("content-type") ?? "application/octet-stream";
+  // Heads-up on SVG: most vision models can't process raw SVG bytes.
+  // We still try (LLaVA-Next / Qwen2-VL handle some), but warn loudly.
+  if (/svg\+xml/i.test(contentType)) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[NeuroDock] Image at ${url} is SVG (${contentType}). Most vision ` +
+        `models can't read SVG directly — expect a poor description. ` +
+        `Right-click a PNG/JPEG version of the image instead.`,
+    );
+  }
+  const blob = await res.blob();
+  const buf = await blob.arrayBuffer();
+  const base64 = arrayBufferToBase64(buf);
+  return `data:${contentType};base64,${base64}`;
+}
+
+function arrayBufferToBase64(buf: ArrayBuffer): string {
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunkSize = 0x8000; // avoid call-stack overflow on large images
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(
+      null,
+      bytes.subarray(i, i + chunkSize) as unknown as number[],
+    );
+  }
+  // btoa is available in service-worker globals; the encoded output is
+  // safe to inline in a data: URL.
+  return btoa(binary);
 }
 
 function getErrorMessage(cause: unknown): string {

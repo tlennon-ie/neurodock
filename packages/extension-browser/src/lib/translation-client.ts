@@ -302,7 +302,7 @@ function mockResponseFromData<T>(
   const provenance: ModelProvenance = {
     mode: "local",
     provider: "mock",
-    model: `neurodock-mock-${SCHEMA_VERSION}`,
+    model: `mock-stub (schema-v${SCHEMA_VERSION})`,
   };
   const data = buildMockData(request.tool, reason) as T;
   const detailSuffix = detail ? ` (${detail})` : "";
@@ -342,7 +342,7 @@ export function buildProviderFromProfile(
   if (profile.mode === "mock") {
     return {
       provider: createMockProvider({ reason: "force_mock" }),
-      model: `neurodock-mock-${SCHEMA_VERSION}`,
+      model: `mock-stub (schema-v${SCHEMA_VERSION})`,
     };
   }
   if (profile.mode === "cloud") {
