@@ -17,6 +17,7 @@ import {
   translate,
   detectChannelFromUrl,
 } from "../src/lib/translation-client.js";
+import { fetchModels } from "../src/lib/providers/models.js";
 import { appendHistory, truncatePreview } from "../src/lib/storage.js";
 import type {
   RuntimeMessage,
@@ -133,6 +134,34 @@ export function registerHandlers(): void {
               data: null,
               error: getErrorMessage(error),
             } satisfies RuntimeResponseEnvelope);
+          }
+        })();
+        return true; // async response
+      }
+      if (msg.type === "models:fetch") {
+        // 0.0.16: proxy model-list fetches through the service worker so
+        // local-LLM endpoints that don't send Access-Control-Allow-Origin
+        // (LM Studio, plain Ollama) work from the popup. The SW has
+        // host_permissions for the configured origin and bypasses CORS;
+        // the popup's `chrome-extension://...` origin does not.
+        void (async () => {
+          try {
+            const models = await fetchModels({
+              provider: msg.provider,
+              ...(msg.baseUrl ? { baseUrl: msg.baseUrl } : {}),
+              ...(msg.apiKey ? { apiKey: msg.apiKey } : {}),
+            });
+            sendResponse({
+              success: true,
+              models,
+              error: null,
+            });
+          } catch (error: unknown) {
+            sendResponse({
+              success: false,
+              models: null,
+              error: getErrorMessage(error),
+            });
           }
         })();
         return true; // async response

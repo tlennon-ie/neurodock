@@ -39,6 +39,62 @@ import {
 } from "../../src/lib/permissions.js";
 import { ProviderTest } from "./ProviderTest.js";
 
+/**
+ * 0.0.16 — route popup model-list fetches through the service worker.
+ * The popup runs in the `chrome-extension://...` origin, where
+ * cross-origin requests to local-LLM endpoints (LM Studio at
+ * `localhost:1234`, etc.) hit CORS because LM Studio doesn't send
+ * `Access-Control-Allow-Origin`. The SW has the relevant host
+ * permissions and bypasses CORS.
+ *
+ * Falls back to a direct fetch when `chrome.runtime.sendMessage` is
+ * unavailable — that path is exercised by unit tests via the shim in
+ * tests/setup.ts and would otherwise force every test to mock the SW.
+ */
+async function fetchModelsViaWorker(args: {
+  provider: ModelFetchableProvider;
+  baseUrl?: string | null;
+  apiKey?: string | null;
+}): Promise<string[]> {
+  const send = (
+    globalThis as unknown as {
+      chrome?: {
+        runtime?: {
+          sendMessage?: (msg: unknown) => Promise<unknown>;
+        };
+      };
+    }
+  ).chrome?.runtime?.sendMessage;
+  if (!send) {
+    return fetchModels(args);
+  }
+  let res: unknown;
+  try {
+    res = await send({
+      type: "models:fetch",
+      provider: args.provider,
+      baseUrl: args.baseUrl ?? null,
+      apiKey: args.apiKey ?? null,
+    });
+  } catch (cause: unknown) {
+    // SW unreachable (e.g. extension reloaded). Surface the actual error
+    // rather than silently falling back to a direct fetch — direct fetch
+    // would hit CORS again and confuse the user.
+    throw cause instanceof Error
+      ? cause
+      : new Error("Service worker unreachable");
+  }
+  const env = res as {
+    success?: boolean;
+    models?: string[] | null;
+    error?: string | null;
+  } | null;
+  if (env && env.success && Array.isArray(env.models)) {
+    return env.models;
+  }
+  throw new Error(env?.error ?? "Service worker returned no models");
+}
+
 function isLocalhostBaseUrl(baseUrl: string): boolean {
   try {
     const u = new URL(baseUrl);
@@ -863,11 +919,13 @@ function ModelPicker({
       }
     }
     try {
-      const models = await fetchModels({
-        provider,
-        baseUrl,
-        apiKey,
-      });
+      // 0.0.16: route through the service worker. The popup runs in the
+      // chrome-extension:// origin and faces CORS on local-LLM endpoints
+      // (LM Studio at localhost:1234 returns no Access-Control-Allow-Origin
+      // header); the SW has host_permissions for the configured origin
+      // and bypasses CORS. Falls back to a direct fetch when chrome.runtime
+      // is absent (unit tests, or future non-extension surfaces).
+      const models = await fetchModelsViaWorker({ provider, baseUrl, apiKey });
       setState({ status: "ok", models });
     } catch (cause: unknown) {
       const message = cause instanceof Error ? cause.message : "Unknown error";

@@ -206,7 +206,27 @@ export type RuntimeMessage =
    * defaults instead of the user's actual settings (privacy-transparency
    * bug). See [bootstrap.tsx] for the caller.
    */
-  | { readonly type: "profile:get" };
+  | { readonly type: "profile:get" }
+  /**
+   * 0.0.16: popup asks the service worker to fetch the model list from
+   * the configured provider. The popup itself runs in the
+   * `chrome-extension://...` origin where cross-origin fetches face CORS
+   * — local LLM endpoints like LM Studio's `http://localhost:1234/v1`
+   * do NOT send `Access-Control-Allow-Origin`, so the direct fetch
+   * fails. The service worker has `host_permissions` for those origins
+   * and bypasses CORS, so we proxy through it.
+   */
+  | {
+      readonly type: "models:fetch";
+      readonly provider:
+        | "ollama"
+        | "lmstudio"
+        | "openai"
+        | "openrouter"
+        | "anthropic";
+      readonly baseUrl?: string | null;
+      readonly apiKey?: string | null;
+    };
 
 export interface RuntimeResponseEnvelope<T = unknown> {
   readonly success: boolean;

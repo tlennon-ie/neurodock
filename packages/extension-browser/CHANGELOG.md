@@ -1,5 +1,35 @@
 # @neurodock/extension-browser
 
+## 0.0.16
+
+### Fixed — CORS error when refreshing local-LLM model lists from the popup
+
+`Refresh models` in Settings was throwing
+`Access to fetch at 'http://localhost:1234/v1/models' from origin
+'chrome-extension://...' has been blocked by CORS policy` whenever the
+user was configured against LM Studio or plain-API Ollama. The popup
+runs in the `chrome-extension://...` origin, where cross-origin fetches
+face CORS — and LM Studio / Ollama do not send
+`Access-Control-Allow-Origin`. The Chrome MV3 escape hatch is to
+**proxy the fetch through the service worker**, which has the relevant
+`host_permissions` and bypasses CORS.
+
+Resolution:
+
+- New runtime-message type `models:fetch` handled in `background.ts`.
+  The handler calls `fetchModels` (the same helper as before) and
+  returns `{ success, models, error }` to the popup.
+- `SettingsTab.tsx` swaps its direct `fetchModels()` call for
+  `fetchModelsViaWorker()`, which proxies via `chrome.runtime.sendMessage`
+  when available and falls back to direct fetch only when the runtime
+  is absent (unit tests).
+- No new permissions required — the existing `host_permissions` +
+  `optional_host_permissions` cover every supported provider.
+
+The same path also fixes the Test connection button for non-localhost
+local-LLM endpoints (Tailscale, APIPA, LAN boxes) that were previously
+intermittently CORS-blocked.
+
 ## 0.0.15
 
 ### Fixed — LM Studio vision
