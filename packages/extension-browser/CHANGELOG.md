@@ -1,5 +1,30 @@
 # @neurodock/extension-browser
 
+## 0.0.11
+
+### Fixed
+
+- **Service worker registration failure (`Uncaught ReferenceError:
+require is not defined`) in 0.0.10.** Ajv's standalone code generator
+  emits a single CommonJS `require("ajv/dist/runtime/ucs2length")` call
+  for the maxLength helper even with `code: { esm: true }`. Chrome MV3
+  service workers don't define `require`, so the worker failed to load
+  entirely — every translation request silently rejected with `Could
+not establish connection`.
+  Resolution: `scripts/compile-schemas.ts` now post-processes the
+  AJV-generated module and rewrites every
+  `require("ajv/dist/runtime/<name>")` call into a top-level
+  `import * as` namespace import. The known runtime helpers
+  (`ucs2length`, `equal`, `validateTime`) are hard-listed; any
+  unrecognised helper fails the compile step loudly rather than
+  shipping broken silently.
+  Verified: rebuilt `background.js` has zero actual `require()`
+  invocations. The only `require(...)` string in the bundle is a
+  metadata string literal inside AJV's own ucs2length module (not an
+  invocation).
+- **Test backfill for the new validator path.** Existing 197/197 tests
+  pass against the precompiled validators — no test changes needed.
+
 ## 0.0.10
 
 **This is the fix that actually makes the extension work.** Every prior

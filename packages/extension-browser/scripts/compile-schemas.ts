@@ -55,6 +55,59 @@ function buildOutputSchema(raw: JsonSchema, tool: string): JsonSchema {
   };
 }
 
+/**
+ * Replaces the single `require("ajv/dist/runtime/<name>")` call AJV
+ * standalone emits with a top-level ES import + reference to the imported
+ * binding. We hard-list the known runtime helpers — AJV only emits these
+ * for the keywords we use (maxLength/minLength → ucs2length; equal → for
+ * enum/const checks if we ever add them).
+ *
+ * If a future AJV version introduces a new runtime helper, the compile
+ * step will fail loudly here rather than ship a broken bundle. That is
+ * the correct trade-off; silent fallthrough is what broke 0.0.10.
+ */
+function rewriteAjvRuntimeRequires(source: string): string {
+  const knownRuntimes: Record<string, string> = {
+    ucs2length: "__ajvRuntimeUcs2length",
+    equal: "__ajvRuntimeEqual",
+    validateTime: "__ajvRuntimeValidateTime",
+  };
+  const imports: string[] = [];
+  let out = source;
+  const requireRe = /require\("ajv\/dist\/runtime\/([a-zA-Z0-9_]+)"\)/g;
+  const seen = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = requireRe.exec(source)) !== null) {
+    const name = m[1]!;
+    const binding = knownRuntimes[name];
+    if (!binding) {
+      throw new Error(
+        `compile-schemas: AJV standalone emitted require() for an ` +
+          `unrecognised runtime helper "${name}". Add it to ` +
+          `knownRuntimes in rewriteAjvRuntimeRequires.`,
+      );
+    }
+    if (!seen.has(name)) {
+      // Use namespace import so `.default` access in the generated code
+      // (`require("…").default`) keeps resolving. Default-import would
+      // unwrap the default and break `.default` references downstream.
+      imports.push(
+        `import * as ${binding} from "ajv/dist/runtime/${name}.js";`,
+      );
+      seen.add(name);
+    }
+  }
+  out = out.replace(requireRe, (_full, name: string) => knownRuntimes[name]!);
+  if (imports.length === 0) return source;
+  // Standalone output starts with `"use strict";`. Insert imports right
+  // after that pragma so the module still type-checks and stays ESM.
+  const prefix = '"use strict";';
+  if (out.startsWith(prefix)) {
+    return prefix + imports.join("") + out.slice(prefix.length);
+  }
+  return imports.join("") + out;
+}
+
 function loadSchema(tool: string): JsonSchema {
   const path = join(SCHEMAS_DIR, `${tool}.schema.json`);
   if (!existsSync(path)) {
@@ -79,7 +132,14 @@ export function compileSchemas(): { written: string } {
     ajv.addSchema(wrapped, tool);
     refs[`validate_${tool}`] = tool;
   }
-  const moduleSource = standaloneCode(ajv, refs);
+  const rawModule = standaloneCode(ajv, refs);
+  // Post-process: AJV standalone with `esm: true` still emits a single
+  // CJS-style `require("ajv/dist/runtime/ucs2length")` for the maxLength
+  // runtime helper (because `ucs2length` is a runtime, not codegen,
+  // dependency). Chrome MV3 service workers don't define `require`, so
+  // this throws `ReferenceError: require is not defined` at load time.
+  // We rewrite the single call into a top-level ES import.
+  const moduleSource = rewriteAjvRuntimeRequires(rawModule);
   writeFileSync(OUTPUT_FILE, moduleSource, "utf8");
 
   const types = [
