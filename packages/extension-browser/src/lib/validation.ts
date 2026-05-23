@@ -1,26 +1,35 @@
 /**
  * validation.ts
  *
- * Ajv-based validation of LLM completions against the MCP translation
- * output schemas. The schemas are mirrored at build time from
- * packages/mcp-translation/schemas via scripts/sync-schemas.ts.
+ * Validates LLM completions against the MCP translation output schemas.
  *
- * Each tool's schema has the shape:
- *   { "type": "object",
- *     "properties": { "input": {...}, "output": {...} },
- *     "$defs": { ... } }
+ * **CSP-safe path (the only path).** Chrome MV3 forbids `unsafe-eval`.
+ * `Ajv.compile(schema)` at runtime calls `new Function(generatedCode)`,
+ * which is `eval` — so before this fix every translation response failed
+ * validation silently with `EvalError: Evaluating a string as JavaScript
+ * violates the following Content Security Policy directive...` and the
+ * extension showed no result.
  *
- * For runtime validation we want ONLY the `output` sub-schema, but the
- * `$defs` references resolve against the root document. We synthesise a
- * standalone schema by lifting `properties.output` to the root and
- * carrying `$defs` with it. `$id`s are dropped to avoid Ajv complaining
- * about duplicate ids.
+ * Resolution: the four output schemas are pre-compiled at build time by
+ * `scripts/compile-schemas.ts` into `schemas/compiled-validators.js`
+ * via Ajv's standalone code generator. This module imports those compiled
+ * validator functions directly — no `new Function`, no `eval`.
+ *
+ * `outputSchemaSnippet()` is still synthesised here for prompt assembly
+ * (the LLM gets the schema in-band), using the same lifting logic that
+ * `compile-schemas.ts` uses at build time.
  */
-import Ajv2020, { type ValidateFunction, type ErrorObject } from "ajv/dist/2020.js";
-import translateIncoming from "./schemas/translate_incoming.schema.json" with { type: "json" };
-import checkTone from "./schemas/check_tone.schema.json" with { type: "json" };
-import rewriteOutgoing from "./schemas/rewrite_outgoing.schema.json" with { type: "json" };
-import briefMeeting from "./schemas/brief_meeting.schema.json" with { type: "json" };
+import translateIncoming from "./schemas/translate_incoming.schema.json" assert { type: "json" };
+import checkTone from "./schemas/check_tone.schema.json" assert { type: "json" };
+import rewriteOutgoing from "./schemas/rewrite_outgoing.schema.json" assert { type: "json" };
+import briefMeeting from "./schemas/brief_meeting.schema.json" assert { type: "json" };
+import {
+  validate_translate_incoming,
+  validate_check_tone,
+  validate_rewrite_outgoing,
+  validate_brief_meeting,
+  type ValidateFn,
+} from "./schemas/compiled-validators.js";
 import type { TranslationTool } from "./types.js";
 
 type JsonSchema = Record<string, unknown>;
@@ -32,13 +41,18 @@ const RAW_SCHEMAS: Record<TranslationTool, JsonSchema> = {
   brief_meeting: briefMeeting as unknown as JsonSchema,
 };
 
+const VALIDATORS: Record<TranslationTool, ValidateFn> = {
+  translate_incoming: validate_translate_incoming,
+  check_tone: validate_check_tone,
+  rewrite_outgoing: validate_rewrite_outgoing,
+  brief_meeting: validate_brief_meeting,
+};
+
 export interface ValidationResult<T = unknown> {
   readonly ok: boolean;
   readonly data: T | null;
   readonly errors: readonly string[];
 }
-
-let cachedValidators: Partial<Record<TranslationTool, ValidateFunction>> = {};
 
 function buildOutputSchema(tool: TranslationTool): JsonSchema {
   const raw = RAW_SCHEMAS[tool];
@@ -52,24 +66,16 @@ function buildOutputSchema(tool: TranslationTool): JsonSchema {
   };
 }
 
-function getValidator(tool: TranslationTool): ValidateFunction {
-  const cached = cachedValidators[tool];
-  if (cached) return cached;
-  const ajv = new Ajv2020({ allErrors: true, strict: false });
-  const compiled = ajv.compile(buildOutputSchema(tool));
-  cachedValidators = { ...cachedValidators, [tool]: compiled };
-  return compiled;
-}
-
 export function _resetValidatorsForTests(): void {
-  cachedValidators = {};
+  // Validators are precompiled and stateless; nothing to reset. Kept for
+  // backwards compatibility with existing tests.
 }
 
 export function validateOutput<T = unknown>(
   tool: TranslationTool,
-  candidate: unknown
+  candidate: unknown,
 ): ValidationResult<T> {
-  const validate = getValidator(tool);
+  const validate = VALIDATORS[tool];
   const ok = validate(candidate);
   if (ok) return { ok: true, data: candidate as T, errors: [] };
   return {
@@ -81,7 +87,7 @@ export function validateOutput<T = unknown>(
 
 export function parseAndValidate<T = unknown>(
   tool: TranslationTool,
-  rawText: string
+  rawText: string,
 ): ValidationResult<T> {
   const extracted = extractJson(rawText);
   if (extracted === null) {
@@ -92,13 +98,16 @@ export function parseAndValidate<T = unknown>(
     };
   }
   let parsed: unknown;
-  try { parsed = JSON.parse(extracted); }
-  catch (cause: unknown) {
+  try {
+    parsed = JSON.parse(extracted);
+  } catch (cause: unknown) {
     return {
       ok: false,
       data: null,
       errors: [
-        `JSON parse error: ${cause instanceof Error ? cause.message : "unknown"}`,
+        `JSON parse error: ${
+          cause instanceof Error ? cause.message : "unknown"
+        }`,
       ],
     };
   }
@@ -118,7 +127,12 @@ export function extractJson(rawText: string): string | null {
   return trimmed.slice(firstBrace, lastBrace + 1);
 }
 
-function formatErrors(errors: readonly ErrorObject[]): string[] {
+interface ErrorObjectLike {
+  readonly instancePath: string;
+  readonly message?: string;
+}
+
+function formatErrors(errors: ReadonlyArray<ErrorObjectLike>): string[] {
   return errors.map((e) => {
     const path = e.instancePath.length > 0 ? e.instancePath : "(root)";
     return `${path}: ${e.message ?? "validation error"}`;

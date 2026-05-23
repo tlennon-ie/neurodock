@@ -1,5 +1,45 @@
 # @neurodock/extension-browser
 
+## 0.0.10
+
+**This is the fix that actually makes the extension work.** Every prior
+release shipped a Chrome-MV3-incompatible JSON-schema validator. Every
+translation response failed validation silently with
+`EvalError: Evaluating a string as JavaScript violates the following
+Content Security Policy directive because 'unsafe-eval' is not an
+allowed source of script` and the user saw nothing in the panel.
+
+### Fixed
+
+- **Schema validation now CSP-safe (the real reason translations never
+  rendered).** `Ajv.compile(schema)` at runtime calls `new Function(...)`,
+  which is `eval`. Chrome MV3 forbids `unsafe-eval`. Result: every
+  translation response was rejected by the validator before it could
+  reach the in-page panel.
+  Resolution: the four translation output schemas are now pre-compiled
+  at build time by `scripts/compile-schemas.ts` via Ajv's standalone
+  code generator. `validation.ts` imports the compiled validator
+  functions directly — no `new Function`, no `eval`. Verified: rebuilt
+  `background.js` contains zero `new Function(` references where the
+  0.0.9 bundle had them inline from the Ajv runtime.
+
+### Added
+
+- `scripts/compile-schemas.ts` — build-time AJV standalone compiler.
+- `compile:schemas` script wired into `sync:all` so it runs on every
+  `dev`, `build`, `test`, and `typecheck`.
+- `src/lib/schemas/compiled-validators.{js,d.ts}` — auto-generated
+  output, gitignored.
+
+### Note on prior 0.0.6–0.0.9 fixes
+
+Every fix shipped in 0.0.6 through 0.0.9 (LM Studio body shape, profile
+broadcast, save-error surfacing, notification fallback, Anthropic
+JSON-mode, OpenRouter retry, profile:get handler, etc.) was correct —
+but the user could never observe any of them because validation failed
+before the response could render. The 0.0.10 build is the first version
+where the prior nine fixes can actually be exercised end-to-end.
+
 ## 0.0.9
 
 P1 bundle from the 2026-05-23 five-agent extension audit
