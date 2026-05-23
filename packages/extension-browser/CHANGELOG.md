@@ -1,5 +1,48 @@
 # @neurodock/extension-browser
 
+## 0.0.12
+
+### Fixed — the panel finally renders structured human-readable UI
+
+0.0.11 finally let translations reach the panel (CSP + SW load fixes
+shipped over the prior two versions). But once the response arrived
+the panel dumped it as `JSON.stringify(data, null, 2)` inside a `<pre>`
+— a monospaced black blob harder to read than the source email it was
+"translating". That single line of code was the panel's whole render
+path.
+
+This release rewrites `panel.tsx` end-to-end with dedicated view
+components per tool:
+
+- **`translate_incoming`** → labelled sections: Explicit ask, Likely
+  subtext (ordered list with low/med/high confidence badges, no
+  spurious decimal precision), Unclear bits (reason + note), Suggested
+  next (action + reason + copyable draft reply).
+- **`check_tone`** → three horizontal score bars (Direct / Warm /
+  Urgent, 0–100) with optional target markers, a list of flagged
+  phrases with deltas, an italic hint line.
+- **`rewrite_outgoing`** → the rewritten message in a copyable panel,
+  tone-shift summary, terms not preserved, warnings.
+- **`brief_meeting`** → Asks on me, My asks of others, Decisions,
+  Unclear — each with verbatim quotes pulled from `quoted_span.text`
+  (the ADR 0005 invariant the schema enforces).
+
+Voice rules applied: no clinical phrasing, no marketing intensifiers,
+literal section labels, confidence shown as a coarse band rather than
+three decimals.
+
+The panel also gets a sticky close button, a small `via <provider> ·
+<model>` provenance footer, and is widened from 360px to 420px with
+`max-height: 80vh + overflow-y: auto` so the structured content has
+room to render without overlapping page text.
+
+### Note
+
+If you reload the extension before rebuilding, you'll still see the
+JSON dump — the build step is what regenerates the bundle. Run
+`pnpm --filter @neurodock/extension-browser run build:chrome` then
+remove + load-unpacked the card at `chrome://extensions`.
+
 ## 0.0.11
 
 ### Fixed

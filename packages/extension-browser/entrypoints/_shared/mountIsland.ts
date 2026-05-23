@@ -83,13 +83,20 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       pointer-events: auto;
       font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
       font-size: 14px;
-      line-height: 1.65;
-      max-width: 360px;
-      padding: 12px;
+      line-height: 1.5;
+      width: 420px;
+      max-width: 92vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 12px 14px 14px 14px;
       border: 1px solid #56564f;
       background: #fafaf9;
       color: #161615;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+      border-radius: 4px;
+    }
+    .neurodock-panel h3 {
+      font-family: inherit;
     }
     @media (prefers-color-scheme: dark) {
       .neurodock-panel {
