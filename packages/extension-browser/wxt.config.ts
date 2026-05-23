@@ -161,6 +161,15 @@ export default defineConfig({
         // at runtime — this CSP entry just lifts the platform-level
         // block. data: is required for screenshot-style image inputs
         // and for the local base64 round-trip.
+        //
+        // 0.0.21: also allow arbitrary `http:` so right-click describe
+        // works for images on user-controlled local dev servers like
+        // `http://127.0.0.1:8000/...` (ML output samples, asset-pipeline
+        // previews, etc.) and LAN-hosted asset stores. Without this CSP
+        // entry the SW fetch was blocked before host_permissions ever
+        // got a chance to gate it, so users saw "Mock response" with no
+        // way to grant. Symmetrical with the existing https: umbrella.
+        "http: " +
         "https: " +
         "data:;",
     },

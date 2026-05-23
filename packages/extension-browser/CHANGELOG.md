@@ -1,5 +1,61 @@
 # @neurodock/extension-browser
 
+## 0.0.21
+
+### Fixed — CSP blocked images on local HTTP dev servers
+
+Right-clicking an image on `http://127.0.0.1:8000/...` (or any
+non-port-restricted HTTP host) was blocked at the CSP layer:
+
+```
+Connecting to 'http://127.0.0.1:8000/files/.../candidate.png' violates
+the following Content Security Policy directive: "connect-src 'self'
+http://localhost:11434 http://127.0.0.1:11434 ... https: data:".
+The action has been blocked.
+```
+
+The 0.0.18 CSP had `https:` and `data:` umbrellas for image fetches
+but no matching `http:` umbrella — so ML output samples, asset-pipeline
+previews, and any LAN-hosted asset store fell straight through to the
+mock fallback with no actionable error. Added `http:` to the
+`connect-src` allowlist. Symmetric with the existing `https:` entry;
+still gated by `optional_host_permissions` at the runtime layer, which
+the user grants per-host on right-click.
+
+### Fixed — History rows are now click-to-expand
+
+Pre-0.0.21 the History tab listed `describe_image · 2026-05-23 · local
+· lmstudio` rows that weren't interactive, while right-click
+notifications cheerfully told users to "open History to read the
+result." That was a dead-end: the row only carried metadata, not the
+actual translation, so clicking did nothing and the user reasonably
+concluded the feature was broken.
+
+Two-part fix:
+
+1. **History entries now carry the full request + response**
+   (`HistoryEntry.request` / `HistoryEntry.response` — both optional
+   for back-compat with rows written before 0.0.21). Canvas-snapshot
+   `data:` URLs are sanitised out so we don't balloon IndexedDB.
+2. **Rows expand on click** into the same structured `ToolView` the
+   in-page panel uses — description, key elements, transcribed text,
+   subtext, action card, tone bars, etc. For image rows the source
+   preview also renders a thumbnail of the actual image so you can
+   tell which one a row refers to without leaving the popup.
+
+The notification fallback copy now reads the live `historyEnabled`
+flag and only suggests checking History when History is actually on —
+otherwise it suggests turning History on.
+
+### Added — Source preview shows the actual image, not just the URL
+
+For right-click → "describe image" translations, the source preview in
+the in-page panel and the popup History detail now renders a small
+inline `<img>` thumbnail of the original image alongside its URL. When
+several similar avatars or thumbnails sit next to each other on a
+page, you could previously only see a URL string and had to guess
+which one you described.
+
 ## 0.0.20
 
 ### Fixed — `LLM_OUTPUT_VALIDATION_FAILED` on local-model image descriptions

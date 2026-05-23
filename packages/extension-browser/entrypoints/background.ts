@@ -214,10 +214,6 @@ export async function runTranslate(
   const response = await translate(request, { profile });
   if (profile.historyEnabled) {
     try {
-      const inputPreview =
-        typeof request.input.text === "string"
-          ? truncatePreview(request.input.text)
-          : "";
       await appendHistory({
         id: `${response.timestamp}-${response.tool}`,
         tool: response.tool,
@@ -226,8 +222,17 @@ export async function runTranslate(
         mode: profile.mode,
         mockMode: response.mockMode,
         provider: response.provenance.provider,
-        inputPreview,
+        inputPreview: buildInputPreview(request),
         outputSummary: summariseOutput(response),
+        // 0.0.21: persist the full request+response so the popup
+        // History tab can render the actual structured result, not
+        // just a "describe_image · ok" summary line. Sanitised below
+        // to drop massive base64 image data URLs the canvas snapshot
+        // produces — keeping the original URL is enough for the
+        // History row's source-preview line, and the full data URL
+        // would balloon the IndexedDB store.
+        request: sanitiseRequestForHistory(request),
+        response,
       });
       // Notify the popup (if open) so its history list refreshes live.
       // The popup mounts once and used to never repaint, leaving users
@@ -252,6 +257,58 @@ function summariseOutput(response: TranslationResponse): string {
   return "ok";
 }
 
+/**
+ * One-line input preview for the History list row. Text translations
+ * truncate the selected text; image translations show the image URL
+ * (so the user can tell which image a row belongs to without expanding
+ * it). The full structured input is kept separately on the `request`
+ * field for the expanded view.
+ */
+function buildInputPreview(request: TranslationRequest): string {
+  const input = request.input as Record<string, unknown>;
+  if (typeof input.text === "string" && input.text.length > 0) {
+    return truncatePreview(input.text);
+  }
+  if (typeof input.image_url === "string" && input.image_url.length > 0) {
+    // Data URLs (canvas snapshots) blow past the 256-char preview cap.
+    // Show a stable marker instead so the History row stays compact.
+    if (input.image_url.startsWith("data:")) {
+      return "[snapshot] (rendered via canvas; original URL on the row)";
+    }
+    return truncatePreview(input.image_url);
+  }
+  if (typeof input.transcript === "string" && input.transcript.length > 0) {
+    return truncatePreview(input.transcript);
+  }
+  return "";
+}
+
+/**
+ * Drop oversized inline data from the request before we persist it.
+ * Canvas-snapshot data URLs can be hundreds of kB — storing them in
+ * IndexedDB would balloon the History store fast. We replace the data
+ * URL with a short marker and rely on the `inputPreview` showing the
+ * original page-side image URL the user actually right-clicked.
+ */
+function sanitiseRequestForHistory(
+  request: TranslationRequest,
+): TranslationRequest {
+  const input = request.input as Record<string, unknown>;
+  if (
+    typeof input.image_url === "string" &&
+    input.image_url.startsWith("data:")
+  ) {
+    return {
+      ...request,
+      input: {
+        ...input,
+        image_url: "[snapshot]",
+      },
+    };
+  }
+  return request;
+}
+
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return "Unexpected error";
@@ -265,10 +322,22 @@ function getErrorMessage(error: unknown): string {
  * translation payload. The user can find the full result in the popup's
  * History tab if `historyEnabled` is on.
  */
-function notifyContextResultFallback(
+async function notifyContextResultFallback(
   response: TranslationResponse,
   pageUrl: string,
-): void {
+): Promise<void> {
+  // Read the live profile so the "open History" suggestion is only shown
+  // when History is actually ON. Pre-0.0.21 the toast told users to
+  // check History unconditionally; for users who had History off the
+  // tab was empty by design and the message looked broken.
+  let historyEnabled = false;
+  try {
+    const profile = await loadProfile();
+    historyEnabled = profile.historyEnabled;
+  } catch {
+    // Profile read failure means we can't tell — fall back to the
+    // "turn on History" branch which is a safe non-promise either way.
+  }
   const g = globalThis as unknown as {
     chrome?: {
       notifications?: {
@@ -295,9 +364,15 @@ function notifyContextResultFallback(
       : "NeuroDock — translation error";
   const host = safeHost(pageUrl);
   const where = host ? ` on ${host}` : "";
+  // Only point the user at History when History is actually ON — otherwise
+  // they open a History tab that's empty by design and quite reasonably
+  // conclude the feature is broken.
+  const okSuffix = historyEnabled
+    ? "Open the popup → Home → History and click the latest row to read it."
+    : "Turn on History in the popup → Home if you want the result kept around.";
   const message = ok
     ? `Done${where}. NeuroDock's panel can't open on this site (no host ` +
-      `permission). Open the popup → Home → History to read the result.`
+      `permission). ${okSuffix}`
     : response.mockMode
       ? `Configured provider was unreachable${where}; mock answered instead. Check popup → Settings → Test.`
       : `Could not translate${where}. ${response.error ?? "Unknown error"}.`;
@@ -445,7 +520,7 @@ async function sendImagePermissionDenied(
       channel,
     })
     .catch(() => {
-      notifyContextResultFallback(response, pageUrl);
+      void notifyContextResultFallback(response, pageUrl);
     });
 }
 
@@ -474,6 +549,6 @@ async function dispatchContextResult(
       channel,
     })
     .catch(() => {
-      notifyContextResultFallback(response, pageUrl);
+      void notifyContextResultFallback(response, pageUrl);
     });
 }

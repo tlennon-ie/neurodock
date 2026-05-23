@@ -22,6 +22,7 @@ import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
 import { listHistory, clearHistory } from "../../src/lib/storage.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
+import { ToolView, SourcePreview } from "../_shared/panel.js";
 
 function isHistoryUpdatedMessage(msg: unknown): boolean {
   return (
@@ -437,59 +438,172 @@ function HistoryPanel({
           supported site to start.
         </p>
       ) : null}
-      {profile.historyEnabled && history.length > 0
-        ? (() => {
-            // A "silent fallback" is when the user configured a real
-            // provider (ollama, lmstudio, openai, anthropic, openrouter)
-            // but the translation client could not reach it and quietly
-            // answered with the deterministic mock. The history row
-            // surfaces the fallback inline; if the most recent entry
-            // shows one, we also surface a one-line banner so the user
-            // realises *why* responses are coming back as "mock".
-            const fellBack = (entry: HistoryEntry): boolean =>
-              entry.mockMode === true &&
-              typeof entry.provider === "string" &&
-              entry.provider !== "mock";
-            const latest = history[0];
-            const latestFallback = latest ? fellBack(latest) : false;
-            return (
-              <>
-                {latestFallback && latest ? (
-                  <div className="mb-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-                    <strong>Heads up:</strong> your selected provider (
-                    <code>{latest.provider}</code>) was unreachable, so the
-                    extension fell back to the mock provider. Open Settings →
-                    Test to diagnose.
-                  </div>
-                ) : null}
-                <ul className="m-0 flex max-h-48 list-none flex-col gap-1 overflow-auto p-0 text-xs">
-                  {history.map((entry) => {
-                    const providerLabel = entry.provider ?? "unknown";
-                    const fallbackHere = fellBack(entry);
-                    return (
-                      <li
-                        key={entry.id}
-                        className="border-b border-neutral-200 pb-1 dark:border-neutral-800"
-                      >
-                        <div className="font-mono">{entry.tool}</div>
-                        <div className="text-neutral-500">
-                          {entry.timestamp} · {entry.mode} ·{" "}
-                          {fallbackHere ? (
-                            <span className="text-amber-700 dark:text-amber-300">
-                              {providerLabel} → mock (fallback)
-                            </span>
-                          ) : (
-                            providerLabel
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </>
-            );
-          })()
-        : null}
+      {profile.historyEnabled && history.length > 0 ? (
+        <HistoryList history={history} />
+      ) : null}
     </div>
   );
+}
+
+interface HistoryListProps {
+  readonly history: readonly HistoryEntry[];
+}
+
+function HistoryList({ history }: HistoryListProps): React.ReactElement {
+  // 0.0.21: rows are now click-to-expand. Pre-0.0.21 they showed only a
+  // tool/timestamp/provider line and the user had no way to read the
+  // actual result — the notifications that said "open History to see
+  // the translation" pointed at a dead-end list. Each row now stores
+  // the full response (sanitised — base64 snapshots are stripped), so
+  // expanding renders the same structured view the in-page panel uses.
+  //
+  // Only one row open at a time to keep scroll predictable; clicking
+  // an open row collapses it.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const fellBack = (entry: HistoryEntry): boolean =>
+    entry.mockMode === true &&
+    typeof entry.provider === "string" &&
+    entry.provider !== "mock";
+  const latest = history[0];
+  const latestFallback = latest ? fellBack(latest) : false;
+  return (
+    <>
+      {latestFallback && latest ? (
+        <div className="mb-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          <strong>Heads up:</strong> your selected provider (
+          <code>{latest.provider}</code>) was unreachable, so the extension fell
+          back to the mock provider. Open Settings → Test to diagnose.
+        </div>
+      ) : null}
+      <ul className="m-0 flex max-h-72 list-none flex-col gap-1 overflow-auto p-0 text-xs">
+        {history.map((entry) => {
+          const providerLabel = entry.provider ?? "unknown";
+          const fallbackHere = fellBack(entry);
+          const expanded = openId === entry.id;
+          const expandable = entry.response !== undefined;
+          return (
+            <li
+              key={entry.id}
+              className="border-b border-neutral-200 pb-1 dark:border-neutral-800"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenId(expanded ? null : entry.id)}
+                disabled={!expandable}
+                aria-expanded={expanded}
+                aria-controls={`history-row-${entry.id}`}
+                className={
+                  "flex w-full items-center justify-between gap-2 border-0 bg-transparent p-0 text-left " +
+                  (expandable
+                    ? "cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100"
+                    : "cursor-default opacity-80")
+                }
+                data-testid={`history-row-toggle-${entry.tool}`}
+              >
+                <div>
+                  <div className="font-mono">{entry.tool}</div>
+                  <div className="text-neutral-500">
+                    {formatTimestamp(entry.timestamp)} · {entry.mode} ·{" "}
+                    {fallbackHere ? (
+                      <span className="text-amber-700 dark:text-amber-300">
+                        {providerLabel} → mock (fallback)
+                      </span>
+                    ) : (
+                      providerLabel
+                    )}
+                  </div>
+                </div>
+                {expandable ? (
+                  <span aria-hidden="true" className="text-neutral-400">
+                    {expanded ? "▾" : "▸"}
+                  </span>
+                ) : null}
+              </button>
+              {expanded && entry.response ? (
+                <div
+                  id={`history-row-${entry.id}`}
+                  className="mt-2 border-l-2 border-neutral-300 pl-2 dark:border-neutral-700"
+                  data-testid="history-row-detail"
+                >
+                  <HistoryEntryDetail entry={entry} />
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
+interface HistoryEntryDetailProps {
+  readonly entry: HistoryEntry;
+}
+
+function HistoryEntryDetail({
+  entry,
+}: HistoryEntryDetailProps): React.ReactElement {
+  const response = entry.response;
+  if (!response) {
+    return (
+      <p className="text-xs text-neutral-500">
+        (No detail saved for this row — it was written before NeuroDock started
+        persisting full responses.)
+      </p>
+    );
+  }
+  const sourceText = extractSourcePreview(entry);
+  return (
+    <div className="flex flex-col gap-2">
+      {sourceText.length > 0 ? <SourcePreview text={sourceText} /> : null}
+      {response.ok && response.data !== null ? (
+        <ToolView
+          tool={response.tool}
+          data={response.data as Record<string, unknown>}
+        />
+      ) : (
+        <p className="text-xs text-red-700 dark:text-red-300">
+          Error: {response.error ?? "Unknown error"}
+        </p>
+      )}
+      <p className="text-[11px] text-neutral-500">
+        via {response.provenance.provider} · {response.provenance.model} ·{" "}
+        {response.provenance.mode}
+      </p>
+    </div>
+  );
+}
+
+function extractSourcePreview(entry: HistoryEntry): string {
+  const input = entry.request?.input as Record<string, unknown> | undefined;
+  if (input) {
+    if (typeof input.text === "string" && input.text.length > 0) {
+      return input.text;
+    }
+    if (typeof input.image_url === "string" && input.image_url.length > 0) {
+      return input.image_url;
+    }
+    if (typeof input.transcript === "string" && input.transcript.length > 0) {
+      return input.transcript;
+    }
+  }
+  return entry.inputPreview;
+}
+
+function formatTimestamp(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    // Locale-default short form; readable enough for the history list
+    // without flooding the row with full ISO ms precision.
+    return d.toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
 }

@@ -173,6 +173,19 @@ export interface HistoryEntry {
   readonly provider?: string;
   readonly inputPreview: string;
   readonly outputSummary: string;
+  /**
+   * 0.0.21: full request + response captured so the popup History tab
+   * can render the actual structured result (description, subtext,
+   * etc.) on click — pre-0.0.21 entries only carried short previews,
+   * so the "open History to view the result" notification led to a
+   * dead-end list. Optional for back-compat with rows written before
+   * this field landed.
+   *
+   * Stored locally only — same privacy envelope as the rest of the
+   * History store. Never sent off-device.
+   */
+  readonly request?: TranslationRequest;
+  readonly response?: TranslationResponse;
 }
 
 /**

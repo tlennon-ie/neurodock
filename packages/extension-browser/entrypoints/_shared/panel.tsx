@@ -120,8 +120,15 @@ export function Panel({
   );
 }
 
-function SourcePreview({ text }: { text: string }): React.ReactElement {
+export function SourcePreview({ text }: { text: string }): React.ReactElement {
   const isUrl = /^https?:\/\//.test(text) || text.startsWith("data:");
+  // 0.0.21: when the source is an image URL (right-click describe), also
+  // show a small thumbnail of the image — knowing the URL alone wasn't
+  // enough to tell *which* image you described, especially when several
+  // similar avatars or thumbnails sit next to each other on a page.
+  const isImage =
+    text.startsWith("data:image/") ||
+    /^https?:\/\/[^\s]+\.(png|jpe?g|gif|webp|svg|avif|bmp)(\?|$)/i.test(text);
   return (
     <div
       data-testid="context-source-preview"
@@ -132,11 +139,25 @@ function SourcePreview({ text }: { text: string }): React.ReactElement {
         borderLeft: "3px solid rgba(0,0,0,0.25)",
         fontSize: 12,
         fontStyle: isUrl ? "normal" : "italic",
-        maxHeight: 80,
+        maxHeight: 220,
         overflow: "auto",
         wordBreak: isUrl ? "break-all" : "normal",
       }}
     >
+      {isImage ? (
+        <img
+          src={text}
+          alt="Source image (right-clicked)"
+          style={{
+            maxWidth: "100%",
+            maxHeight: 140,
+            display: "block",
+            marginBottom: 4,
+            objectFit: "contain",
+            background: "rgba(0,0,0,0.04)",
+          }}
+        />
+      ) : null}
       {isUrl ? (
         <code style={{ fontFamily: "ui-monospace, monospace" }}>{text}</code>
       ) : (
@@ -227,7 +248,7 @@ function ProvenanceLine({
   );
 }
 
-function ToolView({
+export function ToolView({
   tool,
   data,
 }: {
