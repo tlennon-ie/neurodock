@@ -22,6 +22,7 @@
 import React from "react";
 import { mountIsland } from "./mountIsland.js";
 import { ContentApp } from "./contentApp.js";
+import { installImageSnapshotHandler } from "./imageSnapshot.js";
 import { defaultProfile } from "../../src/lib/profile.js";
 import type {
   Channel,
@@ -116,10 +117,19 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
     chrome.storage.onChanged.addListener(storageListener);
   }
 
+  // 0.0.20: register the SW → content-script `image:snapshot` handler so
+  // the right-click "describe image" path can fall back to a canvas-based
+  // PNG snapshot when the direct URL fetch fails (SVG, auth-gated CDN,
+  // expired signed URL). The handler returns null when the image can't
+  // be snapshotted (CORS-tainted canvas, no matching <img>), and the SW
+  // gracefully falls back to its existing URL-fetch path.
+  const removeImageSnapshotHandler = installImageSnapshotHandler();
+
   return (): void => {
     if (chrome?.storage?.onChanged?.removeListener) {
       chrome.storage.onChanged.removeListener(storageListener);
     }
+    removeImageSnapshotHandler();
     island.destroy();
   };
 }

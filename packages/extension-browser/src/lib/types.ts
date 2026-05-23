@@ -226,7 +226,28 @@ export type RuntimeMessage =
         | "anthropic";
       readonly baseUrl?: string | null;
       readonly apiKey?: string | null;
-    };
+    }
+  /**
+   * 0.0.20: SW asks the content-script island to snapshot a right-clicked
+   * image into a base64 PNG data URL. Used as a robust fallback when the
+   * direct image URL is unreachable (auth-required CDN, expired hotlink),
+   * is in a format vision models can't read (SVG), or when the URL fetch
+   * round-trip would be wasteful (the browser already has the bytes in
+   * memory because the image is rendered on the page).
+   *
+   * The content script locates the `<img>` element matching `imageUrl`
+   * (via `currentSrc` / `src`), draws it onto an offscreen canvas, and
+   * returns `toDataURL('image/png')`. Returns null when:
+   *   - no matching `<img>` is found on the page
+   *   - the image isn't yet loaded (`naturalWidth === 0`)
+   *   - the canvas is cross-origin tainted (`toDataURL` throws
+   *     `SecurityError`) — common when the image was served without a
+   *     CORS header and the `<img>` has no `crossorigin="anonymous"`
+   *
+   * Null on either side is non-fatal: the SW falls back to the
+   * original-URL fetch path so the existing behaviour is preserved.
+   */
+  | { readonly type: "image:snapshot"; readonly imageUrl: string };
 
 export interface RuntimeResponseEnvelope<T = unknown> {
   readonly success: boolean;

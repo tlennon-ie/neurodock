@@ -159,7 +159,11 @@ export async function translate<T = unknown>(
     };
   }
 
-  const validated = parseAndValidate<T>(request.tool, providerResult.text);
+  const validated = parseAndValidate<T>(
+    request.tool,
+    providerResult.text,
+    providerResult.provenance,
+  );
   if (!validated.ok) {
     return {
       ok: false,

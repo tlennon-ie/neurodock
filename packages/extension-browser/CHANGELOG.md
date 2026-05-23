@@ -1,5 +1,71 @@
 # @neurodock/extension-browser
 
+## 0.0.20
+
+### Fixed — `LLM_OUTPUT_VALIDATION_FAILED` on local-model image descriptions
+
+`describe_image` requests against local vision models (gemma-4-e4b,
+Qwen2-VL) were succeeding at the model layer but failing schema
+validation with:
+
+```
+LLM_OUTPUT_VALIDATION_FAILED: ...
+must have required property 'eval_corpus_slice';
+must have required property 'model_provenance';
+/contains_text: must be boolean
+```
+
+The schemas mark `eval_corpus_slice` and `model_provenance` as required
+_output_ fields, but per ADR 0005 these are **server-owned** — the
+model has no honest way to produce them (the provenance is what the
+server knows about which model answered; the corpus slice is a CI
+marker). Asking the model to invent the values via prompt was the
+wrong shape; small local models also routinely return `contains_text`
+as a string ("true"/"false") rather than a boolean.
+
+Fix: a new `normaliseLLMOutput()` step in `validation.ts` runs between
+JSON parse and schema validation. It:
+
+- Injects `model_provenance` from the actual provider/model that
+  answered, when the model omitted it.
+- Injects `eval_corpus_slice` with the canonical per-tool identifier
+  (e.g. `"describe_image-v0.1.0"`) when the model omitted it.
+- Coerces `contains_text` from string-boolean to boolean, defaults
+  missing optional arrays/null fields to their schema-shaped values.
+
+The public schema contract still holds — the server guarantees these
+fields, the validator still runs, and a genuinely malformed response
+(missing `description`, wrong types we can't coerce) still fails
+loudly.
+
+### Added — canvas snapshot fallback for inaccessible / wrong-format images
+
+Right-click → "describe image" now snapshots the rendered `<img>` from
+the page into a base64 PNG **before** falling back to fetching the
+URL. This handles three previously broken paths:
+
+- **Auth-gated CDN images** (private repo avatars, signed S3 URLs the
+  SW has no cookies for): the page already has the bytes, the
+  snapshot uses them directly.
+- **SVG images**: most vision models can't read raw SVG. The canvas
+  rasterises the rendered SVG into a PNG the model can actually parse.
+- **Expired signed URLs**: the same URL might 404 by the time the SW
+  fetches it; the snapshot uses the bytes the browser cached.
+
+Flow (`background.ts` → `dispatchImageTranslate`):
+
+1. SW sends `{type: "image:snapshot", imageUrl}` to the tab.
+2. Content-script `installImageSnapshotHandler` (in `_shared/imageSnapshot.ts`)
+   locates the matching `<img>`, draws it to an offscreen canvas, and
+   returns `toDataURL('image/png')`.
+3. SW uses the data URL as `input.image_url` if the snapshot succeeded;
+   otherwise it falls back to the existing 0.0.17 URL-fetch path so
+   behaviour degrades gracefully when the canvas is CORS-tainted or no
+   content-script island is mounted.
+
+The in-panel "source preview" still shows the original URL so the
+user can verify which image was processed.
+
 ## 0.0.19
 
 ### Fixed — image-translation permission prompt never fired

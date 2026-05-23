@@ -359,17 +359,62 @@ async function dispatchImageTranslate(
   channel: ReturnType<typeof detectChannelFromUrl>,
   imageUrl: string,
 ): Promise<void> {
+  // 0.0.20: prefer the content-script canvas snapshot over the original
+  // URL. The page already has the decoded image bytes in memory, so a
+  // snapshot bypasses three failure modes the URL path can't recover
+  // from: (a) the URL requires auth the SW doesn't have, (b) the URL
+  // returned an SVG most vision models can't read, (c) the URL is a
+  // short-lived signed link that has expired between page load and
+  // right-click. The snapshot returns a base64 PNG data URL that drops
+  // straight into the existing image-pipeline.
+  //
+  // Falls back silently to the original URL when:
+  //   - no content-script island is mounted on this tab (URL outside
+  //     declared host_permissions) — `sendMessage` rejects
+  //   - the canvas is CORS-tainted — `toDataURL` throws SecurityError
+  //   - no matching `<img>` element is found on the page
+  // ...so the existing 0.0.17 URL-fetch path remains the safety net.
+  const effectiveImageUrl =
+    (await tryImageSnapshot(tabId, imageUrl)) ?? imageUrl;
   await dispatchContextResult(
     tabId,
     pageUrl,
     channel,
     {
       tool: "describe_image",
-      input: { image_url: imageUrl, page_url: pageUrl },
+      input: { image_url: effectiveImageUrl, page_url: pageUrl },
       channel,
     },
-    imageUrl,
+    imageUrl, // keep the original URL for the in-panel SourcePreview
   );
+}
+
+/**
+ * Ask the content-script island to snapshot the right-clicked image
+ * via `<canvas>.toDataURL`. Returns null when the snapshot path is
+ * unavailable (no island, tainted canvas, image not yet loaded), in
+ * which case the caller falls back to fetching the URL directly.
+ */
+async function tryImageSnapshot(
+  tabId: number,
+  imageUrl: string,
+): Promise<string | null> {
+  const tabsApi = (globalThis as { chrome?: typeof chrome }).chrome?.tabs;
+  if (!tabsApi?.sendMessage) return null;
+  try {
+    const response = (await tabsApi.sendMessage(tabId, {
+      type: "image:snapshot",
+      imageUrl,
+    })) as { dataUrl?: unknown } | undefined;
+    if (response && typeof response.dataUrl === "string") {
+      return response.dataUrl;
+    }
+    return null;
+  } catch {
+    // No content-script island (out-of-scope URL), tab gone, or
+    // listener threw. Caller falls back to the URL path.
+    return null;
+  }
 }
 
 async function sendImagePermissionDenied(
