@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/describe_image.schema.json",
+  "title": "describe_image",
+  "description": "Describe an image for a neurodivergent reader. The caller sends an image URL (or data URL); the server orchestrates a prompt against a vision-capable LLM and returns a literal description, transcribed text if any, key elements, inferred purpose, and an alt-text suggestion. REQUIRES A VISION-CAPABLE MODEL — text-only models will reject the request with VISION_MODEL_REQUIRED. The server stores no image bytes; URLs are not logged.",
+  "version": "0.1.0",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["image_url"],
+      "properties": {
+        "image_url": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "description": "URL of the image to describe. May be an https URL, a data: URL, or a blob: URL. The server passes the URL through to the configured vision model verbatim. Never logged.",
+          "examples": [
+            "https://example.com/banner.png",
+            "data:image/png;base64,iVBORw0KG..."
+          ]
+        },
+        "page_url": {
+          "type": "string",
+          "maxLength": 4096,
+          "description": "Optional URL of the page the image was found on. Provided so the model can ground its purpose-inference (e.g. a banner on a docs site vs. an email signature). NOT used to fetch anything.",
+          "examples": ["https://mail.google.com/mail/u/0/#inbox/..."]
+        },
+        "alt_text": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Optional existing alt text from the page's DOM, included so the model can either reuse it (if accurate) or flag the gap."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "contains_text",
+        "key_elements",
+        "inferred_purpose",
+        "eval_corpus_slice",
+        "model_provenance"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600,
+          "description": "Literal one-to-three sentence description of what is visually depicted. No metaphor, no emotional interpretation, no marketing language. A reader who cannot see the image should be able to picture it from this description."
+        },
+        "contains_text": {
+          "type": "boolean",
+          "description": "True iff the image contains readable text (signage, screenshots, charts with labels, memes, etc.)."
+        },
+        "transcribed_text": {
+          "type": ["string", "null"],
+          "maxLength": 4000,
+          "description": "Verbatim transcription of any text visible in the image. Null when contains_text is false. Empty string when contains_text is true but the text is illegible — the description should note the illegibility."
+        },
+        "key_elements": {
+          "type": "array",
+          "maxItems": 7,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": "Up to 7 bullet-list items naming distinct elements in the image (e.g. 'red circle, top-left', 'bar chart with 5 bars', 'company logo'). Ordered by visual prominence."
+        },
+        "inferred_purpose": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "description": "What the image is FOR, in plain language. Examples: 'Promotional banner for a podcast', 'Diagram explaining the auth flow', 'Screenshot of a settings page', 'Decorative — no information'."
+        },
+        "accessibility_notes": {
+          "type": ["string", "null"],
+          "maxLength": 400,
+          "description": "Optional one-line alt-text suggestion suitable for assistive technology. Null when the image is purely decorative. When non-null, MUST be a single sentence."
+        },
+        "eval_corpus_slice": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identifier of the eval corpus slice that validates this prompt template. Required so prompt changes can be re-evaluated in CI."
+        },
+        "model_provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "provider", "model"],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": ["local", "cloud", "unknown"]
+            },
+            "provider": { "type": "string" },
+            "model": { "type": "string" }
+          },
+          "description": "Honest declaration of which mode/provider/model handled this request. The cloud-mode banner in the extension is gated on `mode === 'cloud'`."
+        }
+      }
+    }
+  },
+  "compatibility": {
+    "vision_required": true,
+    "vision_capable_model_hints": {
+      "openai": [
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4-turbo",
+        "gpt-4-vision-preview",
+        "o1",
+        "o3",
+        "o4"
+      ],
+      "anthropic": [
+        "claude-3-haiku",
+        "claude-3-sonnet",
+        "claude-3-opus",
+        "claude-3-5-sonnet",
+        "claude-haiku-4-5",
+        "claude-sonnet-4-6",
+        "claude-opus-4-7"
+      ],
+      "ollama": [
+        "llava",
+        "bakllava",
+        "llama3.2-vision",
+        "moondream",
+        "minicpm-v"
+      ],
+      "lmstudio": ["any LM Studio model whose card declares vision support"]
+    },
+    "rejection_error_code": "VISION_MODEL_REQUIRED",
+    "policy": "Additive-only within v0.1.x. New optional output fields MAY land in v0.1.x. Removing or retyping a field requires a new major version."
+  }
+}

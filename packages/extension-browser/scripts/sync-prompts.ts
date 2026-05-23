@@ -64,6 +64,7 @@ export function syncPrompts(): SyncResult {
     "check_tone.prompt.md",
     "rewrite_outgoing.prompt.md",
     "brief_meeting.prompt.md",
+    "describe_image.prompt.md",
   ];
   const available = new Set(readdirSync(SOURCE_DIR));
   const copied: string[] = [];

@@ -344,6 +344,7 @@ describe("buildPrompt — schema suffix", () => {
     "check_tone",
     "rewrite_outgoing",
     "brief_meeting",
+    "describe_image",
   ];
 
   const MINIMAL_INPUTS: Record<TranslationTool, Record<string, unknown>> = {
@@ -351,6 +352,11 @@ describe("buildPrompt — schema suffix", () => {
     check_tone: CHECK_TONE_INPUT,
     rewrite_outgoing: REWRITE_OUTGOING_INPUT,
     brief_meeting: BRIEF_MEETING_INPUT,
+    describe_image: {
+      image_url: "https://example.com/image.png",
+      page_url: "https://example.com/page",
+      alt_text: "",
+    },
   };
 
   it.each(tools)(
@@ -390,6 +396,7 @@ describe("buildPrompt — all four tools build without throwing", () => {
     "check_tone",
     "rewrite_outgoing",
     "brief_meeting",
+    "describe_image",
   ];
 
   const MINIMAL_INPUTS: Record<TranslationTool, Record<string, unknown>> = {
@@ -397,6 +404,11 @@ describe("buildPrompt — all four tools build without throwing", () => {
     check_tone: CHECK_TONE_INPUT,
     rewrite_outgoing: REWRITE_OUTGOING_INPUT,
     brief_meeting: BRIEF_MEETING_INPUT,
+    describe_image: {
+      image_url: "https://example.com/image.png",
+      page_url: "https://example.com/page",
+      alt_text: "",
+    },
   };
 
   it.each(tools)(

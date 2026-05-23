@@ -27,8 +27,26 @@ flowchart LR
 
 - Floats a non-intrusive "Translate" button on text fields across Gmail, Slack web, Linear, Notion, GitHub, Google Docs, and Outlook web.
 - Adds a right-click context-menu action ("NeuroDock: translate selection") on any selected text within a permitted site.
+- **0.0.14+: right-click any image** for "NeuroDock: describe image (vision)". Returns a literal description, transcribed text (for screenshots/charts/memes), key visual elements, the inferred purpose, and an alt-text suggestion. **Requires a vision-capable model** — see [Image translation: vision-model requirement](#image-translation-vision-model-requirement) below. Text-only models refuse with a clear `VISION_MODEL_REQUIRED` error.
 - Opens a tabbed popup (Home / Settings) for mode selection, provider configuration, and history.
-- Runs the four translation tools defined by the MCP twin (`translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`) using the **same prompt library** as `packages/mcp-translation`.
+- Runs the five translation tools defined by the MCP twin (`translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`, `describe_image`) using the **same prompt library** as `packages/mcp-translation`.
+
+## Image translation: vision-model requirement
+
+The `describe_image` tool sends the image URL to the configured model. **The model must support image input** — otherwise the request is rejected up front with `VISION_MODEL_REQUIRED` and no partial / fabricated result is returned.
+
+Models known to support image input:
+
+| Provider   | Vision-capable models                                                                                                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI     | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4-vision-preview`, `o1`, `o3`, `o4`, future `gpt-5*`                                                                                                     |
+| Anthropic  | `claude-3-*` family, `claude-haiku-4-*`, `claude-sonnet-4-*`, `claude-opus-4-*`                                                                                                                       |
+| OpenRouter | `openrouter/auto` (routes to vision models when images are present), or pick a vision-capable upstream slug manually                                                                                  |
+| Ollama     | `llava`, `bakllava`, `llama3.2-vision`, `moondream`, `minicpm-v` — **but the local lane currently rejects image input in v0.0.14; cloud-mode is the supported path**. Local vision lands in v0.0.15+. |
+| LM Studio  | Same — vision support is Phase 2 work.                                                                                                                                                                |
+
+Privacy: the image URL is passed verbatim to the model. The extension never downloads, caches, or logs the image bytes. Cloud-mode also fires the persistent cloud-mode banner so consent state stays visible.
+
 - Dispatches real LLM calls through a single boundary (`translation-client.ts`) to one of five providers:
 
 | Provider     | Mode  | Transport                                              | Default model      |

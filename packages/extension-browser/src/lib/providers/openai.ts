@@ -50,7 +50,7 @@ async function completeStreaming(
       model: request.model,
       stream: true,
       response_format: { type: "json_object" },
-      messages: [{ role: "user", content: request.prompt }],
+      messages: [{ role: "user", content: buildOpenAIContent(request) }],
     },
     { signal: request.signal },
   );
@@ -79,7 +79,7 @@ async function completeNonStreaming(
         model: request.model,
         stream: false,
         response_format: { type: "json_object" },
-        messages: [{ role: "user", content: request.prompt }],
+        messages: [{ role: "user", content: buildOpenAIContent(request) }],
       },
       { signal: request.signal },
     );
@@ -92,6 +92,60 @@ async function completeNonStreaming(
     text,
     provenance: { mode: "cloud", provider: "openai", model: request.model },
   };
+}
+
+/**
+ * Build the `messages[0].content` payload for an OpenAI Chat Completions
+ * call. When `request.images` is non-empty we send the multimodal
+ * content array (text + image_url parts) — this is the canonical
+ * vision-model input shape. OpenAI silently 400s on text-only models
+ * sent multimodal content, so this path is gated on `images` presence.
+ *
+ * For describe_image we additionally check `model` against a coarse
+ * vision-capability allowlist and surface a clearer error than the
+ * generic 400. See `isVisionCapableOpenAIModel`.
+ */
+type OpenAIMessageContent =
+  | string
+  | Array<
+      | { type: "text"; text: string }
+      | { type: "image_url"; image_url: { url: string } }
+    >;
+
+function buildOpenAIContent(request: ProviderRequest): OpenAIMessageContent {
+  const images = request.images ?? [];
+  if (images.length === 0) return request.prompt;
+  if (!isVisionCapableOpenAIModel(request.model)) {
+    throw new Error(
+      `VISION_MODEL_REQUIRED: model "${request.model}" doesn't appear to ` +
+        `support image input. Try gpt-4o-mini, gpt-4o, gpt-4-turbo, or ` +
+        `an o1/o3-series model in Settings.`,
+    );
+  }
+  return [
+    { type: "text", text: request.prompt },
+    ...images.map((url) => ({
+      type: "image_url" as const,
+      image_url: { url },
+    })),
+  ];
+}
+
+/**
+ * Coarse allowlist for OpenAI models known to accept image input.
+ * Pattern-matched to absorb future minor releases. New families need to
+ * be added here; the failure mode is a clear VISION_MODEL_REQUIRED
+ * error rather than an opaque OpenAI 400.
+ */
+export function isVisionCapableOpenAIModel(model: string): boolean {
+  const m = model.toLowerCase();
+  if (m.startsWith("gpt-4o")) return true;
+  if (m.startsWith("gpt-4-turbo")) return true;
+  if (m.startsWith("gpt-4-vision")) return true;
+  if (m.startsWith("gpt-5")) return true;
+  if (/^o[134](-|$)/.test(m)) return true;
+  if (m.startsWith("chatgpt-4o")) return true;
+  return false;
 }
 
 function isStreamUnsupported(cause: unknown): boolean {

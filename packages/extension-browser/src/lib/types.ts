@@ -36,7 +36,8 @@ export type TranslationTool =
   | "translate_incoming"
   | "check_tone"
   | "rewrite_outgoing"
-  | "brief_meeting";
+  | "brief_meeting"
+  | "describe_image";
 
 export type Channel =
   | "email"
@@ -108,6 +109,23 @@ export interface NextAction {
   readonly action: string;
   readonly reason: string;
   readonly draft_reply: string | null;
+}
+
+/**
+ * Output shape of the `describe_image` tool. REQUIRES a vision-capable
+ * model — text-only models return an error with code
+ * `VISION_MODEL_REQUIRED`. See `packages/mcp-translation/schemas/
+ * describe_image.schema.json` for the canonical wire contract.
+ */
+export interface DescribeImageResult {
+  readonly description: string;
+  readonly contains_text: boolean;
+  readonly transcribed_text: string | null;
+  readonly key_elements: readonly string[];
+  readonly inferred_purpose: string;
+  readonly accessibility_notes: string | null;
+  readonly eval_corpus_slice: string;
+  readonly model_provenance: ModelProvenance;
 }
 
 export interface TranslateIncomingResult {

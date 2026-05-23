@@ -73,7 +73,10 @@ async function completeStreaming(
       model: request.model,
       max_tokens: MAX_TOKENS,
       system: JSON_MODE_SYSTEM,
-      messages: [{ role: "user", content: request.prompt }],
+      messages: [
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { role: "user", content: buildAnthropicContent(request) as any },
+      ],
     },
     { signal: request.signal },
   );
@@ -99,7 +102,10 @@ async function completeNonStreaming(
         model: request.model,
         max_tokens: MAX_TOKENS,
         system: JSON_MODE_SYSTEM,
-        messages: [{ role: "user", content: request.prompt }],
+        messages: [
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          { role: "user", content: buildAnthropicContent(request) as any },
+        ],
       },
       { signal: request.signal },
     );
@@ -128,6 +134,72 @@ function extractText(message: AnthropicMessageLike): string {
     .filter((b) => b.type === "text" && typeof b.text === "string")
     .map((b) => b.text ?? "")
     .join("");
+}
+
+/**
+ * Build Anthropic Messages content. Text-only when no images; multimodal
+ * (text + image blocks) when images are present. Vision-capability is
+ * gated by an allowlist so users get `VISION_MODEL_REQUIRED` rather than
+ * an opaque Anthropic 400.
+ */
+type AnthropicMessageContent =
+  | string
+  | Array<
+      | { type: "text"; text: string }
+      | {
+          type: "image";
+          source:
+            | { type: "url"; url: string }
+            | { type: "base64"; media_type: string; data: string };
+        }
+    >;
+
+function buildAnthropicContent(
+  request: ProviderRequest,
+): AnthropicMessageContent {
+  const images = request.images ?? [];
+  if (images.length === 0) return request.prompt;
+  if (!isVisionCapableAnthropicModel(request.model)) {
+    throw new Error(
+      `VISION_MODEL_REQUIRED: model "${request.model}" doesn't support ` +
+        `image input. Anthropic vision is supported on claude-3-* and ` +
+        `claude-4.x families. Update the model in Settings.`,
+    );
+  }
+  return [
+    { type: "text", text: request.prompt },
+    ...images.map(toAnthropicImagePart),
+  ];
+}
+
+function toAnthropicImagePart(url: string): {
+  type: "image";
+  source:
+    | { type: "url"; url: string }
+    | { type: "base64"; media_type: string; data: string };
+} {
+  if (url.startsWith("data:")) {
+    const match = url.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      return {
+        type: "image",
+        source: { type: "base64", media_type: match[1]!, data: match[2]! },
+      };
+    }
+  }
+  return { type: "image", source: { type: "url", url } };
+}
+
+export function isVisionCapableAnthropicModel(model: string): boolean {
+  const m = model.toLowerCase();
+  if (m.startsWith("claude-3")) return true;
+  if (m.startsWith("claude-haiku-4")) return true;
+  if (m.startsWith("claude-sonnet-4")) return true;
+  if (m.startsWith("claude-opus-4")) return true;
+  if (m.startsWith("claude-haiku-5")) return true;
+  if (m.startsWith("claude-sonnet-5")) return true;
+  if (m.startsWith("claude-opus-5")) return true;
+  return false;
 }
 
 function isStreamUnsupported(cause: unknown): boolean {

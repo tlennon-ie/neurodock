@@ -91,6 +91,20 @@ export function buildMockData(
       model_provenance: provenance,
     };
   }
+  if (tool === "describe_image") {
+    return {
+      description:
+        "[MOCK] Image-description stub. Configure a vision-capable cloud " +
+        "model (gpt-4o-mini, claude-haiku-4-5) to receive a real description.",
+      contains_text: false,
+      transcribed_text: null,
+      key_elements: [],
+      inferred_purpose: "[MOCK] Purpose inference disabled in mock mode.",
+      accessibility_notes: null,
+      eval_corpus_slice: evalSlice,
+      model_provenance: provenance,
+    };
+  }
   return {
     my_asks: [],
     others_asks: [],

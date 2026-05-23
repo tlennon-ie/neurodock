@@ -1,5 +1,66 @@
 # @neurodock/extension-browser
 
+## 0.0.14
+
+### Added — image translation (requires a vision-capable model)
+
+Right-click any image on a supported site → **NeuroDock: describe image
+(vision)** → the panel renders a literal description, transcribed text
+(for screenshots / charts / memes / signage), key visual elements, the
+inferred purpose, and an alt-text suggestion. Same ND-friendly UX as
+the text panel: TL;DR card on top, collapsible detail below, no raw
+schema field names leaking to the surface.
+
+**This feature requires a vision-capable model.** Text-only models
+(`gpt-3.5-turbo`, base `claude-haiku-3` without vision tier, plain
+Ollama Llama models without `-vision`, etc.) will refuse the request
+with a clear `VISION_MODEL_REQUIRED` error rather than silently
+returning a fabricated description.
+
+Known vision-capable models:
+
+| Provider   | Vision-capable models                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI     | `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-4-vision-preview`, `o1`, `o3`, `o4`, future `gpt-5*`                                                                                                                                |
+| Anthropic  | `claude-3-*` family, `claude-haiku-4-*`, `claude-sonnet-4-*`, `claude-opus-4-*`                                                                                                                                                  |
+| OpenRouter | `openrouter/auto` (routes to a vision model when the request contains images), or pick a vision-capable upstream slug manually                                                                                                   |
+| Ollama     | `llava`, `bakllava`, `llama3.2-vision`, `moondream`, `minicpm-v` — but the **local lane currently rejects image input with VISION_MODEL_REQUIRED in v0.0.14**; cloud-mode is the supported path. Local vision lands in v0.0.15+. |
+| LM Studio  | Same — vision support is Phase 2 work.                                                                                                                                                                                           |
+
+### Details
+
+- **New MCP tool**: `describe_image` with schema at
+  `packages/mcp-translation/schemas/describe_image.schema.json` and
+  prompt template at
+  `packages/mcp-translation/src/neurodock_mcp_translation/prompts/describe_image.prompt.md`.
+  Validated end-to-end through the same precompiled-AJV path as the
+  other four tools (CSP-safe).
+- **Context menu**: a new "NeuroDock: describe image (vision)" entry
+  fires on `contexts: ["image"]`. Image source URL is read from
+  `info.srcUrl`; the page URL is passed as context. The URL is sent
+  verbatim to the vision model — neither the extension nor the MCP
+  server downloads, caches, or logs the image bytes.
+- **Provider plumbing**: `ProviderRequest` gained an optional
+  `images: readonly string[]` field. The OpenAI and Anthropic providers
+  now build multimodal content arrays (text part + `image_url` /
+  `image` source parts) and gate on a coarse model-allowlist so users
+  get `VISION_MODEL_REQUIRED` rather than an opaque upstream 400.
+  OpenRouter pass-through trusts the routed model. Ollama + LM Studio
+  raise `VISION_MODEL_REQUIRED` until Phase 2.
+- **Panel**: new `ImageDescribeView` mirrors the `TranslateIncomingView`
+  pattern — TL;DR description + "What it's for" + (when present)
+  copyable transcribed text + collapsible key elements + alt-text
+  suggestion.
+- **Mock provider** answers `describe_image` so the extension still
+  works in mock mode for developer testing.
+
+### Tests
+
+- Prompt-builder + schema-suffix tests extended to include
+  `describe_image` — `199/199` pass.
+- `sync-prompts.test.ts` updated to expect all 5 prompts in the
+  canonical list.
+
 ## 0.0.13
 
 ### Fixed

@@ -112,12 +112,14 @@ export async function translate<T = unknown>(
 
   let providerResult;
   try {
+    const images = extractImagesFromInput(request);
     const providerRequest: ProviderRequest = {
       tool: request.tool,
       prompt: buildPrompt({ tool: request.tool, input: request.input }),
       model,
       ...(options.signal ? { signal: options.signal } : {}),
       ...(options.onToken ? { onToken: options.onToken } : {}),
+      ...(images.length > 0 ? { images } : {}),
     };
     providerResult = await provider.complete(providerRequest);
   } catch (cause: unknown) {
@@ -345,6 +347,19 @@ export function buildProviderFromProfile(
     return { provider: resolved.provider, model: resolved.model };
   }
   return buildLocalProvider(profile);
+}
+
+/**
+ * Pull the image URL(s) out of the request input for multimodal tools.
+ * Currently only `describe_image` carries `input.image_url` (singular);
+ * if a future tool accepts multiple images we can read an array here
+ * without changing the provider surface.
+ */
+function extractImagesFromInput(request: TranslationRequest): string[] {
+  if (request.tool !== "describe_image") return [];
+  const url = request.input.image_url;
+  if (typeof url !== "string" || url.length === 0) return [];
+  return [url];
 }
 
 function getErrorMessage(cause: unknown): string {

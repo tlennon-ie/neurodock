@@ -114,6 +114,7 @@ function toolLabel(tool: TranslationResponse["tool"]): string {
   if (tool === "check_tone") return "tone check";
   if (tool === "rewrite_outgoing") return "rewrite";
   if (tool === "brief_meeting") return "meeting brief";
+  if (tool === "describe_image") return "image described";
   return "result";
 }
 
@@ -208,7 +209,82 @@ function ToolView({
   if (tool === "brief_meeting") {
     return <BriefMeetingView data={data} />;
   }
+  if (tool === "describe_image") {
+    return <ImageDescribeView data={data} />;
+  }
   return <UnknownToolFallback data={data} />;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// describe_image
+// ─────────────────────────────────────────────────────────────────────────
+
+function ImageDescribeView({
+  data,
+}: {
+  data: Record<string, unknown>;
+}): React.ReactElement {
+  const description =
+    typeof data.description === "string" ? data.description : "";
+  const containsText = data.contains_text === true;
+  const transcribedText =
+    typeof data.transcribed_text === "string" &&
+    data.transcribed_text.length > 0
+      ? data.transcribed_text
+      : null;
+  const keyElements = Array.isArray(data.key_elements)
+    ? (data.key_elements as unknown[]).filter(
+        (e): e is string => typeof e === "string",
+      )
+    : [];
+  const inferredPurpose =
+    typeof data.inferred_purpose === "string" ? data.inferred_purpose : "";
+  const altText =
+    typeof data.accessibility_notes === "string" &&
+    data.accessibility_notes.length > 0
+      ? data.accessibility_notes
+      : null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {description.length > 0 ? <TldrCard text={description} /> : null}
+
+      <Section label="What it's for">
+        <p style={{ margin: 0 }}>
+          {inferredPurpose.length > 0 ? inferredPurpose : "(not inferred)"}
+        </p>
+      </Section>
+
+      {containsText && transcribedText ? (
+        <Section label="Text in the image">
+          <CopyableDraft text={transcribedText} />
+        </Section>
+      ) : null}
+
+      {keyElements.length > 0 ? (
+        <Collapsible label={`Key elements (${keyElements.length})`}>
+          <ul
+            style={{
+              margin: "4px 0 0 0",
+              paddingLeft: 18,
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+            }}
+          >
+            {keyElements.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
+        </Collapsible>
+      ) : null}
+
+      {altText ? (
+        <Section label="Suggested alt text">
+          <p style={{ margin: 0, fontStyle: "italic" }}>{altText}</p>
+        </Section>
+      ) : null}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────

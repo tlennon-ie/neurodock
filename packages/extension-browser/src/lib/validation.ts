@@ -23,11 +23,13 @@ import translateIncoming from "./schemas/translate_incoming.schema.json" assert 
 import checkTone from "./schemas/check_tone.schema.json" assert { type: "json" };
 import rewriteOutgoing from "./schemas/rewrite_outgoing.schema.json" assert { type: "json" };
 import briefMeeting from "./schemas/brief_meeting.schema.json" assert { type: "json" };
+import describeImage from "./schemas/describe_image.schema.json" assert { type: "json" };
 import {
   validate_translate_incoming,
   validate_check_tone,
   validate_rewrite_outgoing,
   validate_brief_meeting,
+  validate_describe_image,
   type ValidateFn,
 } from "./schemas/compiled-validators.js";
 import type { TranslationTool } from "./types.js";
@@ -39,6 +41,7 @@ const RAW_SCHEMAS: Record<TranslationTool, JsonSchema> = {
   check_tone: checkTone as unknown as JsonSchema,
   rewrite_outgoing: rewriteOutgoing as unknown as JsonSchema,
   brief_meeting: briefMeeting as unknown as JsonSchema,
+  describe_image: describeImage as unknown as JsonSchema,
 };
 
 const VALIDATORS: Record<TranslationTool, ValidateFn> = {
@@ -46,6 +49,7 @@ const VALIDATORS: Record<TranslationTool, ValidateFn> = {
   check_tone: validate_check_tone,
   rewrite_outgoing: validate_rewrite_outgoing,
   brief_meeting: validate_brief_meeting,
+  describe_image: validate_describe_image,
 };
 
 export interface ValidationResult<T = unknown> {

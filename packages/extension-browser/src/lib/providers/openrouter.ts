@@ -70,9 +70,23 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
     stream: boolean,
     useJsonResponseFormat: boolean,
   ): Promise<Response> {
+    // OpenRouter speaks OpenAI Chat Completions, including multimodal
+    // content arrays. We don't gate on a model allowlist because
+    // OpenRouter has hundreds of models — instead we trust the upstream
+    // to 400 with a clear error if the routed model can't handle images.
+    const content =
+      request.images && request.images.length > 0
+        ? [
+            { type: "text", text: request.prompt },
+            ...request.images.map((url) => ({
+              type: "image_url" as const,
+              image_url: { url },
+            })),
+          ]
+        : request.prompt;
     const payload: Record<string, unknown> = {
       model: request.model,
-      messages: [{ role: "user", content: request.prompt }],
+      messages: [{ role: "user", content }],
       stream,
     };
     if (useJsonResponseFormat) {

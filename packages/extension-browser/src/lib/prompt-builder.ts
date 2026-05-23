@@ -17,6 +17,7 @@ import translateIncomingPrompt from "./prompts/translate_incoming.prompt.md?raw"
 import checkTonePrompt from "./prompts/check_tone.prompt.md?raw";
 import rewriteOutgoingPrompt from "./prompts/rewrite_outgoing.prompt.md?raw";
 import briefMeetingPrompt from "./prompts/brief_meeting.prompt.md?raw";
+import describeImagePrompt from "./prompts/describe_image.prompt.md?raw";
 import { outputSchemaSnippet } from "./validation.js";
 import type { TranslationTool } from "./types.js";
 
@@ -25,6 +26,7 @@ const TEMPLATES: Record<TranslationTool, string> = {
   check_tone: checkTonePrompt,
   rewrite_outgoing: rewriteOutgoingPrompt,
   brief_meeting: briefMeetingPrompt,
+  describe_image: describeImagePrompt,
 };
 
 const SUFFIX_HEADER =

@@ -34,6 +34,7 @@ const TOOLS = [
   "check_tone",
   "rewrite_outgoing",
   "brief_meeting",
+  "describe_image",
 ] as const;
 
 type JsonSchema = Record<string, unknown>;

@@ -26,6 +26,7 @@ import type {
 } from "../src/lib/types.js";
 
 const CONTEXT_MENU_ID = "neurodock-translate-selection";
+const CONTEXT_MENU_IMAGE_ID = "neurodock-describe-image";
 
 export function registerHandlers(): void {
   chrome.runtime.onInstalled.addListener(() => {
@@ -41,21 +42,55 @@ export function registerHandlers(): void {
         void chrome.runtime.lastError;
       },
     );
+    // 0.0.14+: right-click an image to get a structured description.
+    // Requires a vision-capable cloud model (gpt-4o-mini, claude-haiku-4-5,
+    // openrouter/auto routes to one). Local providers reject loudly with
+    // VISION_MODEL_REQUIRED so the user knows to switch modes.
+    chrome.contextMenus.create(
+      {
+        id: CONTEXT_MENU_IMAGE_ID,
+        title: "NeuroDock: describe image (vision)",
+        contexts: ["image"],
+      },
+      () => {
+        void chrome.runtime.lastError;
+      },
+    );
   });
 
   chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId !== CONTEXT_MENU_ID) return;
     if (!tab?.id) return;
-    const text =
-      typeof info.selectionText === "string" ? info.selectionText : "";
-    if (text.length === 0) return;
     const url = tab.url ?? "";
     const channel = detectChannelFromUrl(url);
-    const request: TranslationRequest = {
-      tool: "translate_incoming",
-      input: { text, channel },
-      channel,
-    };
+
+    let request: TranslationRequest | null = null;
+    let sourceText = "";
+
+    if (info.menuItemId === CONTEXT_MENU_ID) {
+      const text =
+        typeof info.selectionText === "string" ? info.selectionText : "";
+      if (text.length === 0) return;
+      request = {
+        tool: "translate_incoming",
+        input: { text, channel },
+        channel,
+      };
+      sourceText = text;
+    } else if (info.menuItemId === CONTEXT_MENU_IMAGE_ID) {
+      const imageUrl = typeof info.srcUrl === "string" ? info.srcUrl : "";
+      if (imageUrl.length === 0) return;
+      request = {
+        tool: "describe_image",
+        input: { image_url: imageUrl, page_url: url },
+        channel,
+      };
+      // Source preview for the image path is the URL — the in-page panel's
+      // ImageDescribeView shows a thumbnail rendered from this URL.
+      sourceText = imageUrl;
+    } else {
+      return;
+    }
+
     const response = await runTranslate(request);
     // Targeted at the tab's content-script island (mounted by gmail.content.ts
     // and the other per-site bootstraps). The island listens for this exact
@@ -72,7 +107,7 @@ export function registerHandlers(): void {
       .sendMessage(tab.id, {
         type: "neurodock:context-result",
         response,
-        sourceText: text,
+        sourceText,
         channel,
       })
       .catch(() => {

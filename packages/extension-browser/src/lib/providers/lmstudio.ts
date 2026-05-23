@@ -148,6 +148,18 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
   }
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
+    if (request.images && request.images.length > 0) {
+      // LM Studio supports vision via select GGUF models (LLaVA-family,
+      // MiniCPM-V, Qwen2-VL) but the API shape differs per model card.
+      // Phase 2 work — for now reject loudly so the user knows to switch
+      // to cloud mode rather than silently degrading the result.
+      throw new Error(
+        `VISION_MODEL_REQUIRED: image translation isn't yet supported on ` +
+          `the local LM Studio lane. Switch to cloud mode with a vision-` +
+          `capable model (gpt-4o-mini, claude-haiku-4-5) in the popup ` +
+          `Settings tab.`,
+      );
+    }
     if (options.disableStreaming === true) {
       return completeNonStreaming(request);
     }

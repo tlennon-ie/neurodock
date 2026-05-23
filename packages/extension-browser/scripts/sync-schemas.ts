@@ -24,6 +24,7 @@ const EXPECTED_SCHEMAS = [
   "check_tone.schema.json",
   "rewrite_outgoing.schema.json",
   "brief_meeting.schema.json",
+  "describe_image.schema.json",
 ] as const;
 
 export function syncSchemas(): SyncResult {

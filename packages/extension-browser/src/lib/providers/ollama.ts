@@ -43,6 +43,16 @@ export function createOllamaProvider(options: OllamaOptions): Provider {
   const f = options.fetchImpl ?? fetch.bind(globalThis);
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
+    if (request.images && request.images.length > 0) {
+      // Vision support for local Ollama requires a vision-capable model
+      // (llava, llama3.2-vision, bakllava, moondream, minicpm-v) and a
+      // base64-image payload — different shape from text-only. Phase 2.
+      throw new Error(
+        `VISION_MODEL_REQUIRED: image translation isn't yet supported on ` +
+          `the local Ollama lane. Switch to cloud mode with a vision-capable ` +
+          `model (gpt-4o-mini, claude-haiku-4-5) in the popup Settings tab.`,
+      );
+    }
     if (options.hasPermission) {
       const allowed = await options.hasPermission(endpoint);
       if (!allowed) {

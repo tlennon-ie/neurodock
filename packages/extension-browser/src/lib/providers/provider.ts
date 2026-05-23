@@ -25,6 +25,13 @@ export interface ProviderRequest {
   readonly model: string;
   readonly signal?: AbortSignal;
   readonly onToken?: (delta: string) => void;
+  /**
+   * Optional image URLs the provider should attach as multimodal input.
+   * Currently only used by the `describe_image` tool. Providers that do
+   * not support vision MUST throw an error containing
+   * `VISION_MODEL_REQUIRED` rather than silently dropping the images.
+   */
+  readonly images?: readonly string[];
 }
 
 export interface ProviderResult {
