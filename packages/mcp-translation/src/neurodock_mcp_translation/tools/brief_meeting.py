@@ -41,7 +41,7 @@ from neurodock_mcp_translation.types import (
     QuotedSpan,
 )
 
-EVAL_CORPUS_SLICE = "packages/evals/corpora/translation/meeting/v0.1.0/general.jsonl"
+EVAL_CORPUS_SLICE = "packages/evals/corpora/translation/meetings/v0.1.0/general.jsonl"
 
 _OUTPUT_SCHEMA_REF = "packages/mcp-translation/schemas/brief_meeting.schema.json"
 

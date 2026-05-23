@@ -30,7 +30,7 @@ from neurodock_mcp_cognitive_graph.types import (
 # Backwards-compatible re-export name.
 LiteralObject = LiteralValue
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 __schema_version__ = 2
 """Storage schema version. Bumped every time a new SQL migration ships in

@@ -63,7 +63,8 @@ def record_fact(
     if predicate not in PREDICATE_VOCABULARY:
         raise ToolError(
             "PREDICATE_NOT_IN_VOCABULARY",
-            f"predicate '{predicate}' is not in the v0.1.0 controlled vocabulary.",
+            f"predicate '{predicate}' is not in the v0.1.0 controlled vocabulary."
+            f" Valid predicates: {sorted(PREDICATE_VOCABULARY)}.",
         )
     pred = cast(Predicate, predicate)
     confidence_value = _validate_confidence(confidence)

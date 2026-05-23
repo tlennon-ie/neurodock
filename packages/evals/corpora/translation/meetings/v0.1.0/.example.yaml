@@ -1,0 +1,3 @@
+# Placeholder — versioned slice directory for meetings translation corpus v0.1.0.
+# Real examples live as *.example.yaml files directly under corpora/translation/meetings/.
+# This directory will hold general.jsonl when the slice is exported for eval runs.

@@ -5,13 +5,16 @@
   "description": "Shared types, profile schema, and plugin protocol for NeuroDock.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
-    "src",
+    "dist",
     "schemas",
     "README.md"
   ],
@@ -25,10 +28,10 @@
   },
   "homepage": "https://github.com/tlennon-ie/neurodock#readme",
   "scripts": {
-    "build": "echo 'core: build stub' && exit 0",
-    "lint": "echo 'core: lint stub' && exit 0",
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit && echo 'core: lint via tsc strict mode'",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "echo 'core: typecheck stub' && exit 0",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "devDependencies": {

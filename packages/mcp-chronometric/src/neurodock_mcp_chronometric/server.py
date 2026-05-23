@@ -32,7 +32,7 @@ from neurodock_mcp_chronometric.tools.session import (
 from neurodock_mcp_chronometric.tools.time_context import get_time_context
 
 SERVER_NAME = "neurodock-mcp-chronometric"
-SERVER_VERSION = "0.0.1"
+SERVER_VERSION = "0.0.2"
 
 _LOG = logging.getLogger("neurodock_mcp_chronometric.server")
 

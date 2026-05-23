@@ -43,6 +43,11 @@ def test_unknown_predicate_raises_vocabulary_error(
             object={"type": "person", "name": "Priya"},
         )
     assert exc_info.value.code == "PREDICATE_NOT_IN_VOCABULARY"
+    # The error message must include at least one valid predicate so the caller
+    # immediately knows what values are accepted (fix #9).
+    from neurodock_mcp_cognitive_graph.tools._shared import PREDICATE_VOCABULARY
+
+    assert any(p in exc_info.value.args[0] for p in PREDICATE_VOCABULARY)
 
 
 def test_duplicate_returns_same_id_with_deduplicated_true(

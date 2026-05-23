@@ -8,6 +8,7 @@ from neurodock_mcp_task_fractionator.tools.next_one import (
     AllTasksBlockedError,
     NoTasksAvailableError,
     ProjectRequiredError,
+    ProjectTooLongError,
     next_one,
 )
 from neurodock_mcp_task_fractionator.types import Task
@@ -101,3 +102,28 @@ def test_empty_project_string_raises_project_required(
 
     with pytest.raises(ProjectRequiredError):
         next_one(project="   ", source=in_memory_source)
+
+
+def test_overlong_project_raises_project_too_long(
+    in_memory_source: InMemoryPendingTaskSource,
+) -> None:
+    """A project name longer than 120 characters raises ProjectTooLongError."""
+
+    long_project = "x" * 121
+    with pytest.raises(ProjectTooLongError):
+        next_one(project=long_project, source=in_memory_source)
+
+
+@pytest.mark.asyncio
+async def test_server_maps_project_too_long_to_correct_code() -> None:
+    """Server must map ProjectTooLongError → error code PROJECT_TOO_LONG (not PROJECT_REQUIRED)."""
+
+    from fastmcp import Client
+    from neurodock_mcp_task_fractionator.server import build_server
+
+    server = build_server(source=InMemoryPendingTaskSource())
+    long_project = "y" * 121
+    async with Client(server) as client:
+        with pytest.raises(Exception) as exc_info:
+            await client.call_tool("next_one", {"project": long_project})
+        assert "PROJECT_TOO_LONG" in str(exc_info.value)

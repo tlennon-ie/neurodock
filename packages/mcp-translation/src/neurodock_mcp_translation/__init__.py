@@ -26,7 +26,7 @@ the refined result. The server itself is provider-agnostic and local-first.
 
 from neurodock_mcp_translation.server import build_server
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 __all__ = [
     "__version__",

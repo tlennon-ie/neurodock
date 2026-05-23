@@ -20,7 +20,7 @@ from neurodock_mcp_translation.types import (
     RewriteOutgoingInput,
 )
 
-EVAL_CORPUS_SLICE = "packages/evals/corpora/translation/rewrite/v0.1.0/general.jsonl"
+EVAL_CORPUS_SLICE = "packages/evals/corpora/translation/outgoing/v0.1.0/general.jsonl"
 
 _OUTPUT_SCHEMA_REF = "packages/mcp-translation/schemas/rewrite_outgoing.schema.json"
 

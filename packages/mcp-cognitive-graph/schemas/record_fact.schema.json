@@ -127,7 +127,7 @@
       "OBJECT_REQUIRED": {
         "description": "The object argument was missing or did not include at least one of {id, name, literal}."
       },
-      "PREDICATE_UNKNOWN": {
+      "PREDICATE_NOT_IN_VOCABULARY": {
         "description": "Predicate is not in the v0.1.0 controlled vocabulary. Use one of: mentioned_in, decided_in, reports_to, depends_on, resolved_by, blocked_by, tagged, belongs_to. Extension predicates land in v0.2."
       },
       "ENTITY_TYPE_UNKNOWN": {

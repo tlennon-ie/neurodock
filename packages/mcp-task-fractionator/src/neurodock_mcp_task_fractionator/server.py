@@ -131,7 +131,7 @@ def build_server(*, source: PendingTaskSource | None = None) -> FastMCP[Any]:
         except ProjectRequiredError as exc:
             raise _ToolError("PROJECT_REQUIRED", str(exc)) from exc
         except ProjectTooLongError as exc:
-            raise _ToolError("PROJECT_REQUIRED", str(exc)) from exc
+            raise _ToolError("PROJECT_TOO_LONG", str(exc)) from exc
         except NoTasksAvailableError as exc:
             raise _ToolError("NO_TASKS_AVAILABLE", str(exc)) from exc
         except AllTasksBlockedError as exc:
