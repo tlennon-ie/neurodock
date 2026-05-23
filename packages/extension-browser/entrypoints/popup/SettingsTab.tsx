@@ -33,9 +33,12 @@ import {
   type ModelFetchableProvider,
 } from "../../src/lib/providers/models.js";
 import {
+  hasImageTranslationGlobalAccess,
   listGrantedNonDefaultOrigins,
   requestHostPermission,
+  requestImageTranslationGlobalAccess,
   revokeHostPermission,
+  revokeImageTranslationGlobalAccess,
 } from "../../src/lib/permissions.js";
 import { ProviderTest } from "./ProviderTest.js";
 
@@ -268,6 +271,8 @@ export function SettingsTab({
 
       <ProviderTest profile={profile} />
 
+      <ImageTranslationPermission />
+
       <HostPermissionsPanel />
     </section>
   );
@@ -402,6 +407,103 @@ function NonLocalhostNotice({
  * provider hosts are intentionally NOT listed individually — those are
  * managed via the cloud-mode flow elsewhere in Settings.
  */
+/**
+ * 0.0.19: one-time grant for arbitrary HTTPS image fetches. Without
+ * this the SW prompts per-host every time the user describes an image
+ * on a new site. The button MUST be wired to a direct click handler so
+ * the user-gesture context reaches `chrome.permissions.request`.
+ */
+function ImageTranslationPermission(): React.ReactElement {
+  const [granted, setGranted] = useState<boolean | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const has = await hasImageTranslationGlobalAccess();
+        if (!cancelled) setGranted(has);
+      } catch {
+        if (!cancelled) setGranted(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onGrant = useCallback(async () => {
+    setMessage(null);
+    const res = await requestImageTranslationGlobalAccess();
+    setGranted(res.granted);
+    if (!res.granted) {
+      setMessage(
+        res.reason === "user-denied"
+          ? "Denied. Image translation will still work per-site if you accept the right-click prompt instead."
+          : "Permissions API unavailable.",
+      );
+    }
+  }, []);
+
+  const onRevoke = useCallback(async () => {
+    setMessage(null);
+    await revokeImageTranslationGlobalAccess();
+    setGranted(false);
+  }, []);
+
+  return (
+    <fieldset
+      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      data-testid="image-translation-permission"
+    >
+      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+        Image translation
+      </legend>
+      <p className="m-0 text-xs text-neutral-500">
+        Right-click any image → "NeuroDock: describe image (vision)" needs
+        permission to fetch the image bytes (so it can base64-encode them for
+        your vision model). Grant once for every HTTPS site, or accept the
+        per-site prompt at right-click time.
+      </p>
+      {granted === null ? (
+        <p className="m-0 text-xs text-neutral-500">Checking…</p>
+      ) : granted ? (
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span>
+            <strong>Granted</strong> — image translation works on every HTTPS
+            site.
+          </span>
+          <button
+            type="button"
+            onClick={() => void onRevoke()}
+            className="border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            data-testid="image-perms-revoke"
+          >
+            Revoke
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span>Not granted. You'll be prompted per-site instead.</span>
+          <button
+            type="button"
+            onClick={() => void onGrant()}
+            className="border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            data-testid="image-perms-grant"
+          >
+            Enable for every site
+          </button>
+        </div>
+      )}
+      {message ? (
+        <p className="m-0 text-xs text-amber-700 dark:text-amber-300">
+          {message}
+        </p>
+      ) : null}
+    </fieldset>
+  );
+}
+
 function HostPermissionsPanel(): React.ReactElement {
   const [origins, setOrigins] = useState<readonly string[]>([]);
 

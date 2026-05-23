@@ -59,98 +59,74 @@ export function registerHandlers(): void {
     );
   });
 
-  chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  // IMPORTANT: this listener must stay synchronous up to the
+  // `chrome.permissions.request` call. MV3 service workers consume the
+  // user-gesture context at the first `await`, after which
+  // `permissions.request` is rejected with "must be called during a user
+  // gesture" and never prompts. 0.0.18 had an `async (info, tab) => { ...
+  // await ensureImageHostPermission ... }` shape which silently broke the
+  // permission prompt — the user got `IMAGE_PERMISSION_DENIED` with no
+  // way to grant. 0.0.19 restructures to callback-style permission
+  // request, then delegates to an async runner.
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (!tab?.id) return;
+    const tabId = tab.id;
     const url = tab.url ?? "";
     const channel = detectChannelFromUrl(url);
-
-    let request: TranslationRequest | null = null;
-    let sourceText = "";
 
     if (info.menuItemId === CONTEXT_MENU_ID) {
       const text =
         typeof info.selectionText === "string" ? info.selectionText : "";
       if (text.length === 0) return;
-      request = {
-        tool: "translate_incoming",
-        input: { text, channel },
+      // Return the dispatch promise so tests that await
+      // `contextMenus.onClicked._invoke(...)` get a settled result. Chrome
+      // ignores the return value of context-menu listeners; this is a
+      // test-seam convenience, not a behavioural contract change.
+      return dispatchContextResult(
+        tabId,
+        url,
         channel,
-      };
-      sourceText = text;
-    } else if (info.menuItemId === CONTEXT_MENU_IMAGE_ID) {
-      const imageUrl = typeof info.srcUrl === "string" ? info.srcUrl : "";
-      if (imageUrl.length === 0) return;
-      // 0.0.18: request optional host permission for the image's origin
-      // BEFORE running the translate. This is a user-gesture context
-      // (the user just clicked the menu item) so chrome.permissions.request
-      // is allowed to prompt. Without this, the LM Studio / Ollama lane
-      // fetches the image from the SW and fails with a CSP / permission
-      // error the user can't act on. Granted hosts stick until revoked
-      // from Settings → Host permissions.
-      const granted = await ensureImageHostPermission(imageUrl);
-      if (!granted) {
-        const response: TranslationResponse = {
-          ok: false,
-          tool: "describe_image",
-          data: null,
-          error:
-            "IMAGE_PERMISSION_DENIED: NeuroDock needs permission to read " +
-            "this image's host to send it to your vision model. Click the " +
-            "right-click menu item again and grant access when prompted.",
-          mockMode: false,
-          provenance: {
-            mode: "unknown",
-            provider: "none",
-            model: "none",
-          },
-          timestamp: new Date().toISOString(),
-        };
-        void chrome.tabs
-          .sendMessage(tab.id, {
-            type: "neurodock:context-result",
-            response,
-            sourceText: imageUrl,
-            channel,
-          })
-          .catch(() => {
-            notifyContextResultFallback(response, url);
-          });
-        return;
-      }
-      request = {
-        tool: "describe_image",
-        input: { image_url: imageUrl, page_url: url },
-        channel,
-      };
-      // Source preview for the image path is the URL — the in-page panel's
-      // ImageDescribeView shows a thumbnail rendered from this URL.
-      sourceText = imageUrl;
-    } else {
-      return;
+        {
+          tool: "translate_incoming",
+          input: { text, channel },
+          channel,
+        },
+        text,
+      ) as unknown as void;
     }
 
-    const response = await runTranslate(request);
-    // Targeted at the tab's content-script island (mounted by gmail.content.ts
-    // and the other per-site bootstraps). The island listens for this exact
-    // discriminated `type` and opens the result panel.
-    //
-    // P1.4 from the audit: if the user right-clicks on a page OUTSIDE the
-    // 9 declared `host_permissions`, no content script is mounted, the
-    // sendMessage rejects with "Could not establish connection. Receiving
-    // end does not exist." and the user previously saw nothing — the
-    // translation succeeded silently into IndexedDB. Fall back to a
-    // `chrome.notifications` toast so the user gets confirmation AND a
-    // hint about where the result is.
-    void chrome.tabs
-      .sendMessage(tab.id, {
-        type: "neurodock:context-result",
-        response,
-        sourceText,
-        channel,
-      })
-      .catch(() => {
-        notifyContextResultFallback(response, url);
+    if (info.menuItemId === CONTEXT_MENU_IMAGE_ID) {
+      const imageUrl = typeof info.srcUrl === "string" ? info.srcUrl : "";
+      if (imageUrl.length === 0) return;
+      const origin = imageOriginFor(imageUrl);
+
+      // data: URL or unparseable — skip the host-permission check entirely.
+      if (origin === null) {
+        void dispatchImageTranslate(tabId, url, channel, imageUrl);
+        return;
+      }
+
+      // Sync `chrome.permissions.request` preserves the user gesture
+      // because we have NOT awaited anything yet. The callback fires
+      // immediately with `granted: true` when permission already exists,
+      // otherwise it prompts. No `contains` pre-check — that would
+      // consume the gesture before the request landed.
+      const permsApi = getPermissionsApi();
+      if (!permsApi) {
+        // Permissions API unavailable (tests / unusual context) — just
+        // run the translate and let downstream fetch errors surface.
+        void dispatchImageTranslate(tabId, url, channel, imageUrl);
+        return;
+      }
+      permsApi.request({ origins: [origin] }, (granted) => {
+        if (!granted) {
+          void sendImagePermissionDenied(tabId, url, channel, imageUrl);
+          return;
+        }
+        void dispatchImageTranslate(tabId, url, channel, imageUrl);
       });
+      return;
+    }
   });
 
   chrome.runtime.onMessage.addListener(
@@ -349,45 +325,110 @@ function safeHost(url: string): string {
 }
 
 /**
- * 0.0.18: request optional host_permission for the origin of an image URL
- * so the SW can fetch + base64-encode it for local-LLM vision models.
- * Called from inside the contextMenus.onClicked handler which preserves
- * the user-gesture timing chrome.permissions.request needs to prompt.
- *
- * Returns true when permission already exists OR was just granted; false
- * when the user denied or the URL is unparseable. data: URLs always
- * return true (no host to request).
+ * 0.0.19: helper extracts the `<scheme>://<host>/*` pattern from an
+ * image URL for use with chrome.permissions.request. Returns null for
+ * data: URLs (no host to grant) and for unparseable strings.
  */
-async function ensureImageHostPermission(imageUrl: string): Promise<boolean> {
-  if (imageUrl.startsWith("data:")) return true;
-  let origin: string;
+function imageOriginFor(imageUrl: string): string | null {
+  if (imageUrl.startsWith("data:")) return null;
   try {
     const u = new URL(imageUrl);
-    origin = `${u.protocol}//${u.host}/*`;
+    return `${u.protocol}//${u.host}/*`;
   } catch {
-    return false;
+    return null;
   }
+}
+
+interface PermissionsApi {
+  readonly request: (
+    perm: { origins: string[] },
+    cb: (granted: boolean) => void,
+  ) => void;
+}
+
+function getPermissionsApi(): PermissionsApi | null {
   const g = globalThis as unknown as {
-    chrome?: {
-      permissions?: {
-        contains?: (
-          perm: { origins: string[] },
-          cb: (has: boolean) => void,
-        ) => void;
-        request?: (
-          perm: { origins: string[] },
-          cb: (granted: boolean) => void,
-        ) => void;
-      };
-    };
+    chrome?: { permissions?: PermissionsApi };
   };
-  const perms = g.chrome?.permissions;
-  if (!perms?.contains || !perms?.request) return true; // tests / no API
-  const alreadyHas = await new Promise<boolean>((resolve) => {
-    perms.contains!({ origins: [origin] }, (has) => resolve(has));
-  });
-  if (alreadyHas) return true;
-  return new Promise<boolean>((resolve) => {
-    perms.request!({ origins: [origin] }, (granted) => resolve(granted));
-  });
+  return g.chrome?.permissions ?? null;
+}
+
+async function dispatchImageTranslate(
+  tabId: number,
+  pageUrl: string,
+  channel: ReturnType<typeof detectChannelFromUrl>,
+  imageUrl: string,
+): Promise<void> {
+  await dispatchContextResult(
+    tabId,
+    pageUrl,
+    channel,
+    {
+      tool: "describe_image",
+      input: { image_url: imageUrl, page_url: pageUrl },
+      channel,
+    },
+    imageUrl,
+  );
+}
+
+async function sendImagePermissionDenied(
+  tabId: number,
+  pageUrl: string,
+  channel: ReturnType<typeof detectChannelFromUrl>,
+  imageUrl: string,
+): Promise<void> {
+  const response: TranslationResponse = {
+    ok: false,
+    tool: "describe_image",
+    data: null,
+    error:
+      "IMAGE_PERMISSION_DENIED: NeuroDock needs permission to read this " +
+      "image's host (so it can fetch + base64-encode it for your vision " +
+      "model). You can either (a) right-click again and accept the per-host " +
+      "prompt, or (b) open the popup → Settings → Enable image translation " +
+      "to grant access to every site at once.",
+    mockMode: false,
+    provenance: { mode: "unknown", provider: "none", model: "none" },
+    timestamp: new Date().toISOString(),
+  };
+  void chrome.tabs
+    .sendMessage(tabId, {
+      type: "neurodock:context-result",
+      response,
+      sourceText: imageUrl,
+      channel,
+    })
+    .catch(() => {
+      notifyContextResultFallback(response, pageUrl);
+    });
+}
+
+async function dispatchContextResult(
+  tabId: number,
+  pageUrl: string,
+  channel: ReturnType<typeof detectChannelFromUrl>,
+  request: TranslationRequest,
+  sourceText: string,
+): Promise<void> {
+  const response = await runTranslate(request);
+  // Targeted at the tab's content-script island (mounted by gmail.content.ts
+  // and the other per-site bootstraps). The island listens for this exact
+  // discriminated `type` and opens the result panel.
+  //
+  // P1.4 from the audit: if the user right-clicks on a page OUTSIDE the
+  // 9 declared `host_permissions`, no content script is mounted, the
+  // sendMessage rejects with "Could not establish connection. Receiving
+  // end does not exist." and the user previously saw nothing. Fall back
+  // to a `chrome.notifications` toast.
+  void chrome.tabs
+    .sendMessage(tabId, {
+      type: "neurodock:context-result",
+      response,
+      sourceText,
+      channel,
+    })
+    .catch(() => {
+      notifyContextResultFallback(response, pageUrl);
+    });
 }

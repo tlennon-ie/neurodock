@@ -231,6 +231,49 @@ const DEFAULT_HIDDEN_ORIGIN_HOSTS: ReadonlySet<string> = new Set([
   "openrouter.ai",
 ]);
 
+/**
+ * 0.0.19: request the broad `https://*\/*` host permission so the SW can
+ * fetch arbitrary HTTPS images (for the image-translation flow). The
+ * user grants once and stops getting per-host prompts. Must be called
+ * from a user-gesture handler (a Settings button click).
+ */
+export async function requestImageTranslationGlobalAccess(): Promise<HostPermissionResult> {
+  const api = getPermissionsApi();
+  if (api === null) {
+    return {
+      granted: false,
+      origin: "https://*/*",
+      reason: "api-unavailable",
+    };
+  }
+  const pattern = "https://*/*";
+  const already = await api.contains({ origins: [pattern] });
+  if (already) return { granted: true, origin: pattern };
+  const ok = await api.request({ origins: [pattern] });
+  return ok
+    ? { granted: true, origin: pattern }
+    : { granted: false, origin: pattern, reason: "user-denied" };
+}
+
+export async function hasImageTranslationGlobalAccess(): Promise<boolean> {
+  const api = getPermissionsApi();
+  if (api === null) return false;
+  return api.contains({ origins: ["https://*/*"] });
+}
+
+export async function revokeImageTranslationGlobalAccess(): Promise<HostPermissionResult> {
+  const api = getPermissionsApi();
+  if (api === null) {
+    return {
+      granted: false,
+      origin: "https://*/*",
+      reason: "api-unavailable",
+    };
+  }
+  await api.remove({ origins: ["https://*/*"] });
+  return { granted: false, origin: "https://*/*" };
+}
+
 export async function listGrantedNonDefaultOrigins(): Promise<
   readonly string[]
 > {

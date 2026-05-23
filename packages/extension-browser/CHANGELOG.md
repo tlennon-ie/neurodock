@@ -1,5 +1,44 @@
 # @neurodock/extension-browser
 
+## 0.0.19
+
+### Fixed — image-translation permission prompt never fired
+
+0.0.18 added `chrome.permissions.request` to the context-menu handler
+to prompt the user for image-host access, but the listener was `async`
+and awaited `permissions.contains` BEFORE calling `request`. MV3
+service workers consume the user-gesture context at the first `await`
+— by the time `request` fired, the gesture was gone, Chrome rejected
+with `"must be called during a user gesture"`, and the prompt never
+appeared. The user saw `IMAGE_PERMISSION_DENIED` with no way to grant.
+
+Resolution: the context-menu listener is now synchronous up to the
+`permissions.request` call (callback-style, no awaits before it). The
+pre-flight `contains` check was removed — `request` is a no-op when
+permission already exists, so the optimisation wasn't worth losing the
+gesture. The text-translation branch returns its dispatch promise so
+existing tests still work without microtask hacks.
+
+### Added — "Enable for every site" Settings button
+
+Right-click prompts you per-site every time you describe an image on a
+new host. For users who want a single broad grant instead, Settings
+now has an **Image translation** section with a button that requests
+the `https://*/*` host pattern once. Revocable from the same panel.
+Both flows coexist — pick per-site for the privacy-conservative path,
+or all-sites for the convenience path.
+
+### Notes on related observations
+
+- The `'url' field must be a base64 encoded image` error from LM Studio
+  was the old code path before the permission grant landed (the SW
+  fetch failed silently, the URL was passed through, LM Studio
+  rejected). Once a grant is in place the 0.0.17 base64 conversion
+  fires correctly.
+- The SVG warning is a real model limitation — most vision models can't
+  read raw SVG bytes. We continue to attempt the request but warn in
+  the console.
+
 ## 0.0.18
 
 ### Fixed — CSP / host permissions blocked image fetches on arbitrary HTTPS sites
