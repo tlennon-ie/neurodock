@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(pnpm --filter @neurodock/cli run --silent dev profile validate)"
-    ]
-  }
-}
