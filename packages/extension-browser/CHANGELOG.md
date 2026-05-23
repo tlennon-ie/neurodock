@@ -1,5 +1,39 @@
 # @neurodock/extension-browser
 
+## 0.0.7
+
+### Fixed
+
+- **Right-click "translate selection" now actually shows a result.**
+  The service worker has been broadcasting `neurodock:context-result`
+  via `chrome.tabs.sendMessage` since the context menu was added, but
+  no content-script listener existed — the header comment in
+  `entrypoints/_shared/bootstrap.tsx` literally said "Listening for
+  context-menu result broadcasts" while the implementation was missing.
+  Every right-click translation was running successfully end-to-end on
+  the service worker (LM Studio responded, history was written) and
+  then silently dropped on the wire. The user's report: stream visibly
+  completed to 100% in LM Studio's UI, but nothing appeared on the page
+  or in the extension popup. `ContentApp` now registers the listener
+  and opens the panel with the response. The panel falls back to a
+  viewport top-right anchor when no compose box is focused, instead of
+  positioning itself at `(-1000, -1000)` and rendering off-screen.
+- **Popup now refreshes its history list while open.** The service
+  worker broadcasts `chrome.runtime.sendMessage({ type:
+"history:updated" })` after every successful `appendHistory`, and
+  the popup listens for it. Pre-0.0.7, the popup read history once on
+  mount and never repainted, so a translation completing while the
+  popup was already open never appeared until the user closed and
+  re-opened it.
+
+### Added
+
+- `neurodock:context-result` and `history:updated` message variants on
+  the `RuntimeMessage` discriminated union (`src/lib/types.ts`). The
+  context-result payload carries the original `sourceText` and detected
+  `channel` so the panel can render a quoted preview above the result.
+- 5 new regression tests pinning the contracts above (132/132 pass).
+
 ## 0.0.6
 
 ### Fixed

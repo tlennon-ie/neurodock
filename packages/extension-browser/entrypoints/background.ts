@@ -57,10 +57,19 @@ export default defineBackground(() => {
       channel,
     };
     const response = await runTranslate(request);
-    chrome.tabs.sendMessage(tab.id, {
-      type: "neurodock:context-result",
-      response,
-    });
+    // Targeted at the tab's content-script island (mounted by gmail.content.ts
+    // and the other per-site bootstraps). The island listens for this exact
+    // discriminated `type` and opens the result panel. Errors (e.g. tab
+    // closed before response landed) are swallowed — the result is already
+    // in IndexedDB history via runTranslate, so the user can still find it.
+    void chrome.tabs
+      .sendMessage(tab.id, {
+        type: "neurodock:context-result",
+        response,
+        sourceText: text,
+        channel,
+      })
+      .catch(() => undefined);
   });
 
   chrome.runtime.onMessage.addListener(
@@ -109,6 +118,13 @@ async function runTranslate(
         inputPreview,
         outputSummary: summariseOutput(response),
       });
+      // Notify the popup (if open) so its history list refreshes live.
+      // The popup mounts once and used to never repaint, leaving users
+      // staring at a stale list after a fresh translation completed.
+      // sendMessage rejects if no receiver (popup closed) — that is fine.
+      void chrome.runtime
+        .sendMessage({ type: "history:updated" })
+        .catch(() => undefined);
     } catch {
       // History writes never block translation; swallow failures here.
     }

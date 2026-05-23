@@ -23,6 +23,14 @@ import { listHistory } from "../../src/lib/storage.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
 
+function isHistoryUpdatedMessage(msg: unknown): boolean {
+  return (
+    typeof msg === "object" &&
+    msg !== null &&
+    (msg as { type?: unknown }).type === "history:updated"
+  );
+}
+
 type TabId = "home" | "settings";
 
 export function App(): React.ReactElement {
@@ -32,17 +40,21 @@ export function App(): React.ReactElement {
   const [syncStatus, setSyncStatus] = useState<ProfileSyncStatus | null>(null);
   const [tab, setTab] = useState<TabId>("home");
 
+  const refreshHistory = useCallback(async (): Promise<void> => {
+    try {
+      setHistory(await listHistory(20));
+    } catch {
+      setHistory([]);
+    }
+  }, []);
+
   useEffect(() => {
     void (async () => {
       const p = await loadProfile();
       setProfile(p);
       setLoaded(true);
       if (p.historyEnabled) {
-        try {
-          setHistory(await listHistory(20));
-        } catch {
-          setHistory([]);
-        }
+        await refreshHistory();
       }
       try {
         setSyncStatus(await getSyncStatus());
@@ -50,7 +62,25 @@ export function App(): React.ReactElement {
         setSyncStatus(null);
       }
     })();
-  }, []);
+  }, [refreshHistory]);
+
+  // Live history updates while the popup is open. The service worker
+  // broadcasts `history:updated` after every successful appendHistory.
+  // Pre-0.0.7 the popup only read history on mount, so a translation
+  // completing while the popup was open never appeared until the user
+  // closed and re-opened it.
+  useEffect(() => {
+    if (typeof chrome === "undefined" || !chrome.runtime?.onMessage) {
+      return undefined;
+    }
+    const handler = (msg: unknown): void => {
+      if (!isHistoryUpdatedMessage(msg)) return;
+      if (!profile.historyEnabled) return;
+      void refreshHistory();
+    };
+    chrome.runtime.onMessage.addListener(handler);
+    return () => chrome.runtime.onMessage.removeListener(handler);
+  }, [profile.historyEnabled, refreshHistory]);
 
   const update = useCallback(async (patch: Partial<ExtensionProfile>) => {
     const next = await saveProfile(patch);

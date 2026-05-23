@@ -39,8 +39,8 @@ const grantedOrigins = new Set<string>();
   },
   runtime: {
     sendMessage: async () => ({ success: false, data: null, error: "no-bg" }),
-    onMessage: { addListener: () => {} },
-    onInstalled: { addListener: () => {} },
+    onMessage: { addListener: () => {}, removeListener: () => {} },
+    onInstalled: { addListener: () => {}, removeListener: () => {} },
   },
   contextMenus: {
     create: () => {},

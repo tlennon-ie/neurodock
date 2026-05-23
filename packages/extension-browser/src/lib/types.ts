@@ -157,10 +157,30 @@ export interface HistoryEntry {
   readonly outputSummary: string;
 }
 
-export interface RuntimeMessage {
-  readonly type: "translate";
-  readonly request: TranslationRequest;
-}
+/**
+ * Discriminated union of every message that flows over the extension's
+ * runtime bus. Use `msg.type` to narrow.
+ *
+ * Directions (informational — `chrome.runtime.sendMessage` is bidirectional):
+ * - `translate`               : content script / popup → service worker.
+ * - `neurodock:context-result`: service worker → tab (broadcast after a
+ *                               right-click "translate selection"; the
+ *                               island in the tab opens the result panel).
+ * - `history:updated`         : service worker → popup (broadcast after
+ *                               `appendHistory`; the popup reloads its
+ *                               history list without waiting for re-open).
+ */
+export type RuntimeMessage =
+  | { readonly type: "translate"; readonly request: TranslationRequest }
+  | {
+      readonly type: "neurodock:context-result";
+      readonly response: TranslationResponse;
+      /** Original selection text the user right-clicked; shown alongside the panel. */
+      readonly sourceText: string;
+      /** Channel detected from the tab's URL, so the panel header can label it. */
+      readonly channel: Channel | null;
+    }
+  | { readonly type: "history:updated" };
 
 export interface RuntimeResponseEnvelope<T = unknown> {
   readonly success: boolean;
