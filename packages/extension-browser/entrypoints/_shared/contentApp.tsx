@@ -138,6 +138,7 @@ export function ContentApp({
             loading={loading}
             cloudMode={profile.mode === "cloud"}
             cloudProvider={profile.cloudProvider}
+            configuredProvider={resolveConfiguredProvider(profile)}
             onClose={onClosePanel}
           />
         </div>
@@ -167,6 +168,12 @@ function computeButtonAnchor(el: Editable): PanelAnchor {
     top: Math.max(8, rect.top - 36),
     left: Math.max(8, rect.right - 100),
   };
+}
+
+function resolveConfiguredProvider(profile: ExtensionProfile): string | null {
+  if (profile.mode === "mock") return "mock";
+  if (profile.mode === "cloud") return profile.cloudProvider;
+  return profile.localProvider;
 }
 
 function computePanelAnchor(el: Editable | null): PanelAnchor {

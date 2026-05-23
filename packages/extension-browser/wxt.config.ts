@@ -86,6 +86,7 @@ export default defineConfig({
       128: "icon/128.png",
     },
     action: {
+      default_title: "NeuroDock — Translate",
       default_icon: {
         16: "icon/16.png",
         32: "icon/32.png",
@@ -105,6 +106,8 @@ export default defineConfig({
       "https://app.slack.com/*",
       "https://linear.app/*",
       "https://www.notion.so/*",
+      "https://*.notion.so/*",
+      "https://*.notion.site/*",
       "https://github.com/*",
       "https://docs.google.com/*",
       "https://outlook.live.com/*",
@@ -145,9 +148,6 @@ export default defineConfig({
         "https://api.anthropic.com " +
         "https://api.openai.com " +
         "https://openrouter.ai;",
-    },
-    action: {
-      default_title: "NeuroDock — Translate",
     },
     browser_specific_settings: {
       gecko: {

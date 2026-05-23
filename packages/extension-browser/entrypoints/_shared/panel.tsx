@@ -1,9 +1,19 @@
 /**
  * Result panel — shows the translation response, the cloud-mode banner
- * (when relevant), and a mock-mode notice.
+ * (when relevant), a mock-mode notice, and (0.0.8+) a silent-fallback
+ * banner when the configured provider was unreachable and the extension
+ * answered with the deterministic mock.
+ *
+ * Pre-0.0.8 the fallback banner only existed in the popup. The user's
+ * in-page panel just showed the mock JSON with no indication their
+ * configured provider had failed — same class of "silent failure" the
+ * popup banner exists to prevent. The 0.0.8 panel surfaces it inline.
  */
 import React from "react";
-import type { TranslationResponse } from "../../src/lib/types.js";
+import type {
+  ExtensionProfile,
+  TranslationResponse,
+} from "../../src/lib/types.js";
 
 export interface PanelProps {
   readonly response: TranslationResponse | null;
@@ -11,6 +21,17 @@ export interface PanelProps {
   readonly cloudMode: boolean;
   readonly cloudProvider: string | null;
   readonly onClose: () => void;
+  /**
+   * The provider the user CONFIGURED (e.g. "lmstudio"). Used to detect
+   * a silent fallback: when `response.provenance.provider !== this AND
+   * this is not "mock"`, the configured provider was unreachable and
+   * the mock responded instead. Surfaced via a banner so the user
+   * realises why the result looks mock-like.
+   */
+  readonly configuredProvider?:
+    | ExtensionProfile["localProvider"]
+    | string
+    | null;
 }
 
 export function Panel({
@@ -19,7 +40,9 @@ export function Panel({
   cloudMode,
   cloudProvider,
   onClose,
+  configuredProvider,
 }: PanelProps): React.ReactElement {
+  const fellBack = detectFallback(response, configuredProvider);
   return (
     <div
       className="neurodock-panel"
@@ -31,6 +54,22 @@ export function Panel({
         <div className="neurodock-banner" data-testid="cloud-mode-banner">
           Cloud mode: text leaves your device for{" "}
           <strong>{cloudProvider ?? "the configured provider"}</strong>.
+        </div>
+      ) : null}
+      {fellBack ? (
+        <div
+          data-testid="silent-fallback-banner"
+          style={{
+            marginBottom: 6,
+            padding: "4px 6px",
+            border: "1px solid #c08a3a",
+            background: "rgba(192,138,58,0.08)",
+            fontSize: 12,
+          }}
+        >
+          <strong>Heads up:</strong> your configured provider (
+          <code>{configuredProvider}</code>) was unreachable, so the extension
+          fell back to the mock provider. Open Settings → Test to diagnose.
         </div>
       ) : null}
       {loading ? <p>Translating…</p> : null}
@@ -47,6 +86,18 @@ export function Panel({
       </div>
     </div>
   );
+}
+
+function detectFallback(
+  response: TranslationResponse | null,
+  configuredProvider: PanelProps["configuredProvider"],
+): boolean {
+  if (response === null) return false;
+  if (!response.mockMode) return false;
+  if (typeof configuredProvider !== "string") return false;
+  if (configuredProvider.length === 0) return false;
+  if (configuredProvider === "mock") return false;
+  return response.provenance.provider !== configuredProvider;
 }
 
 function ResultBody({

@@ -1,5 +1,68 @@
 # @neurodock/extension-browser
 
+## 0.0.8
+
+Bundle of P0 fixes surfaced by a five-agent audit dispatched after the
+0.0.7 ship.
+
+### Fixed
+
+- **Content-script islands no longer run with the wrong profile.**
+  `bootstrapContent` was sending `{ type: "profile:get" }` to the
+  service worker and the worker had **no listener** — exact same shape
+  as the 0.0.7 Gmail bug, shipping in production for the life of the
+  extension. The message resolved to `undefined`, hit the bare catch
+  at `bootstrap.tsx:41`, and every island ran with `defaultProfile()`
+  for the life of the tab. Consequence: the in-page cloud-mode banner
+  reflected `local Ollama` defaults even when the user had switched to
+  cloud mode in the popup, breaking the privacy-transparency contract.
+  `background.ts` now handles `profile:get` and returns the loaded
+  profile.
+- **Popup changes propagate live to open content-script islands.**
+  Bootstrap subscribes to `chrome.storage.onChanged` for the profile
+  key. When the user switches provider in the popup, every open island
+  on every site re-renders with fresh state — no tab reload needed.
+- **In-page panel now surfaces silent fallbacks.** When the configured
+  local provider was unreachable and the deterministic mock answered
+  instead, the popup banner already warned the user, but the in-page
+  panel just showed mock JSON with no explanation. Now the panel
+  surfaces an inline amber notice when `response.provenance.provider
+!== configured.provider AND configured !== "mock"`. Matches the
+  popup banner copy.
+- **Notion subdomain coverage extended.** Pre-0.0.8 only
+  `https://www.notion.so/*` was matched. `*.notion.so/*` workspace
+  tenants (e.g. `acme.notion.so/...`) and `*.notion.site/*` public
+  shared pages now match too. `host_permissions` extended to suit.
+- **wxt.config duplicate `action` key merged.** The MV3 manifest had
+  two `action: {...}` declarations; the second silently overrode the
+  first. The `default_icon` was being stripped at build time. Merged
+  into a single block with both `default_title` and `default_icon`.
+
+### Added
+
+- `profile:get` variant on the `RuntimeMessage` discriminated union.
+- `configuredProvider` prop on `Panel` plus `detectFallback` helper.
+- Regression tests:
+  - LM Studio sends `response_format: { type: "text" }` on the
+    streaming path (pins the 0.0.6 fix).
+  - LM Studio sends `response_format: { type: "text" }` on the
+    non-streaming fallback path too.
+
+### Audit fallout
+
+Five parallel agents audited the codebase. Reports under
+`.claude-reports/2026-05-23-extension-audit/`. Headline findings beyond
+the fixes in this commit:
+
+- 11 P1 silent-failure patterns still present (bare catches without
+  rationale comments, `void onChange(...)` without `.catch`).
+- 12 P2 SSE/JSON parse catches that mask malformed-response classes as
+  generic "no JSON found" downstream.
+- `background.ts` has zero direct unit tests; `bootstrap.tsx` and
+  `mountIsland.ts` are wholly untested.
+- chrome-devtools MCP cannot load unpacked extensions — recommend
+  switching live-test path to Playwright `launchPersistentContext`.
+
 ## 0.0.7
 
 ### Fixed

@@ -180,7 +180,15 @@ export type RuntimeMessage =
       /** Channel detected from the tab's URL, so the panel header can label it. */
       readonly channel: Channel | null;
     }
-  | { readonly type: "history:updated" };
+  | { readonly type: "history:updated" }
+  /**
+   * Content-script island asks the service worker for the current profile.
+   * Pre-0.0.8 this message had no handler — islands silently fell through
+   * to `defaultProfile()`, so the in-page cloud-mode banner reflected
+   * defaults instead of the user's actual settings (privacy-transparency
+   * bug). See [bootstrap.tsx] for the caller.
+   */
+  | { readonly type: "profile:get" };
 
 export interface RuntimeResponseEnvelope<T = unknown> {
   readonly success: boolean;

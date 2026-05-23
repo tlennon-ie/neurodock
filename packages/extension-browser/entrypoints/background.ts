@@ -73,25 +73,45 @@ export default defineBackground(() => {
   });
 
   chrome.runtime.onMessage.addListener(
-    (
-      msg: RuntimeMessage,
-      _sender,
-      sendResponse: (env: RuntimeResponseEnvelope) => void,
-    ) => {
-      if (!msg || msg.type !== "translate") return false;
-      void (async () => {
-        try {
-          const data = await runTranslate(msg.request);
-          sendResponse({ success: true, data, error: null });
-        } catch (error: unknown) {
-          sendResponse({
-            success: false,
-            data: null,
-            error: getErrorMessage(error),
-          });
-        }
-      })();
-      return true; // async response
+    (msg: RuntimeMessage, _sender, sendResponse: (env: unknown) => void) => {
+      if (!msg) return false;
+      if (msg.type === "translate") {
+        void (async () => {
+          try {
+            const data = await runTranslate(msg.request);
+            sendResponse({
+              success: true,
+              data,
+              error: null,
+            } satisfies RuntimeResponseEnvelope);
+          } catch (error: unknown) {
+            sendResponse({
+              success: false,
+              data: null,
+              error: getErrorMessage(error),
+            } satisfies RuntimeResponseEnvelope);
+          }
+        })();
+        return true; // async response
+      }
+      if (msg.type === "profile:get") {
+        // Pre-0.0.8 this handler did not exist. Content-script islands
+        // sent `profile:get` from bootstrap.tsx, got `undefined` back,
+        // hit the bare catch, and silently ran with `defaultProfile()`
+        // for the life of the tab — meaning the in-page panel's
+        // cloud-mode banner reflected defaults rather than the user's
+        // actual settings (privacy-transparency bug).
+        void (async () => {
+          try {
+            const profile = await loadProfile();
+            sendResponse(profile);
+          } catch {
+            sendResponse(null);
+          }
+        })();
+        return true; // async response
+      }
+      return false;
     },
   );
 });

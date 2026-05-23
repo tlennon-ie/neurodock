@@ -129,10 +129,44 @@ describe("lmstudio provider", () => {
       model: string;
       stream: boolean;
       messages: { role: string; content: string }[];
+      response_format?: { type: string };
     };
     expect(body.model).toBe("qwen2.5-7b-instruct");
     expect(body.stream).toBe(true);
     expect(body.messages).toEqual([{ role: "user", content: "ping" }]);
+    // Regression pin for 0.0.6 fix. LM Studio's OpenAI-compat API rejects
+    // `response_format: { type: "json_object" }` with HTTP 400
+    // (`'response_format.type' must be 'json_schema' or 'text'`).
+    // The body MUST send `text`. Without this assertion the fix could
+    // silently regress to `json_object` and break every LM Studio user.
+    expect(body.response_format).toEqual({ type: "text" });
+  });
+
+  it("uses response_format=text on the non-streaming fallback too (regression: 0.0.6 LM Studio HTTP 400)", async () => {
+    const captured: CapturedRequest[] = [];
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      captured.push({ url, init });
+      return buildJsonResponse(200, {
+        choices: [{ message: { content: '{"ok":true}' } }],
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = createLMStudioProvider({
+      baseUrl: LMSTUDIO_DEFAULT_BASE_URL,
+      fetchImpl: fakeFetch,
+      disableStreaming: true,
+    });
+    await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "qwen2.5-7b-instruct",
+    });
+    const body = JSON.parse(captured[0]!.init?.body as string) as {
+      stream: boolean;
+      response_format?: { type: string };
+    };
+    expect(body.stream).toBe(false);
+    expect(body.response_format).toEqual({ type: "text" });
   });
 
   it("attaches Bearer auth when an apiKey is provided", async () => {
