@@ -1,5 +1,93 @@
 # @neurodock/extension-browser
 
+## 0.0.9
+
+P1 bundle from the 2026-05-23 five-agent extension audit
+(`.claude-reports/2026-05-23-extension-audit/SYNTHESIS.md`). Eleven
+items: seven production fixes, four test backfills covering surfaces
+that had **zero** direct coverage when 0.0.6/0.0.7/0.0.8 bugs shipped.
+
+### Fixed
+
+- **Profile saves now broadcast `profile:updated`.** `chrome.storage.onChanged`
+  covers content-script islands (the 0.0.8 fix), but a popup open in a
+  _separate_ browser window held its own React state and never re-read
+  the local store. `saveProfileWithOutcome` now fires a typed
+  `profile:updated` runtime message after every storage.set; the popup
+  subscribes and applies the new profile to its local state.
+- **Popup surfaces save errors instead of swallowing them.** Pre-0.0.9
+  every `onChange` site in `App.tsx` and `SettingsTab.tsx` discarded
+  the save outcome via `void onChange(...)`. Confirm-required prompts
+  from the native host and chrome.storage hard rejections silently
+  carried on as if the save had succeeded. The popup now wires through
+  `saveProfileWithOutcome`, captures `error`, and renders a dismissible
+  red banner.
+- **Right-click translations on out-of-permission pages now show a
+  notification.** Pre-0.0.9 a right-click translate on any URL outside
+  the nine declared `host_permissions` succeeded silently into IndexedDB
+  — `chrome.tabs.sendMessage` rejected with "Receiving end does not
+  exist" and the user saw nothing. The background script now falls back
+  to `chrome.notifications.create` with a basic-type toast carrying the
+  status (ok / mock-fallback / error) and the page host.
+- **Anthropic now sends a JSON-mode system prompt.** Anthropic has no
+  `response_format` knob (unlike OpenAI / LM Studio / Ollama). Both the
+  streaming and non-streaming paths now send a `system` instruction
+  telling the model to return a single JSON object with no prose, no
+  markdown fences, no commentary — substantially improves first-try
+  schema conformance and reduces downstream validation retries.
+- **Anthropic 404s surface as `ANTHROPIC_MODEL_NOT_FOUND`.** Previously
+  a typo or a stale hardcoded model id produced an opaque
+  `ANTHROPIC_ERROR: 404 not found`. The error normaliser now maps 404 /
+  `not_found_error` / `unknown.*model` to a dedicated prefix the UI can
+  hint at ("Update your model in Settings and try again").
+- **OpenRouter retries once without `response_format` when upstream
+  rejects it.** Some upstream models routed through OpenRouter (older
+  Mistral variants, some Llama hosts) reject the
+  `response_format: json_object` field with a 400. Same class of bug as
+  the v0.0.6 LM Studio fix. The provider now detects this specific 400
+  shape (status 400 + body mentions `response_format`/`json_object`/
+  `json_mode`) and retries the request once without that field. 400s
+  for other reasons (context-length, malformed prompt, etc.) still
+  throw without retry.
+- **Bare catches across `background.ts`, `bootstrap.tsx`, `App.tsx`,
+  `SettingsTab.tsx`, `ProviderTest.tsx` now carry intent rationale.**
+  Each catch now explains WHY swallowing is correct (e.g. history write
+  failures must not block translation; SW unreachability during
+  upgrade leaves the cached profile in place; permissions-API rejection
+  collapses the list rather than freezing the panel). Future reviewers
+  can tell "intentional non-blocking" apart from "accidentally
+  swallowing real errors".
+
+### Added — tests for previously uncovered surfaces
+
+- **`background.ts` direct unit tests** (19 tests). Covers the
+  context-menu dispatcher, the `translate` and `profile:get` message
+  handlers, and `runTranslate`'s history side-effects. The handler
+  callbacks were extracted into a `registerHandlers()` export so tests
+  can invoke them without going through `defineBackground`. Production
+  behaviour is unchanged.
+- **`bootstrapContent` + `mountIsland` unit tests** (9 tests). Covers
+  Shadow DOM mounting, idempotent re-mount, `requestTranslate`
+  envelope unwrap, profile-fetch re-render, `storage.onChanged`
+  re-subscription, and cleanup.
+- **`buildPrompt` direct tests** (26 tests). Pre-0.0.9
+  `translation-client.test.ts` short-circuited the builder via
+  `providerOverride`, so placeholder substitution was bypassed in
+  every higher-level test. The new file exercises single-brace
+  substitution, double-brace literal preservation, missing-key
+  fallback, array/object stringification, and the schema suffix shape
+  — across all four tools.
+- **Background notification-fallback tests** (3 tests). Pins the new
+  `chrome.notifications.create` path so the next refactor can't
+  regress it silently.
+- **Profile broadcast tests** (2 tests). Pins the `profile:updated`
+  broadcast and the no-receiver-rejection swallow.
+- **Anthropic JSON-mode + MODEL_NOT_FOUND tests** (2 tests).
+- **OpenRouter retry-without-response_format tests** (3 tests,
+  streaming + non-streaming + non-`response_format` 400).
+
+Test count: 133 → 197.
+
 ## 0.0.8
 
 Bundle of P0 fixes surfaced by a five-agent audit dispatched after the

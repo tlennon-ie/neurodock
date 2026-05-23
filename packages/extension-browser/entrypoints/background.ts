@@ -27,7 +27,7 @@ import type {
 
 const CONTEXT_MENU_ID = "neurodock-translate-selection";
 
-export default defineBackground(() => {
+export function registerHandlers(): void {
   chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create(
       {
@@ -59,9 +59,15 @@ export default defineBackground(() => {
     const response = await runTranslate(request);
     // Targeted at the tab's content-script island (mounted by gmail.content.ts
     // and the other per-site bootstraps). The island listens for this exact
-    // discriminated `type` and opens the result panel. Errors (e.g. tab
-    // closed before response landed) are swallowed — the result is already
-    // in IndexedDB history via runTranslate, so the user can still find it.
+    // discriminated `type` and opens the result panel.
+    //
+    // P1.4 from the audit: if the user right-clicks on a page OUTSIDE the
+    // 9 declared `host_permissions`, no content script is mounted, the
+    // sendMessage rejects with "Could not establish connection. Receiving
+    // end does not exist." and the user previously saw nothing — the
+    // translation succeeded silently into IndexedDB. Fall back to a
+    // `chrome.notifications` toast so the user gets confirmation AND a
+    // hint about where the result is.
     void chrome.tabs
       .sendMessage(tab.id, {
         type: "neurodock:context-result",
@@ -69,7 +75,9 @@ export default defineBackground(() => {
         sourceText: text,
         channel,
       })
-      .catch(() => undefined);
+      .catch(() => {
+        notifyContextResultFallback(response, url);
+      });
   });
 
   chrome.runtime.onMessage.addListener(
@@ -106,6 +114,10 @@ export default defineBackground(() => {
             const profile = await loadProfile();
             sendResponse(profile);
           } catch {
+            // Profile read failed (corrupted storage, native-host
+            // crash). Return null so the content-script keeps its
+            // defaultProfile() — the popup will surface the underlying
+            // issue the next time the user opens Settings.
             sendResponse(null);
           }
         })();
@@ -114,9 +126,11 @@ export default defineBackground(() => {
       return false;
     },
   );
-});
+}
 
-async function runTranslate(
+export default defineBackground(() => registerHandlers());
+
+export async function runTranslate(
   request: TranslationRequest,
 ): Promise<TranslationResponse> {
   const profile = await loadProfile();
@@ -146,7 +160,10 @@ async function runTranslate(
         .sendMessage({ type: "history:updated" })
         .catch(() => undefined);
     } catch {
-      // History writes never block translation; swallow failures here.
+      // History writes never block translation. IndexedDB unavailability
+      // or a transient transaction error here would otherwise lose the
+      // translation result altogether; instead the user still gets the
+      // in-page panel + notification and only the History tab is empty.
     }
   }
   return response;
@@ -161,4 +178,70 @@ function summariseOutput(response: TranslationResponse): string {
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   return "Unexpected error";
+}
+
+/**
+ * P1.4 fallback path. Called when the right-click translate completes but
+ * the active tab has no content-script island (the URL is outside the 9
+ * declared host_permissions). We deliberately keep the message short —
+ * notifications are a non-blocking surface and shouldn't carry the full
+ * translation payload. The user can find the full result in the popup's
+ * History tab if `historyEnabled` is on.
+ */
+function notifyContextResultFallback(
+  response: TranslationResponse,
+  pageUrl: string,
+): void {
+  const g = globalThis as unknown as {
+    chrome?: {
+      notifications?: {
+        create?: (
+          opts: {
+            type: string;
+            iconUrl: string;
+            title: string;
+            message: string;
+            priority?: number;
+          },
+          cb?: (id: string) => void,
+        ) => void;
+      };
+    };
+  };
+  const create = g.chrome?.notifications?.create;
+  if (!create) return;
+  const ok = response.ok && !response.mockMode;
+  const title = ok
+    ? "NeuroDock — translation ready"
+    : response.mockMode
+      ? "NeuroDock — mock fallback"
+      : "NeuroDock — translation error";
+  const host = safeHost(pageUrl);
+  const where = host ? ` on ${host}` : "";
+  const message = ok
+    ? `Done${where}. Open the extension popup to read the result (History tab).`
+    : response.mockMode
+      ? `Configured provider was unreachable${where}; mock answered instead. Check Settings → Test.`
+      : `Could not translate${where}. ${response.error ?? "Unknown error"}.`;
+  try {
+    create({
+      type: "basic",
+      iconUrl: "icon/128.png",
+      title,
+      message,
+      priority: 1,
+    });
+  } catch {
+    // notifications.create can throw if the icon path resolves outside
+    // the extension at runtime. We have nothing better to fall back to
+    // here — the user can still find the result in popup History.
+  }
+}
+
+function safeHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "";
+  }
 }

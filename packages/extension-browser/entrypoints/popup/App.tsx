@@ -14,7 +14,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   defaultProfile,
   loadProfile,
-  saveProfile,
+  saveProfileWithOutcome,
   getSyncStatus,
   type ProfileSyncStatus,
 } from "../../src/lib/profile.js";
@@ -31,6 +31,21 @@ function isHistoryUpdatedMessage(msg: unknown): boolean {
   );
 }
 
+interface ProfileUpdatedMessage {
+  readonly type: "profile:updated";
+  readonly profile: ExtensionProfile;
+}
+
+function isProfileUpdatedMessage(msg: unknown): msg is ProfileUpdatedMessage {
+  return (
+    typeof msg === "object" &&
+    msg !== null &&
+    (msg as { type?: unknown }).type === "profile:updated" &&
+    typeof (msg as { profile?: unknown }).profile === "object" &&
+    (msg as { profile?: unknown }).profile !== null
+  );
+}
+
 type TabId = "home" | "settings";
 
 export function App(): React.ReactElement {
@@ -39,11 +54,19 @@ export function App(): React.ReactElement {
   const [loaded, setLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<ProfileSyncStatus | null>(null);
   const [tab, setTab] = useState<TabId>("home");
+  // P1.2: surface save errors instead of swallowing them in `void onChange()`
+  // callers. Previously a confirm-required prompt or a native-host hard
+  // error returned silently and the popup carried on as if the save had
+  // succeeded.
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const refreshHistory = useCallback(async (): Promise<void> => {
     try {
       setHistory(await listHistory(20));
     } catch {
+      // History view degrades to empty if IndexedDB is unavailable; the
+      // toggle still works and the underlying writes will succeed once the
+      // store recovers. Surfacing this would be noise.
       setHistory([]);
     }
   }, []);
@@ -59,6 +82,9 @@ export function App(): React.ReactElement {
       try {
         setSyncStatus(await getSyncStatus());
       } catch {
+        // Native-host probe failure leaves the sync status as "checking";
+        // the Settings panel re-runs the probe on demand. No user-facing
+        // surface for this in the popup root.
         setSyncStatus(null);
       }
     })();
@@ -82,14 +108,50 @@ export function App(): React.ReactElement {
     return () => chrome.runtime.onMessage.removeListener(handler);
   }, [profile.historyEnabled, refreshHistory]);
 
-  const update = useCallback(async (patch: Partial<ExtensionProfile>) => {
-    const next = await saveProfile(patch);
-    setProfile(next);
+  // P1.1: pick up profile saves originating from other popup windows.
+  // `chrome.storage.onChanged` only fires for non-popup contexts;
+  // sibling popups need this explicit broadcast (sent from
+  // `saveProfileWithOutcome` in profile.ts).
+  useEffect(() => {
+    if (typeof chrome === "undefined" || !chrome.runtime?.onMessage) {
+      return undefined;
+    }
+    const handler = (msg: unknown): void => {
+      if (!isProfileUpdatedMessage(msg)) return;
+      setProfile(msg.profile);
+    };
+    chrome.runtime.onMessage.addListener(handler);
+    return () => chrome.runtime.onMessage.removeListener(handler);
   }, []);
+
+  const update = useCallback(
+    async (patch: Partial<ExtensionProfile>) => {
+      try {
+        const outcome = await saveProfileWithOutcome(patch);
+        setProfile(outcome.profile);
+        if (outcome.error) {
+          setSaveError(outcome.error);
+        } else if (saveError) {
+          setSaveError(null);
+        }
+      } catch (cause: unknown) {
+        // chrome.storage.local hard rejection — extremely rare, but if it
+        // happens we MUST tell the user. Silent failure here means the
+        // change was never persisted and the popup shows stale state.
+        const msg = cause instanceof Error ? cause.message : "Save failed";
+        setSaveError(msg);
+      }
+    },
+    [saveError],
+  );
 
   const handleSwitchLocal = useCallback(() => {
     void update({ mode: "local" });
   }, [update]);
+
+  const dismissSaveError = useCallback(() => {
+    setSaveError(null);
+  }, []);
 
   return (
     <main className="flex flex-col gap-4 p-4">
@@ -101,6 +163,26 @@ export function App(): React.ReactElement {
       </header>
 
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />
+
+      {saveError !== null ? (
+        <div
+          role="alert"
+          data-testid="popup-save-error"
+          className="flex items-start justify-between gap-2 border border-red-300 bg-red-50 p-2 text-xs text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100"
+        >
+          <span>
+            <strong>Save failed.</strong> {saveError}
+          </span>
+          <button
+            type="button"
+            onClick={dismissSaveError}
+            className="border border-red-300 px-2 py-0.5 text-xs dark:border-red-700"
+            aria-label="Dismiss save error"
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
 
       <TabBar current={tab} onChange={setTab} />
 

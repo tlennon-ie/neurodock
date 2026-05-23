@@ -18,11 +18,20 @@ import * as profileModule from "../../src/lib/profile.js";
 import { App } from "../../entrypoints/popup/App.js";
 
 type ChromeMessageListener = (msg: unknown) => void;
+// The default `ReturnType<typeof vi.spyOn>` resolves to the broad
+// `MockInstance<(this: unknown, ...args: unknown[]) => unknown>` overload
+// which collides with the precise `listHistory` signature. Use the
+// concrete function type so strict tsc accepts the assignment below.
+type ListHistorySpy = ReturnType<typeof storage.listHistory> extends Promise<
+  infer R
+>
+  ? import("vitest").MockInstance<(limit?: number) => Promise<R>>
+  : never;
 
 describe("Popup — live history updates via history:updated message", () => {
   let capturedListeners: ChromeMessageListener[];
   let originalOnMessage: typeof chrome.runtime.onMessage;
-  let listHistorySpy: ReturnType<typeof vi.spyOn>;
+  let listHistorySpy: ListHistorySpy;
 
   beforeEach(() => {
     capturedListeners = [];
@@ -50,6 +59,8 @@ describe("Popup — live history updates via history:updated message", () => {
     });
     vi.spyOn(profileModule, "getSyncStatus").mockResolvedValue({
       source: "extension-local",
+      nativeHostStatus: "absent",
+      path: null,
       detail: null,
     });
     listHistorySpy = vi.spyOn(storage, "listHistory").mockResolvedValue([]);

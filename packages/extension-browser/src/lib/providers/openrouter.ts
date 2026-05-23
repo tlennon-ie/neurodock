@@ -68,13 +68,17 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
   async function postOnce(
     request: ProviderRequest,
     stream: boolean,
+    useJsonResponseFormat: boolean,
   ): Promise<Response> {
-    const body = JSON.stringify({
+    const payload: Record<string, unknown> = {
       model: request.model,
       messages: [{ role: "user", content: request.prompt }],
       stream,
-      response_format: { type: "json_object" },
-    });
+    };
+    if (useJsonResponseFormat) {
+      payload.response_format = { type: "json_object" };
+    }
+    const body = JSON.stringify(payload);
     let res: Response;
     try {
       res = await f(DEFAULT_BASE_URL, {
@@ -92,6 +96,19 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
     }
     if (!res.ok) {
       const detail = await readErrorBody(res);
+      // P1.7 from the audit: OpenRouter forwards `response_format` to the
+      // selected upstream model and some models (e.g. older Mistral
+      // variants, some Llama hosts) reject the field with a 400. Detect
+      // that specific shape and let the caller retry without it. We use
+      // a sentinel exception so callers can distinguish "retry without
+      // json mode" from a generic 400.
+      if (
+        res.status === 400 &&
+        useJsonResponseFormat &&
+        isResponseFormatRejection(detail)
+      ) {
+        throw new ResponseFormatRejected(detail);
+      }
       throw normaliseOpenRouterError(res.status, detail);
     }
     return res;
@@ -102,7 +119,7 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
       return completeNonStreaming(request);
     }
     try {
-      const res = await postOnce(request, true);
+      const res = await postOnce(request, true, true);
       const ct = res.headers.get("content-type") ?? "";
       if (!ct.toLowerCase().includes("text/event-stream")) {
         // Some upstream models surface non-streaming responses even when
@@ -114,6 +131,17 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
       const text = await consumeSse(res, request.onToken);
       return resultFor(request, text);
     } catch (cause: unknown) {
+      if (cause instanceof ResponseFormatRejected) {
+        // Retry once on the streaming path without the json-mode hint.
+        const res = await postOnce(request, true, false);
+        const ct = res.headers.get("content-type") ?? "";
+        if (!ct.toLowerCase().includes("text/event-stream")) {
+          const text = await consumeNonStreamBody(res, request.onToken);
+          return resultFor(request, text);
+        }
+        const text = await consumeSse(res, request.onToken);
+        return resultFor(request, text);
+      }
       if (cause instanceof Error && /OPENROUTER_/.test(cause.message)) {
         throw cause;
       }
@@ -127,9 +155,18 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
   async function completeNonStreaming(
     request: ProviderRequest,
   ): Promise<ProviderResult> {
-    const res = await postOnce(request, false);
-    const text = await consumeNonStreamBody(res, request.onToken);
-    return resultFor(request, text);
+    try {
+      const res = await postOnce(request, false, true);
+      const text = await consumeNonStreamBody(res, request.onToken);
+      return resultFor(request, text);
+    } catch (cause: unknown) {
+      if (cause instanceof ResponseFormatRejected) {
+        const res = await postOnce(request, false, false);
+        const text = await consumeNonStreamBody(res, request.onToken);
+        return resultFor(request, text);
+      }
+      throw cause;
+    }
   }
 
   return { id: "openrouter", complete };
@@ -260,6 +297,27 @@ async function readErrorBody(response: Response): Promise<string> {
 function isStreamUnsupported(cause: unknown): boolean {
   if (!(cause instanceof Error)) return false;
   return /event-stream|stream not supported/i.test(cause.message);
+}
+
+/**
+ * Sentinel raised by `postOnce` when OpenRouter rejects our request with
+ * a 400 that names `response_format` (or the equivalent json-mode wording
+ * its upstream model returned). The caller retries the request without
+ * the `response_format` field. Same class of bug as the v0.0.6 LM Studio
+ * fix (`LMSTUDIO_HTTP_400`).
+ */
+class ResponseFormatRejected extends Error {
+  constructor(detail: string) {
+    super(`OPENROUTER_RESPONSE_FORMAT_REJECTED: ${detail}`);
+    this.name = "ResponseFormatRejected";
+  }
+}
+
+function isResponseFormatRejection(detail: string): boolean {
+  // Matches messages like "response_format.type must be 'text' or
+  // 'json_schema'", "Invalid response_format", "response_format is not
+  // supported by this model", etc.
+  return /response_format|json[_ ]object|json[_ ]mode/i.test(detail);
 }
 
 function normaliseOpenRouterError(status: number, detail: string): Error {

@@ -84,4 +84,94 @@ describe("anthropic provider", () => {
       /ANTHROPIC_API_KEY_MISSING/,
     );
   });
+
+  // P1.6 — Anthropic 404 / not_found_error now surfaces a dedicated
+  // ANTHROPIC_MODEL_NOT_FOUND prefix so the UI can hint at the stale
+  // hardcoded model list rather than showing an opaque ANTHROPIC_ERROR.
+  it("maps 404 / not_found_error to ANTHROPIC_MODEL_NOT_FOUND", async () => {
+    const failingClient = {
+      messages: {
+        stream() {
+          return {
+            on() {},
+            async finalMessage() {
+              throw new Error("404 model not_found_error: model not found");
+            },
+          };
+        },
+        async create() {
+          throw new Error("404 model not_found_error: model not found");
+        },
+      },
+    };
+    const provider = createAnthropicProvider({
+      apiKey: "sk-ant-test",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      clientFactory: () => failingClient as any,
+    });
+    let err: unknown;
+    try {
+      await provider.complete({
+        tool: "translate_incoming",
+        prompt: "ping",
+        model: "claude-imaginary",
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/ANTHROPIC_MODEL_NOT_FOUND/);
+  });
+
+  // P1.5 — Anthropic does not support response_format. We compensate by
+  // sending a system instruction telling the model to return a single
+  // JSON object with no prose. Verify the system field is present on the
+  // outgoing request shape (covers both streaming and non-streaming
+  // paths to prevent silent regression).
+  it("sends a JSON-mode system prompt on every request", async () => {
+    const capturedStream: { system?: string }[] = [];
+    const capturedCreate: { system?: string }[] = [];
+    const recordingClient = {
+      messages: {
+        stream(args: { system?: string }) {
+          capturedStream.push({ system: args.system });
+          return {
+            on() {},
+            async finalMessage() {
+              return { content: [{ type: "text", text: '{"ok":true}' }] };
+            },
+          };
+        },
+        async create(args: { system?: string }) {
+          capturedCreate.push({ system: args.system });
+          return { content: [{ type: "text", text: '{"ok":true}' }] };
+        },
+      },
+    };
+    const streamingProvider = createAnthropicProvider({
+      apiKey: "sk-ant-test",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      clientFactory: () => recordingClient as any,
+    });
+    await streamingProvider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "claude-haiku-4-5",
+    });
+    expect(capturedStream.length).toBe(1);
+    expect(capturedStream[0]!.system).toMatch(/single JSON object/i);
+
+    const nonStreamingProvider = createAnthropicProvider({
+      apiKey: "sk-ant-test",
+      disableStreaming: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      clientFactory: () => recordingClient as any,
+    });
+    await nonStreamingProvider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "claude-haiku-4-5",
+    });
+    expect(capturedCreate.length).toBe(1);
+    expect(capturedCreate[0]!.system).toMatch(/single JSON object/i);
+  });
 });

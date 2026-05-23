@@ -20,6 +20,24 @@ export interface AnthropicOptions {
 
 const MAX_TOKENS = 2048;
 
+/**
+ * JSON-mode system prompt for Anthropic.
+ *
+ * Anthropic has no `response_format` knob (unlike OpenAI / LM Studio / Ollama).
+ * The recommended substitute is a strong `system` instruction telling the
+ * model to return a single JSON object with no prose, no markdown fences,
+ * no commentary. We send this on every request so users do not have to
+ * encode JSON discipline into the prompt template — the prompt-builder
+ * already appends the output schema; this system message reinforces it
+ * outside the user-controlled prompt surface.
+ *
+ * P1.5 from .claude-reports/2026-05-23-extension-audit/SYNTHESIS.md.
+ */
+const JSON_MODE_SYSTEM =
+  "Respond with a single JSON object that validates against the schema in " +
+  "the user message. Do not include prose, markdown, code fences, or " +
+  "commentary outside the JSON. Output starts with `{` and ends with `}`.";
+
 export function createAnthropicProvider(options: AnthropicOptions): Provider {
   if (options.apiKey.length === 0) {
     throw new Error(
@@ -54,6 +72,7 @@ async function completeStreaming(
     {
       model: request.model,
       max_tokens: MAX_TOKENS,
+      system: JSON_MODE_SYSTEM,
       messages: [{ role: "user", content: request.prompt }],
     },
     { signal: request.signal },
@@ -79,6 +98,7 @@ async function completeNonStreaming(
       {
         model: request.model,
         max_tokens: MAX_TOKENS,
+        system: JSON_MODE_SYSTEM,
         messages: [{ role: "user", content: request.prompt }],
       },
       { signal: request.signal },
@@ -126,6 +146,18 @@ function normaliseAnthropicError(cause: unknown): Error {
     if (/429|rate.?limit/i.test(msg)) {
       return new Error(
         "ANTHROPIC_RATE_LIMITED: Too many requests. Wait and retry.",
+      );
+    }
+    // P1.6 from the audit: surface MODEL_NOT_FOUND rather than an opaque
+    // ANTHROPIC_ERROR when the user types or selects a model id Anthropic
+    // does not recognise (e.g. the hardcoded list in models.ts has gone
+    // stale or the user pasted a typo). 404 is Anthropic's signal here;
+    // newer SDK versions also tag the structured error type as
+    // `not_found_error`.
+    if (/404|not[_ ]found|model.*not.*found|unknown.*model/i.test(msg)) {
+      return new Error(
+        `ANTHROPIC_MODEL_NOT_FOUND: Anthropic does not recognise the ` +
+          `selected model. Update your model in Settings and try again.`,
       );
     }
     return new Error(`ANTHROPIC_ERROR: ${msg}`);

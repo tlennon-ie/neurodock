@@ -17,6 +17,9 @@ function isLocalhostBaseUrl(baseUrl: string): boolean {
     const u = new URL(baseUrl);
     return u.hostname === "localhost" || u.hostname === "127.0.0.1";
   } catch {
+    // Treat unparseable URLs as "no permission prompt needed" — the
+    // subsequent provider fetch will fail with a separate, actionable
+    // error and the test result UI surfaces that instead.
     return true;
   }
 }

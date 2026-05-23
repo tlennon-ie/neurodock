@@ -159,6 +159,15 @@ export async function saveProfileWithOutcome(
   const storage = getStorage();
   await storage.set({ [STORAGE_KEY]: merged });
 
+  // P1.1 from .claude-reports/2026-05-23-extension-audit/SYNTHESIS.md:
+  // `chrome.storage.onChanged` covers content-script islands (the 0.0.8
+  // fix), but a popup open in a *separate* browser window holds its own
+  // React state and never re-reads the local store on its own. Broadcast
+  // a typed runtime message so any other open popup can refresh without
+  // a close+reopen. The current-window popup also subscribes and uses
+  // this as an idempotent confirmation of the save.
+  broadcastProfileUpdated(merged);
+
   const probe = await probeNativeHost();
   if (probe.status !== "active") {
     return {
@@ -187,6 +196,20 @@ export async function saveProfileWithOutcome(
     confirmRequired: result.confirmRequired,
     error: result.error,
   };
+}
+
+function broadcastProfileUpdated(profile: ExtensionProfile): void {
+  const g = globalThis as unknown as {
+    chrome?: { runtime?: { sendMessage?: (msg: unknown) => Promise<unknown> } };
+  };
+  const send = g.chrome?.runtime?.sendMessage;
+  if (!send) return;
+  // No receiver (popup closed in every window) rejects the promise — that
+  // is fine; profile state is already in storage and other contexts pick
+  // it up via `chrome.storage.onChanged`. Intentional non-blocking.
+  void Promise.resolve()
+    .then(() => send({ type: "profile:updated", profile }))
+    .catch(() => undefined);
 }
 
 export async function setMode(mode: ExtensionMode): Promise<ExtensionProfile> {

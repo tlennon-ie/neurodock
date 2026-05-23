@@ -54,6 +54,8 @@ function originOf(baseUrl: string): string {
     const u = new URL(baseUrl);
     return `${u.protocol}//${u.host}`;
   } catch {
+    // Fall back to the raw user-typed string; downstream permission
+    // checks will fail loudly if it is actually invalid.
     return baseUrl;
   }
 }
@@ -248,6 +250,9 @@ function NonLocalhostNotice({
         if (cancelled) return;
         setGranted(all.includes(origin));
       } catch {
+        // Permissions API rejection here is rare and not actionable from
+        // the popup; default to "not granted" so the prompt button stays
+        // visible. The user can click it to surface the real error.
         if (!cancelled) setGranted(false);
       }
     })();
@@ -349,6 +354,9 @@ function HostPermissionsPanel(): React.ReactElement {
       const all = await listGrantedNonDefaultOrigins();
       setOrigins(all);
     } catch {
+      // Permissions API rejection collapses the list to empty rather than
+      // freezing the panel. The user can still revoke via Chrome's
+      // chrome://extensions detail screen.
       setOrigins([]);
     }
   }, []);

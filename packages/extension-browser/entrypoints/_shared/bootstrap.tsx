@@ -50,6 +50,10 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
       if (res) profile = res;
       return profile;
     } catch {
+      // Background worker may be temporarily unreachable during SW restart
+      // or extension upgrade; keep the existing profile (defaultProfile
+      // on first attempt, the last-known profile thereafter) so the
+      // island stays mounted and re-renders on the next storage change.
       return profile;
     }
   };
@@ -68,6 +72,9 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
       if (!env.success || !env.data) return null;
       return env.data;
     } catch {
+      // SW unreachable / killed mid-flight. Returning null lets ContentApp
+      // render its "couldn't reach background" error state; this is the
+      // same shape it shows when the provider itself failed.
       return null;
     }
   };
@@ -125,6 +132,8 @@ async function sendMessage<T>(payload: unknown): Promise<T | null> {
     const result = await chrome.runtime.sendMessage<unknown, T>(payload);
     return result ?? null;
   } catch {
+    // Background worker not available. Caller treats null as "use the
+    // current cached value" — see requestProfile above.
     return null;
   }
 }

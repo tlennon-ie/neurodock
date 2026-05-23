@@ -195,6 +195,111 @@ describe("openrouter provider", () => {
     expect(tokens).toEqual(['{"ok":true}']);
   });
 
+  // P1.7 — some upstream models reject `response_format: json_object`
+  // with a 400. The provider now retries once without that field rather
+  // than surfacing an opaque OPENROUTER_HTTP_400 to the user. Same class
+  // of bug as the v0.0.6 LM Studio fix.
+  it("retries without response_format when upstream model rejects it (streaming)", async () => {
+    const captured: CapturedRequest[] = [];
+    let call = 0;
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      captured.push({ url, init });
+      call += 1;
+      if (call === 1) {
+        return buildJsonResponse(400, {
+          error: {
+            message:
+              "response_format.type must be 'text' or 'json_schema' for this model",
+            code: 400,
+          },
+        });
+      }
+      return buildSseResponse(['{"ok":true}']);
+    }) as unknown as typeof fetch;
+
+    const provider = createOpenRouterProvider({
+      apiKey: "sk-or-test",
+      fetchImpl: fakeFetch,
+    });
+    const result = await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "mistralai/mistral-7b-instruct",
+    });
+    expect(result.text).toBe('{"ok":true}');
+    expect(captured.length).toBe(2);
+    const firstBody = JSON.parse(captured[0]!.init?.body as string) as Record<
+      string,
+      unknown
+    >;
+    const secondBody = JSON.parse(captured[1]!.init?.body as string) as Record<
+      string,
+      unknown
+    >;
+    expect(firstBody.response_format).toEqual({ type: "json_object" });
+    expect(secondBody.response_format).toBeUndefined();
+  });
+
+  it("retries without response_format on the non-streaming path too", async () => {
+    const captured: CapturedRequest[] = [];
+    let call = 0;
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      captured.push({ url, init });
+      call += 1;
+      if (call === 1) {
+        return buildJsonResponse(400, {
+          error: {
+            message: "Invalid response_format for this model",
+            code: 400,
+          },
+        });
+      }
+      return buildJsonResponse(200, {
+        choices: [{ message: { content: '{"ok":true}' } }],
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = createOpenRouterProvider({
+      apiKey: "sk-or-test",
+      fetchImpl: fakeFetch,
+      disableStreaming: true,
+    });
+    const result = await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "meta-llama/llama-3.3-70b-instruct",
+    });
+    expect(result.text).toBe('{"ok":true}');
+    expect(captured.length).toBe(2);
+  });
+
+  it("does NOT retry on 400s unrelated to response_format", async () => {
+    const captured: CapturedRequest[] = [];
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      captured.push({ url, init });
+      return buildJsonResponse(400, {
+        error: { message: "context length exceeded", code: 400 },
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = createOpenRouterProvider({
+      apiKey: "sk-or-test",
+      fetchImpl: fakeFetch,
+    });
+    let err: unknown;
+    try {
+      await provider.complete({
+        tool: "translate_incoming",
+        prompt: "ping",
+        model: "openrouter/auto",
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect(captured.length).toBe(1);
+    expect((err as Error).message).toMatch(/OPENROUTER_HTTP_400/);
+  });
+
   it("normalises 402 to OPENROUTER_INSUFFICIENT_CREDITS", async () => {
     const fakeFetch = vi.fn(async () =>
       buildJsonResponse(402, {
