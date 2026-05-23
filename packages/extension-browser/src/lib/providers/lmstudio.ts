@@ -141,11 +141,20 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
       }
       content = parts;
     }
+    // 0.0.22: explicit `max_tokens` so big images don't get a 6-line
+    // truncated JSON response. LM Studio's default cap on most installs
+    // is 256 tokens, which is enough for short text responses but trips
+    // the JSON parser mid-array for image descriptions
+    // (`Expected ',' or ']' after array element in JSON at position N`).
+    // 4096 leaves comfortable headroom for the largest schema we ship
+    // (describe_image with 7 key_elements + transcribed_text) without
+    // blowing model context windows.
     const body = JSON.stringify({
       model: request.model,
       messages: [{ role: "user", content }],
       stream,
       response_format: { type: "text" },
+      max_tokens: 4096,
     });
     let res: Response;
     try {

@@ -68,6 +68,10 @@ function baseProfile(
     cloudApiKey: null,
     historyEnabled: true,
     displayName: "you",
+    neurotypes: [],
+    outputFormat: "answer_first",
+    maxChunkSize: 5,
+    additionalNotes: null,
     ...overrides,
   };
 }

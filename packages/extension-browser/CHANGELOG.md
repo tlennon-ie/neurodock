@@ -1,5 +1,153 @@
 # @neurodock/extension-browser
 
+## 0.0.22
+
+This release is the dogfood-driven response to a 4-hour session that
+ran past midnight on extension fixes — during which **none** of
+NeuroDock's safety surfaces (chronometric breaks, hyperfocus warnings,
+rumination flags) auto-fired. Two pieces shipped: concrete extension
+fixes the user logged (CSP, JSON truncation, panel UX, per-neurotype
+prompts), AND a proposal + prototype for proactive guardrails that
+push instead of waiting for the user to pull.
+
+### Added — Per-neurotype prompt tailoring (the big one)
+
+Pre-0.0.22 every prompt addressed "a neurodivergent reader" as one
+undifferentiated audience. A dyslexic user got the same dense 3-line
+`explicit_ask` as an ADHD user got the same 5-deep `likely_subtext`
+list as an ASD user got idiom-laden "warm" rewrites.
+
+A 2026-05-24 prompt-evaluation agent produced
+[`.claude-reports/2026-05-24-prompt-neurotype-tailoring/REPORT.md`](../../.claude-reports/2026-05-24-prompt-neurotype-tailoring/REPORT.md)
+which audited all five prompts per neurotype and recommended
+per-neurotype addenda. Implementation:
+
+- New `buildNeurotypeAddendum(profile)` in
+  [`src/lib/neurotype-addendum.ts`](src/lib/neurotype-addendum.ts).
+  Returns an empty string for the all-default profile so existing
+  installs see no prompt change until they opt in.
+- Threaded into `buildPrompt` between the rendered template and the
+  JSON-schema suffix, so the model reads the per-neurotype rules in
+  time to shape its response.
+- Eight neurotype blocks: ADHD (answer-first, cut qualifiers), ASD
+  (literal, no idioms, verbatim quotes), AuDHD (fused — substitutes
+  ADHD+ASD rather than concatenating), OCD (low-pressure phrasing,
+  no urgency vocab), dyslexia (≤15-word sentences, plain words),
+  dyspraxia (absolute dates, low sequencing burden), Tourette
+  (explicit no-op — UI motion already handled), other (free-form
+  notes).
+- All `{max_chunk_size}` placeholders are interpolated to the user's
+  configured list cap (default 5, schema permits up to 20).
+- Combination rules: 3+ neurotypes append a "prefer the more
+  conservative reading" footer; `other` is always emitted last so
+  user-authored notes are the final word.
+- Schemas are unchanged — all tailoring fits inside existing v0.1.0
+  bounds.
+
+### Added — Settings UI for neurotypes + preferences
+
+New "Reader preferences" fieldset in the Settings tab surfaces:
+
+- Eight-neurotype checkbox grid with hints.
+- Smart AuDHD hint when the user picks both ADHD and ASD.
+- Output-format radio (`answer_first` / `conventional` /
+  `bullet_first`).
+- Max-list-items number input (1..20).
+- Additional-notes textarea (500-char cap).
+
+`ExtensionProfile` now carries `neurotypes`, `outputFormat`,
+`maxChunkSize`, `additionalNotes`. The on-disk mapper
+`mapOnDiskProfileToExtension` was extended to read these from the
+yaml (it previously dropped them silently and read only
+`identity.display_name`), and `mapExtensionProfileToOnDisk` now
+round-trips them so native-host users no longer get neurotypes wiped
+to `[]` on every Settings change.
+
+### Added — Toolbar icon progress + outcome badge
+
+The browser-toolbar action icon now reflects translation state:
+
+- `…` (neutral) while translating — gemma-4-e4b on a big image takes
+  8-20s; pre-0.0.22 the icon stayed inert and users thought the
+  right-click was lost.
+- `✓` (green) on success, auto-clears after 4s.
+- `m` (amber) on mock-fallback, auto-clears after 4s.
+- `!` (red) on error, auto-clears after 8s.
+
+State-driven via [`src/lib/action-badge.ts`](src/lib/action-badge.ts).
+Title hover text mirrors state for screen-reader users; badges scope
+per-tab so a translation in tab A doesn't visually overwrite the
+outcome from tab B.
+
+### Fixed — LinkedIn / gemma JSON truncation
+
+Image translations against gemma-4-e4b were returning truncated JSON
+on complex images:
+
+```
+LLM_OUTPUT_VALIDATION_FAILED: JSON parse error: Expected ',' or ']'
+after array element in JSON at position 864 (line 6 column 49)
+```
+
+Two changes:
+
+1. **Explicit `max_tokens: 4096`** in the LM Studio request body
+   ([`providers/lmstudio.ts`](src/lib/providers/lmstudio.ts)). The
+   server's default of 256 tokens was the root cause — fine for short
+   text translations, ruinous for image descriptions.
+2. **Structural JSON repair** in
+   [`validation.ts:repairTruncatedJson`](src/lib/validation.ts).
+   Walks the input balancing brackets and quotes; on JSON-parse
+   failure, attempts a repair before giving up. Recovers the partial
+   result the user would otherwise lose.
+
+### Fixed — CSP blocked images on local HTTP dev servers (0.0.21 follow-up)
+
+Right-click describe on `http://127.0.0.1:8000/...` now works
+end-to-end. The 0.0.21 CSP only allowed `https:` and `data:` for
+arbitrary images; this release adds `http:` to the `connect-src`
+allowlist (symmetric with `https:`; still gated by
+`optional_host_permissions` at the runtime layer).
+
+### Fixed — Notification copy when the panel can't open in-page
+
+Pre-0.0.22 the notification told users to "open extension settings"
+when the panel couldn't open on a non-supported host — but Settings
+has no surface for adding hosts (it's a content-script injection
+scope issue, not a permissions issue), so the advice wasted clicks.
+
+The notification now:
+
+- Distinguishes between "site not in auto-inject list" and "panel
+  couldn't reach this tab (try reloading)" — honest about which
+  failure mode applies.
+- Carries a tool-aware preview of the actual result (description
+  for image, explicit ask for text, tone score summary, etc.) so
+  the user gets value out of the notification itself.
+- Only suggests checking History when History is actually on; when
+  History is off, suggests turning it on.
+
+### Added — Proposal for proactive guardrails
+
+The user's 2026-05-24 00:38 message:
+
+> "We deploy all these changes but then it's really on the user to
+> actively type commands and phrases to make use of the guardrails
+> and protections we put in place in NeuroDock, instead we should be
+> able to have NeuroDock detect all interactions and know when to
+> intercept. This last 24hours just proved the value of everything
+> we built is not working if I am able to non stop work on this…"
+
+…landed as a concrete proposal at
+[`.claude-reports/2026-05-24-proactive-guardrails/PROPOSAL.md`](../../.claude-reports/2026-05-24-proactive-guardrails/PROPOSAL.md)
+with a Phase-1 prototype Claude Code hook
+(`SessionStart` / `PreToolUse` / `PostToolUse` / `Stop`) that
+auto-fires chronometric + guardrail checks every N tool uses, without
+the user having to remember to call them.
+
+Wiring instructions are in the proposal. The prototype lives in
+that report directory pending review.
+
 ## 0.0.21
 
 ### Fixed — CSP blocked images on local HTTP dev servers

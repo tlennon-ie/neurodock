@@ -56,6 +56,10 @@ describe("Popup — live history updates via history:updated message", () => {
       cloudApiKey: null,
       historyEnabled: true,
       displayName: "you",
+      neurotypes: [],
+      outputFormat: "answer_first",
+      maxChunkSize: 5,
+      additionalNotes: null,
     });
     vi.spyOn(profileModule, "getSyncStatus").mockResolvedValue({
       source: "extension-local",
@@ -99,6 +103,10 @@ describe("Popup — live history updates via history:updated message", () => {
       cloudApiKey: null,
       historyEnabled: false,
       displayName: "you",
+      neurotypes: [],
+      outputFormat: "answer_first",
+      maxChunkSize: 5,
+      additionalNotes: null,
     });
     render(<App />);
     // Wait for the initial mount effect to settle.

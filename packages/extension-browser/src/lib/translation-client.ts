@@ -115,7 +115,14 @@ export async function translate<T = unknown>(
     const images = extractImagesFromInput(request);
     const providerRequest: ProviderRequest = {
       tool: request.tool,
-      prompt: buildPrompt({ tool: request.tool, input: request.input }),
+      // 0.0.22: pass the live profile so the prompt-builder can append
+      // the per-neurotype addendum (no-op for profiles at default
+      // settings — preserves the pre-0.0.22 prompt byte-for-byte).
+      prompt: buildPrompt({
+        tool: request.tool,
+        input: request.input,
+        profile,
+      }),
       model,
       ...(options.signal ? { signal: options.signal } : {}),
       ...(options.onToken ? { onToken: options.onToken } : {}),

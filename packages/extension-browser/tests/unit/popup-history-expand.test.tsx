@@ -47,9 +47,15 @@ describe("Popup — History row click-to-expand", () => {
       cloudApiKey: null,
       historyEnabled: true,
       displayName: "you",
+      neurotypes: [],
+      outputFormat: "answer_first",
+      maxChunkSize: 5,
+      additionalNotes: null,
     });
     vi.spyOn(profileModule, "getSyncStatus").mockResolvedValue({
       source: "extension-local",
+      nativeHostStatus: "absent",
+      path: null,
       detail: null,
     });
   });

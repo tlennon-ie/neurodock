@@ -56,6 +56,34 @@ export type TargetRegister =
   | "concise"
   | "clarifying";
 
+/**
+ * Self-ID neurotypes mirroring the `identity.neurotypes` enum in
+ * `packages/core/schemas/profile.schema.json`. The user may select any
+ * combination. AuDHD is first-class — when the user has both `adhd` and
+ * `asd` separately we substitute the fused AuDHD addendum at prompt
+ * build time rather than concatenating both (per the 2026-05-24
+ * neurotype-tailoring report).
+ */
+export type Neurotype =
+  | "adhd"
+  | "asd"
+  | "audhd"
+  | "ocd"
+  | "dyslexia"
+  | "dyspraxia"
+  | "tourette"
+  | "other";
+
+/**
+ * How the user wants the AI to structure free-text answers. Mirrors
+ * `preferences.output_format` in the profile schema.
+ *
+ *   - answer_first: lead with the headline verdict; reasoning after.
+ *   - conventional: explanation first, then verdict.
+ *   - bullet_first: lead with a bullet list before any prose.
+ */
+export type OutputFormat = "answer_first" | "conventional" | "bullet_first";
+
 export interface ExtensionProfile {
   readonly mode: ExtensionMode;
   /**
@@ -85,6 +113,33 @@ export interface ExtensionProfile {
   readonly cloudApiKey: string | null;
   readonly historyEnabled: boolean;
   readonly displayName: string;
+  /**
+   * 0.0.22: per-neurotype prompt tailoring. Empty array = no tailoring
+   * (the base prompt is sent unchanged). Read from `identity.neurotypes`
+   * on the on-disk yaml; configurable via the Settings tab when no
+   * native host is installed.
+   */
+  readonly neurotypes: readonly Neurotype[];
+  /**
+   * 0.0.22: how the AI should structure free-text fields. Threaded into
+   * every prompt at build time so the model sees it before responding.
+   * Mirrors `preferences.output_format` on the on-disk profile.
+   */
+  readonly outputFormat: OutputFormat;
+  /**
+   * 0.0.22: per-list item cap injected into per-neurotype addenda
+   * (`{max_chunk_size}` placeholder). 1..20, default 5. Mirrors
+   * `preferences.max_chunk_size`. The schema permits more items but the
+   * prompt instructs the model to stop at this count.
+   */
+  readonly maxChunkSize: number;
+  /**
+   * 0.0.22: free-form text the user wants the model to know. Surfaced
+   * via the `other` addendum block (or always-appended footer). Never
+   * sent off-device unless cloud mode is on. Mirrors
+   * `identity.additional_notes`.
+   */
+  readonly additionalNotes: string | null;
 }
 
 export interface ModelProvenance {

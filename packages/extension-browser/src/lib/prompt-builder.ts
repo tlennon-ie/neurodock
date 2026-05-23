@@ -19,7 +19,8 @@ import rewriteOutgoingPrompt from "./prompts/rewrite_outgoing.prompt.md?raw";
 import briefMeetingPrompt from "./prompts/brief_meeting.prompt.md?raw";
 import describeImagePrompt from "./prompts/describe_image.prompt.md?raw";
 import { outputSchemaSnippet } from "./validation.js";
-import type { TranslationTool } from "./types.js";
+import { buildNeurotypeAddendum } from "./neurotype-addendum.js";
+import type { ExtensionProfile, TranslationTool } from "./types.js";
 
 const TEMPLATES: Record<TranslationTool, string> = {
   translate_incoming: translateIncomingPrompt,
@@ -38,13 +39,21 @@ const SUFFIX_HEADER =
 export interface PromptInputs {
   readonly tool: TranslationTool;
   readonly input: Record<string, unknown>;
+  /**
+   * 0.0.22: optional profile context so the prompt-builder can append
+   * the per-neurotype addendum block. Omit to get the byte-identical
+   * pre-0.0.22 prompt (the addendum builder returns "" for the
+   * all-default profile case).
+   */
+  readonly profile?: ExtensionProfile;
 }
 
-export function buildPrompt({ tool, input }: PromptInputs): string {
+export function buildPrompt({ tool, input, profile }: PromptInputs): string {
   const template = TEMPLATES[tool];
   const rendered = renderTemplate(template, input);
+  const addendum = profile ? buildNeurotypeAddendum(profile) : "";
   const schema = outputSchemaSnippet(tool);
-  return `${rendered}${SUFFIX_HEADER}\`\`\`json\n${schema}\n\`\`\`\n`;
+  return `${rendered}${addendum}${SUFFIX_HEADER}\`\`\`json\n${schema}\n\`\`\`\n`;
 }
 
 function renderTemplate(

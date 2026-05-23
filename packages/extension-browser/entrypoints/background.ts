@@ -19,6 +19,7 @@ import {
 } from "../src/lib/translation-client.js";
 import { fetchModels } from "../src/lib/providers/models.js";
 import { appendHistory, truncatePreview } from "../src/lib/storage.js";
+import { setActionBadge } from "../src/lib/action-badge.js";
 import type {
   RuntimeMessage,
   RuntimeResponseEnvelope,
@@ -133,9 +134,10 @@ export function registerHandlers(): void {
     (msg: RuntimeMessage, _sender, sendResponse: (env: unknown) => void) => {
       if (!msg) return false;
       if (msg.type === "translate") {
+        const tabId = _sender.tab?.id;
         void (async () => {
           try {
-            const data = await runTranslate(msg.request);
+            const data = await runTranslate(msg.request, tabId);
             sendResponse({
               success: true,
               data,
@@ -209,9 +211,25 @@ export default defineBackground(() => registerHandlers());
 
 export async function runTranslate(
   request: TranslationRequest,
+  tabId?: number,
 ): Promise<TranslationResponse> {
+  // 0.0.22: toolbar badge surfaces in-flight state so the user gets a
+  // visible "working…" indicator while the model thinks (gemma-4-e4b on
+  // images can take 8–20s). Pre-0.0.22 the icon stayed inert and users
+  // assumed the right-click was lost.
+  setActionBadge("working", tabId);
   const profile = await loadProfile();
   const response = await translate(request, { profile });
+  // Outcome → badge state. Mock-fallback uses its own "m" badge so the
+  // user can tell at a glance that the answer didn't come from their
+  // configured provider.
+  if (!response.ok) {
+    setActionBadge("error", tabId);
+  } else if (response.mockMode) {
+    setActionBadge("mock", tabId);
+  } else {
+    setActionBadge("success", tabId);
+  }
   if (profile.historyEnabled) {
     try {
       await appendHistory({
@@ -315,28 +333,29 @@ function getErrorMessage(error: unknown): string {
 }
 
 /**
- * P1.4 fallback path. Called when the right-click translate completes but
- * the active tab has no content-script island (the URL is outside the 9
- * declared host_permissions). We deliberately keep the message short —
- * notifications are a non-blocking surface and shouldn't carry the full
- * translation payload. The user can find the full result in the popup's
- * History tab if `historyEnabled` is on.
+ * Fallback path when the panel can't be shown in-page. Called when
+ * `chrome.tabs.sendMessage` to the active tab rejects — either because
+ * the URL is outside our declared `host_permissions` (no auto-injected
+ * content script), or because of a transient SPA-navigation race.
+ *
+ * 0.0.22: notification copy is now honest about *which* failure mode
+ * applies and carries the actual translation preview in the body so the
+ * user gets value without opening anything. Pre-0.0.22 it told users
+ * to "open extension settings" — but Settings has nothing the user can
+ * do about an off-list host (it's not a permissions issue, it's a
+ * content-script injection scope issue), so users wasted clicks.
  */
 async function notifyContextResultFallback(
   response: TranslationResponse,
   pageUrl: string,
 ): Promise<void> {
-  // Read the live profile so the "open History" suggestion is only shown
-  // when History is actually ON. Pre-0.0.21 the toast told users to
-  // check History unconditionally; for users who had History off the
-  // tab was empty by design and the message looked broken.
   let historyEnabled = false;
   try {
     const profile = await loadProfile();
     historyEnabled = profile.historyEnabled;
   } catch {
-    // Profile read failure means we can't tell — fall back to the
-    // "turn on History" branch which is a safe non-promise either way.
+    // Profile read failure means we can't tell — default to the
+    // "turn on History" branch (always honest, never lies about state).
   }
   const g = globalThis as unknown as {
     chrome?: {
@@ -347,6 +366,7 @@ async function notifyContextResultFallback(
             iconUrl: string;
             title: string;
             message: string;
+            contextMessage?: string;
             priority?: number;
           },
           cb?: (id: string) => void,
@@ -363,32 +383,138 @@ async function notifyContextResultFallback(
       ? "NeuroDock — mock fallback"
       : "NeuroDock — translation error";
   const host = safeHost(pageUrl);
-  const where = host ? ` on ${host}` : "";
-  // Only point the user at History when History is actually ON — otherwise
-  // they open a History tab that's empty by design and quite reasonably
-  // conclude the feature is broken.
-  const okSuffix = historyEnabled
-    ? "Open the popup → Home → History and click the latest row to read it."
-    : "Turn on History in the popup → Home if you want the result kept around.";
+  const isSupportedHost = isAutoInjectedHost(host);
+  const preview = buildResultPreview(response);
+
+  // Build a one-line, honest explanation of why the panel didn't open
+  // in-page. Avoid suggesting the user "open Settings" — there's no
+  // setting that fixes the off-list-host case, and saying so wasted
+  // user clicks pre-0.0.22.
+  let reason: string;
+  if (!ok && !response.mockMode) {
+    reason = response.error ?? "Unknown error.";
+  } else if (response.mockMode) {
+    reason = "Configured provider was unreachable; mock answered instead.";
+  } else if (isSupportedHost) {
+    // Inside our declared host_permissions, but sendMessage still failed.
+    // Almost always an SPA-navigation race or a tab that hasn't finished
+    // mounting the island yet.
+    reason = "Panel couldn't reach this tab. Try reloading the tab.";
+  } else {
+    reason =
+      "This site isn't in NeuroDock's auto-inject list yet " +
+      "(Gmail, Slack, Linear, Notion, GitHub, Google Docs, Outlook). " +
+      "The translation still ran; result is below.";
+  }
+
+  const historyHint = historyEnabled
+    ? " Full result also saved to History."
+    : " Turn on History in the popup → Home to keep results.";
+
+  // Include the host inside the message body too (not only contextMessage)
+  // — Chrome puts contextMessage in a smaller font under the body, and
+  // some platforms (Linux notify-osd, older Firefox) ignore it entirely.
+  // The host hint is the most-asked-for piece of "which tab did this
+  // come from" context, so it goes in the main copy as well.
+  const hostHint = host ? ` (on ${host})` : "";
   const message = ok
-    ? `Done${where}. NeuroDock's panel can't open on this site (no host ` +
-      `permission). ${okSuffix}`
-    : response.mockMode
-      ? `Configured provider was unreachable${where}; mock answered instead. Check popup → Settings → Test.`
-      : `Could not translate${where}. ${response.error ?? "Unknown error"}.`;
+    ? `${preview}\n\n${reason}${hostHint}${historyHint}`
+    : `${reason}${hostHint}`;
+
   try {
     create({
       type: "basic",
       iconUrl: "icon/128.png",
       title,
       message,
+      contextMessage: host ? `from ${host}` : "",
       priority: 1,
     });
   } catch {
     // notifications.create can throw if the icon path resolves outside
-    // the extension at runtime. We have nothing better to fall back to
-    // here — the user can still find the result in popup History.
+    // the extension at runtime. Nothing better to fall back to — the
+    // result is still in History when enabled.
   }
+}
+
+/**
+ * Are we on a host that has a content script auto-injected (and so the
+ * `tabs.sendMessage` failure was an unexpected race rather than the
+ * documented off-list-host case)? Mirrors the `host_permissions` block
+ * in wxt.config.ts — kept in sync manually because there's no runtime
+ * way to ask Chrome which hosts have auto-injected scripts.
+ */
+function isAutoInjectedHost(host: string): boolean {
+  if (host.length === 0) return false;
+  return (
+    host === "mail.google.com" ||
+    host === "app.slack.com" ||
+    host === "linear.app" ||
+    host === "www.notion.so" ||
+    host.endsWith(".notion.so") ||
+    host.endsWith(".notion.site") ||
+    host === "github.com" ||
+    host === "docs.google.com" ||
+    host === "outlook.live.com" ||
+    host === "outlook.office.com" ||
+    host === "outlook.office365.com"
+  );
+}
+
+/**
+ * Render a one- or two-line preview of the translation result so the
+ * user actually gets value out of the notification, not just "Done".
+ * Tool-aware: image describe shows the description, text translate
+ * shows the explicit ask, tone check shows the headline number, etc.
+ */
+function buildResultPreview(response: TranslationResponse): string {
+  if (!response.ok || response.data === null) return "Done.";
+  const data = response.data as Record<string, unknown>;
+  const trim = (s: string, n: number): string =>
+    s.length > n ? `${s.slice(0, n - 1)}…` : s;
+  if (response.tool === "describe_image") {
+    const desc = typeof data.description === "string" ? data.description : "";
+    return desc.length > 0 ? trim(desc, 220) : "Image described.";
+  }
+  if (response.tool === "translate_incoming") {
+    const ask = typeof data.explicit_ask === "string" ? data.explicit_ask : "";
+    if (ask.length > 0) return `Ask: ${trim(ask, 200)}`;
+    const subs = Array.isArray(data.likely_subtext)
+      ? (data.likely_subtext as Array<{ text?: unknown }>)
+      : [];
+    const first = subs[0];
+    if (first && typeof first.text === "string") {
+      return `Subtext: ${trim(first.text, 200)}`;
+    }
+    return "Message decoded.";
+  }
+  if (response.tool === "check_tone") {
+    const axes = data.axes as Record<string, unknown> | undefined;
+    if (axes) {
+      const d = numOrDash(axes.directness);
+      const w = numOrDash(axes.warmth);
+      const u = numOrDash(axes.urgency);
+      return `Tone — direct ${d} / warm ${w} / urgent ${u} (0–100).`;
+    }
+    return "Tone checked.";
+  }
+  if (response.tool === "rewrite_outgoing") {
+    const rew = typeof data.rewritten === "string" ? data.rewritten : "";
+    return rew.length > 0 ? trim(rew, 220) : "Rewrite ready.";
+  }
+  if (response.tool === "brief_meeting") {
+    const my = Array.isArray(data.my_asks) ? data.my_asks.length : 0;
+    const others = Array.isArray(data.others_asks)
+      ? data.others_asks.length
+      : 0;
+    const dec = Array.isArray(data.decisions) ? data.decisions.length : 0;
+    return `${my} ask(s) on you · ${others} asks of others · ${dec} decision(s).`;
+  }
+  return "Done.";
+}
+
+function numOrDash(x: unknown): string {
+  return typeof x === "number" ? String(Math.round(x)) : "—";
 }
 
 function safeHost(url: string): string {
@@ -531,7 +657,7 @@ async function dispatchContextResult(
   request: TranslationRequest,
   sourceText: string,
 ): Promise<void> {
-  const response = await runTranslate(request);
+  const response = await runTranslate(request, tabId);
   // Targeted at the tab's content-script island (mounted by gmail.content.ts
   // and the other per-site bootstraps). The island listens for this exact
   // discriminated `type` and opens the result panel.

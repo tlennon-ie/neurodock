@@ -23,7 +23,12 @@
  *  - A third mode value `mock` lets users explicitly request the
  *    deterministic developer-only provider.
  */
-import type { ExtensionMode, ExtensionProfile } from "./types.js";
+import type {
+  ExtensionMode,
+  ExtensionProfile,
+  Neurotype,
+  OutputFormat,
+} from "./types.js";
 import {
   nativeHostGetProfile,
   nativeHostSetProfile,
@@ -44,6 +49,14 @@ const DEFAULT_PROFILE: ExtensionProfile = Object.freeze({
   cloudApiKey: null,
   historyEnabled: false,
   displayName: "you",
+  // 0.0.22: per-neurotype prompt tailoring. Defaults are the
+  // no-tailoring case (empty neurotypes + null notes + answer_first +
+  // max_chunk_size 5) so existing installs see no prompt-content change
+  // until they opt-in via the Settings tab or yaml.
+  neurotypes: Object.freeze([]) as readonly never[],
+  outputFormat: "answer_first" as const,
+  maxChunkSize: 5,
+  additionalNotes: null,
 });
 
 export type ProfileSource = "native-host" | "extension-local";
@@ -258,6 +271,31 @@ function normaliseMode(input: Partial<ExtensionProfile>): ExtensionMode {
   return "local";
 }
 
+const NEUROTYPE_ENUM: ReadonlySet<Neurotype> = new Set([
+  "adhd",
+  "asd",
+  "audhd",
+  "ocd",
+  "dyslexia",
+  "dyspraxia",
+  "tourette",
+  "other",
+]);
+
+const OUTPUT_FORMAT_ENUM: ReadonlySet<OutputFormat> = new Set([
+  "answer_first",
+  "conventional",
+  "bullet_first",
+]);
+
+function isNeurotype(x: unknown): x is Neurotype {
+  return typeof x === "string" && NEUROTYPE_ENUM.has(x as Neurotype);
+}
+
+function isOutputFormat(x: unknown): x is OutputFormat {
+  return typeof x === "string" && OUTPUT_FORMAT_ENUM.has(x as OutputFormat);
+}
+
 function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
   return {
     mode: normaliseMode(input),
@@ -291,6 +329,24 @@ function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
       typeof input.displayName === "string" && input.displayName.length > 0
         ? input.displayName
         : DEFAULT_PROFILE.displayName,
+    neurotypes: Array.isArray(input.neurotypes)
+      ? (input.neurotypes as unknown[]).filter(isNeurotype)
+      : DEFAULT_PROFILE.neurotypes,
+    outputFormat: isOutputFormat(input.outputFormat)
+      ? input.outputFormat
+      : DEFAULT_PROFILE.outputFormat,
+    maxChunkSize:
+      typeof input.maxChunkSize === "number" &&
+      Number.isInteger(input.maxChunkSize) &&
+      input.maxChunkSize >= 1 &&
+      input.maxChunkSize <= 20
+        ? input.maxChunkSize
+        : DEFAULT_PROFILE.maxChunkSize,
+    additionalNotes:
+      typeof input.additionalNotes === "string" &&
+      input.additionalNotes.length > 0
+        ? input.additionalNotes
+        : null,
   };
 }
 
@@ -309,29 +365,73 @@ function mapOnDiskProfileToExtension(
   baseline: ExtensionProfile,
 ): ExtensionProfile {
   const identity = isRecord(onDisk["identity"]) ? onDisk["identity"] : {};
+  const preferences = isRecord(onDisk["preferences"])
+    ? onDisk["preferences"]
+    : {};
+
   const displayName =
     typeof identity["display_name"] === "string" &&
     identity["display_name"].length > 0
       ? identity["display_name"]
       : baseline.displayName;
-  return normaliseProfile({ ...baseline, displayName });
+
+  // 0.0.22: also read neurotypes, additional_notes, output_format,
+  // max_chunk_size from the on-disk yaml. Pre-0.0.22 these dropped on
+  // the floor and the extension stayed at defaults regardless of what
+  // the user had configured via the CLI / yaml.
+  const neurotypes = Array.isArray(identity["neurotypes"])
+    ? (identity["neurotypes"] as unknown[]).filter(isNeurotype)
+    : baseline.neurotypes;
+
+  const additionalNotes =
+    typeof identity["additional_notes"] === "string" &&
+    identity["additional_notes"].length > 0
+      ? identity["additional_notes"]
+      : baseline.additionalNotes;
+
+  const outputFormat = isOutputFormat(preferences["output_format"])
+    ? preferences["output_format"]
+    : baseline.outputFormat;
+
+  const rawChunk = preferences["max_chunk_size"];
+  const maxChunkSize =
+    typeof rawChunk === "number" &&
+    Number.isInteger(rawChunk) &&
+    rawChunk >= 1 &&
+    rawChunk <= 20
+      ? rawChunk
+      : baseline.maxChunkSize;
+
+  return normaliseProfile({
+    ...baseline,
+    displayName,
+    neurotypes,
+    outputFormat,
+    maxChunkSize,
+    additionalNotes,
+  });
 }
 
 /**
  * Translate the extension-internal profile into the on-disk shape. Other
- * top-level blocks (preferences, chronometric, guardrails, privacy) are
- * left untouched on disk so a user's hand-edits survive.
+ * top-level blocks (chronometric, guardrails, privacy) are left untouched
+ * on disk so a user's hand-edits survive.
  */
 export function mapExtensionProfileToOnDisk(
   profile: ExtensionProfile,
 ): Record<string, unknown> {
+  const identity: Record<string, unknown> = {
+    display_name: profile.displayName,
+    neurotypes: profile.neurotypes,
+  };
+  if (profile.additionalNotes !== null) {
+    identity["additional_notes"] = profile.additionalNotes;
+  }
   return {
-    identity: {
-      display_name: profile.displayName,
-      // neurotypes is required by the schema; supply an empty array when
-      // the extension does not know one to declare. The schema treats
-      // empty as "opt out", which is the correct conservative default.
-      neurotypes: [],
+    identity,
+    preferences: {
+      output_format: profile.outputFormat,
+      max_chunk_size: profile.maxChunkSize,
     },
   };
 }

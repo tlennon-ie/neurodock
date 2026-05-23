@@ -27,7 +27,12 @@
  *    "Refresh models" button that populates a dropdown.
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import type { ExtensionMode, ExtensionProfile } from "../../src/lib/types.js";
+import type {
+  ExtensionMode,
+  ExtensionProfile,
+  Neurotype,
+  OutputFormat,
+} from "../../src/lib/types.js";
 import {
   fetchModels,
   type ModelFetchableProvider,
@@ -271,10 +276,223 @@ export function SettingsTab({
 
       <ProviderTest profile={profile} />
 
+      <ReaderPreferences profile={profile} onChange={onChange} />
+
       <ImageTranslationPermission />
 
       <HostPermissionsPanel />
     </section>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Reader preferences (0.0.22): per-neurotype prompt tailoring.
+//
+// Surfaces the four ExtensionProfile fields that drive
+// buildNeurotypeAddendum:
+//   - neurotypes (multi-select checkboxes; 8 enum values)
+//   - outputFormat (3-radio)
+//   - maxChunkSize (number input, 1..20)
+//   - additionalNotes (textarea)
+//
+// Saves immediately on each change. Native-host users see the same
+// values mirrored from ~/.neurodock/profile.yaml; extension-local
+// users get this panel as their only configuration surface.
+// ──────────────────────────────────────────────────────────────────────
+
+interface ReaderPreferencesProps {
+  readonly profile: ExtensionProfile;
+  readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void> | void;
+}
+
+const NEUROTYPE_OPTIONS: ReadonlyArray<{
+  readonly value: Neurotype;
+  readonly label: string;
+  readonly hint: string;
+}> = [
+  { value: "adhd", label: "ADHD", hint: "answer-first, short lists" },
+  { value: "asd", label: "Autism / ASD", hint: "literal subtext, no idioms" },
+  {
+    value: "audhd",
+    label: "AuDHD",
+    hint: "fused — picks both ADHD and ASD rules without doubling up",
+  },
+  { value: "ocd", label: "OCD", hint: "low-pressure phrasing" },
+  {
+    value: "dyslexia",
+    label: "Dyslexia",
+    hint: "short sentences, plain words",
+  },
+  {
+    value: "dyspraxia",
+    label: "Dyspraxia",
+    hint: "absolute dates, low sequencing burden",
+  },
+  {
+    value: "tourette",
+    label: "Tourette's",
+    hint: "no prompt change (motion already handled in UI)",
+  },
+  {
+    value: "other",
+    label: "Other / self-described",
+    hint: "use the notes box",
+  },
+];
+
+function ReaderPreferences({
+  profile,
+  onChange,
+}: ReaderPreferencesProps): React.ReactElement {
+  const toggleNeurotype = (value: Neurotype, checked: boolean): void => {
+    const next = new Set<Neurotype>(profile.neurotypes);
+    if (checked) {
+      next.add(value);
+    } else {
+      next.delete(value);
+    }
+    void onChange({ neurotypes: Array.from(next) });
+  };
+  const showAudhdHint =
+    profile.neurotypes.includes("adhd") &&
+    profile.neurotypes.includes("asd") &&
+    !profile.neurotypes.includes("audhd");
+  return (
+    <fieldset
+      data-testid="reader-preferences"
+      className="m-0 flex flex-col gap-3 border border-neutral-200 p-3 dark:border-neutral-800"
+    >
+      <legend className="px-1 text-xs font-medium uppercase tracking-wider text-neutral-500">
+        Reader preferences (shapes every translation)
+      </legend>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium">Which describe you?</label>
+        <p className="text-[11px] text-neutral-500">
+          Self-ID only — no diagnosis required. Tick all that apply. Used to
+          tailor prompts; never sent off-device unless cloud mode is on.
+        </p>
+        <div className="mt-1 grid grid-cols-2 gap-1">
+          {NEUROTYPE_OPTIONS.map((opt) => {
+            const checked = profile.neurotypes.includes(opt.value);
+            return (
+              <label
+                key={opt.value}
+                className="flex items-start gap-2 text-xs"
+                title={opt.hint}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => toggleNeurotype(opt.value, e.target.checked)}
+                  data-testid={`neurotype-${opt.value}`}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="font-medium">{opt.label}</span>
+                  <span className="block text-[10px] text-neutral-500">
+                    {opt.hint}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        {showAudhdHint ? (
+          <p
+            data-testid="audhd-hint"
+            className="mt-1 border border-amber-300 bg-amber-50 p-1.5 text-[11px] text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+          >
+            Looks like you might want <strong>AuDHD</strong> — it's a fused
+            block instead of stacking ADHD + ASD. Tick AuDHD and untick the
+            other two if that's right.
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium">Output shape</label>
+        <div className="flex flex-col gap-0.5 text-xs">
+          {(
+            [
+              {
+                value: "answer_first",
+                label: "Answer-first — verdict in the first phrase",
+              },
+              {
+                value: "conventional",
+                label: "Conventional — brief context, then verdict",
+              },
+              {
+                value: "bullet_first",
+                label: "Bullet-first — bullet list before any prose",
+              },
+            ] as ReadonlyArray<{ value: OutputFormat; label: string }>
+          ).map((opt) => (
+            <label key={opt.value} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="output-format"
+                value={opt.value}
+                checked={profile.outputFormat === opt.value}
+                onChange={() => void onChange({ outputFormat: opt.value })}
+                data-testid={`outputFormat-${opt.value}`}
+              />
+              <span>{opt.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="max-chunk-size" className="text-xs font-medium">
+          Max items in lists
+        </label>
+        <input
+          id="max-chunk-size"
+          type="number"
+          min={1}
+          max={20}
+          value={profile.maxChunkSize}
+          onChange={(e) => {
+            const parsed = Number.parseInt(e.target.value, 10);
+            if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 20) {
+              void onChange({ maxChunkSize: parsed });
+            }
+          }}
+          data-testid="max-chunk-size"
+          className="w-20 border border-neutral-300 bg-white px-2 py-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+        />
+        <p className="text-[11px] text-neutral-500">
+          How many items the AI shows before stopping. Manifesto default is 5
+          (ADHD-tuned). Schema lets you go up to 20.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="additional-notes" className="text-xs font-medium">
+          Anything else the AI should know about you?
+        </label>
+        <textarea
+          id="additional-notes"
+          value={profile.additionalNotes ?? ""}
+          onChange={(e) =>
+            void onChange({
+              additionalNotes:
+                e.target.value.length > 0 ? e.target.value : null,
+            })
+          }
+          rows={3}
+          maxLength={500}
+          placeholder='Example: "I get overwhelmed by long paragraphs" or "please always quote the source verbatim"'
+          data-testid="additional-notes"
+          className="w-full border border-neutral-300 bg-white p-2 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+        />
+        <p className="text-[11px] text-neutral-500">
+          Treated as a literal instruction set to the AI. 500-character max.
+        </p>
+      </div>
+    </fieldset>
   );
 }
 

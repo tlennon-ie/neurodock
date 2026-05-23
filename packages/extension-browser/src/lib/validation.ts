@@ -94,32 +94,126 @@ export function parseAndValidate<T = unknown>(
   rawText: string,
   provenance?: ModelProvenance,
 ): ValidationResult<T> {
-  const extracted = extractJson(rawText);
+  // Try the strict extractor first (looks for matched `{ … }` brackets
+  // or a fenced ```json block). When the model truncated mid-output —
+  // no closing brace at all — fall back to using the rawText so the
+  // repair function downstream gets a chance to balance the brackets.
+  let extracted = extractJson(rawText);
   if (extracted === null) {
-    return {
-      ok: false,
-      data: null,
-      errors: ["Could not locate a JSON object in the model completion."],
-    };
+    const trimmed = rawText.trim();
+    if (trimmed.length > 0 && (trimmed[0] === "{" || trimmed[0] === "[")) {
+      extracted = trimmed;
+    } else {
+      return {
+        ok: false,
+        data: null,
+        errors: ["Could not locate a JSON object in the model completion."],
+      };
+    }
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(extracted);
-  } catch (cause: unknown) {
-    return {
-      ok: false,
-      data: null,
-      errors: [
-        `JSON parse error: ${
-          cause instanceof Error ? cause.message : "unknown"
-        }`,
-      ],
-    };
+  } catch (firstError: unknown) {
+    // 0.0.22: gemma-4-e4b and similar small local models routinely
+    // truncate JSON mid-array on big inputs (image descriptions are the
+    // worst offender — `key_elements: ["bar chart", "axis labels",`
+    // cuts off and the parser fails with `Expected ',' or ']' after
+    // array element in JSON at position N`). Try a structural repair
+    // before giving up: balance open brackets, drop trailing commas,
+    // and re-parse. If the repair fixes the structure the user gets
+    // the partial result they would otherwise lose.
+    const repaired = repairTruncatedJson(extracted);
+    if (repaired !== null) {
+      try {
+        parsed = JSON.parse(repaired);
+      } catch {
+        return {
+          ok: false,
+          data: null,
+          errors: [
+            `JSON parse error: ${
+              firstError instanceof Error ? firstError.message : "unknown"
+            } (auto-repair also failed)`,
+          ],
+        };
+      }
+    } else {
+      return {
+        ok: false,
+        data: null,
+        errors: [
+          `JSON parse error: ${
+            firstError instanceof Error ? firstError.message : "unknown"
+          }`,
+        ],
+      };
+    }
   }
   const normalised = provenance
     ? normaliseLLMOutput(tool, parsed, provenance)
     : parsed;
   return validateOutput<T>(tool, normalised);
+}
+
+/**
+ * Best-effort structural repair for a truncated JSON string from a
+ * small local model. Walks the input once tracking string-mode and
+ * bracket depth; if the source ends mid-string, mid-array, or
+ * mid-object, appends the missing closers in reverse order. Drops a
+ * trailing comma if one was the last meaningful character before the
+ * truncation.
+ *
+ * Returns the repaired string when it MIGHT now be valid JSON, or null
+ * when the structure is too damaged to safely guess (e.g. the
+ * truncation landed inside a number we can't tell is complete).
+ */
+export function repairTruncatedJson(raw: string): string | null {
+  const text = raw.trim();
+  if (text.length === 0) return null;
+  if (text[0] !== "{" && text[0] !== "[") return null;
+  const stack: Array<"]" | "}"> = [];
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (inString) {
+      if (ch === "\\") {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{") stack.push("}");
+    else if (ch === "[") stack.push("]");
+    else if (ch === "}" || ch === "]") {
+      const expected = stack.pop();
+      if (expected !== ch) return null; // structural mismatch; give up
+    }
+  }
+  if (stack.length === 0 && !inString) {
+    // Nothing to repair — original parse already failed for a different
+    // reason. Don't pretend we fixed it.
+    return null;
+  }
+  let repaired = text;
+  if (inString) {
+    repaired += '"';
+  }
+  // Drop a trailing comma sitting before whatever needs closing —
+  // `[a, b,` → `[a, b]` not `[a, b,]`.
+  repaired = repaired.replace(/,\s*$/, "");
+  while (stack.length > 0) repaired += stack.pop();
+  return repaired;
 }
 
 /**
