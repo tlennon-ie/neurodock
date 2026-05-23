@@ -1,5 +1,43 @@
 # @neurodock/extension-browser
 
+## 0.0.18
+
+### Fixed — CSP / host permissions blocked image fetches on arbitrary HTTPS sites
+
+0.0.17 fetched images in the service worker so local-LLM vision models
+could receive base64 data URLs. That fetch was blocked by the extension's
+own CSP whenever the image was on a host not in our narrow `connect-src`
+allowlist:
+
+```
+Connecting to 'https://huggingface.co/.../logo.svg' violates the
+following Content Security Policy directive: "connect-src 'self'
+http://localhost:11434 http://localhost:1234 ..."
+```
+
+Two-part fix:
+
+1. **`wxt.config.ts`** — `connect-src` widened to include `https:` and
+   `data:`. Specific known hosts kept for clarity but the `https:` umbrella
+   lifts the CSP block for arbitrary HTTPS image hosts. `optional_host_permissions`
+   gains `https://*/*` (alongside the existing `http://*/*`) so the user
+   can grant a specific host at runtime.
+
+2. **`background.ts`** — when the user right-clicks `describe image`,
+   the SW now requests optional `host_permission` for that image's
+   origin BEFORE running the translate. Right-click is a user-gesture
+   context so `chrome.permissions.request` can prompt; the granted
+   host sticks until the user revokes it from Settings → Host
+   permissions. If the user denies, the panel renders a clear
+   `IMAGE_PERMISSION_DENIED` error pointing back at the prompt.
+
+`data:` URLs short-circuit the permission check (no host).
+
+The previous fall-through behavior (fetch silently fails → translation
+falls back to mock) is now an actionable error. Combined with 0.0.17's
+mock-label fix you can tell at a glance whether you're seeing a real
+translation or a stub.
+
 ## 0.0.17
 
 ### Fixed — LM Studio image input is now base64, not URL

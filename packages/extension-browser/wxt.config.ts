@@ -124,6 +124,12 @@ export default defineConfig({
       // The user-typed host is whitelisted only after explicit consent;
       // the Settings UI exposes a Revoke control to remove it again.
       "http://*/*",
+      // 0.0.18: also opt-in https for image translation. When the user
+      // right-clicks an image on any HTTPS site we need to fetch the
+      // image bytes (LM Studio + Ollama only accept base64). The
+      // permission is REQUESTED at right-click time (user gesture, so
+      // chrome.permissions.request can prompt) — never grabbed at install.
+      "https://*/*",
       // Cloud providers — requested when the user saves an API key.
       "https://api.anthropic.com/*",
       "https://api.openai.com/*",
@@ -147,7 +153,16 @@ export default defineConfig({
         "http://*:1234 " +
         "https://api.anthropic.com " +
         "https://api.openai.com " +
-        "https://openrouter.ai;",
+        "https://openrouter.ai " +
+        // 0.0.18: allow arbitrary HTTPS fetches AND data: URLs so the
+        // image-translation flow can pull image bytes from any site for
+        // local-LLM base64 encoding. The actual reach is still gated by
+        // optional_host_permissions which the user must grant per-host
+        // at runtime — this CSP entry just lifts the platform-level
+        // block. data: is required for screenshot-style image inputs
+        // and for the local base64 round-trip.
+        "https: " +
+        "data:;",
     },
     browser_specific_settings: {
       gecko: {

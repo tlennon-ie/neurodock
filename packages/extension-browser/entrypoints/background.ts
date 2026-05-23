@@ -80,6 +80,43 @@ export function registerHandlers(): void {
     } else if (info.menuItemId === CONTEXT_MENU_IMAGE_ID) {
       const imageUrl = typeof info.srcUrl === "string" ? info.srcUrl : "";
       if (imageUrl.length === 0) return;
+      // 0.0.18: request optional host permission for the image's origin
+      // BEFORE running the translate. This is a user-gesture context
+      // (the user just clicked the menu item) so chrome.permissions.request
+      // is allowed to prompt. Without this, the LM Studio / Ollama lane
+      // fetches the image from the SW and fails with a CSP / permission
+      // error the user can't act on. Granted hosts stick until revoked
+      // from Settings → Host permissions.
+      const granted = await ensureImageHostPermission(imageUrl);
+      if (!granted) {
+        const response: TranslationResponse = {
+          ok: false,
+          tool: "describe_image",
+          data: null,
+          error:
+            "IMAGE_PERMISSION_DENIED: NeuroDock needs permission to read " +
+            "this image's host to send it to your vision model. Click the " +
+            "right-click menu item again and grant access when prompted.",
+          mockMode: false,
+          provenance: {
+            mode: "unknown",
+            provider: "none",
+            model: "none",
+          },
+          timestamp: new Date().toISOString(),
+        };
+        void chrome.tabs
+          .sendMessage(tab.id, {
+            type: "neurodock:context-result",
+            response,
+            sourceText: imageUrl,
+            channel,
+          })
+          .catch(() => {
+            notifyContextResultFallback(response, url);
+          });
+        return;
+      }
       request = {
         tool: "describe_image",
         input: { image_url: imageUrl, page_url: url },
@@ -309,4 +346,48 @@ function safeHost(url: string): string {
   } catch {
     return "";
   }
+}
+
+/**
+ * 0.0.18: request optional host_permission for the origin of an image URL
+ * so the SW can fetch + base64-encode it for local-LLM vision models.
+ * Called from inside the contextMenus.onClicked handler which preserves
+ * the user-gesture timing chrome.permissions.request needs to prompt.
+ *
+ * Returns true when permission already exists OR was just granted; false
+ * when the user denied or the URL is unparseable. data: URLs always
+ * return true (no host to request).
+ */
+async function ensureImageHostPermission(imageUrl: string): Promise<boolean> {
+  if (imageUrl.startsWith("data:")) return true;
+  let origin: string;
+  try {
+    const u = new URL(imageUrl);
+    origin = `${u.protocol}//${u.host}/*`;
+  } catch {
+    return false;
+  }
+  const g = globalThis as unknown as {
+    chrome?: {
+      permissions?: {
+        contains?: (
+          perm: { origins: string[] },
+          cb: (has: boolean) => void,
+        ) => void;
+        request?: (
+          perm: { origins: string[] },
+          cb: (granted: boolean) => void,
+        ) => void;
+      };
+    };
+  };
+  const perms = g.chrome?.permissions;
+  if (!perms?.contains || !perms?.request) return true; // tests / no API
+  const alreadyHas = await new Promise<boolean>((resolve) => {
+    perms.contains!({ origins: [origin] }, (has) => resolve(has));
+  });
+  if (alreadyHas) return true;
+  return new Promise<boolean>((resolve) => {
+    perms.request!({ origins: [origin] }, (granted) => resolve(granted));
+  });
 }
