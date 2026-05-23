@@ -63,6 +63,17 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # TODO: migrate to npm provenance (trusted publisher) when ready.
+      # Steps required by the maintainer:
+      #   1. On npmjs.com, configure a Granular Access Token with provenance
+      #      publishing enabled for each @neurodock/* package, OR configure
+      #      a trusted publisher (OIDC) under each package's settings.
+      #   2. When using OIDC: remove NPM_TOKEN usage below and replace
+      #      the publish command with: pnpm -r publish --provenance --no-git-checks --access public
+      #      The id-token: write permission is already set in this workflow.
+      #   3. Remove the 'Configure npm auth' step once token-auth is dropped.
+      # Current path: long-lived NPM_TOKEN (kept until OIDC is configured).
+
       # Publish every changed package directly. changesets/action was
       # used previously but it computes a Version-PR base branch from
       # GITHUB_REF_NAME, which on tag pushes becomes 'refs/tags/v0.2.3'
@@ -110,6 +121,16 @@ jobs:
           echo "Built artefacts:"
           ls -la dist/
 
+      # TODO: migrate to PyPI trusted publisher (OIDC) when ready.
+      # Steps required by the maintainer:
+      #   1. On pypi.org, go to each package → Manage → Publishing → Add a
+      #      new trusted publisher: GitHub Actions, repo tlennon-ie/neurodock,
+      #      workflow release.yml, environment (leave blank or match below).
+      #   2. When configured: remove PYPI_TOKEN usage below and replace
+      #      the uv publish call with: uv publish --trusted-publisher "$f"
+      #      The id-token: write permission is already set in this workflow.
+      #   3. Remove the PYPI_TOKEN env var once OIDC is the only path.
+      # Current path: long-lived PYPI_TOKEN (kept until OIDC is configured).
       - name: Publish to PyPI
         run: |
           if [ ! -d dist ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then

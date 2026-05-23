@@ -3,7 +3,7 @@
 Local-first goal decomposition and single next-action selection, exposed as
 an MCP server.
 
-- **Version:** v0.0.1 (developer preview)
+- **Version:** v0.0.3 (developer preview)
 - **Status:** Phase 1 substrate server.
 - **License:** AGPL-3.0-or-later.
 - **Design:** see [ADR 0003 — task-fractionator tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0003-task-fractionator-tool-design.md).
@@ -53,9 +53,9 @@ uv run pytest packages/mcp-task-fractionator/tests/ -v
 uv run neurodock-mcp-task-fractionator
 ```
 
-## In-memory-only `next_one` (v0.0.1 caveat)
+## In-memory-only `next_one` (v0.0.3 caveat)
 
-`next_one` reads pending tasks from a `PendingTaskSource`. v0.0.1 ships two
+`next_one` reads pending tasks from a `PendingTaskSource`. v0.0.3 ships two
 implementations:
 
 - **`InMemoryPendingTaskSource`** — default, used by tests. Holds tasks in

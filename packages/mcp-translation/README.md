@@ -3,7 +3,7 @@
 Communication and translation tools as an MCP server. Shares its schemas and
 prompt library with `@neurodock/extension-browser` (Phase 2).
 
-**Version:** 0.0.1 (developer preview, deterministic baseline).
+**Version:** 0.0.2 (developer preview, deterministic baseline).
 
 ## Status
 
@@ -93,7 +93,7 @@ uv run ruff format --check packages/mcp-translation/
 uv run mypy --strict packages/mcp-translation/src/
 ```
 
-## Known limitations (v0.0.1)
+## Known limitations (v0.0.2)
 
 - No language packs. The deterministic heuristics are English-only. BCP-47
   `target_language` is accepted but only passed through to the prompt.
@@ -105,6 +105,6 @@ uv run mypy --strict packages/mcp-translation/src/
   land in Phase 2.
 - No streaming. Long meeting transcripts (>200k chars) must be chunked by the
   caller.
-- The four schemas under `schemas/` are the v0.1.0 wire contract; the v0.0.1
+- The four schemas under `schemas/` are the v0.1.0 wire contract; the v0.0.2
   envelope wraps them and will collapse to the wire contract once the
   Phase 2 LLM-refinement flow is the default path.

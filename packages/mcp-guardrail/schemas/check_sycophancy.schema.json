@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.neurodock.org/mcp-guardrail/v0.1.0/check_sycophancy.schema.json",
   "title": "check_sycophancy",
-  "description": "Detect (a) over-validation patterns in a candidate LLM response or (b) repeated reassurance-seeking in recent user messages on the same decision. Returns the matched pattern, a confidence score, a counter-prompt for the calling skill to optionally surface to the model, and user overrides. NEVER rewrites the model's output; the calling skill decides whether to use counter_prompt. Phase 3 deliverable: in v0.1.0 the schema is locked but the runtime returns DETECTOR_NOT_YET_IMPLEMENTED until the  endorses the patterns.",
+  "description": "Detect (a) over-validation patterns in a candidate LLM response or (b) repeated reassurance-seeking in recent user messages on the same decision. Returns the matched pattern, a confidence score, a counter-prompt for the calling skill to optionally surface to the model, and user overrides. NEVER rewrites the model's output; the calling skill decides whether to use counter_prompt. Live since v0.0.2: the runtime evaluates sycophancy patterns deterministically via the heuristics in neurodock_mcp_guardrail.",
   "version": "0.1.0",
-  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/clinical/ requires sign-off from  and consultation with the  per ETHICS.md commitment 3 and plan.md §8.",
-  "x-implementation-status": "schema-only-v0.1.0",
+  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/ requires sign-off from clinical-reviewer and consultation with the clinical advisory board per ETHICS.md commitment 3 and plan.md §8.",
+  "x-implementation-status": "live-v0.0.2",
   "type": "object",
   "properties": {
     "input": {
@@ -71,7 +71,7 @@
             "escalating_validation",
             "other"
           ],
-          "description": "Closed v0.1.0 vocabulary. 'unconditional_agreement' = the candidate_response agrees with the user without naming trade-offs on a subjective question; 'repeated_reassurance_request' = the user has asked for validation of the same decision_context >=3 times in recent_user_messages; 'praise_without_evidence' = the candidate_response opens with affirmation lacking referenced prior evidence; 'escalating_validation' = the candidate_response intensifies agreement compared to its own prior turns; 'other' = pattern matched but does not fit a canonical bucket; 'none' = no pattern. Each non-'none' value MUST be backed by a documented heuristic in packages/clinical/sycophancy/."
+          "description": "Closed v0.1.0 vocabulary. 'unconditional_agreement' = the candidate_response agrees with the user without naming trade-offs on a subjective question; 'repeated_reassurance_request' = the user has asked for validation of the same decision_context >=3 times in recent_user_messages; 'praise_without_evidence' = the candidate_response opens with affirmation lacking referenced prior evidence; 'escalating_validation' = the candidate_response intensifies agreement compared to its own prior turns; 'other' = pattern matched but does not fit a canonical bucket; 'none' = no pattern. Each non-'none' value MUST be backed by a documented heuristic in packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/sycophancy.py."
         },
         "confidence": {
           "type": "number",
@@ -127,7 +127,7 @@
                 "agreement_intensity_delta",
                 "other"
               ],
-              "description": "One heuristic per pattern, plus 'none' and 'other'. Source code path is canonical: packages/clinical/sycophancy/<name>.py."
+              "description": "One heuristic per pattern, plus 'none' and 'other'. Source code path is canonical: packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/sycophancy.py."
             },
             "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
             "description": { "type": "string", "maxLength": 500 }
@@ -193,9 +193,6 @@
   "errors": {
     "type": "object",
     "properties": {
-      "DETECTOR_NOT_YET_IMPLEMENTED": {
-        "description": "Returned by v0.1.0 runtime until the Phase 3  endorses the patterns. The schema is finalised so callers can integrate; the runtime returns this error with `phase: \"3\"`. Callers MUST tolerate this error and fall through to no-intervention behaviour."
-      },
       "INPUT_MISSING": {
         "description": "Neither candidate_response nor recent_user_messages was provided. At least one is required."
       },
@@ -217,9 +214,9 @@
         "confidence": 0.88,
         "reason": "Candidate response names trade-offs and grounds in stated constraints.",
         "heuristic": {
-          "name": "agreement_without_tradeoff_marker",
-          "version": "0.1.0",
-          "description": "Flags responses that affirm a user's stated preference on a subjective question without any of the configured trade-off markers ('trade-off', 'however', 'but', 'cost', 'risk', 'downside') appearing in the response body."
+          "name": "none",
+          "version": "0.2.0",
+          "description": "No sycophancy pattern matched above the confidence threshold."
         },
         "override_options": [],
         "false_positive_feedback_path": "https://github.com/tlennon-ie/neurodock/issues/new?template=guardrail_false_positive.md"
@@ -291,14 +288,14 @@
     }
   ],
   "compatibility": {
-    "policy": "Additive-only within v0.1.x. The pattern enum and heuristic.name enum are closed; new patterns require a minor bump (additive) and  sign-off. v0.1.0 runtime returns DETECTOR_NOT_YET_IMPLEMENTED; callers MUST handle this error gracefully. Phase 3 will flip the runtime on once the  endorses thresholds.",
+    "policy": "Additive-only within v0.1.x. The pattern enum and heuristic.name enum are closed; new patterns require a minor bump (additive) and clinical-reviewer sign-off.",
     "user_overridable": true,
     "privacy": "local-only",
     "side_effects": "None. The server is stateless: candidate_response and recent_user_messages are evaluated and discarded; the server does not log, persist, or transmit them.",
     "telemetry": "None. Per ETHICS.md commitment 4.",
     "idempotency": "Trivially idempotent.",
     "consent_gate": "Install-time only. profile.guardrails.sycophancy_check is the configuration surface (values: 'off' | 'warn' | 'enforce'). When 'off' the tool is never called.",
-    "heuristic_source": "packages/clinical/sycophancy/ (path is normative; one file per heuristic name).",
+    "heuristic_source": "packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/sycophancy.py (path is normative).",
     "clinical_review_required": true,
     "field_study_target": "False-positive rate < 5% on the field-study corpus per plan.md §13. Particularly: detections that fire on responses raters consider appropriately validating rather than sycophantic."
   }

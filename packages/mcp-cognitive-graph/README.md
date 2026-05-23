@@ -5,8 +5,31 @@ server. Externalises the user's working memory of people, projects,
 decisions, and concepts so a hyperfocused or context-switched session does
 not start from zero.
 
-This is **v0.0.1** — the first working slice. Vector recall, `fastembed`
-embeddings, and `sqlite-vec` are deferred to v0.0.2; see `CHANGELOG.md`.
+This is **v0.0.3** — the current release. Vector recall, `fastembed`
+embeddings, and `sqlite-vec` are deferred to a future version; see `CHANGELOG.md`.
+
+## Install
+
+```sh
+uv add neurodock-mcp-cognitive-graph
+# or
+pip install neurodock-mcp-cognitive-graph
+```
+
+## Use as an MCP server
+
+Add to your `~/.claude.json` (Claude Code) or `claude_desktop_config.json` (Claude Desktop):
+
+```json
+{
+  "mcpServers": {
+    "neurodock-cognitive-graph": {
+      "command": "uv",
+      "args": ["run", "neurodock-mcp-cognitive-graph"]
+    }
+  }
+}
+```
 
 ## Quickstart
 
@@ -21,7 +44,7 @@ uv run neurodock-mcp-cognitive-graph
 The server stores its graph at `~/.neurodock/cognitive-graph.sqlite` by
 default. Override with the `NEURODOCK_GRAPH_DB_PATH` environment variable.
 
-## Tools (v0.0.1)
+## Tools (v0.0.3)
 
 | Tool                                                            | Purpose                                                                                                                                                        |
 | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -63,7 +86,7 @@ src/neurodock_mcp_cognitive_graph/
 ├── config.py            Resolves the SQLite path
 ├── clock.py             SystemClock / FixedClock
 ├── errors.py            ToolError envelope
-├── resolution.py        Entity name/alias cascade (exact, alias only in v0.0.1)
+├── resolution.py        Entity name/alias cascade (exact, alias only in v0.0.3)
 ├── rollup.py            Heuristic decision/blocker/next-action assembly
 ├── storage/
 │   ├── base.py          Storage Protocol + row dataclasses
@@ -82,7 +105,7 @@ src/neurodock_mcp_cognitive_graph/
 
 - [ADR 0002 — cognitive-graph tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0002-cognitive-graph-tool-design.md)
   — the design rationale, vocabularies, output shapes, and the three open
-  questions whose v0.0.1 resolutions are documented in `CHANGELOG.md`.
+  questions whose v0.0.3 resolutions are documented in `CHANGELOG.md`.
 - [ADR 0001 — chronometric tool design](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0001-chronometric-tool-design.md)
   — the cross-cutting precedents (ISO 8601 with offsets, enums for coarse
   signals, structured errors) that this package inherits.

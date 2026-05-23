@@ -4,7 +4,7 @@
   "title": "check_rumination",
   "description": "Detect whether the user's current prompt is a semantic repeat of recent prompts within a rolling window. Returns a structured advisory signal with the rule that fired, a confidence score, and a non-empty list of overrides the user may invoke. NEVER blocks the user's action; the calling skill decides whether to surface, defer, or ignore. Stateless: the caller supplies the history; this server stores nothing.",
   "version": "0.1.0",
-  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/clinical/ requires sign-off from  and consultation with the  per ETHICS.md commitment 3 and plan.md §8.",
+  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/ requires sign-off from clinical-reviewer and consultation with the clinical advisory board per ETHICS.md commitment 3 and plan.md §8.",
   "type": "object",
   "properties": {
     "input": {
@@ -147,12 +147,12 @@
             "version": {
               "type": "string",
               "pattern": "^\\d+\\.\\d+\\.\\d+$",
-              "description": "Semantic version of the heuristic implementation in packages/clinical/. Surfaced so a user reading the explanation can pin the exact rule."
+              "description": "Semantic version of the heuristic implementation. Surfaced so a user reading the explanation can pin the exact rule."
             },
             "description": {
               "type": "string",
               "maxLength": 500,
-              "description": "Plain-language description of the rule. The actual source lives in packages/clinical/ and is auditable from there."
+              "description": "Plain-language description of the rule. The actual source lives in packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/rumination.py and is auditable from there."
             }
           }
         },
@@ -319,14 +319,14 @@
     }
   ],
   "compatibility": {
-    "policy": "Additive-only within v0.1.x. The override_options token enum and the heuristic.name enum are closed; additions require a minor bump (additive) and  sign-off. Default thresholds (window_minutes=90, threshold_count=3, similarity_threshold=0.55) may be revised within v0.1.x based on field-study data, but the field types and bounds are frozen.",
+    "policy": "Additive-only within v0.1.x. The override_options token enum and the heuristic.name enum are closed; additions require a minor bump (additive) and clinical-reviewer sign-off. Default thresholds (window_minutes=90, threshold_count=3, similarity_threshold=0.55) may be revised within v0.1.x based on field-study data, but the field types and bounds are frozen.",
     "user_overridable": true,
     "privacy": "local-only",
     "side_effects": "None. The server is stateless: it does not log, persist, or transmit current_prompt, history, or detection outcomes. A calling skill MAY choose to record a detection event into the cognitive graph (e.g. via record_fact), but the guardrail server itself writes nothing.",
     "telemetry": "None. Per ETHICS.md commitment 4, detection events are never aggregated. The server has no telemetry endpoints in default or non-default configurations.",
     "idempotency": "Trivially idempotent. The same input yields the same output; there is no internal state.",
     "consent_gate": "Install-time only. The user opts into the guardrail layer when configuring profile.guardrails.rumination_threshold; no per-call consent is required because nothing leaves the server.",
-    "heuristic_source": "packages/clinical/rumination/word_overlap_jaccard.py (path is normative; the source code IS the auditable specification per ETHICS.md commitment 3).",
+    "heuristic_source": "packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/rumination.py (path is normative; the source code IS the auditable specification per ETHICS.md commitment 3).",
     "clinical_review_required": true,
     "field_study_target": "False-positive rate < 5% on the field-study corpus per plan.md §13."
   }

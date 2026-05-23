@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.neurodock.org/mcp-guardrail/v0.1.0/check_hyperfocus.schema.json",
   "title": "check_hyperfocus",
-  "description": "Given a snapshot of the current chronometric session, classify hyperfocus escalation into a coarse level (none|gentle|nudge|hard) and return the user's prior stated intent, the time-since-stated-end, a suggested action, and overrides. Stateless: chronometric state is passed in by the caller; this server does not import or talk to mcp-chronometric. Phase 3 deliverable: in v0.1.0 the schema is locked but the runtime returns DETECTOR_NOT_YET_IMPLEMENTED until the  endorses the level thresholds.",
+  "description": "Given a snapshot of the current chronometric session, classify hyperfocus escalation into a coarse level (none|gentle|nudge|hard) and return the user's prior stated intent, the time-since-stated-end, a suggested action, and overrides. Stateless: chronometric state is passed in by the caller; this server does not import or talk to mcp-chronometric. Live since v0.0.2: the runtime evaluates thresholds deterministically via the elapsed_threshold_with_eod heuristic.",
   "version": "0.1.0",
-  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/clinical/ requires sign-off from  and consultation with the  per ETHICS.md commitment 3 and plan.md §8.",
-  "x-implementation-status": "schema-only-v0.1.0",
+  "x-clinical-review-required": "Any change to this schema or to the heuristic implementation in packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/ requires sign-off from clinical-reviewer and consultation with the clinical advisory board per ETHICS.md commitment 3 and plan.md §8.",
+  "x-implementation-status": "live-v0.0.2",
   "type": "object",
   "properties": {
     "input": {
@@ -216,9 +216,6 @@
   "errors": {
     "type": "object",
     "properties": {
-      "DETECTOR_NOT_YET_IMPLEMENTED": {
-        "description": "Returned by v0.1.0 runtime until the Phase 3  endorses the level thresholds. The schema is finalised so callers can integrate; the runtime returns this error consistently with a `phase: \"3\"` metadata field. Callers MUST tolerate this error and fall through to no-intervention behaviour."
-      },
       "SESSION_ID_MISMATCH": {
         "description": "Both input.session_id and input.chronometric_snapshot.open_session.session_id were provided but did not match. The server does not pick one; ambiguous input is rejected."
       },
@@ -300,14 +297,14 @@
     }
   ],
   "compatibility": {
-    "policy": "Additive-only within v0.1.x. The level enum is closed and ordered (none < gentle < nudge < hard); reordering or removing values requires a major bump and  sign-off. v0.1.0 runtime returns DETECTOR_NOT_YET_IMPLEMENTED; callers MUST handle this error gracefully. Phase 3 will flip the runtime on once the  endorses thresholds.",
+    "policy": "Additive-only within v0.1.x. The level enum is closed and ordered (none < gentle < nudge < hard); reordering or removing values requires a major bump and clinical-reviewer sign-off.",
     "user_overridable": true,
     "privacy": "local-only",
     "side_effects": "None. The server is stateless: chronometric state is passed in by the caller; the guardrail server does not import neurodock-mcp-chronometric and does not subscribe to its events. Loose coupling per ADR 0006.",
     "telemetry": "None. Per ETHICS.md commitment 4.",
     "idempotency": "Trivially idempotent.",
     "consent_gate": "Install-time only. profile.chronometric.hyperfocus_break_minutes and profile.chronometric.end_of_day_local are the configuration surface; both are set out-of-session, never under duress mid-task, per plan.md §8.",
-    "heuristic_source": "packages/clinical/hyperfocus/elapsed_threshold_with_eod.py (path is normative).",
+    "heuristic_source": "packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/hyperfocus.py (path is normative).",
     "clinical_review_required": true,
     "field_study_target": "False-positive rate < 5% on the field-study corpus per plan.md §13. Specifically: 'hard' interventions on sessions where the user reports the timing was correct."
   }

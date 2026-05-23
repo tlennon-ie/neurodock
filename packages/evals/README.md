@@ -7,7 +7,7 @@ The corpus is the strategic asset that makes the translation layer honest. We
 prove that ND-aware prompts help neurodivergent users in real situations, and
 we catch regressions when prompts change. The harness gates prompt PRs in CI.
 
-This package is **v0.0.1** — the scaffold, the harness, and 6-10 hand-authored
+This package is **v0.0.2** — the scaffold, the harness, and 6-10 hand-authored
 seed examples. The seeds are **synthesised by to
 demonstrate the format** — they are NOT real corporate messages. Real
 contributed corpora arrive over Phase 2 (target ~300 examples by month 6, per
@@ -73,8 +73,8 @@ under a different policy.
 
 ## Status
 
-- v0.0.1 (current): scaffold + harness + 10 synthesised seed examples
-- v0.0.2 (planned): first contributed corpus (after )
+- v0.0.2 (current): scaffold + harness + 10 synthesised seed examples
+- v0.0.3 (planned): first contributed corpus
 - v0.1.0 (planned): HuggingFace publication pipeline under the `neurodock` org
 
 See `CHANGELOG.md` for detail.

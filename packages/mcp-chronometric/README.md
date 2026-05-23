@@ -4,6 +4,29 @@ Time, idle, and break management as an MCP server. Part of [NeuroDock](https://n
 
 **Version:** 0.0.2 (developer preview, in-memory).
 
+## Install
+
+```sh
+uv add neurodock-mcp-chronometric
+# or
+pip install neurodock-mcp-chronometric
+```
+
+## Use as an MCP server
+
+Add to your `~/.claude.json` (Claude Code) or `claude_desktop_config.json` (Claude Desktop):
+
+```json
+{
+  "mcpServers": {
+    "neurodock-chronometric": {
+      "command": "uv",
+      "args": ["run", "neurodock-mcp-chronometric"]
+    }
+  }
+}
+```
+
 ## Status
 
 v0.0.x implements the five tools specified in ADR
@@ -23,7 +46,7 @@ storage is not on the hot path. SQLite-backed session history is planned for
 v0.1.0 per ADR 0001; until then, restart Claude and any open session is
 treated as auto-closed on the next `mark_session_start`.
 
-The OS idle probe is intentionally a no-op stub in v0.0.1: the consent gate is
+The OS idle probe is intentionally a no-op stub in v0.0.2: the consent gate is
 the hard correctness property, and the probe itself returns `None` on every
 platform until per-platform implementations and tests land.
 
@@ -45,7 +68,7 @@ The server speaks the MCP stdio transport.
 ## Profile
 
 Reads `~/.neurodock/profile.yaml`. Override with `NEURODOCK_PROFILE_PATH` (used
-in tests). Fields consumed in v0.0.1:
+in tests). Fields consumed in v0.0.2:
 
 ```yaml
 privacy:

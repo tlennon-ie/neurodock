@@ -35,8 +35,11 @@
 /packages/mcp-translation/          @thomas-lennon
 /packages/mcp-guardrail/            @thomas-lennon
 
+# Clinical heuristics — require clinical-reviewers sign-off per ADR 0006 §6
+/packages/mcp-guardrail/src/neurodock_mcp_guardrail/heuristics/  @thomas-lennon @neurodock/clinical-reviewers
+/packages/clinical/                                                @thomas-lennon @neurodock/clinical-reviewers
+
 # Python libraries
-/packages/clinical/           @thomas-lennon
 /packages/evals/              @thomas-lennon
 
 # Skills
