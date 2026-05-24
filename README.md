@@ -126,8 +126,49 @@ neurodock doctor
 
 `@neurodock/cli` exposes: `init`, `doctor`, `validate`, `update`, `sync`,
 `uninstall`, `host install`, `host uninstall`, `profile show`,
-`profile validate`, `install-all`, `examples`,
+`profile validate`, `install-all`, `install-hooks`, `examples`,
 `plugin add/remove/list/enable/disable/validate`.
+
+### Proactive guardrails (optional, recommended)
+
+By default NeuroDock waits for you to ask. That's the wrong shape — an
+ND user in hyperfocus is the one least likely to remember to run a
+break tool. One command flips it:
+
+```sh
+neurodock install-hooks --self-test
+```
+
+This wires a small Python script (bundled, stdlib-only — no extra
+install needed) into Claude Code's hook system. It then runs silently
+on every tool call and auto-fires the chronometric / rumination /
+sycophancy heuristics when patterns trip. You get a one-line stderr
+banner on the next prompt — never blocked, always dismissible.
+
+For host-agnostic coverage (catches you working in the terminal at
+02:00 too), add the standalone daemon:
+
+```sh
+neurodock install-hooks --install-daemon --self-test
+```
+
+That registers a per-user autostart entry (HKCU Run on Windows,
+LaunchAgent on macOS, systemd `--user` on Linux). The daemon polls
+every 5 min and surfaces OS-native notifications.
+
+Opt out anytime:
+
+```sh
+neurodock install-hooks --uninstall          # removes both
+export NEURODOCK_GUARDRAILS=off              # disables without removing
+```
+
+The browser extension carries its own equivalent (Phase 2 watchdog) —
+it's enabled by default and toggleable from `chrome.storage.local` via
+the popup Settings tab.
+
+See [`docs/.../proactive-guardrails`](./docs/src/content/docs/concepts/proactive-guardrails.mdx) for the design behind this and the
+opt-out matrix.
 
 Want to see it work without installing from PyPI/npm at all?
 `TESTING_LOCAL.md` walks through the from-clone path.

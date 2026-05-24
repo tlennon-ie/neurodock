@@ -1,0 +1,176 @@
+---
+title: Proactive guardrails
+description: How NeuroDock surfaces hyperfocus / rumination / late-night signals automatically, instead of waiting for the user to ask.
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+NeuroDock's chronometric and guardrail MCP servers expose tools for
+detecting hyperfocus, rumination, and sycophancy. Pre-0.0.23, every
+one of those tools required a manual call — type "check my session"
+or invoke an MCP tool. **That's the wrong shape**: an ND user in
+hyperfocus is the person least likely to remember to call the break
+tool.
+
+The proactive-guardrails layer flips the pattern from **pull-by-user**
+to **push-by-watchdog**. The same heuristics run, on the same data,
+but they're triggered automatically by a background watcher and
+surfaced via a non-blocking banner.
+
+Three independent watchers, three blind spots covered:
+
+| Watcher                          | Catches                                    | Misses                            |
+| -------------------------------- | ------------------------------------------ | --------------------------------- |
+| **Claude Code hook** (Phase 1)   | Hyperfocus during long Claude Code sessions, rumination across prompts, sycophancy in assistant turns | Non-Claude work        |
+| **Browser-extension watchdog** (Phase 2) | Hyperfocus in translation activity, single-host rumination, late-night decoding | Non-browser work     |
+| **Standalone daemon** (Phase 3)  | Everything else — terminal sessions, IDE work, gaming after work | None (full host coverage) |
+
+A serious install runs all three. The first two cover the common case;
+the daemon is opt-in for users who want host-agnostic coverage.
+
+## Phase 1 — Claude Code hook
+
+```sh
+neurodock install-hooks --self-test
+```
+
+Wires four entries into `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "matcher": "", "hooks": [{ "type": "command", "command": "python \"~/.neurodock/hooks/proactive_guardrail.py\" session-start" }] }],
+    "PreToolUse":   [{ "matcher": "", "hooks": [{ "type": "command", "command": "python \"~/.neurodock/hooks/proactive_guardrail.py\" pre-tool" }] }],
+    "PostToolUse":  [{ "matcher": "", "hooks": [{ "type": "command", "command": "python \"~/.neurodock/hooks/proactive_guardrail.py\" post-tool" }] }],
+    "Stop":         [{ "matcher": "", "hooks": [{ "type": "command", "command": "python \"~/.neurodock/hooks/proactive_guardrail.py\" stop" }] }]
+  }
+}
+```
+
+<Aside type="caution" title="The Windows path-escape lockout">
+The path **must** use forward slashes, even on Windows. Bash-style
+shells (Git Bash / MinGW — which Claude Code uses on Windows for
+hooks) strip backslashes from unquoted Windows paths, mangling `\U`,
+`\h`, `\p` as escape sequences. The 0.0.22 install command had this
+bug and silently locked the user out of every tool call. The 0.0.23
+`install-hooks` always normalises to forward slashes; the unit test
+`packages/cli/tests/install-hooks.test.ts` pins the contract.
+</Aside>
+
+### What fires when
+
+- **SessionStart** — opens a chronometric session, prints a "late
+  night" banner if local time is in 00:00–05:59 or 22:00–23:59.
+- **PreToolUse** — every 5th tool call, evaluates hyperfocus (elapsed
+  time vs `hyperfocus_break_minutes`) and rumination (Jaccard
+  similarity over the last 90 min of prompts ≥ 3 matches).
+- **PostToolUse** — checks the assistant's response text for opening
+  unconditional agreement / praise without a trade-off named.
+- **Stop** — closes the chronometric session.
+
+### Banner shape
+
+```
+┌─ NeuroDock ──
+│ NeuroDock hyperfocus check (95 min): worth taking a real break —
+│ walk outside, switch context for 10 minutes.
+└──
+```
+
+Always one line. Always dismissible. The hook never blocks the tool.
+
+## Phase 2 — Browser-extension watchdog
+
+The service worker registers a `setInterval` (default 5 min) that
+reads the local IndexedDB translation history and evaluates:
+
+- **Hyperfocus** — ≥12 translations in 30 min.
+- **Deep-night** — local time 00:00–05:59 AND ≥1 translation since
+  midnight.
+- **Rumination on a single host** — ≥8 translations on the same
+  host in the last hour.
+
+When a signal trips, the extension shows a `chrome.notifications`
+toast and flips the toolbar badge amber until the next translation.
+
+Opt-out (per-browser):
+
+```js
+await chrome.storage.local.set({ "neurodock.watchdog.enabled": false });
+```
+
+The Settings tab exposes the same toggle for users who don't want to
+touch DevTools.
+
+## Phase 3 — Standalone daemon
+
+```sh
+neurodock install-hooks --install-daemon --self-test
+```
+
+Wires the Python `neurodock_daemon.py` script (also bundled, stdlib
+only) at user-login autostart via:
+
+- **Windows** — `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+  registry entry
+- **macOS** — `~/Library/LaunchAgents/org.neurodock.guardrail.plist`
+- **Linux** — `~/.config/systemd/user/neurodock-guardrail.service`
+
+The daemon polls every 5 min, reads the same state files the Phase 1
+hook updates (`~/.neurodock/state/guardrail-session.json`,
+`~/.neurodock/state/guardrail-prompts.json`), evaluates the same
+heuristics, and surfaces interventions via native notifications:
+
+- Windows toast (Windows Runtime API via PowerShell)
+- macOS `osascript -e 'display notification ...'`
+- Linux `notify-send`
+
+Why a separate daemon when the hook exists? The hook only fires
+inside Claude Code. The daemon catches you working in a terminal at
+02:00, doomscrolling at 02:30, or back in Claude Code at 03:00 with a
+stale `started_at`.
+
+## Opt-out matrix
+
+| What you want                          | Command / setting                                                    |
+| -------------------------------------- | -------------------------------------------------------------------- |
+| Disable all three temporarily          | `export NEURODOCK_GUARDRAILS=off` (env var; hook + daemon both honor it) |
+| Remove the hook + daemon entirely      | `neurodock install-hooks --uninstall`                                |
+| Disable extension watchdog only        | `chrome.storage.local.set({ "neurodock.watchdog.enabled": false })` |
+| Disable Phase 1 hook but keep daemon   | Manually delete the 4 entries from `~/.claude/settings.json`         |
+| Change hyperfocus threshold            | Edit `~/.neurodock/profile.yaml` — `chronometric.hyperfocus_break_minutes` (Phase 1 hook respects it; Phase 3 daemon reads on next tick) |
+
+## State files
+
+All under `~/.neurodock/state/`:
+
+| File                              | Owner             | Contents                                                |
+| --------------------------------- | ----------------- | ------------------------------------------------------- |
+| `guardrail-session.json`          | Phase 1 hook      | `{ started_at, tool_count }`                            |
+| `guardrail-prompts.json`          | Phase 1 hook      | rolling 200-entry list of `{ at, text }` for rumination |
+| `guardrail-log.jsonl`             | Phase 1 hook      | audit trail of every banner surfaced                    |
+| `daemon.json`                     | Phase 3 daemon    | last-surfaced timestamp for dedup                       |
+| `daemon-log.jsonl`                | Phase 3 daemon    | audit trail of daemon events                            |
+
+The browser extension keeps its own state in IndexedDB
+(`neurodock.history.v1`) — distinct from the on-disk state.
+
+## Privacy
+
+Everything is local. No state file ever leaves the device. The
+Jaccard heuristic operates on prompt word-sets; full prompts are
+stored in `guardrail-prompts.json` for the rolling 200-entry window
+and never transmitted.
+
+The on-disk audit trails (`*-log.jsonl`) are append-only and exist
+solely so you can prove to yourself, retroactively, why a given
+banner fired. Delete them at any time.
+
+## The dogfood story
+
+The proactive-guardrails design was filed on 2026-05-24 at 00:38
+local, mid-way through a 4-hour straight-through extension-bug
+session during which **none** of NeuroDock's existing safety surfaces
+auto-fired. Every one of the underlying tools worked correctly when
+called manually. None were called. The proposal document — [`PROPOSAL.md`](https://github.com/tlennon-ie/neurodock/blob/main/.claude-reports/2026-05-24-proactive-guardrails/PROPOSAL.md) — captures the gap and the three-phase fix; this page is the
+shipped form.

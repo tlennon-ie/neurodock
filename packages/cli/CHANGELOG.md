@@ -1,5 +1,70 @@
 # @neurodock/cli changelog
 
+## 0.6.0
+
+### Added — `neurodock install-hooks` (proactive guardrails Phases 1 + 3)
+
+One command wires NeuroDock's proactive-guardrail layer into a fresh
+install. Bundled self-contained Python scripts ship with the npm
+package — no extra `pip install` step.
+
+```sh
+neurodock install-hooks --self-test
+neurodock install-hooks --install-daemon --self-test
+neurodock install-hooks --uninstall
+neurodock install-hooks --dry-run
+```
+
+The command:
+
+1. Copies `proactive_guardrail.py` to `~/.neurodock/hooks/` (Phase 1
+   Claude Code hook; auto-fires chronometric / rumination /
+   sycophancy checks on every Nth tool use, banners on stderr).
+2. Copies `neurodock_daemon.py` to the same dir (Phase 3 host-agnostic
+   poller; same heuristics, native OS notifications).
+3. Idempotently merges 4 entries into `~/.claude/settings.json`
+   (`SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`), preserving
+   any existing hooks from other tools.
+4. With `--install-daemon`, registers the daemon at user-login
+   autostart: HKCU Run on Windows, LaunchAgent on macOS, systemd
+   `--user` unit on Linux.
+5. With `--self-test`, runs both scripts' built-in smoke test to
+   verify Python is on PATH and the heuristics fire.
+
+**Opt-out:**
+
+```sh
+neurodock install-hooks --uninstall        # removes hook + daemon entries
+export NEURODOCK_GUARDRAILS=off            # disables without removing
+```
+
+### Fixed — Windows path-escape lockout (regression-pinned)
+
+Pre-0.6.0 the hook command written into `settings.json` used
+backslashes on Windows. Bash-style shells (Git Bash / MinGW — what
+Claude Code uses for hooks on Windows) interpret `\U`, `\h`, `\p`
+etc. as escape sequences and strip them, mangling the path to
+`pythonscript.py` and causing every PreToolUse hook to fail, which
+**blocks every tool call** until the user manually edits
+`settings.json`. The 0.0.22 install command hit this. Twice.
+
+0.6.0 always normalises the script path to forward slashes (Python
+accepts them on Windows) and always wraps it in double quotes. The
+new install summary also echoes the exact hook command string so the
+bug class can't recur silently.
+
+Regression test: `packages/cli/tests/install-hooks.test.ts` pins the
+contract — the test fails if any hook entry contains a backslash in
+its script-path portion.
+
+### Internals
+
+- New build step `scripts/copy-assets.mjs` copies `src/assets/` into
+  `dist/assets/` after `tsc`, so the published npm tarball contains
+  the bundled Python scripts.
+- `package.json` `files` array already includes `dist/`, so no
+  manifest change needed.
+
 ## 0.5.0
 
 ### Changed (breaking)

@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/cli",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "NeuroDock installer and diagnostic CLI — wires the MCP servers, manages plugins, and validates your profile.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -41,7 +41,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-assets.mjs",
     "lint": "echo 'cli: lint skipped (no eslint config in workspace yet)' && exit 0",
     "test": "vitest run",
     "test:watch": "vitest",

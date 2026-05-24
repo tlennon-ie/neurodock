@@ -29,6 +29,7 @@ description: The neurodock command-line interface. Eighteen commands across seve
 | [`neurodock plugin enable`](#neurodock-plugin-enable) | Activate an installed plugin (writes the `.enabled` marker). |
 | [`neurodock plugin disable`](#neurodock-plugin-disable) | Deactivate an installed plugin (removes the `.enabled` marker; keeps files). |
 | [`neurodock plugin validate`](#neurodock-plugin-validate) | Validate a plugin manifest without installing. |
+| [`neurodock install-hooks`](#neurodock-install-hooks) | Wire the proactive-guardrail hook into Claude Code, optionally autostart the daemon. |
 
 ### `neurodock init`
 
@@ -332,8 +333,47 @@ Exit codes: `0` if valid; non-zero otherwise.
 | 1 | User-actionable failure (bad input, missing profile, validation error, missing entrypoint on PATH). |
 | 2 | Init failure during `install-all` (Python packages installed but client wiring failed). |
 
+### `neurodock install-hooks`
+
+```bash
+neurodock install-hooks --self-test
+neurodock install-hooks --install-daemon --self-test
+neurodock install-hooks --uninstall
+neurodock install-hooks --dry-run
+```
+
+Wires the proactive-guardrail hook into Claude Code's hook system so
+chronometric + rumination + sycophancy checks fire automatically on
+every Nth tool call, without the user having to invoke them.
+
+**Flags**
+
+| Flag                  | Effect                                                                                  |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| `--dry-run`           | Print what would happen without writing `~/.claude/settings.json`. Echoes the exact hook command so you can spot path-escape bugs before they bite. |
+| `--self-test`         | After install, run the script's `self-test` to verify Python is on PATH and heuristics fire. |
+| `--install-daemon`    | Also register the standalone Phase 3 daemon at user-login autostart (HKCU Run / LaunchAgent / systemd `--user`). |
+| `--uninstall`         | Remove NeuroDock hook entries from `settings.json` and the daemon autostart entry. Leaves the script files in `~/.neurodock/hooks/`. |
+
+**What it writes**
+
+- `~/.neurodock/hooks/proactive_guardrail.py` — Phase 1 hook (stdlib only, no pip install required).
+- `~/.neurodock/hooks/neurodock_daemon.py` — Phase 3 daemon (same).
+- 4 entries in `~/.claude/settings.json` under `hooks`: `SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`.
+- Optionally: per-OS autostart entry for the daemon.
+
+**Opt-out**
+
+```sh
+export NEURODOCK_GUARDRAILS=off     # disables hook + daemon without removing them
+neurodock install-hooks --uninstall # removes them entirely
+```
+
+See [Proactive guardrails](/concepts/proactive-guardrails/) for the full design + opt-out matrix.
+
 ## What's next
 
 - [Installation](/getting-started/installation/) for the end-to-end install flow.
 - [Profile schema](/reference/profile-schema/) for the file `init` writes.
+- [Proactive guardrails](/concepts/proactive-guardrails/) for the automatic safety surfaces.
 - [`@neurodock/cli` CHANGELOG](https://github.com/tlennon-ie/neurodock/blob/main/packages/cli/CHANGELOG.md) for per-release detail.

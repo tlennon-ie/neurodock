@@ -9,6 +9,7 @@ import { runUpdate } from "./commands/update.js";
 import { runSync } from "./commands/sync.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { runHostInstall, runHostUninstall } from "./commands/host.js";
+import { runInstallHooks } from "./commands/install-hooks.js";
 import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
 import { runExamples } from "./commands/examples.js";
 import {
@@ -346,6 +347,51 @@ export function buildProgram(): Command {
         });
         for (const m of r.messages) print(m);
         process.exit(0);
+      },
+    );
+
+  program
+    .command("install-hooks")
+    .description(
+      "wire NeuroDock's proactive guardrails into ~/.claude/settings.json " +
+        "(auto-detects hyperfocus, late-night work, rumination, sycophancy)",
+    )
+    .option(
+      "--dry-run",
+      "print what would happen without writing settings.json",
+      false,
+    )
+    .option(
+      "--self-test",
+      "after installing, run the script's smoke test to verify Python is on PATH",
+      false,
+    )
+    .option(
+      "--uninstall",
+      "remove NeuroDock hook entries from settings.json (leaves the script)",
+      false,
+    )
+    .option(
+      "--install-daemon",
+      "also register the standalone daemon at user-login autostart " +
+        "(HKCU Run on Windows, LaunchAgent on macOS, systemd --user on Linux)",
+      false,
+    )
+    .action(
+      async (opts: {
+        dryRun: boolean;
+        selfTest: boolean;
+        uninstall: boolean;
+        installDaemon: boolean;
+      }) => {
+        const r = await runInstallHooks({
+          dryRun: opts.dryRun === true,
+          selfTest: opts.selfTest === true,
+          uninstall: opts.uninstall === true,
+          installDaemon: opts.installDaemon === true,
+        });
+        for (const m of r.messages) print(m);
+        process.exit(r.exitCode);
       },
     );
 
