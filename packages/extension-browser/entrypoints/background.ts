@@ -20,6 +20,11 @@ import {
 import { fetchModels } from "../src/lib/providers/models.js";
 import { appendHistory, truncatePreview } from "../src/lib/storage.js";
 import { setActionBadge } from "../src/lib/action-badge.js";
+import {
+  startWatchdog,
+  DEFAULT_WATCHDOG_CONFIG,
+} from "../src/lib/proactive-watchdog.js";
+import { listHistory } from "../src/lib/storage.js";
 import type {
   RuntimeMessage,
   RuntimeResponseEnvelope,
@@ -207,7 +212,96 @@ export function registerHandlers(): void {
   );
 }
 
-export default defineBackground(() => registerHandlers());
+export default defineBackground(() => {
+  registerHandlers();
+  // 0.0.23: Phase 2 proactive watchdog — periodic check against the
+  // local translation history for hyperfocus / late-night / rumination
+  // patterns. Surfaces a notification + amber toolbar badge when a
+  // signal trips. Opt-out via chrome.storage.local
+  // `neurodock.watchdog.enabled` (default true).
+  startProactiveWatchdog();
+});
+
+function startProactiveWatchdog(): void {
+  try {
+    startWatchdog(
+      {
+        listHistory: (limit) => listHistory(limit),
+        isEnabled: async () => readWatchdogEnabled(),
+        notify: {
+          notify: (title, message) => {
+            const g = globalThis as unknown as {
+              chrome?: {
+                notifications?: {
+                  create?: (opts: {
+                    type: string;
+                    iconUrl: string;
+                    title: string;
+                    message: string;
+                    priority?: number;
+                  }) => void;
+                };
+              };
+            };
+            try {
+              g.chrome?.notifications?.create?.({
+                type: "basic",
+                iconUrl: "icon/128.png",
+                title,
+                message,
+                priority: 1,
+              });
+            } catch {
+              // Notifications API can throw if the icon path resolves
+              // outside the extension at runtime. The badge change
+              // already gives the user a visible signal; nothing more
+              // to do here.
+            }
+          },
+        },
+      },
+      DEFAULT_WATCHDOG_CONFIG,
+    );
+  } catch (cause: unknown) {
+    // Watchdog setup must never break the SW. Translation continues.
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[neurodock.watchdog] failed to start:",
+      cause instanceof Error ? cause.message : cause,
+    );
+  }
+}
+
+async function readWatchdogEnabled(): Promise<boolean> {
+  const g = globalThis as unknown as {
+    chrome?: {
+      storage?: {
+        local?: {
+          get: (
+            keys: string[],
+            cb: (out: Record<string, unknown>) => void,
+          ) => void;
+        };
+      };
+    };
+  };
+  const local = g.chrome?.storage?.local;
+  if (!local) return true; // dev / test → default-on
+  return new Promise<boolean>((resolve) => {
+    try {
+      local.get(["neurodock.watchdog.enabled"], (out) => {
+        const value = out["neurodock.watchdog.enabled"];
+        if (value === false) {
+          resolve(false);
+          return;
+        }
+        resolve(true);
+      });
+    } catch {
+      resolve(true);
+    }
+  });
+}
 
 export async function runTranslate(
   request: TranslationRequest,
@@ -658,23 +752,83 @@ async function dispatchContextResult(
   sourceText: string,
 ): Promise<void> {
   const response = await runTranslate(request, tabId);
-  // Targeted at the tab's content-script island (mounted by gmail.content.ts
-  // and the other per-site bootstraps). The island listens for this exact
-  // discriminated `type` and opens the result panel.
-  //
-  // P1.4 from the audit: if the user right-clicks on a page OUTSIDE the
-  // 9 declared `host_permissions`, no content script is mounted, the
-  // sendMessage rejects with "Could not establish connection. Receiving
-  // end does not exist." and the user previously saw nothing. Fall back
-  // to a `chrome.notifications` toast.
-  void chrome.tabs
-    .sendMessage(tabId, {
-      type: "neurodock:context-result",
-      response,
-      sourceText,
-      channel,
-    })
-    .catch(() => {
-      void notifyContextResultFallback(response, pageUrl);
+  const message = {
+    type: "neurodock:context-result" as const,
+    response,
+    sourceText,
+    channel,
+  };
+  // First try: the tab might already have an island (one of the 9
+  // declared host_permissions, or a previously-injected generic one).
+  try {
+    await chrome.tabs.sendMessage(tabId, message);
+    return;
+  } catch {
+    // No listener — fall through to the on-demand injection path.
+  }
+  // 0.0.23: when the active tab is outside our declared host_permissions
+  // (LinkedIn, Reddit, BBC News, etc.), programmatically inject the
+  // generic content script and retry. Requires user has granted
+  // host permission for the tab — true after `Enable for every site`
+  // in Settings, OR after a per-host right-click prompt earlier.
+  const injected = await injectGenericContentScript(tabId);
+  if (injected) {
+    try {
+      // Brief settle so the React island mounts its listener before we
+      // dispatch. Empirically 250ms is enough on a cold tab; on a warm
+      // tab the mount is sync after script load and this is just polite.
+      await new Promise((r) => setTimeout(r, 250));
+      await chrome.tabs.sendMessage(tabId, message);
+      return;
+    } catch {
+      // Injection succeeded but the message still didn't reach a
+      // listener — fall through to notification.
+    }
+  }
+  void notifyContextResultFallback(response, pageUrl);
+}
+
+/**
+ * 0.0.23: Inject the generic content script into the active tab on
+ * demand. Returns true when the injection succeeded, false when Chrome
+ * refused (typically: extension lacks host permission for the tab, or
+ * the tab is a privileged page like chrome:// or chrome-extension://).
+ *
+ * Idempotent — re-injecting on a tab that already has the script just
+ * re-runs `main()`, and bootstrapContent reuses an existing island
+ * rather than mounting a duplicate.
+ */
+async function injectGenericContentScript(tabId: number): Promise<boolean> {
+  const g = globalThis as unknown as {
+    chrome?: {
+      scripting?: {
+        executeScript: (
+          inj: {
+            target: { tabId: number };
+            files: string[];
+          },
+          cb?: () => void,
+        ) => Promise<unknown>;
+      };
+    };
+  };
+  const scripting = g.chrome?.scripting;
+  if (!scripting) return false;
+  try {
+    await scripting.executeScript({
+      target: { tabId },
+      files: ["content-scripts/generic.js"],
     });
+    return true;
+  } catch (cause: unknown) {
+    // Cannot inject (no permission, restricted page, etc.). Log for
+    // debugging but never throw — the fallback notification path
+    // covers this case.
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[neurodock] generic content-script injection failed:",
+      cause instanceof Error ? cause.message : cause,
+    );
+    return false;
+  }
 }

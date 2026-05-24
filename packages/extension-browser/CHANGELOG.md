@@ -1,5 +1,59 @@
 # @neurodock/extension-browser
 
+## 0.0.23
+
+### Added — Proactive watchdog in the service worker (Phase 2)
+
+The background SW now runs a `setInterval` (default 5 min) that reads
+the local IndexedDB translation history and evaluates three
+auto-fired signals:
+
+- **Hyperfocus** — ≥12 translations in 30 min.
+- **Deep-night** — local time 00:00–05:59 AND ≥1 translation since
+  midnight.
+- **Rumination on a single host** — ≥8 translations on the same host
+  in the last hour.
+
+When a signal trips, the extension shows a `chrome.notifications`
+toast and flips the toolbar badge amber until the next translation.
+Per-signal-kind dedup (15 min window) so a fast tick after a dismiss
+doesn't re-fire the same nudge.
+
+Opt-out per browser:
+
+```js
+await chrome.storage.local.set({ "neurodock.watchdog.enabled": false });
+```
+
+The full design is documented at
+[`docs/concepts/proactive-guardrails`](../../docs/src/content/docs/concepts/proactive-guardrails.mdx).
+
+### Added — Panel works on ANY site (generic content-script injection)
+
+Pre-0.0.23 the panel only auto-mounted on the nine declared
+host-permissions sites (Gmail, Slack, Linear, Notion, GitHub, Google
+Docs, Outlook variants). Right-clicking on LinkedIn etc. ran the
+translation correctly but fell back to a notification — the user had
+to dig through History to read the result.
+
+The SW now ships a `content-scripts/generic.js` bundle that's NOT
+auto-injected (declared with `matches: []` and
+`registration: "runtime"`). When `chrome.tabs.sendMessage` rejects
+because no island is mounted, the SW calls
+`chrome.scripting.executeScript({ files: ["content-scripts/generic.js"] })`
+to inject it on demand, waits 250 ms for the React island to mount,
+and retries the message.
+
+Requires that the user has granted host permission for the active tab —
+true after either the per-host right-click prompt or
+**Enable for every site** in Settings.
+
+### Internals — Watchdog covered by unit tests
+
+`src/lib/proactive-watchdog.ts` has 247-test coverage including
+hyperfocus / deep-night / rumination-host signal-evaluation cases and
+the setInterval lifecycle with fake timers.
+
 ## 0.0.22
 
 This release is the dogfood-driven response to a 4-hour session that
