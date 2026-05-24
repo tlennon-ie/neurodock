@@ -276,12 +276,151 @@ export function SettingsTab({
 
       <ProviderTest profile={profile} />
 
+      <ProactiveGuardrails />
+
       <ReaderPreferences profile={profile} onChange={onChange} />
 
       <ImageTranslationPermission />
 
       <HostPermissionsPanel />
     </section>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Proactive guardrails panel.
+//
+// Phase 2 (service-worker watchdog) is toggled via
+// chrome.storage.local["neurodock.watchdog.enabled"], read on demand by
+// src/lib/proactive-watchdog.ts. Default: on. This panel surfaces the
+// flip so users don't need DevTools.
+//
+// Phase 1 (Python hook) and Phase 3 (standalone daemon) live outside
+// the extension sandbox and can only be documented here.
+// ──────────────────────────────────────────────────────────────────────
+
+const WATCHDOG_ENABLED_KEY = "neurodock.watchdog.enabled";
+
+interface WatchdogStorageArea {
+  readonly get: (keys: string | string[]) => Promise<Record<string, unknown>>;
+  readonly set: (items: Record<string, unknown>) => Promise<void>;
+}
+
+function getWatchdogStorage(): WatchdogStorageArea | null {
+  const storage = (
+    globalThis as unknown as {
+      chrome?: {
+        storage?: {
+          local?: WatchdogStorageArea;
+        };
+      };
+    }
+  ).chrome?.storage?.local;
+  return storage ?? null;
+}
+
+function ProactiveGuardrails(): React.ReactElement {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const storage = getWatchdogStorage();
+      if (storage === null) {
+        if (!cancelled) setEnabled(true);
+        return;
+      }
+      try {
+        const got = await storage.get(WATCHDOG_ENABLED_KEY);
+        if (cancelled) return;
+        const raw = got[WATCHDOG_ENABLED_KEY];
+        // Default-on: only `false` disables. Unset, null, or any other
+        // value keeps the watchdog active.
+        setEnabled(raw === false ? false : true);
+      } catch {
+        if (!cancelled) setEnabled(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onToggle = useCallback(async () => {
+    const next = !(enabled ?? true);
+    setEnabled(next);
+    const storage = getWatchdogStorage();
+    if (storage === null) return;
+    try {
+      await storage.set({ [WATCHDOG_ENABLED_KEY]: next });
+    } catch {
+      // Revert on failure so the UI reflects actual persisted state.
+      setEnabled(!next);
+    }
+  }, [enabled]);
+
+  const checked = enabled ?? true;
+
+  return (
+    <fieldset
+      className="m-0 flex flex-col gap-3 border border-neutral-200 p-3 dark:border-neutral-800"
+      data-testid="proactive-guardrails"
+    >
+      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+        Proactive guardrails
+      </legend>
+
+      <label className="flex items-start gap-2 text-xs">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={() => void onToggle()}
+          className="mt-0.5"
+          data-testid="watchdog-toggle"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-medium">
+            Extension watchdog (auto-detects hyperfocus / late-night /
+            rumination)
+          </span>
+          <span className="text-[11px] text-neutral-500">
+            Runs every 5 min. Surfaces a notification + amber toolbar badge when
+            a pattern trips. Local-only; nothing leaves your device.
+          </span>
+        </span>
+      </label>
+
+      <div
+        className="flex flex-col gap-1 border border-neutral-200 p-2 dark:border-neutral-800"
+        data-testid="guardrail-phase1-info"
+      >
+        <span className="text-xs font-medium">Claude Code hook (Phase 1)</span>
+        <span className="text-[11px] text-neutral-500">
+          Auto-fires chronometric / rumination / sycophancy checks on every Nth
+          Claude Code tool use. Banners on stderr.
+        </span>
+        <code className="font-mono mt-1 block border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] dark:border-neutral-700 dark:bg-neutral-950">
+          neurodock install-hooks --self-test
+        </code>
+        <span className="text-[11px] text-neutral-500">Disable with:</span>
+        <code className="font-mono block border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] dark:border-neutral-700 dark:bg-neutral-950">
+          export NEURODOCK_GUARDRAILS=off
+        </code>
+      </div>
+
+      <div
+        className="flex flex-col gap-1 border border-neutral-200 p-2 dark:border-neutral-800"
+        data-testid="guardrail-phase3-info"
+      >
+        <span className="text-xs font-medium">Standalone daemon (Phase 3)</span>
+        <span className="text-[11px] text-neutral-500">
+          Host-agnostic. Catches you working in the terminal at 02:00 too.
+        </span>
+        <code className="font-mono mt-1 block border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] dark:border-neutral-700 dark:bg-neutral-950">
+          neurodock install-hooks --install-daemon
+        </code>
+      </div>
+    </fieldset>
   );
 }
 

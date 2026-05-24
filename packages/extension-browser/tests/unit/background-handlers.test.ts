@@ -279,9 +279,15 @@ describe("contextMenus.onClicked dispatcher", () => {
     (chrome.contextMenus as { onClicked: unknown }).onClicked =
       contextMenusOnClicked;
 
-    // Intercept tabs.sendMessage
+    // Intercept tabs.sendMessage. 0.0.24: the content-script island now
+    // ACKs the context-result message via sendResponse({ ack: true });
+    // dispatchContextResult only treats the dispatch as successful when
+    // it sees the ACK. Resolve the spy with the ACK shape by default so
+    // existing tests still pass; the silent-fallback regression test
+    // overrides this to resolve with `undefined` (simulating Chrome's
+    // "promise resolves but no listener actually fired" behaviour).
     originalTabsSendMessage = chrome.tabs.sendMessage;
-    tabsSendMessageSpy = vi.fn().mockResolvedValue(undefined);
+    tabsSendMessageSpy = vi.fn().mockResolvedValue({ ack: true });
     (chrome.tabs as { sendMessage: unknown }).sendMessage = tabsSendMessageSpy;
 
     // Load profile default

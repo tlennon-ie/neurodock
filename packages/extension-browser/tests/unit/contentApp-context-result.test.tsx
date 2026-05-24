@@ -24,7 +24,11 @@ import type {
   TranslationResponse,
 } from "../../src/lib/types.js";
 
-type ChromeMessageListener = (msg: unknown) => void;
+type ChromeMessageListener = (
+  msg: unknown,
+  sender?: unknown,
+  sendResponse?: (response: unknown) => void,
+) => unknown;
 
 function baseProfile(): ExtensionProfile {
   return {
@@ -131,7 +135,8 @@ describe("ContentApp — right-click context-menu result listener", () => {
       channel: "email",
     };
     act(() => {
-      for (const l of capturedListeners) l(message);
+      // 0.0.24: listener signature now also includes sender + sendResponse.
+      for (const l of capturedListeners) l(message, {}, () => undefined);
     });
 
     expect(
@@ -162,12 +167,61 @@ describe("ContentApp — right-click context-menu result listener", () => {
         requestTranslate={vi.fn().mockResolvedValue(null)}
       />,
     );
+    const noopSendResponse = (): void => undefined;
     act(() => {
-      for (const l of capturedListeners) l({ type: "translate" });
-      for (const l of capturedListeners) l({ type: "unknown-thing" });
-      for (const l of capturedListeners) l(null);
-      for (const l of capturedListeners) l("not an object");
+      for (const l of capturedListeners)
+        l({ type: "translate" }, {}, noopSendResponse);
+      for (const l of capturedListeners)
+        l({ type: "unknown-thing" }, {}, noopSendResponse);
+      for (const l of capturedListeners) l(null, {}, noopSendResponse);
+      for (const l of capturedListeners)
+        l("not an object", {}, noopSendResponse);
     });
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("calls sendResponse({ ack: true }) on receiving a context-result message (0.0.24)", () => {
+    // Regression test for the Gmail silent-failure bug: pre-0.0.24 the
+    // listener returned undefined without calling sendResponse, so the
+    // SW couldn't distinguish "panel opened" from "no listener fired".
+    // Now the listener must explicitly ACK so dispatchContextResult can
+    // verify delivery and fall back to a notification when needed.
+    render(
+      <ContentApp
+        channel="email"
+        profile={baseProfile()}
+        requestTranslate={vi.fn().mockResolvedValue(null)}
+      />,
+    );
+    const sendResponse = vi.fn();
+    const message: Extract<
+      RuntimeMessage,
+      { type: "neurodock:context-result" }
+    > = {
+      type: "neurodock:context-result",
+      response: successResponse(),
+      sourceText: "ping",
+      channel: "email",
+    };
+    act(() => {
+      for (const l of capturedListeners) l(message, {}, sendResponse);
+    });
+    expect(sendResponse).toHaveBeenCalledWith({ ack: true });
+  });
+
+  it("does NOT call sendResponse when the message is not a context-result", () => {
+    render(
+      <ContentApp
+        channel="email"
+        profile={baseProfile()}
+        requestTranslate={vi.fn().mockResolvedValue(null)}
+      />,
+    );
+    const sendResponse = vi.fn();
+    act(() => {
+      for (const l of capturedListeners)
+        l({ type: "image:snapshot", imageUrl: "x" }, {}, sendResponse);
+    });
+    expect(sendResponse).not.toHaveBeenCalled();
   });
 });

@@ -68,16 +68,39 @@ export function ContentApp({
   // service worker. The browser bus is shared between tabs.sendMessage
   // and runtime.sendMessage from the receiver's POV, so a single
   // runtime.onMessage listener covers both.
+  //
+  // 0.0.24: this listener now ACKs the message via `sendResponse`. The
+  // SW awaits the sendMessage promise and, if it resolves with an
+  // explicit { ack: true }, knows the panel actually consumed the
+  // result. Without the ACK the SW falls back to the notification path
+  // — fixing the Gmail-specific silent failure where sendMessage
+  // resolved with `undefined` (meaning "listener returned without
+  // calling sendResponse", which is INDISTINGUISHABLE from "no
+  // listener fired" when there are zero listeners registered).
   useEffect(() => {
     if (typeof chrome === "undefined" || !chrome.runtime?.onMessage) {
       return undefined;
     }
-    const handler = (msg: unknown): void => {
-      if (!isContextResultMessage(msg)) return;
+    const handler = (
+      msg: unknown,
+      _sender: chrome.runtime.MessageSender,
+      sendResponse: (response: { ack: true }) => void,
+    ): boolean | undefined => {
+      if (!isContextResultMessage(msg)) return undefined;
       setResponse(msg.response);
       setContextSourceText(msg.sourceText);
       setLoading(false);
       setPanelOpen(true);
+      try {
+        sendResponse({ ack: true });
+      } catch {
+        // sendResponse can throw if the message channel was closed
+        // (e.g. the SW already gave up waiting for the ACK). The state
+        // updates above still fire, so the panel still opens; the SW
+        // just thinks it failed and sends a backup notification. Worst
+        // case is a duplicate surface, never a missing one.
+      }
+      return undefined;
     };
     chrome.runtime.onMessage.addListener(handler);
     return () => chrome.runtime.onMessage.removeListener(handler);

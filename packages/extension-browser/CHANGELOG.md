@@ -1,5 +1,63 @@
 # @neurodock/extension-browser
 
+## 0.0.24
+
+### Fixed — LM Studio + Gmail silent failure (the #1 outstanding bug)
+
+Translations on long Gmail threads streamed to 100 % in LM Studio but
+the result never reached the panel or the popup — silently lost.
+Two compounding root causes:
+
+**A: MV3 service-worker idle kill mid-fetch.** `runTranslate` awaited
+the translate call directly. On long Gmail bodies the LM Studio
+round-trip exceeded the ~30 s MV3 SW idle threshold; Chrome killed
+the SW mid-fetch (network request kept streaming on the wire, but
+the `await` never resolved because the SW context was gone). No
+`appendHistory`, no `tabs.sendMessage`, no notification — nothing.
+
+**B: `chrome.tabs.sendMessage` ambiguous resolution.**
+`dispatchContextResult` treated any non-rejecting resolution as
+proof the content-script panel had received the message. Chrome
+resolves with `undefined` in two indistinguishable cases: a listener
+fired and returned without `sendResponse`, OR no listener actually
+ran (SPA-navigation race, stale port after SW restart). The SW
+thought it had delivered, returned, the user saw nothing.
+
+**Fix:**
+
+1. New [`src/lib/sw-keepalive.ts`](src/lib/sw-keepalive.ts) —
+   `withKeepalive(fn)` pings `chrome.runtime.getPlatformInfo` every
+   20 s while the wrapped operation runs, defeating the MV3 idle
+   kill. `runTranslate` now wraps the `translate()` call in it.
+2. New ACK contract: `dispatchContextResult` requires the reply to be
+   exactly `{ ack: true }`. Absent the ACK, the existing generic-
+   injection retry + notification fallback chain fires. The user
+   always sees something — panel OR notification carrying the
+   result preview.
+3. The content-script listener in `contentApp.tsx` now explicitly
+   calls `sendResponse({ ack: true })` after applying state.
+
+Seven new regression tests in `tests/unit/background-gmail-silent-failure.test.ts`
+plus updates to three existing test files. 260/260 tests pass.
+
+### Added — Settings UI for Proactive Guardrails
+
+New `<ProactiveGuardrails>` fieldset in the Settings tab between
+**Test connection** and **Reader preferences**. Surfaces:
+
+- **Extension watchdog** toggle — reads/writes
+  `chrome.storage.local["neurodock.watchdog.enabled"]`. Default-on
+  (only literal `false` disables). Reverts UI on persist failure.
+- Read-only info block for **Claude Code hook (Phase 1)** with the
+  `neurodock install-hooks --self-test` install command and the
+  `export NEURODOCK_GUARDRAILS=off` opt-out, both in `<code>` blocks.
+- Read-only info block for **Standalone daemon (Phase 3)** with the
+  `neurodock install-hooks --install-daemon` command.
+
+Four new tests in `tests/unit/settings-tab.test.tsx` (default-on
+semantics, explicit-disable rendering, click → set behaviour, opt-out
+copy present).
+
 ## 0.0.23
 
 ### Added — Proactive watchdog in the service worker (Phase 2)

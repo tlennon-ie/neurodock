@@ -367,6 +367,88 @@ describe("SettingsTab", () => {
     });
   });
 
+  // ──────────────────────────────────────────────────────────────────
+  // Proactive guardrails panel — watchdog toggle + Phase 1 / 3 copy.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("watchdog toggle defaults to checked when storage has no key set", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    const getSpy = vi.fn(async (_keys: string | string[]) => ({}));
+    const setSpy = vi.fn(async (_items: Record<string, unknown>) => {});
+    (
+      globalThis as unknown as {
+        chrome: { storage: { local: unknown } };
+      }
+    ).chrome.storage.local = { get: getSpy, set: setSpy };
+
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("watchdog-toggle")).toBeChecked();
+    });
+    expect(getSpy).toHaveBeenCalledWith("neurodock.watchdog.enabled");
+  });
+
+  it("watchdog toggle renders unchecked when storage returns false", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    const getSpy = vi.fn(async (_keys: string | string[]) => ({
+      "neurodock.watchdog.enabled": false,
+    }));
+    const setSpy = vi.fn(async (_items: Record<string, unknown>) => {});
+    (
+      globalThis as unknown as {
+        chrome: { storage: { local: unknown } };
+      }
+    ).chrome.storage.local = { get: getSpy, set: setSpy };
+
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("watchdog-toggle")).not.toBeChecked();
+    });
+  });
+
+  it("clicking the watchdog toggle persists the inverted value to chrome.storage.local", async () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    const getSpy = vi.fn(async (_keys: string | string[]) => ({}));
+    const setSpy = vi.fn(async (_items: Record<string, unknown>) => {});
+    (
+      globalThis as unknown as {
+        chrome: { storage: { local: unknown } };
+      }
+    ).chrome.storage.local = { get: getSpy, set: setSpy };
+
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+
+    // Wait for the initial read to settle so the checkbox is in the
+    // default-on state before we flip it.
+    await waitFor(() => {
+      expect(screen.getByTestId("watchdog-toggle")).toBeChecked();
+    });
+
+    fireEvent.click(screen.getByTestId("watchdog-toggle"));
+
+    await waitFor(() => {
+      expect(setSpy).toHaveBeenCalledWith({
+        "neurodock.watchdog.enabled": false,
+      });
+    });
+  });
+
+  it("renders Phase 1 and Phase 3 info blocks with documented opt-out commands", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+
+    const phase1 = screen.getByTestId("guardrail-phase1-info");
+    expect(phase1).toHaveTextContent("neurodock install-hooks --self-test");
+    expect(phase1).toHaveTextContent("export NEURODOCK_GUARDRAILS=off");
+
+    const phase3 = screen.getByTestId("guardrail-phase3-info");
+    expect(phase3).toHaveTextContent(
+      "neurodock install-hooks --install-daemon",
+    );
+  });
+
   it("Host permissions panel lists granted non-default origins", async () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
     (

@@ -153,8 +153,13 @@ describe("context-menu notification fallback (P1.4)", () => {
     expect(call.message).toMatch(/example\.com/);
   });
 
-  it("does NOT show a notification when tabs.sendMessage resolves", async () => {
-    tabsSendMessage.mockResolvedValueOnce(undefined);
+  it("does NOT show a notification when the content script ACKs the message", async () => {
+    // 0.0.24: dispatchContextResult now requires an explicit
+    // { ack: true } reply from the content-script listener. Pre-0.0.24
+    // it treated any resolution (including `undefined`) as success,
+    // which masked the Gmail silent-failure bug where Chrome resolved
+    // the promise even though no listener had actually run.
+    tabsSendMessage.mockResolvedValueOnce({ ack: true });
     contextClickTarget._invoke(
       {
         menuItemId: "neurodock-translate-selection",

@@ -25,6 +25,7 @@ import {
   DEFAULT_WATCHDOG_CONFIG,
 } from "../src/lib/proactive-watchdog.js";
 import { listHistory } from "../src/lib/storage.js";
+import { withKeepalive } from "../src/lib/sw-keepalive.js";
 import type {
   RuntimeMessage,
   RuntimeResponseEnvelope,
@@ -313,7 +314,15 @@ export async function runTranslate(
   // assumed the right-click was lost.
   setActionBadge("working", tabId);
   const profile = await loadProfile();
-  const response = await translate(request, { profile });
+  // 0.0.24: wrap the long-running translate in a service-worker keepalive
+  // ticker. Local LM Studio + long Gmail-thread inputs can take 30–90s to
+  // stream back; without periodic chrome.* pings the SW gets killed by
+  // Chrome's MV3 idle reaper mid-fetch and the result is silently lost
+  // (no panel, no history row, no notification). LM Studio's own progress
+  // bar reaches 100% — at the HTTP layer the response completed — but
+  // the SW context is gone by the time the Promise would settle.
+  // See src/lib/sw-keepalive.ts for the rationale.
+  const response = await withKeepalive(() => translate(request, { profile }));
   // Outcome → badge state. Mock-fallback uses its own "m" badge so the
   // user can tell at a glance that the answer didn't come from their
   // configured provider.
@@ -760,12 +769,23 @@ async function dispatchContextResult(
   };
   // First try: the tab might already have an island (one of the 9
   // declared host_permissions, or a previously-injected generic one).
-  try {
-    await chrome.tabs.sendMessage(tabId, message);
-    return;
-  } catch {
-    // No listener — fall through to the on-demand injection path.
-  }
+  //
+  // 0.0.24: we now check the sendMessage REPLY, not just whether the
+  // promise rejected. Pre-0.0.24, sendMessage resolved with `undefined`
+  // in two indistinguishable cases:
+  //   (a) a listener fired and consumed the message without responding,
+  //   (b) no listener fired at all (Chrome's documented behaviour on
+  //       some channels — the promise still resolves rather than
+  //       rejecting).
+  // The Gmail-specific silent failure lived in case (b): something
+  // (transient SPA re-mount, MV3 idle restart of the SW invalidating
+  // a stale port, the imageSnapshot listener intercepting the message
+  // and returning false before the contentApp listener got to run)
+  // meant the contentApp listener never executed but Chrome still
+  // resolved the promise. The fix is to make the contentApp listener
+  // explicitly call sendResponse({ ack: true }), and verify here.
+  if (await tryDeliver(tabId, message)) return;
+
   // 0.0.23: when the active tab is outside our declared host_permissions
   // (LinkedIn, Reddit, BBC News, etc.), programmatically inject the
   // generic content script and retry. Requires user has granted
@@ -773,19 +793,42 @@ async function dispatchContextResult(
   // in Settings, OR after a per-host right-click prompt earlier.
   const injected = await injectGenericContentScript(tabId);
   if (injected) {
-    try {
-      // Brief settle so the React island mounts its listener before we
-      // dispatch. Empirically 250ms is enough on a cold tab; on a warm
-      // tab the mount is sync after script load and this is just polite.
-      await new Promise((r) => setTimeout(r, 250));
-      await chrome.tabs.sendMessage(tabId, message);
-      return;
-    } catch {
-      // Injection succeeded but the message still didn't reach a
-      // listener — fall through to notification.
-    }
+    // Brief settle so the React island mounts its listener before we
+    // dispatch. Empirically 250ms is enough on a cold tab; on a warm
+    // tab the mount is sync after script load and this is just polite.
+    await new Promise((r) => setTimeout(r, 250));
+    if (await tryDeliver(tabId, message)) return;
   }
   void notifyContextResultFallback(response, pageUrl);
+}
+
+/**
+ * 0.0.24: Send the context-result message and verify the receiver
+ * explicitly ACKed it. Resolves true only when the contentApp listener
+ * actually ran and called `sendResponse({ ack: true })`.
+ *
+ * The ACK contract distinguishes "no listener received this" (the
+ * Gmail silent-failure case) from "listener received and opened the
+ * panel" — both of which previously looked identical to the SW
+ * because sendMessage resolves with `undefined` in both cases.
+ */
+async function tryDeliver(
+  tabId: number,
+  message: { readonly type: "neurodock:context-result" } & Record<
+    string,
+    unknown
+  >,
+): Promise<boolean> {
+  try {
+    const reply = (await chrome.tabs.sendMessage(tabId, message)) as
+      | { ack?: unknown }
+      | undefined
+      | null;
+    return reply !== null && reply !== undefined && reply.ack === true;
+  } catch {
+    // No listener — chrome throws "Receiving end does not exist".
+    return false;
+  }
 }
 
 /**
