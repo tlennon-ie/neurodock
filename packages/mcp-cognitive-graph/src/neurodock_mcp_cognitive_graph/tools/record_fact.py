@@ -21,6 +21,14 @@ from neurodock_mcp_cognitive_graph.tools._shared import (
 )
 from neurodock_mcp_cognitive_graph.types import Predicate, RecordFactResult
 
+# A minimal, copy-pasteable valid call. Surfaced in friendly errors so the
+# caller can see the expected shape without reading the schema.
+_VALID_CALL_EXAMPLE: dict[str, Any] = {
+    "subject": {"type": "person", "name": "Roberto"},
+    "predicate": "decided_in",
+    "object": {"type": "decision", "name": "Adopt SQLite + sqlite-vec"},
+}
+
 
 def _validate_confidence(confidence: float | None) -> float:
     if confidence is None:
@@ -31,11 +39,18 @@ def _validate_confidence(confidence: float | None) -> float:
         raise ToolError(
             "CONFIDENCE_OUT_OF_RANGE",
             "confidence must be a number in [0, 1].",
+            hint=("Pass confidence as a number between 0 and 1, or omit it to " "default to 1.0."),
+            example={**_VALID_CALL_EXAMPLE, "confidence": 0.8},
         ) from exc
     if not (0.0 <= value <= 1.0):
         raise ToolError(
             "CONFIDENCE_OUT_OF_RANGE",
             f"confidence {value} not in [0, 1].",
+            hint=(
+                "Confidence must sit in the closed interval [0, 1]. "
+                "Use 1.0 for declarative facts and lower values for inferred ones."
+            ),
+            example={**_VALID_CALL_EXAMPLE, "confidence": 0.8},
         )
     return value
 
@@ -44,9 +59,21 @@ def _validate_source(source: str | None) -> None:
     if source is None:
         return
     if not isinstance(source, str):
-        raise ToolError("OBJECT_REQUIRED", "source must be a string or null.")
+        raise ToolError(
+            "OBJECT_REQUIRED",
+            "source must be a string or null.",
+            hint="Pass `source` as a string (URL, message id, citation) or omit it.",
+            example={
+                **_VALID_CALL_EXAMPLE,
+                "source": "https://github.com/neurodock/neurodock/issues/42",
+            },
+        )
     if len(source) > 2000:
-        raise ToolError("OBJECT_REQUIRED", "source exceeds 2000 characters.")
+        raise ToolError(
+            "OBJECT_REQUIRED",
+            "source exceeds 2000 characters.",
+            hint="Trim `source` to under 2000 characters; it is stored verbatim, not fetched.",
+        )
 
 
 def record_fact(
@@ -61,10 +88,17 @@ def record_fact(
 ) -> RecordFactResult:
     """Persist a (subject, predicate, object) fact and return its canonical id."""
     if predicate not in PREDICATE_VOCABULARY:
+        valid = sorted(PREDICATE_VOCABULARY)
         raise ToolError(
             "PREDICATE_NOT_IN_VOCABULARY",
             f"predicate '{predicate}' is not in the v0.1.0 controlled vocabulary."
-            f" Valid predicates: {sorted(PREDICATE_VOCABULARY)}.",
+            f" Valid predicates: {valid}.",
+            hint=(
+                f"Pick a `predicate` from this fixed list: {', '.join(valid)}. "
+                "For a bug or blocker, try `blocked_by`. For tagging, use `tagged`. "
+                "Predicates are not free-text in v0.1."
+            ),
+            example=_VALID_CALL_EXAMPLE,
         )
     pred = cast(Predicate, predicate)
     confidence_value = _validate_confidence(confidence)

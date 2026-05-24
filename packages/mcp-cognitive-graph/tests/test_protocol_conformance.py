@@ -143,6 +143,71 @@ async def test_weekly_rollup_response_validates(
 
 
 @pytest.mark.asyncio
+async def test_record_fact_friendly_error_path_through_fastmcp() -> None:
+    """Server layer must pass `hint` and `example` through to the MCP caller.
+
+    Reproduces the 2026-05-22 friction: a caller sends a bare string for
+    `subject`. The response must include not just `error` and `message`, but
+    a `hint` telling them what shape to use, and an `example` they can copy.
+    """
+    from datetime import datetime
+
+    clock = FixedClock(datetime(2026, 5, 15, 9, 14, 22, tzinfo=UTC))
+    storage = InMemoryStorage()
+    app = build_app(storage, clock)
+    payload = await _call(
+        app,
+        "record_fact",
+        {
+            "subject": "Roberto",  # bare string, wrong shape
+            "predicate": "reports_to",
+            "object": {"type": "person", "name": "Priya"},
+        },
+    )
+    assert payload["error"] == "SUBJECT_REQUIRED"
+    assert "hint" in payload
+    assert "type" in payload["hint"] and "name" in payload["hint"]
+    assert "example" in payload
+    assert payload["example"]["subject"]["type"] == "person"
+
+
+@pytest.mark.asyncio
+async def test_record_fact_internal_error_does_not_blame_caller() -> None:
+    """An unexpected storage exception must surface as INTERNAL_ERROR.
+
+    Critical UX property: the wrapper distinguishes "user sent bad input"
+    (`SUBJECT_REQUIRED` etc.) from "the server itself fell over"
+    (`INTERNAL_ERROR`). Otherwise users retry-loop on input they got right.
+    """
+    from datetime import datetime
+    from unittest.mock import patch
+
+    clock = FixedClock(datetime(2026, 5, 15, 9, 14, 22, tzinfo=UTC))
+    storage = InMemoryStorage()
+    app = build_app(storage, clock)
+
+    # Patch the underlying tool to raise a bare RuntimeError — simulates an
+    # unexpected internal failure (disk corruption, programmer error, ...).
+    with patch(
+        "neurodock_mcp_cognitive_graph.server.record_fact_tool",
+        side_effect=RuntimeError("simulated disk corruption"),
+    ):
+        payload = await _call(
+            app,
+            "record_fact",
+            {
+                "subject": {"type": "person", "name": "Roberto"},
+                "predicate": "reports_to",
+                "object": {"type": "person", "name": "Priya"},
+            },
+        )
+    assert payload["error"] == "INTERNAL_ERROR"
+    # The message must not pretend the caller sent bad input.
+    assert "user input" not in payload["message"] or "not user input" in payload["message"]
+    assert "simulated disk corruption" in payload["message"]
+
+
+@pytest.mark.asyncio
 async def test_sqlite_backed_end_to_end(
     schemas: dict[str, dict[str, Any]],
     tmp_path: Any,

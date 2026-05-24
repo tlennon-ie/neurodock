@@ -16,7 +16,7 @@ from mcp.server.fastmcp import FastMCP
 from neurodock_mcp_cognitive_graph import __version__
 from neurodock_mcp_cognitive_graph.clock import Clock, SystemClock
 from neurodock_mcp_cognitive_graph.config import resolve_db_path
-from neurodock_mcp_cognitive_graph.errors import ToolError
+from neurodock_mcp_cognitive_graph.errors import InternalToolError, ToolError
 from neurodock_mcp_cognitive_graph.storage.base import Storage
 from neurodock_mcp_cognitive_graph.storage.sqlite import SQLiteStorage
 from neurodock_mcp_cognitive_graph.tools import (
@@ -73,12 +73,19 @@ def build_app(
         ),
     )
     def record_fact(
-        subject: dict[str, Any],
-        predicate: str,
-        object: dict[str, Any],
+        subject: Any,
+        predicate: Any,
+        object: Any,
         source: str | None = None,
         confidence: float | None = None,
     ) -> dict[str, Any]:
+        # `subject`, `predicate`, and `object` are intentionally typed as Any
+        # so wrong-shape input (a bare string, a list, missing keys) is caught
+        # by the tool's own friendly-error path rather than by FastMCP's
+        # generic Pydantic validator. The trade-off: callers no longer get a
+        # type schema from FastMCP itself for these args — but in exchange
+        # they get one-shot, actionable error messages. See record_fact UX
+        # friction note (MEMORY.md, 2026-05-22).
         try:
             result = record_fact_tool(
                 storage,
@@ -92,6 +99,9 @@ def build_app(
         except ToolError as exc:
             logger.warning("record_fact error code=%s", exc.code)
             return exc.to_payload()
+        except Exception as exc:
+            logger.exception("record_fact unexpected internal error")
+            return InternalToolError(str(exc)).to_payload()
         return _serialise(result)
 
     @app.tool(

@@ -6,6 +6,37 @@ to [semantic versioning](https://semver.org/spec/v2.0.0.html). Schemas under
 `schemas/` are versioned independently against `v0.1.0` of the contract; the
 package implements that contract.
 
+## [0.0.4] — 2026-05-24
+
+### Changed
+
+- `record_fact` now returns friendly, actionable errors when the caller sends
+  wrong-shape input. The `ToolError` payload gained two optional fields,
+  `hint` (a one-sentence explainer of what to do next) and `example` (a
+  copy-pasteable valid call). Every failure mode on the `record_fact`
+  boundary now attaches both — bare-string `subject`/`object`, missing
+  `type`, invalid entity type (`feature`, `bug`, ...), unknown predicate,
+  missing `name`/`id`, and out-of-range `confidence`. The original
+  technical message is preserved on the `message` field for debuggability.
+- `server.record_fact` now accepts `subject`/`predicate`/`object` as `Any`
+  so wrong-shape input is caught by the tool's own friendly-error path
+  rather than by FastMCP's generic Pydantic validator.
+- Unexpected exceptions inside any tool entrypoint are now wrapped as
+  `INTERNAL_ERROR` (via new `InternalToolError`) so callers can tell
+  "I sent bad input" apart from "the server fell over". The original
+  exception is preserved as `__cause__` for log inspection.
+
+### Background
+
+This addresses the `record_fact` UX friction logged on 2026-05-22, where a
+caller burned six attempts to land one fact because each Pydantic
+validation error told them what was wrong without telling them what shape
+to try next. Same wire contract; richer error payloads.
+
+No schema change — the JSON Schemas under `schemas/` still describe the
+same `errors` table. The wire payload gains two optional sibling fields
+(`hint`, `example`) alongside `error` and `message`.
+
 ## [0.0.3] - 2026-05-22
 
 ### Changed
