@@ -2,7 +2,7 @@
 
 The `neurodock` installer and diagnostic CLI for [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.
 
-Status: **v0.5.0**.
+Status: **v0.6.0**.
 
 ## Quickstart
 
