@@ -1,6 +1,6 @@
 # @neurodock/extension-browser
 
-## [unreleased]
+## 0.0.33
 
 ### Added — pacing copilot (configurable break suggestions; opt-in default for OCD / AuDHD users)
 

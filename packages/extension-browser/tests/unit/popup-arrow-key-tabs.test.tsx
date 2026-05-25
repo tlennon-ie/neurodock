@@ -13,18 +13,31 @@ import React from "react";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { App } from "../../entrypoints/popup/App.js";
 
-async function clearChromeStorage(): Promise<void> {
+async function seedOnboardedProfile(): Promise<void> {
+  // RFC A1 added a first-run onboarding wizard that replaces the TabBar
+  // when profile.onboardingComplete !== true. Seed an "already onboarded"
+  // profile so the TabBar renders for the keyboard-nav assertions below.
   const c = (
     globalThis as unknown as {
-      chrome: { storage: { local: { clear: () => Promise<void> } } };
+      chrome: {
+        storage: {
+          local: {
+            clear: () => Promise<void>;
+            set: (items: Record<string, unknown>) => Promise<void>;
+          };
+        };
+      };
     }
   ).chrome;
   await c.storage.local.clear();
+  await c.storage.local.set({
+    "neurodock.profile.v1": { onboardingComplete: true },
+  });
 }
 
 describe("Popup tab bar — arrow-key navigation (RFC A3)", () => {
   beforeEach(async () => {
-    await clearChromeStorage();
+    await seedOnboardedProfile();
     document.documentElement.className = "";
   });
 
