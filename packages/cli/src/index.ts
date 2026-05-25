@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import chalk from "chalk";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { runInit } from "./commands/init.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runProfileValidate, runProfileShow } from "./commands/profile.js";
@@ -23,7 +26,28 @@ import {
 import { colorEnabled } from "./lib/env.js";
 import type { CheckResult, ClientId } from "./types.js";
 
-export const CLI_VERSION = "0.5.0";
+// 0.6.2: read version from package.json at module load instead of a
+// hardcoded string. The previous string went stale at every release
+// (0.6.1 still reported 0.5.0 to `--version`); reading the manifest
+// makes it impossible to drift again. Works from both dist/index.js
+// (../package.json) and src/index.ts when run via tsx.
+function resolveCliVersion(): string {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const raw = readFileSync(join(here, "..", "package.json"), "utf8");
+    const parsed = JSON.parse(raw) as { version?: unknown };
+    if (typeof parsed.version === "string" && parsed.version.length > 0) {
+      return parsed.version;
+    }
+  } catch {
+    // Fall through to the safe default — the published tarball will
+    // always have a readable package.json, so this only happens in
+    // unusual harness situations.
+  }
+  return "unknown";
+}
+
+export const CLI_VERSION = resolveCliVersion();
 
 export function buildProgram(): Command {
   const program = new Command();

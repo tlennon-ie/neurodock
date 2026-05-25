@@ -2,7 +2,7 @@
 
 The `neurodock` installer and diagnostic CLI for [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.
 
-Status: **v0.6.0**.
+Status: **v0.6.2**.
 
 ## Quickstart
 
@@ -32,26 +32,27 @@ install, `install-all` runs the `pip install` step automatically.
 
 ## Commands
 
-| Command                      | What it does                                                                                                               |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `neurodock install-all`      | One-command first-time install: pip-install the six servers, wire every detected client, copy the starter profile.         |
-| `neurodock init`             | Install MCP servers into Claude Desktop / Claude Code / Cursor (the wiring half of `install-all`).                         |
-| `neurodock doctor`           | Diagnose your install — profile validity, client wiring, tool availability.                                                |
-| `neurodock validate`         | Schema-validate a profile file (`~/.neurodock/profile.yaml` by default).                                                   |
-| `neurodock update`           | Upgrade NeuroDock to the latest version — re-installs the six MCP servers via pip/uv and re-wires client configs.          |
-| `neurodock sync`             | Re-shape stale NeuroDock MCP entries in existing client configs. No package upgrade. Non-NeuroDock entries are preserved.  |
-| `neurodock uninstall`        | Reverse `init` — remove NeuroDock MCP entries from each client config. Optionally purge `~/.neurodock/`.                   |
-| `neurodock examples`         | Print a copy-pasteable prompt cheat-sheet that exercises every wired NeuroDock MCP tool.                                   |
-| `neurodock host install`     | Register the optional Chrome Native Messaging host so the browser extension can read `~/.neurodock/profile.yaml` directly. |
-| `neurodock host uninstall`   | Remove all NeuroDock native-host manifests and registry pointers.                                                          |
-| `neurodock profile show`     | Print the resolved profile with loader defaults applied.                                                                   |
-| `neurodock profile validate` | Validate `~/.neurodock/profile.yaml` against the v0.1 schema.                                                              |
-| `neurodock plugin add`       | Install a plugin from a local directory into `~/.neurodock/plugins/`.                                                      |
-| `neurodock plugin remove`    | Uninstall a plugin (alias: `plugin uninstall`).                                                                            |
-| `neurodock plugin list`      | List installed plugins and their enabled state. `--json` for scripting.                                                    |
-| `neurodock plugin enable`    | Activate an installed plugin (writes a `.enabled` marker file).                                                            |
-| `neurodock plugin disable`   | Deactivate an installed plugin without deleting its files.                                                                 |
-| `neurodock plugin validate`  | Schema-validate a plugin manifest without installing.                                                                      |
+| Command                      | What it does                                                                                                                                                    |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `neurodock install-all`      | One-command first-time install: pip-install the six servers, wire every detected client, copy the starter profile.                                              |
+| `neurodock init`             | Install MCP servers into Claude Desktop / Claude Code / Cursor (the wiring half of `install-all`).                                                              |
+| `neurodock doctor`           | Diagnose your install — profile validity, client wiring, tool availability.                                                                                     |
+| `neurodock validate`         | Schema-validate a profile file (`~/.neurodock/profile.yaml` by default).                                                                                        |
+| `neurodock update`           | Upgrade NeuroDock to the latest version — re-installs the six MCP servers via pip/uv and re-wires client configs.                                               |
+| `neurodock sync`             | Re-shape stale NeuroDock MCP entries in existing client configs. No package upgrade. Non-NeuroDock entries are preserved.                                       |
+| `neurodock uninstall`        | Reverse `init` — remove NeuroDock MCP entries from each client config. Optionally purge `~/.neurodock/`.                                                        |
+| `neurodock examples`         | Print a copy-pasteable prompt cheat-sheet that exercises every wired NeuroDock MCP tool.                                                                        |
+| `neurodock host install`     | Register the optional Chrome Native Messaging host so the browser extension can read `~/.neurodock/profile.yaml` directly.                                      |
+| `neurodock host uninstall`   | Remove all NeuroDock native-host manifests and registry pointers.                                                                                               |
+| `neurodock profile show`     | Print the resolved profile with loader defaults applied.                                                                                                        |
+| `neurodock profile validate` | Validate `~/.neurodock/profile.yaml` against the v0.1 schema.                                                                                                   |
+| `neurodock plugin add`       | Install a plugin from a local directory into `~/.neurodock/plugins/`.                                                                                           |
+| `neurodock plugin remove`    | Uninstall a plugin (alias: `plugin uninstall`).                                                                                                                 |
+| `neurodock plugin list`      | List installed plugins and their enabled state. `--json` for scripting.                                                                                         |
+| `neurodock plugin enable`    | Activate an installed plugin (writes a `.enabled` marker file).                                                                                                 |
+| `neurodock plugin disable`   | Deactivate an installed plugin without deleting its files.                                                                                                      |
+| `neurodock plugin validate`  | Schema-validate a plugin manifest without installing.                                                                                                           |
+| `neurodock install-hooks`    | Wire the proactive-guardrail hook into Claude Code, optionally autostart the Phase 3 daemon. See `--self-test`, `--install-daemon`, `--uninstall`, `--dry-run`. |
 
 ### `neurodock install-all`
 

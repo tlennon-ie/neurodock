@@ -1,5 +1,59 @@
 # @neurodock/cli changelog
 
+## 0.6.2
+
+### Fixed — `neurodock --version` was hardcoded and stale (read package.json instead)
+
+`src/index.ts` held `export const CLI_VERSION = "0.5.0"`. The string
+went stale at every release: 0.6.0 reported `0.5.0`, 0.6.1 also
+reported `0.5.0`. Fresh users running `neurodock --version` saw a
+number that didn't match what they'd just installed and reasonably
+concluded the install was broken.
+
+0.6.2 reads the version from the package's own `package.json` at
+module load. Works from both `dist/index.js` (the published path)
+and `src/index.ts` when run via tsx during dev. Impossible to drift
+again.
+
+No other behaviour change vs 0.6.1. If you're already on 0.6.1, this
+is purely cosmetic and you can skip it; new installs should jump
+straight to 0.6.2.
+
+## 0.6.1
+
+### Fixed — `npm install` was broken for every fresh user (workspace: protocol leaked)
+
+`@neurodock/cli@0.6.0` was published with `npm publish`, which does NOT
+rewrite pnpm's `workspace:` protocol into a real semver range. The
+resulting tarball's `package.json` carried:
+
+```json
+"@neurodock/native-host": "workspace:^0.1.0"
+```
+
+…which npm/yarn cannot resolve, so the very first `npx --yes
+@neurodock/cli@latest <anything>` failed with `EUNSUPPORTEDPROTOCOL`
+on every fresh machine. The CLI was effectively unpublishable for the
+~14 hours between 0.6.0 hitting npm and this patch.
+
+**The fix:** 0.6.1 is published via `pnpm publish`, which rewrites
+the `workspace:` prefix to the real version pinned in the workspace
+(`^0.1.0`). Verified locally by `pnpm pack` + inspecting the
+extracted `package.json`.
+
+**Belt-and-braces:** a new release-gate script,
+[`scripts/verify-published-tarball.mjs`](../../scripts/verify-published-tarball.mjs),
+fetches the freshly-published tarball from the registry, runs
+`npx --yes @neurodock/cli@<version> --version` against it from a
+scratch directory, and exits non-zero if resolution fails. Wire this
+into the publish pipeline so the next instance of this bug class
+fails the release instead of poisoning `@latest`.
+
+0.6.0 has been deprecated on the registry with a pointer to 0.6.1.
+
+No code changes vs 0.6.0. Same surface, same behaviour, just an
+installable tarball.
+
 ## 0.6.0
 
 ### Added — `neurodock install-hooks` (proactive guardrails Phases 1 + 3)
