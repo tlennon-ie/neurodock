@@ -22,6 +22,8 @@ export type ExtensionMode = "local" | "cloud" | "mock";
  * - `openai`     : cloud-mode provider via the official `openai` package.
  * - `openrouter` : cloud-mode provider via OpenRouter's OpenAI-compatible
  *                  API. Default model is `openrouter/auto` (auto-router).
+ * - `google`     : cloud-mode provider via Google's OpenAI-compatible
+ *                  Gemini endpoint. Default model is `gemini-2.0-flash`.
  * - `mock`       : developer-only deterministic provider.
  */
 export type ProviderId =
@@ -30,6 +32,7 @@ export type ProviderId =
   | "anthropic"
   | "openai"
   | "openrouter"
+  | "google"
   | "mock";
 
 export type TranslationTool =
@@ -291,7 +294,8 @@ export type RuntimeMessage =
         | "lmstudio"
         | "openai"
         | "openrouter"
-        | "anthropic";
+        | "anthropic"
+        | "google";
       readonly baseUrl?: string | null;
       readonly apiKey?: string | null;
     }

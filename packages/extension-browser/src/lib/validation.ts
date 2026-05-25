@@ -243,7 +243,18 @@ export function normaliseLLMOutput(
   provenance: ModelProvenance,
 ): unknown {
   if (!isObject(parsed)) return parsed;
-  const out: Record<string, unknown> = { ...parsed };
+  let out: Record<string, unknown> = { ...parsed };
+
+  // 0.0.26: providers differ on what extra top-level fields they sprinkle
+  // into completions. Gemini (direct or via OpenRouter) often adds
+  // `safety_ratings`, `citations`, `groundings`, `finish_reason`, etc.
+  // Our schemas have `additionalProperties: false`, so the validator
+  // would reject an otherwise-correct response purely for provider
+  // chatter we don't consume. Strip top-level keys that aren't in the
+  // schema's allowed-property set before we get to validation. Server-
+  // owned defaults below run on the already-stripped object so injected
+  // fields can't be re-stripped.
+  out = stripUnknownTopLevelKeys(out, tool);
 
   if (!isObject(out.model_provenance)) {
     out.model_provenance = {
@@ -267,6 +278,53 @@ export function normaliseLLMOutput(
     if (out.explicit_ask === undefined) out.explicit_ask = null;
   }
 
+  return out;
+}
+
+/**
+ * Per-tool allowed top-level property set, computed from the schemas
+ * we already import. Mirrors what `additionalProperties: false` would
+ * reject, but here we drop instead of fail.
+ */
+function buildAllowedTopLevelKeys(): Record<
+  TranslationTool,
+  ReadonlySet<string>
+> {
+  // Build the per-tool allowed-key sets explicitly so TS narrows the
+  // record-key union correctly. Using Object.fromEntries widens the
+  // key type to `string`, which then refuses to cast back to
+  // `Record<TranslationTool, …>` without a structural-mismatch error.
+  const out = {} as Record<TranslationTool, ReadonlySet<string>>;
+  for (const tool of Object.keys(RAW_SCHEMAS) as TranslationTool[]) {
+    const raw = RAW_SCHEMAS[tool];
+    const properties = (raw.properties ?? {}) as Record<string, unknown>;
+    const output = (properties.output ?? {}) as {
+      properties?: Record<string, unknown>;
+    };
+    const outputProps = output.properties ?? {};
+    out[tool] = new Set(Object.keys(outputProps));
+  }
+  return out;
+}
+
+const ALLOWED_TOP_LEVEL_KEYS: Record<
+  TranslationTool,
+  ReadonlySet<string>
+> = buildAllowedTopLevelKeys();
+
+function stripUnknownTopLevelKeys(
+  obj: Record<string, unknown>,
+  tool: TranslationTool,
+): Record<string, unknown> {
+  const allowed = ALLOWED_TOP_LEVEL_KEYS[tool];
+  // Defensive fallback: if for some reason the schema didn't expose
+  // any output properties, return the input unchanged rather than
+  // emptying it out.
+  if (!allowed || allowed.size === 0) return obj;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(obj)) {
+    if (allowed.has(key)) out[key] = obj[key];
+  }
   return out;
 }
 

@@ -17,19 +17,24 @@
  *                                               -> { data:   [{ id   }] }
  *               (we always prepend `openrouter/auto` so the auto-router
  *               is selectable even if the listing omits it).
+ * - Google:     GET https://generativelanguage.googleapis.com/v1beta/openai/models
+ *               with Bearer key                  -> { data:   [{ id   }] }
+ *               (OpenAI-compatible shape; `models/` prefix is stripped).
  * - Anthropic:  no models endpoint exists. We return a hardcoded list of
  *               the currently supported Claude models. Refreshing for
  *               Anthropic requires a code bump.
  */
 import type { ProviderId } from "../types.js";
 import { fetchLMStudioModels } from "./lmstudio.js";
+import { fetchGoogleModels } from "./google.js";
 
 export type ModelFetchableProvider =
   | "ollama"
   | "lmstudio"
   | "openai"
   | "openrouter"
-  | "anthropic";
+  | "anthropic"
+  | "google";
 
 export interface FetchModelsContext {
   readonly provider: ModelFetchableProvider;
@@ -87,6 +92,13 @@ export async function fetchModels(
   }
   if (context.provider === "openrouter") {
     return fetchOpenRouterModels({
+      apiKey: context.apiKey ?? "",
+      ...(context.fetchImpl ? { fetchImpl: context.fetchImpl } : {}),
+      ...(context.signal ? { signal: context.signal } : {}),
+    });
+  }
+  if (context.provider === "google") {
+    return fetchGoogleModels({
       apiKey: context.apiKey ?? "",
       ...(context.fetchImpl ? { fetchImpl: context.fetchImpl } : {}),
       ...(context.signal ? { signal: context.signal } : {}),
@@ -257,7 +269,8 @@ export function supportsModelRefresh(provider: ProviderId): boolean {
     provider === "lmstudio" ||
     provider === "openai" ||
     provider === "openrouter" ||
-    provider === "anthropic"
+    provider === "anthropic" ||
+    provider === "google"
   );
 }
 

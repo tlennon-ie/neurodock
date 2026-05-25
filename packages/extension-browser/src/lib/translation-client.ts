@@ -51,6 +51,10 @@ import {
 import { createAnthropicProvider } from "./providers/anthropic.js";
 import { createOpenAIProvider } from "./providers/openai.js";
 import { createOpenRouterProvider } from "./providers/openrouter.js";
+import {
+  createGoogleProvider,
+  GOOGLE_DEFAULT_MODEL,
+} from "./providers/google.js";
 import { createMockProvider, buildMockData } from "./providers/mock.js";
 import { hasHostPermission } from "./permissions.js";
 
@@ -68,6 +72,10 @@ const DEFAULT_MODELS = {
   // override with any OpenRouter slug (e.g. `anthropic/claude-3-5-sonnet`).
   // https://openrouter.ai/docs/guides/routing/routers/auto-router
   openrouter: "openrouter/auto",
+  // Google Gemini via the OpenAI-compatible endpoint. `gemini-2.0-flash`
+  // is fast, cheap, and vision-capable — fits the default tool surface.
+  // https://ai.google.dev/gemini-api/docs/openai
+  google: GOOGLE_DEFAULT_MODEL,
 } as const;
 
 export interface TranslationClientOptions {
@@ -268,6 +276,13 @@ function resolveCloudProvider(
       model,
     };
   }
+  if (profile.cloudProvider === "google") {
+    const model = profile.cloudModel ?? DEFAULT_MODELS.google;
+    return {
+      provider: createGoogleProvider({ apiKey: profile.cloudApiKey }),
+      model,
+    };
+  }
   return "UNSUPPORTED_CLOUD_PROVIDER";
 }
 
@@ -286,8 +301,8 @@ function cloudConfigError<T>(
       "MISSING_CLOUD_KEY: Cloud mode is enabled but no API key is " +
       "stored. Open the popup Settings tab and paste your key.",
     UNSUPPORTED_CLOUD_PROVIDER:
-      "UNSUPPORTED_CLOUD_PROVIDER: Only 'anthropic', 'openai', and " +
-      "'openrouter' are supported in v0.0.2. Update Settings.",
+      "UNSUPPORTED_CLOUD_PROVIDER: Only 'anthropic', 'openai', " +
+      "'openrouter', and 'google' are supported. Update Settings.",
   };
   return {
     ok: false,

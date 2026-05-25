@@ -360,15 +360,17 @@ describe("buildPrompt — schema suffix", () => {
   };
 
   it.each(tools)(
-    "output for %s ends with the ## Output JSON Schema header and a parseable json block",
+    "output for %s contains the ## Output JSON Schema header and a parseable json block",
     (tool) => {
       const result = buildPrompt({ tool, input: MINIMAL_INPUTS[tool] });
 
       // Header line must be present
       expect(result).toContain("## Output JSON Schema (draft-2020-12)");
 
-      // Extract JSON from the fenced code block at the end
-      const fenceMatch = result.match(/```json\n([\s\S]*?)\n```\s*$/);
+      // Extract JSON from the fenced code block (0.0.25 may append the
+      // reader-preference addendum AFTER the fence, so we no longer anchor
+      // the regex to end-of-string).
+      const fenceMatch = result.match(/```json\n([\s\S]*?)\n```/);
       expect(fenceMatch).not.toBeNull();
 
       const jsonText = fenceMatch![1]!;

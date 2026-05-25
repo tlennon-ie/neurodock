@@ -25,6 +25,7 @@
  * Docs: https://lmstudio.ai/docs/api/openai-api
  */
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
+import { logPromptIfEnabled } from "./debug-log.js";
 
 export interface LMStudioOptions {
   readonly baseUrl: string;
@@ -114,6 +115,12 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     stream: boolean,
   ): Promise<Response> {
     await ensurePermitted();
+    await logPromptIfEnabled({
+      provider: "lmstudio",
+      model: request.model,
+      tool: request.tool,
+      prompt: request.prompt,
+    });
     const url = `${baseUrl}/chat/completions`;
     // LM Studio's OpenAI-compat API rejects response_format.type === 'json_object'
     // (returns HTTP 400 "must be 'json_schema' or 'text'"). The translation

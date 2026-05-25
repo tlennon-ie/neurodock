@@ -8,6 +8,7 @@
  */
 import OpenAI from "openai";
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
+import { logPromptIfEnabled } from "./debug-log.js";
 
 export interface OpenAIOptions {
   readonly apiKey: string;
@@ -26,6 +27,12 @@ export function createOpenAIProvider(options: OpenAIOptions): Provider {
     new OpenAI({ apiKey: options.apiKey, dangerouslyAllowBrowser: true });
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
+    await logPromptIfEnabled({
+      provider: "openai",
+      model: request.model,
+      tool: request.tool,
+      prompt: request.prompt,
+    });
     if (options.disableStreaming === true) {
       return completeNonStreaming(client, request);
     }

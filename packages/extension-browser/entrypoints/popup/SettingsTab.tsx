@@ -135,12 +135,13 @@ const DEFAULT_MODELS: Record<string, string> = {
   anthropic: "claude-haiku-4-5",
   openai: "gpt-4o-mini",
   openrouter: "openrouter/auto",
+  google: "gemini-2.0-flash",
 };
 
 const LMSTUDIO_DEFAULT_BASE_URL = "http://localhost:1234/v1";
 const OLLAMA_DEFAULT_BASE_URL = "http://localhost:11434";
 
-type CloudProviderId = "anthropic" | "openai" | "openrouter";
+type CloudProviderId = "anthropic" | "openai" | "openrouter" | "google";
 
 type SelectedMode =
   | "local-ollama"
@@ -148,6 +149,7 @@ type SelectedMode =
   | "cloud-anthropic"
   | "cloud-openai"
   | "cloud-openrouter"
+  | "cloud-google"
   | "mock";
 
 function selectedModeFromProfile(profile: ExtensionProfile): SelectedMode {
@@ -159,6 +161,7 @@ function selectedModeFromProfile(profile: ExtensionProfile): SelectedMode {
   if (profile.cloudProvider === "anthropic") return "cloud-anthropic";
   if (profile.cloudProvider === "openai") return "cloud-openai";
   if (profile.cloudProvider === "openrouter") return "cloud-openrouter";
+  if (profile.cloudProvider === "google") return "cloud-google";
   if (profile.localProvider === "lmstudio") return "local-lmstudio";
   return "local-ollama";
 }
@@ -169,6 +172,7 @@ function cloudProviderFromSelected(
   if (selected === "cloud-anthropic") return "anthropic";
   if (selected === "cloud-openai") return "openai";
   if (selected === "cloud-openrouter") return "openrouter";
+  if (selected === "cloud-google") return "google";
   return null;
 }
 
@@ -278,6 +282,8 @@ export function SettingsTab({
 
       <ProactiveGuardrails />
 
+      <DebugTools />
+
       <ReaderPreferences profile={profile} onChange={onChange} />
 
       <ImageTranslationPermission />
@@ -300,6 +306,7 @@ export function SettingsTab({
 // ──────────────────────────────────────────────────────────────────────
 
 const WATCHDOG_ENABLED_KEY = "neurodock.watchdog.enabled";
+const PROMPT_LOG_KEY = "neurodock.debug.logPrompts";
 
 interface WatchdogStorageArea {
   readonly get: (keys: string | string[]) => Promise<Record<string, unknown>>;
@@ -420,6 +427,87 @@ function ProactiveGuardrails(): React.ReactElement {
           neurodock install-hooks --install-daemon
         </code>
       </div>
+    </fieldset>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Debug tools (0.0.25).
+//
+// `Log final prompt to console` — when enabled, providers print the
+// fully-assembled prompt (template + input + schema + addendum) to the
+// service worker DevTools console immediately before fetch. Default
+// off; explicit opt-in only. Useful when a user reports "the addendum
+// isn't doing anything" — we ask them to enable the toggle and paste
+// the logged prompt from chrome://extensions → service worker.
+// ──────────────────────────────────────────────────────────────────────
+
+function DebugTools(): React.ReactElement {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const storage = getWatchdogStorage();
+      if (storage === null) {
+        if (!cancelled) setEnabled(false);
+        return;
+      }
+      try {
+        const got = await storage.get(PROMPT_LOG_KEY);
+        if (cancelled) return;
+        setEnabled(got[PROMPT_LOG_KEY] === true);
+      } catch {
+        if (!cancelled) setEnabled(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onToggle = useCallback(async () => {
+    const next = !(enabled ?? false);
+    setEnabled(next);
+    const storage = getWatchdogStorage();
+    if (storage === null) return;
+    try {
+      await storage.set({ [PROMPT_LOG_KEY]: next });
+    } catch {
+      setEnabled(!next);
+    }
+  }, [enabled]);
+
+  const checked = enabled ?? false;
+
+  return (
+    <fieldset
+      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      data-testid="debug-tools"
+    >
+      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+        Debug tools
+      </legend>
+      <label className="flex items-start gap-2 text-xs">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={() => void onToggle()}
+          className="mt-0.5"
+          data-testid="prompt-log-toggle"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-medium">Log final prompt to console</span>
+          <span className="text-[11px] text-neutral-500">
+            Prints the full prompt (template + your input + schema + reader
+            preferences) to the service-worker DevTools console before each
+            translate call. Off by default. Local-only — nothing leaves your
+            device. View at{" "}
+            <code className="font-mono">chrome://extensions</code> → NeuroDock →
+            "service worker".
+          </span>
+        </span>
+      </label>
     </fieldset>
   );
 }
@@ -547,6 +635,15 @@ function ReaderPreferences({
             other two if that's right.
           </p>
         ) : null}
+        <p
+          data-testid="reader-prefs-model-size-note"
+          className="mt-2 text-[11px] italic text-neutral-500"
+        >
+          Reader preferences shape the prompt sent to the model. Larger models
+          honor them better than smaller ones. With a 4B local model (e.g.
+          gemma-4-e4b) you may see only subtle differences between neurotypes;
+          with cloud mode or a 7B+ local model the differentiation is stronger.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1">
@@ -1001,6 +1098,14 @@ function ModeSelector({
         "lets OpenRouter pick the best model per query. Requires an API key.",
     },
     {
+      value: "cloud-google",
+      label: "Cloud Google (Gemini)",
+      help:
+        "Sends text to generativelanguage.googleapis.com via Google's " +
+        "OpenAI-compatible endpoint. Default `gemini-3.5-flash` is fast " +
+        "and vision-capable. Requires an API key from aistudio.google.com.",
+    },
+    {
       value: "mock",
       label: "Mock (developer-only)",
       help: "Deterministic placeholder. No model is called.",
@@ -1205,6 +1310,7 @@ interface CloudSettingsProps {
 function apiKeyPlaceholder(providerId: CloudProviderId): string {
   if (providerId === "anthropic") return "sk-ant-…";
   if (providerId === "openrouter") return "sk-or-…";
+  if (providerId === "google") return "AIza…";
   return "sk-…";
 }
 
@@ -1221,6 +1327,13 @@ function modelHint(providerId: CloudProviderId): string | null {
       "Anthropic does not expose a models endpoint. Refresh loads the " +
       "extension's hardcoded supported list; new releases require an " +
       "extension update."
+    );
+  }
+  if (providerId === "google") {
+    return (
+      "Default `gemini-2.0-flash` is fast + vision-capable. Click " +
+      "Refresh to list every Gemini variant your key can access. Get " +
+      "a key from aistudio.google.com/app/apikey."
     );
   }
   return null;

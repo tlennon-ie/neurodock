@@ -1,5 +1,152 @@
 # @neurodock/extension-browser
 
+## 0.0.26
+
+### Added — Google Gemini as a fourth cloud provider
+
+New cloud option in Settings: **Cloud Google (Gemini)**. Pattern-matches
+the existing OpenRouter provider — Google ships an OpenAI-compatible
+endpoint at `generativelanguage.googleapis.com/v1beta/openai/chat/completions`,
+so the wire format is reused with `Authorization: Bearer <api_key>` and
+the same SSE shape.
+
+- Default model: `gemini-2.0-flash` (fast, cheap, vision-capable). Refresh
+  models populates the dropdown from Google's `/models` endpoint; the
+  fetcher filters non-chat variants (embeddings, AQA) automatically.
+- Vision: Gemini accepts both http(s) URLs and base64 data URLs, so the
+  SW does NOT pre-fetch image bytes (unlike LM Studio). The image URL
+  passes through verbatim.
+- Errors normalised with `GOOGLE_*` prefix — `GOOGLE_AUTH_FAILED` (401),
+  `GOOGLE_MODEL_NOT_FOUND` (404), `GOOGLE_RATE_LIMITED` (429),
+  `GOOGLE_HTTP_<status>`, `GOOGLE_UNREACHABLE`.
+- `response_format: json_object` retry dance for Gemini models that
+  reject it — mirrors the OpenRouter pattern.
+- New CSP `connect-src` + `optional_host_permissions` entries for
+  `generativelanguage.googleapis.com`. Same trust boundary as the
+  other cloud providers (cloud-mode banner + opt-in via Settings).
+
+Get an API key from <https://aistudio.google.com/app/apikey>.
+
+### Fixed — Provider responses with extra top-level fields no longer fail validation
+
+User-reported bug with OpenRouter routing to Gemini:
+
+```
+LLM_OUTPUT_VALIDATION_FAILED: model response did not match the expected
+schema. Retry to try again. ((root): must NOT have additional properties)
+```
+
+Gemini (direct or via OpenRouter) sprinkles top-level metadata fields
+(`safety_ratings`, `citations`, `groundings`, `finish_reason`) into
+completions. Our schemas use `additionalProperties: false`, so AJV was
+rejecting otherwise-correct responses purely for provider chatter we
+don't consume.
+
+`normaliseLLMOutput` in `validation.ts` now strips top-level keys that
+aren't in the per-tool schema's allowed-property set BEFORE validation
+runs. The allowed-key sets are computed at module load from the same
+schemas we already ship — no schema change, no widening of what we
+accept; we just stop failing on noise we ignore anyway.
+
+New regression test pins the contract:
+`tests/unit/validation.test.ts > strips provider-added top-level fields
+before validation`.
+
+### Combined with 0.0.25 (per-tool addenda)
+
+0.0.25 shipped the per-tool per-neurotype addenda + reposition + debug
+log toggle. 0.0.26 includes everything in 0.0.25 plus the two items
+above. 316 tests passing (276 + 8 new google provider + 12 validation
+
+- 20 per-tool matrix).
+
+## 0.0.25
+
+### Fixed — neurotype prompt addenda now actually differentiate
+
+User-reported bug: describing the same image with ADHD vs dyslexia vs
+"all neurotypes toggled" produced three near-identical outputs,
+differing only in surface phrasing. Three compounding root causes:
+
+**A: Addenda were too generic.** The 0.0.22 `buildNeurotypeAddendum`
+emitted tool-agnostic rules ("lead with the verdict in the first
+phrase"). For `describe_image` the model couldn't attach a generic
+rule to a specific schema slot (`description` vs `key_elements` vs
+`inferred_purpose`).
+
+**B: Addendum was sandwiched between rendered template and schema.**
+The JSON schema block was the LAST instruction the model read. Small
+local models (gemma-4-e4b at 4B params is the user's daily driver)
+anchor on the most-recent + most-concrete instruction, so the schema
+won and the addendum was ignored.
+
+**C: The base prompt was already neurodivergent-tuned.** `describe_image.prompt.md`
+already mandates "literal first, no metaphor, no emotional
+interpretation", so the generic ASD / dyslexia addenda added little
+incremental signal.
+
+**Fix:**
+
+1. `buildNeurotypeAddendum(profile, tool?)` now dispatches on
+   `(tool, neurotype)` to per-pair concrete blocks that reference
+   actual schema field names. Five tools × six effective neurotypes
+   (Tourette is no-op, AuDHD is fused, `other` is free-form) = 30
+   concrete blocks. Each block ≤ 25 lines.
+
+2. `buildPrompt` reorders the prompt so the addendum is appended
+   AFTER the schema block, with a new "Reader-specific overrides
+   (apply LAST, after the schema)" header. The addendum is now the
+   last instruction the model reads before emitting JSON.
+
+3. New honest-UI note inside the `<ReaderPreferences>` fieldset:
+   "Reader preferences shape the prompt sent to the model. Larger
+   models honor them better than smaller ones. With a 4B local model
+   (e.g. gemma-4-e4b) you may see only subtle differences between
+   neurotypes; with cloud mode or a 7B+ local model the
+   differentiation is stronger."
+
+### Added — Debug Tools panel with prompt-log toggle
+
+New `<DebugTools>` fieldset in Settings (between Proactive Guardrails
+and Reader Preferences). One toggle: **Log final prompt to console**.
+
+- Reads/writes `chrome.storage.local["neurodock.debug.logPrompts"]`.
+- Default OFF; explicit user opt-in required.
+- When enabled, every provider (Ollama, LM Studio, Anthropic, OpenAI,
+  OpenRouter) prints the fully-assembled prompt
+  (template + input + schema + addendum) to the service-worker
+  DevTools console immediately before fetch.
+- Local-only: nothing leaves the device.
+- Helps diagnose user reports of "the addendum isn't doing anything"
+  by surfacing the exact prompt the model sees.
+
+The shared helper lives at
+[`src/lib/providers/debug-log.ts`](src/lib/providers/debug-log.ts) and
+caches the flag in-memory with `chrome.storage.onChanged` live
+updates so we don't hit storage on every translate call.
+
+### Tests
+
+40 new tests in
+[`tests/unit/neurotype-tool-matrix.test.ts`](tests/unit/neurotype-tool-matrix.test.ts)
+asserting:
+
+- For every (tool, neurotype) concrete pair (30 pairs): the addendum
+  references at least one schema field name from that tool AND at
+  least one neurotype-specific fingerprint.
+- For five different tools: three different neurotypes produce
+  textually distinct addenda (cheap differentiation check).
+- For `describe_image`: ADHD vs dyslexia vs ASD each contain a
+  fingerprint substring the others lack
+  (`"noun phrase, not a sentence"`, `"15 words"`, `"BEFORE writing"`).
+- Tool-less overload still works (back-compat).
+- AuDHD substitution + Tourette no-op + `other` notes-passthrough
+  semantics still hold when a tool argument is supplied.
+
+`prompt-builder.test.ts` JSON-fence assertion no longer anchors to
+end-of-string since the addendum may now follow the fence. All other
+tests pass unchanged. **316/316 tests pass (was 290).**
+
 ## 0.0.24
 
 ### Fixed — LM Studio + Gmail silent failure (the #1 outstanding bug)

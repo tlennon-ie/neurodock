@@ -149,4 +149,36 @@ describe("normaliseLLMOutput", () => {
     expect(res.ok).toBe(false);
     expect(res.errors.join(" ")).toMatch(/eval_corpus_slice|model_provenance/);
   });
+
+  it("strips provider-added top-level fields before validation (REGRESSION: Gemini 'additional properties')", () => {
+    // 0.0.26 — Gemini (direct or via OpenRouter) routinely returns
+    // `safety_ratings`, `citations`, `groundings`, or `finish_reason`
+    // alongside the legitimate output fields. Pre-0.0.26 AJV rejected
+    // the whole response under additionalProperties:false. The
+    // normalisation step now strips unknown top-level keys so the
+    // schema-shaped fields survive untouched.
+    const rawFromGemini = JSON.stringify({
+      description: "A photo of a tabby cat sitting on a windowsill.",
+      contains_text: false,
+      key_elements: ["cat", "windowsill", "soft light"],
+      inferred_purpose: "Pet photo, possibly for a social post.",
+      // Gemini chatter the model adds without being asked:
+      safety_ratings: [
+        { category: "HARM_CATEGORY_DEROGATORY", probability: "NEGLIGIBLE" },
+      ],
+      citations: [],
+      finish_reason: "stop",
+    });
+    const res = parseAndValidate("describe_image", rawFromGemini, provenance);
+    expect(res.errors).toEqual([]);
+    expect(res.ok).toBe(true);
+    const data = res.data as Record<string, unknown>;
+    // The legitimate fields survived…
+    expect(data.description).toMatch(/tabby cat/);
+    expect(Array.isArray(data.key_elements)).toBe(true);
+    // …and the provider noise was dropped.
+    expect(data.safety_ratings).toBeUndefined();
+    expect(data.citations).toBeUndefined();
+    expect(data.finish_reason).toBeUndefined();
+  });
 });

@@ -31,6 +31,7 @@
  * the other providers (e.g. `OPENROUTER_AUTH_FAILED`).
  */
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
+import { logPromptIfEnabled } from "./debug-log.js";
 
 export interface OpenRouterOptions {
   readonly apiKey: string;
@@ -129,6 +130,12 @@ export function createOpenRouterProvider(options: OpenRouterOptions): Provider {
   }
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
+    await logPromptIfEnabled({
+      provider: "openrouter",
+      model: request.model,
+      tool: request.tool,
+      prompt: request.prompt,
+    });
     if (options.disableStreaming === true) {
       return completeNonStreaming(request);
     }

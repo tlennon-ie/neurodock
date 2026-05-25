@@ -16,6 +16,7 @@
  * decoupled from chrome.permissions and unit-testable.
  */
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
+import { logPromptIfEnabled } from "./debug-log.js";
 
 export interface OllamaOptions {
   readonly endpoint: string;
@@ -63,6 +64,12 @@ export function createOllamaProvider(options: OllamaOptions): Provider {
         );
       }
     }
+    await logPromptIfEnabled({
+      provider: "ollama",
+      model: request.model,
+      tool: request.tool,
+      prompt: request.prompt,
+    });
     const url = `${endpoint}/api/generate`;
     const body = JSON.stringify({
       model: request.model,

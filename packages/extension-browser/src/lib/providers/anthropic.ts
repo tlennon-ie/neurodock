@@ -11,6 +11,7 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
+import { logPromptIfEnabled } from "./debug-log.js";
 
 export interface AnthropicOptions {
   readonly apiKey: string;
@@ -49,6 +50,12 @@ export function createAnthropicProvider(options: AnthropicOptions): Provider {
     new Anthropic({ apiKey: options.apiKey, dangerouslyAllowBrowser: true });
 
   async function complete(request: ProviderRequest): Promise<ProviderResult> {
+    await logPromptIfEnabled({
+      provider: "anthropic",
+      model: request.model,
+      tool: request.tool,
+      prompt: request.prompt,
+    });
     if (options.disableStreaming === true) {
       return completeNonStreaming(client, request);
     }

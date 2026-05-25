@@ -64,6 +64,7 @@ import { defineConfig } from "wxt";
  *   - https://api.anthropic.com
  *   - https://api.openai.com
  *   - https://openrouter.ai
+ *   - https://generativelanguage.googleapis.com
  *
  * No `eval`, no inline scripts. The Anthropic and OpenAI SDKs both
  * support browser-context fetch and stream parsing without dynamic
@@ -134,6 +135,7 @@ export default defineConfig({
       "https://api.anthropic.com/*",
       "https://api.openai.com/*",
       "https://openrouter.ai/*",
+      "https://generativelanguage.googleapis.com/*",
     ],
     content_security_policy: {
       extension_pages:
@@ -154,6 +156,7 @@ export default defineConfig({
         "https://api.anthropic.com " +
         "https://api.openai.com " +
         "https://openrouter.ai " +
+        "https://generativelanguage.googleapis.com " +
         // 0.0.18: allow arbitrary HTTPS fetches AND data: URLs so the
         // image-translation flow can pull image bytes from any site for
         // local-LLM base64 encoding. The actual reach is still gated by
