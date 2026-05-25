@@ -1331,9 +1331,11 @@ function modelHint(providerId: CloudProviderId): string | null {
   }
   if (providerId === "google") {
     return (
-      "Default `gemini-2.0-flash` is fast + vision-capable. Click " +
-      "Refresh to list every Gemini variant your key can access. Get " +
-      "a key from aistudio.google.com/app/apikey."
+      "Default `gemini-2.0-flash` is fast + vision-capable. Every " +
+      "Gemini chat model is multimodal — `gemini-pro-latest`, " +
+      "`gemini-flash-latest`, `gemini-3.5-flash`, `gemini-3-pro-preview` " +
+      "all work. Click Refresh to list every variant your key can " +
+      "access. Get a key from aistudio.google.com/app/apikey."
     );
   }
   return null;
