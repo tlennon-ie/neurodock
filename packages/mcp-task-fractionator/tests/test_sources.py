@@ -50,3 +50,27 @@ def test_both_classes_satisfy_protocol() -> None:
 
     assert isinstance(InMemoryPendingTaskSource(), PendingTaskSource)
     assert isinstance(CognitiveGraphPendingTaskSource(), PendingTaskSource)
+
+
+def test_base_module_imports_cleanly_at_runtime() -> None:
+    """Regression guard for CodeQL alert #11 (unreachable ``if False:`` block).
+
+    The forward-reference block in ``sources/base.py`` was changed from
+    ``if False:`` (flagged as unconditionally unreachable) to
+    ``if TYPE_CHECKING:``.  Both are False at runtime, so the module must
+    still import cleanly without triggering any circular-import errors, and
+    the factory must return the expected default without touching the
+    type-checker-only imports.
+    """
+    import importlib
+
+    # Force a fresh import cycle to make sure the TYPE_CHECKING guard
+    # does not accidentally execute at module load time.
+    import neurodock_mcp_task_fractionator.sources.base as base_mod
+
+    importlib.reload(base_mod)
+    source = base_mod.load_pending_task_source(env={})
+    # The memory source is the safe default — graph is a stub.
+    from neurodock_mcp_task_fractionator.sources.memory import InMemoryPendingTaskSource
+
+    assert isinstance(source, InMemoryPendingTaskSource)

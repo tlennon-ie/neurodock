@@ -1,5 +1,18 @@
 # @neurodock/native-host
 
+## [unreleased]
+
+### Security — registration scaffolds use atomic writes
+
+`registerLinux`, `registerDarwin`, and `writeProfile` (profile-io) previously called
+`existsSync` to probe a path and then wrote to that path in a separate `writeFileSync`
+call, leaving a TOCTOU race window. All three sites now use `atomicWriteOverwrite`
+from `src/util/atomic-write.ts`: content is written to a unique `.pid.ts.tmp` sibling
+and renamed into place, which is atomic on POSIX. For `writeProfile` the existing
+read-merge logic is preserved — data is merged before the rename, so no existing
+profile content is lost. The helper is encapsulated in `src/util/atomic-write.ts`
+and shared by both registration modules.
+
 ## 0.1.0
 
 ### Added

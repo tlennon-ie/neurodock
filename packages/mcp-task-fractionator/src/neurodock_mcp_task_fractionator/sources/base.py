@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from neurodock_mcp_task_fractionator.types import Task
 
@@ -77,7 +77,11 @@ def load_pending_task_source(
 
 # Forward references for the type-checker; the runtime imports inside
 # :func:`load_pending_task_source` keep the module free of cycles.
-if False:  # pragma: no cover
+# TYPE_CHECKING is False at runtime (no import cost, no circular import),
+# but True when mypy/pyright runs, so the names are resolvable to the type
+# checker.  This replaces the previous `if False:` pattern which CodeQL
+# correctly flagged as an unreachable block (alert #11).
+if TYPE_CHECKING:
     from neurodock_mcp_task_fractionator.sources.graph import (
         CognitiveGraphPendingTaskSource,
     )

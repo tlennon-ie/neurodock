@@ -2,9 +2,10 @@
  * macOS registration. Drops a manifest into each browser's per-user
  * NativeMessagingHosts directory.
  */
-import { mkdirSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import { mkdirSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { atomicWriteOverwrite } from "../util/atomic-write.js";
 import {
   HOST_NAME,
   buildFirefoxManifest,
@@ -61,7 +62,9 @@ export function registerDarwin(
         ? buildFirefoxManifest(opts)
         : buildManifest(opts);
       const action = existsSync(manifestPath) ? "update" : "create";
-      writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+      // Atomic overwrite: the existsSync probe above and the write share a
+      // TOCTOU window; rename-from-tmp closes it on POSIX.
+      atomicWriteOverwrite(manifestPath, JSON.stringify(manifest, null, 2));
       out.push({ browser: t.browser, manifestPath, action });
     } catch (err) {
       out.push({

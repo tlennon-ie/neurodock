@@ -19,7 +19,6 @@
  * `background.ts` AND a `chrome.storage.onChanged` listener here so
  * popup saves propagate to open islands without manual reload.
  */
-import React from "react";
 import { mountIsland } from "./mountIsland.js";
 import { ContentApp } from "./contentApp.js";
 import { installImageSnapshotHandler } from "./imageSnapshot.js";

@@ -6,9 +6,9 @@ import {
   readdirSync,
   rmSync,
   statSync,
-  writeFileSync,
 } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
+import { atomicWriteNew } from "../util/atomic-write.js";
 import { parse as parseYaml } from "yaml";
 import prompts from "prompts";
 import { readEnv } from "../lib/env.js";
@@ -528,10 +528,12 @@ export async function runPluginEnable(
     };
   }
 
-  writeFileSync(
+  // Atomic exclusive create: the existsSync guard above and this write have
+  // a TOCTOU window. O_CREAT | O_EXCL makes the check-and-create one
+  // kernel operation — a concurrent enabler gets EEXIST rather than a race.
+  atomicWriteNew(
     markerPath,
     `# Created by 'neurodock plugin enable'. Delete (or run\n# 'neurodock plugin disable ${options.name}') to deactivate.\n`,
-    "utf8",
   );
   messages.push(`Enabled plugin '${options.name}'.`);
   messages.push("Restart your MCP client to pick up the change.");

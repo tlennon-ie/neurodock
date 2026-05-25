@@ -26,16 +26,11 @@
  *   Environment variable `NEURODOCK_GUARDRAILS=off` disables the hook
  *   without touching settings.json.
  */
-import {
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-  existsSync,
-  copyFileSync,
-} from "node:fs";
+import { mkdirSync, readFileSync, existsSync, copyFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
+import { atomicWriteOverwrite } from "../util/atomic-write.js";
 import { spawnSync } from "node:child_process";
 
 export interface InstallHooksOptions {
@@ -135,7 +130,9 @@ export async function runInstallHooks(
       for (const line of merged.diff) messages.push(`  ${line}`);
     } else {
       mkdirSync(dirname(settingsPath), { recursive: true });
-      writeFileSync(settingsPath, merged.json + "\n", "utf8");
+      // Atomic overwrite prevents a TOCTOU race between the existsSync
+      // guard (above) and the write to settings.json.
+      atomicWriteOverwrite(settingsPath, merged.json + "\n");
       messages.push("[install-hooks] updated ~/.claude/settings.json");
       for (const line of merged.diff) messages.push(`  ${line}`);
     }
@@ -269,7 +266,9 @@ function uninstallHooks(
       "[install-hooks] would remove NeuroDock entries from ~/.claude/settings.json",
     );
   } else {
-    writeFileSync(settingsPath, formatted + "\n", "utf8");
+    // Atomic overwrite: the existsSync+read above and the write here have a
+    // TOCTOU window; renaming a tmp file into place closes it.
+    atomicWriteOverwrite(settingsPath, formatted + "\n");
     messages.push(
       "[install-hooks] removed NeuroDock entries from ~/.claude/settings.json",
     );

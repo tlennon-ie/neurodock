@@ -178,8 +178,8 @@ def _on_stop(_payload: dict[str, Any]) -> None:
         try:
             elapsed = _now() - datetime.fromisoformat(started)
             duration_min = int(elapsed.total_seconds() // 60)
-        except ValueError:
-            pass
+        except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+            _log("session-end-parse-error", {"error": str(exc)})
     _save_session({})  # clear
     _log("session-end", {"duration_min": duration_min})
 
@@ -393,8 +393,8 @@ def _save_session(state: dict[str, Any]) -> None:
     try:
         with SESSION_FILE.open("w", encoding="utf-8") as fh:
             json.dump(state, fh)
-    except OSError:
-        pass
+    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        _log("session-save-error", {"error": str(exc)})
 
 
 def _load_prompts() -> list[dict[str, Any]]:
@@ -414,8 +414,8 @@ def _record_prompt(text: str) -> None:
     try:
         with PROMPTS_FILE.open("w", encoding="utf-8") as fh:
             json.dump(prompts, fh)
-    except OSError:
-        pass
+    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        _log("prompt-save-error", {"error": str(exc)})
 
 
 def _parse_iso(value: str) -> datetime:
@@ -445,8 +445,9 @@ def _log(event: str, data: dict[str, Any]) -> None:
         }
         with LOG_FILE.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry) + "\n")
-    except OSError:
-        pass
+    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        # Cannot recurse into _log here; write minimally to stderr.
+        sys.stderr.write(f"[neurodock-guardrail] log-write-error: {exc}\n")
 
 
 def _read_stdin_payload() -> dict[str, Any]:
