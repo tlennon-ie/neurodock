@@ -1,5 +1,24 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Added — in-page translation indicator (spinning near image / cursor, tick or cross briefly on completion)
+
+Right-click translations now render a small Shadow-DOM badge on the page
+itself for the duration of the model call. The indicator anchors to the
+top-right corner of the right-clicked image for `describe_image`, and to
+the captured cursor position for `translate_incoming` text selections.
+It spins while the translate is in flight, then morphs into a check
+glyph on success (auto-detaches after ~1.5s) or an x glyph on failure
+(auto-detaches after ~2s). Pre-`[unreleased]` the only feedback was the
+toolbar action badge plus an eventual OS notification — neither felt
+like progress on the page where the user just right-clicked. The
+indicator honours `prefers-reduced-motion` (static "Translating…" badge
+instead of a spin) and announces state changes via `aria-live="polite"`.
+Concurrent translations get independent indicators keyed by a
+crypto-randomUUID requestId; no host-page CSS injection, no new
+permissions.
+
 ## 0.0.30 — translate-not-summarize, for real this time
 
 The 0.0.28 ship added a `content_translation` field to the `describe_image`

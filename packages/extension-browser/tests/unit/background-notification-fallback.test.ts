@@ -125,10 +125,21 @@ describe("context-menu notification fallback (P1.4)", () => {
   });
 
   it("invokes chrome.notifications.create when tabs.sendMessage rejects", async () => {
-    tabsSendMessage.mockRejectedValueOnce(
-      new Error(
-        "Could not establish connection. Receiving end does not exist.",
-      ),
+    // 0.0.31: the SW now ALSO fires translation:starting +
+    // translation:complete to drive the in-page indicator. Make the
+    // context-result delivery (the one that matters for this test) be
+    // the rejection; let indicator messages resolve normally.
+    tabsSendMessage.mockImplementation(
+      (_tabId: number, msg: { type?: string }): Promise<unknown> => {
+        if (msg.type === "neurodock:context-result") {
+          return Promise.reject(
+            new Error(
+              "Could not establish connection. Receiving end does not exist.",
+            ),
+          );
+        }
+        return Promise.resolve(undefined);
+      },
     );
     contextClickTarget._invoke(
       {
@@ -141,7 +152,12 @@ describe("context-menu notification fallback (P1.4)", () => {
     // rejection -> notifyContextResultFallback).
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(tabsSendMessage).toHaveBeenCalledTimes(1);
+    const contextCalls = tabsSendMessage.mock.calls.filter(
+      (call) =>
+        (call[1] as { type?: string } | undefined)?.type ===
+        "neurodock:context-result",
+    );
+    expect(contextCalls).toHaveLength(1);
     expect(notificationsCreate).toHaveBeenCalledTimes(1);
     const call = notificationsCreate.mock.calls[0]![0] as {
       type: string;
@@ -160,7 +176,14 @@ describe("context-menu notification fallback (P1.4)", () => {
     // it treated any resolution (including `undefined`) as success,
     // which masked the Gmail silent-failure bug where Chrome resolved
     // the promise even though no listener had actually run.
-    tabsSendMessage.mockResolvedValueOnce({ ack: true });
+    tabsSendMessage.mockImplementation(
+      (_tabId: number, msg: { type?: string }): Promise<unknown> => {
+        if (msg.type === "neurodock:context-result") {
+          return Promise.resolve({ ack: true });
+        }
+        return Promise.resolve(undefined);
+      },
+    );
     contextClickTarget._invoke(
       {
         menuItemId: "neurodock-translate-selection",
@@ -170,7 +193,12 @@ describe("context-menu notification fallback (P1.4)", () => {
     );
     await new Promise((r) => setTimeout(r, 10));
 
-    expect(tabsSendMessage).toHaveBeenCalledTimes(1);
+    const contextCalls = tabsSendMessage.mock.calls.filter(
+      (call) =>
+        (call[1] as { type?: string } | undefined)?.type ===
+        "neurodock:context-result",
+    );
+    expect(contextCalls).toHaveLength(1);
     expect(notificationsCreate).not.toHaveBeenCalled();
   });
 
