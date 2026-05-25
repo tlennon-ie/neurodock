@@ -29,6 +29,7 @@ import {
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
+import { OnboardingWizard } from "./OnboardingWizard.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
 import { OpenInTabButton } from "../../src/components/OpenInTabButton.js";
 import {
@@ -237,32 +238,45 @@ export function App(): React.ReactElement {
         </div>
       ) : null}
 
-      <PacingOptInPrompt profile={profile} />
-
-      <TabBar current={tab} onChange={setTab} />
-
-      {tab === "home" ? (
-        <HomeTab
+      {loaded && profile.onboardingComplete !== true ? (
+        <OnboardingWizard
           profile={profile}
-          history={history}
-          onToggleHistory={(enabled) => update({ historyEnabled: enabled })}
-          onClearHistory={handleClearHistory}
+          onChange={update}
+          onComplete={() => setTab("home")}
+          onOpenSettings={() => setTab("settings")}
         />
-      ) : null}
-      {tab === "notifications" ? <NotificationsTab /> : null}
-      {tab === "settings" ? (
-        <SettingsTab profile={profile} onChange={update} />
-      ) : null}
+      ) : (
+        <>
+          <PacingOptInPrompt profile={profile} />
 
-      <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
-        <h2
-          id="sync-heading"
-          className="font-heading text-fg m-0 text-base font-medium"
-        >
-          Profile sync
-        </h2>
-        <ProfileSyncLine status={syncStatus} />
-      </section>
+          <TabBar current={tab} onChange={setTab} />
+
+          {tab === "home" ? (
+            <HomeTab
+              profile={profile}
+              history={history}
+              onToggleHistory={(enabled) => update({ historyEnabled: enabled })}
+              onClearHistory={handleClearHistory}
+            />
+          ) : null}
+          {tab === "notifications" ? <NotificationsTab /> : null}
+          {tab === "settings" ? (
+            <SettingsTab profile={profile} onChange={update} />
+          ) : null}
+        </>
+      )}
+
+      {loaded && profile.onboardingComplete !== true ? null : (
+        <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
+          <h2
+            id="sync-heading"
+            className="font-heading text-fg m-0 text-base font-medium"
+          >
+            Profile sync
+          </h2>
+          <ProfileSyncLine status={syncStatus} />
+        </section>
+      )}
 
       {loaded ? null : (
         <p className="text-fg-muted text-sm">Loading your profile…</p>

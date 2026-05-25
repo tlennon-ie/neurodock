@@ -95,6 +95,48 @@ Tests added:
 - `tests/unit/tab-skip-link.test.tsx` — link rendered, targets
   `#nd-tab-main`, sits first in DOM order before the AppShell wrapper.
 
+### Added — guided onboarding wizard (provider selection, model validation, profile sync)
+
+First-run users now land on a five-step wizard instead of the bare tab
+bar. The wizard explains what NeuroDock does in plain language, lets
+the user pick a provider (Local LM Studio, Local Ollama, or Cloud
+Anthropic / OpenAI / OpenRouter / Google), validates the configuration
+with a real model-list ping, and offers an optional native-host profile
+sync hint. On completion (or any skip) the `onboardingComplete` flag is
+persisted and the wizard never re-appears.
+
+- **New surface**: `entrypoints/popup/OnboardingWizard.tsx` with five
+  steps — Welcome, Provider select, Provider configuration, Profile
+  sync, Done. Skip-for-now is available on every step except Provider
+  configuration. Progress is shown as `1 of 5` (sentence case, no emoji).
+- **Profile shape**: `ExtensionProfile.onboardingComplete?: boolean`
+  added to `src/lib/types.ts`. `normaliseProfile()` defaults brand-new
+  profiles to `false` so the wizard renders on first popup open.
+- **Migration guard**: pre-A1 profiles with any provider already
+  configured (cloud key set, per-provider key, cloud provider id, or
+  a non-default local endpoint) are stamped `onboardingComplete: true`
+  automatically, so an upgrade never re-shows the wizard to an existing
+  user.
+- **Gate**: `entrypoints/popup/App.tsx` renders the wizard in place of
+  the tab bar + content whenever `profile.onboardingComplete !== true`.
+  The bottom Profile sync section is hidden while the wizard owns the
+  popup (the wizard has its own sync step).
+- **Refactor**: `fetchModelsViaWorker` extracted from `SettingsTab.tsx`
+  into `src/lib/fetch-models-via-worker.ts` so the wizard can re-use
+  the same SW round-trip without duplicating the model picker logic.
+- **Tests added**:
+  `tests/unit/profile-onboarding-migration.test.ts` (default / migration
+  / explicit-honour paths),
+  `tests/unit/popup-onboarding-wizard.test.tsx` (wizard renders on first
+  run, Skip persists, step transitions, Continue gating),
+  `tests/unit/popup-onboarding-skip.test.tsx` (existing users never see
+  the wizard).
+- **No new colours, no new dependencies.** The wizard reuses the 0.0.32
+  design tokens via the existing Tailwind utility aliases (`bg-bg`,
+  `text-fg`, `border-hairline`, `text-fg-accent`, …) and the existing
+  `chrome.runtime.sendMessage` round-trip to the service worker. No new
+  IPC, no analytics, no telemetry.
+
 ## 0.0.32
 
 ### Changed — visual identity refresh matching docs site

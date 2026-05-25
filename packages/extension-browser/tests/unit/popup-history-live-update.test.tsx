@@ -61,6 +61,7 @@ describe("Popup — live history updates via history:updated message", () => {
       outputFormat: "answer_first",
       maxChunkSize: 5,
       additionalNotes: null,
+      onboardingComplete: true,
     });
     vi.spyOn(profileModule, "getSyncStatus").mockResolvedValue({
       source: "extension-local",
