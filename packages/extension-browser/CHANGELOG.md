@@ -1,6 +1,6 @@
 # @neurodock/extension-browser
 
-## [unreleased]
+## 0.0.32
 
 ### Changed — visual identity refresh matching docs site
 
