@@ -178,11 +178,13 @@ export function App(): React.ReactElement {
   }, [refreshHistory]);
 
   return (
-    <main className="flex flex-col gap-4 p-4">
+    <main className="text-fg flex flex-col gap-4 p-4">
       <header className="flex items-start justify-between gap-2">
         <div>
-          <h1 className="font-heading m-0 text-lg font-medium">NeuroDock</h1>
-          <p className="m-0 text-sm text-neutral-600 dark:text-neutral-400">
+          <h1 className="font-heading text-fg m-0 text-base font-medium">
+            NeuroDock
+          </h1>
+          <p className="text-fg-muted m-0 text-sm">
             Decode subtext. Check tone. Local-first by default.
           </p>
         </div>
@@ -195,7 +197,7 @@ export function App(): React.ReactElement {
         <div
           role="alert"
           data-testid="popup-save-error"
-          className="flex items-start justify-between gap-2 border border-red-300 bg-red-50 p-2 text-xs text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100"
+          className="border-error-border bg-error-bg text-error-fg flex items-start justify-between gap-2 border p-2 text-sm"
         >
           <span>
             <strong>Save failed.</strong> {saveError}
@@ -203,7 +205,7 @@ export function App(): React.ReactElement {
           <button
             type="button"
             onClick={dismissSaveError}
-            className="border border-red-300 px-2 py-0.5 text-xs dark:border-red-700"
+            className="border-error-border border px-2 py-0.5 text-xs"
             aria-label="Dismiss save error"
           >
             Dismiss
@@ -229,7 +231,7 @@ export function App(): React.ReactElement {
       <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
         <h2
           id="sync-heading"
-          className="font-heading m-0 text-base font-medium"
+          className="font-heading text-fg m-0 text-base font-medium"
         >
           Profile sync
         </h2>
@@ -237,7 +239,7 @@ export function App(): React.ReactElement {
       </section>
 
       {loaded ? null : (
-        <p className="text-xs text-neutral-500">Loading your profile…</p>
+        <p className="text-fg-muted text-sm">Loading your profile…</p>
       )}
     </main>
   );
@@ -249,32 +251,30 @@ interface ProfileSyncLineProps {
 
 function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   if (status === null) {
-    return <p className="text-xs text-neutral-500">Checking native host…</p>;
+    return <p className="text-fg-muted text-sm">Checking native host…</p>;
   }
   if (status.source === "native-host") {
     return (
-      <div className="flex flex-col gap-0.5 text-xs text-neutral-600 dark:text-neutral-400">
+      <div className="text-fg-muted flex flex-col gap-0.5 text-sm">
         <span>
-          <strong>native host (active).</strong> Reading and writing{" "}
+          <strong>Native host active.</strong> Reading and writing{" "}
           <code className="font-mono">~/.neurodock/profile.yaml</code>.
         </span>
-        {status.detail ? (
-          <span className="text-neutral-500">{status.detail}</span>
-        ) : null}
+        {status.detail ? <span>{status.detail}</span> : null}
       </div>
     );
   }
   return (
-    <div className="flex flex-col gap-1 border border-neutral-200 bg-neutral-50 p-2 text-xs dark:border-neutral-800 dark:bg-neutral-900">
-      <span className="text-neutral-700 dark:text-neutral-300">
-        <strong>extension-local.</strong> Profile lives only inside this
+    <div className="border-hairline bg-bg-nav text-fg flex flex-col gap-1 border p-2 text-sm">
+      <span>
+        <strong>Extension-local.</strong> Profile lives only inside this
         browser.
       </span>
-      <span className="text-neutral-600 dark:text-neutral-400">
+      <span className="text-fg-muted">
         Install the native host to keep this extension in sync with{" "}
         <code className="font-mono">~/.neurodock/profile.yaml</code>:
       </span>
-      <code className="select-all bg-neutral-100 px-2 py-1 font-mono dark:bg-neutral-800">
+      <code className="bg-bg-code border-hairline select-all border px-2 py-1 font-mono">
         pnpx @neurodock/native-host install
       </code>
     </div>
@@ -287,6 +287,8 @@ interface TabBarProps {
 }
 
 function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
+  // Sentence case per the design contract — every label lowercase
+  // except the first word.
   const tabs: { id: TabId; label: string }[] = [
     { id: "home", label: "Home" },
     { id: "notifications", label: "Notifications" },
@@ -295,7 +297,7 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
   return (
     <nav
       aria-label="Popup sections"
-      className="flex gap-1 border-b border-neutral-200 dark:border-neutral-800"
+      className="border-hairline flex gap-1 border-b"
     >
       {tabs.map((t) => (
         <button
@@ -305,10 +307,10 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
           aria-selected={current === t.id}
           onClick={() => onChange(t.id)}
           className={
-            "border-b-2 px-3 py-1 text-sm " +
+            "-mb-px border-b-2 px-3 py-1 text-sm " +
             (current === t.id
-              ? "border-neutral-900 dark:border-neutral-100"
-              : "border-transparent text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100")
+              ? "border-accent text-fg-accent font-medium"
+              : "text-fg-muted hover:text-fg border-transparent")
           }
           data-testid={`tab-${t.id}`}
         >
@@ -337,7 +339,7 @@ function HomeTab({
       <section aria-labelledby="status-heading" className="flex flex-col gap-2">
         <h2
           id="status-heading"
-          className="font-heading m-0 text-base font-medium"
+          className="font-heading text-fg m-0 text-base font-medium"
         >
           Status
         </h2>
@@ -350,7 +352,7 @@ function HomeTab({
       >
         <h2
           id="history-heading"
-          className="font-heading m-0 text-base font-medium"
+          className="font-heading text-fg m-0 text-base font-medium"
         >
           History
         </h2>
@@ -390,13 +392,8 @@ function ModeSummary({ profile }: ModeSummaryProps): React.ReactElement {
   }
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="m-0 text-sm text-neutral-700 dark:text-neutral-300">
-        {label}
-      </p>
-      <p
-        className="m-0 text-xs text-neutral-500"
-        data-testid="profile-identity"
-      >
+      <p className="text-fg m-0 text-sm">{label}</p>
+      <p className="text-fg-muted m-0 text-sm" data-testid="profile-identity">
         Profile: <strong>{profile.displayName || "you"}</strong>
       </p>
     </div>
@@ -434,14 +431,14 @@ function HistoryPanel({
           type="button"
           onClick={() => void onClear()}
           data-testid="clear-history"
-          className="self-start border border-neutral-300 bg-white px-2 py-0.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+          className="border-hairline bg-bg text-fg hover:bg-bg-nav self-start border px-2 py-0.5 text-sm"
           aria-label="Wipe all NeuroDock translation history"
         >
           Wipe history ({history.length})
         </button>
       ) : null}
       {profile.historyEnabled && history.length === 0 ? (
-        <p className="text-xs text-neutral-500">
+        <p className="text-fg-muted text-sm">
           No translations yet. Right-click selected text or an image on a
           supported site to start.
         </p>
@@ -477,23 +474,20 @@ function HistoryList({ history }: HistoryListProps): React.ReactElement {
   return (
     <>
       {latestFallback && latest ? (
-        <div className="mb-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-          <strong>Heads up:</strong> your selected provider (
+        <div className="border-warn-border bg-warn-bg text-warn-fg mb-2 border p-2 text-sm">
+          <strong>Heads up.</strong> Your selected provider (
           <code>{latest.provider}</code>) was unreachable, so the extension fell
-          back to the mock provider. Open Settings → Test to diagnose.
+          back to the mock provider. Open Settings then Test to diagnose.
         </div>
       ) : null}
-      <ul className="m-0 flex max-h-72 list-none flex-col gap-1 overflow-auto p-0 text-xs">
+      <ul className="m-0 flex max-h-72 list-none flex-col gap-1 overflow-auto p-0 text-sm">
         {history.map((entry) => {
           const providerLabel = entry.provider ?? "unknown";
           const fallbackHere = fellBack(entry);
           const expanded = openId === entry.id;
           const expandable = entry.response !== undefined;
           return (
-            <li
-              key={entry.id}
-              className="border-b border-neutral-200 pb-1 dark:border-neutral-800"
-            >
+            <li key={entry.id} className="border-hairline border-b pb-1">
               <button
                 type="button"
                 onClick={() => setOpenId(expanded ? null : entry.id)}
@@ -503,17 +497,17 @@ function HistoryList({ history }: HistoryListProps): React.ReactElement {
                 className={
                   "flex w-full items-center justify-between gap-2 border-0 bg-transparent p-0 text-left " +
                   (expandable
-                    ? "cursor-pointer hover:text-neutral-900 dark:hover:text-neutral-100"
+                    ? "hover:text-fg-accent cursor-pointer"
                     : "cursor-default opacity-80")
                 }
                 data-testid={`history-row-toggle-${entry.tool}`}
               >
                 <div>
-                  <div className="font-mono">{entry.tool}</div>
-                  <div className="text-neutral-500">
+                  <div className="text-fg font-mono">{entry.tool}</div>
+                  <div className="text-fg-muted">
                     {formatTimestamp(entry.timestamp)} · {entry.mode} ·{" "}
                     {fallbackHere ? (
-                      <span className="text-amber-700 dark:text-amber-300">
+                      <span className="text-warn-fg">
                         {providerLabel} → mock (fallback)
                       </span>
                     ) : (
@@ -522,7 +516,7 @@ function HistoryList({ history }: HistoryListProps): React.ReactElement {
                   </div>
                 </div>
                 {expandable ? (
-                  <span aria-hidden="true" className="text-neutral-400">
+                  <span aria-hidden="true" className="text-fg-muted">
                     {expanded ? "▾" : "▸"}
                   </span>
                 ) : null}
@@ -530,7 +524,7 @@ function HistoryList({ history }: HistoryListProps): React.ReactElement {
               {expanded && entry.response ? (
                 <div
                   id={`history-row-${entry.id}`}
-                  className="mt-2 border-l-2 border-neutral-300 pl-2 dark:border-neutral-700"
+                  className="border-hairline mt-2 border-l-2 pl-2"
                   data-testid="history-row-detail"
                 >
                   <HistoryEntryDetail entry={entry} />
@@ -554,8 +548,8 @@ function HistoryEntryDetail({
   const response = entry.response;
   if (!response) {
     return (
-      <p className="text-xs text-neutral-500">
-        (No detail saved for this row — it was written before NeuroDock started
+      <p className="text-fg-muted text-sm">
+        (No detail saved for this row. It was written before NeuroDock started
         persisting full responses.)
       </p>
     );
@@ -570,11 +564,11 @@ function HistoryEntryDetail({
           data={response.data as Record<string, unknown>}
         />
       ) : (
-        <p className="text-xs text-red-700 dark:text-red-300">
+        <p className="text-error-fg text-sm">
           Error: {response.error ?? "Unknown error"}
         </p>
       )}
-      <p className="text-[11px] text-neutral-500">
+      <p className="text-fg-muted text-sm">
         via {response.provenance.provider} · {response.provenance.model} ·{" "}
         {response.provenance.mode}
       </p>

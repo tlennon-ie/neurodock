@@ -177,12 +177,12 @@ export function NotificationsTab({
       <header className="flex items-center justify-between">
         <h2
           id="notifications-heading"
-          className="font-heading m-0 text-base font-medium"
+          className="font-heading text-fg m-0 text-base font-medium"
         >
           Notifications
           {unreadCount > 0 ? (
             <span
-              className="ml-2 inline-block rounded bg-neutral-200 px-1.5 py-0.5 text-xs font-normal text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+              className="border-hairline bg-bg-nav text-fg-muted ml-2 inline-block border px-1.5 py-0.5 text-sm font-normal"
               data-testid="notifications-unread-count"
             >
               {unreadCount} unread
@@ -195,7 +195,7 @@ export function NotificationsTab({
               type="button"
               onClick={() => void handleMarkAllRead()}
               data-testid="notifications-mark-all-read"
-              className="border border-neutral-300 bg-white px-2 py-0.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+              className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-0.5 text-sm"
             >
               Mark all read
             </button>
@@ -203,7 +203,7 @@ export function NotificationsTab({
               type="button"
               onClick={() => void handleDeleteAll()}
               data-testid="notifications-delete-all"
-              className="border border-neutral-300 bg-white px-2 py-0.5 text-xs hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+              className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-0.5 text-sm"
             >
               Delete all
             </button>
@@ -218,10 +218,7 @@ export function NotificationsTab({
       />
 
       {loaded && items.length === 0 ? (
-        <p
-          className="text-xs text-neutral-500"
-          data-testid="notifications-empty"
-        >
+        <p className="text-fg-muted text-sm" data-testid="notifications-empty">
           Nothing here yet. Proactive nudges (hyperfocus, late-night,
           rumination) and guardrail signals will show up in this list so you can
           come back to them on your own time.
@@ -230,7 +227,7 @@ export function NotificationsTab({
 
       {items.length > 0 ? (
         <ul
-          className="m-0 flex max-h-72 list-none flex-col gap-1 overflow-auto p-0 text-xs"
+          className="m-0 flex max-h-72 list-none flex-col gap-1 overflow-auto p-0 text-sm"
           data-testid="notifications-list"
         >
           {items.map((n) => (
@@ -262,8 +259,8 @@ function NotificationRow({
   return (
     <li
       className={
-        "flex flex-col gap-1 border-b border-neutral-200 pb-1 dark:border-neutral-800 " +
-        (isUnread ? "font-medium" : "text-neutral-600 dark:text-neutral-400")
+        "border-hairline flex flex-col gap-1 border-b pb-1 " +
+        (isUnread ? "text-fg font-medium" : "text-fg-muted")
       }
       data-testid="notifications-row"
       data-unread={isUnread ? "true" : "false"}
@@ -271,7 +268,7 @@ function NotificationRow({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate">{notification.title}</div>
-          <div className="text-neutral-500">
+          <div className="text-fg-muted">
             {formatTimestamp(notification.createdAt)} · {notification.category}
             {notification.subcategory ? ` · ${notification.subcategory}` : ""}
           </div>
@@ -282,7 +279,7 @@ function NotificationRow({
             onClick={() => void onToggleRead(notification)}
             data-testid="notifications-row-toggle-read"
             aria-label={isUnread ? "Mark as read" : "Mark as unread"}
-            className="border border-neutral-300 bg-white px-2 py-0.5 text-[11px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+            className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-0.5 text-sm"
           >
             {isUnread ? "Mark read" : "Mark unread"}
           </button>
@@ -291,16 +288,14 @@ function NotificationRow({
             onClick={() => void onDelete(notification.id)}
             data-testid="notifications-row-delete"
             aria-label="Delete notification"
-            className="border border-neutral-300 bg-white px-2 py-0.5 text-[11px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+            className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-0.5 text-sm"
           >
             Delete
           </button>
         </div>
       </div>
       {notification.body.length > 0 ? (
-        <p className="m-0 whitespace-pre-line text-neutral-700 dark:text-neutral-300">
-          {notification.body}
-        </p>
+        <p className="text-fg m-0 whitespace-pre-line">{notification.body}</p>
       ) : null}
     </li>
   );
@@ -318,8 +313,8 @@ function MuteControls({
   onUnmute,
 }: MuteControlsProps): React.ReactElement {
   return (
-    <div className="flex flex-col gap-2 border border-neutral-200 bg-neutral-50 p-2 text-xs dark:border-neutral-800 dark:bg-neutral-900">
-      <p className="m-0 text-neutral-600 dark:text-neutral-400">
+    <div className="border-hairline bg-bg-nav flex flex-col gap-2 border p-2 text-sm">
+      <p className="text-fg-muted m-0">
         Mute categories. Muted signals still land in this inbox; only the
         toaster pop-up is suppressed.
       </p>
@@ -333,15 +328,15 @@ function MuteControls({
               data-testid={`mute-row-${cat.key}`}
             >
               <span className="min-w-0 flex-1">
-                <span className="font-medium">{cat.label}</span>
-                <span className="ml-1 text-neutral-500">— {cat.help}</span>
+                <span className="text-fg font-medium">{cat.label}</span>
+                <span className="text-fg-muted ml-1">— {cat.help}</span>
               </span>
               {muted ? (
                 <button
                   type="button"
                   onClick={() => void onUnmute(cat.key)}
                   data-testid={`mute-clear-${cat.key}`}
-                  className="border border-neutral-300 bg-white px-2 py-0.5 text-[11px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-950 dark:hover:bg-neutral-800"
+                  className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-0.5 text-sm"
                 >
                   Unmute
                 </button>
@@ -353,7 +348,7 @@ function MuteControls({
                       type="button"
                       onClick={() => void onMute(cat.key, opt.until)}
                       data-testid={`mute-${cat.key}-${opt.label}`}
-                      className="border border-neutral-300 bg-white px-2 py-0.5 text-[11px] hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-950 dark:hover:bg-neutral-800"
+                      className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-0.5 text-sm"
                     >
                       {opt.label}
                     </button>

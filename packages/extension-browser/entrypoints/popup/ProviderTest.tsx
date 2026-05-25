@@ -104,15 +104,15 @@ export function ProviderTest({
         type="button"
         onClick={() => void onClick()}
         disabled={state.status === "running"}
-        className="self-start border border-neutral-300 bg-white px-3 py-1 text-sm hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+        className="border-hairline bg-bg text-fg hover:bg-bg-nav focus-visible:outline-accent self-start border px-3 py-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
         data-testid="provider-test-button"
       >
         {state.status === "running" ? "Testing…" : "Test connection"}
       </button>
-      <div role="status" aria-live="polite" className="text-xs">
+      <div role="status" aria-live="polite" className="text-sm">
         {state.status === "ok" ? (
           <span
-            className="text-success-light dark:text-success-dark"
+            className="text-fg-accent"
             data-testid="provider-test-result-ok"
           >
             OK — got {state.preview.length} chars back.
@@ -120,7 +120,7 @@ export function ProviderTest({
         ) : null}
         {state.status === "fail" ? (
           <span
-            className="text-warn-light dark:text-warn-dark"
+            className="text-warn-fg"
             data-testid="provider-test-result-fail"
           >
             Failed: {state.message}

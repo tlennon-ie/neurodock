@@ -51,33 +51,56 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
   // unless we explicitly inject them; v0.0.1 keeps the in-page island
   // styling inline / minimal. The popup uses Tailwind; the in-page island
   // uses a small handcrafted stylesheet.
+  // The shadow root cannot reach the popup's @import "tokens.css"
+  // declarations because `:host { all: initial; }` severs all inherited
+  // custom properties. We re-declare the same OKLCH coordinates here so
+  // the in-page island matches the popup and tab surfaces exactly. The
+  // values mirror `src/styles/tokens.css`.
+  //
+  // Hairlines only — no decorative shadows, no gradients, no radii
+  // beyond a 2px touch to soften the hard rectangle. Motion is disabled.
   styleHost.textContent = `
     :host { all: initial; }
+    :host {
+      --nd-color-bg: oklch(98% 0.005 95);
+      --nd-color-bg-nav: oklch(97% 0.005 95);
+      --nd-color-fg: oklch(22% 0.01 250);
+      --nd-color-fg-muted: oklch(40% 0.01 250);
+      --nd-color-hairline: oklch(88% 0.005 95);
+      --nd-color-accent: oklch(45% 0.05 250);
+      --nd-color-accent-high: oklch(35% 0.05 250);
+      --nd-color-warn-fg: oklch(40% 0.08 70);
+      --nd-color-warn-border: oklch(80% 0.06 70);
+      --nd-color-warn-bg: oklch(95% 0.03 70);
+    }
+    @media (prefers-color-scheme: dark) {
+      :host {
+        --nd-color-bg: oklch(18% 0.005 250);
+        --nd-color-bg-nav: oklch(20% 0.005 250);
+        --nd-color-fg: oklch(92% 0.01 95);
+        --nd-color-fg-muted: oklch(72% 0.01 95);
+        --nd-color-hairline: oklch(28% 0.005 250);
+        --nd-color-accent: oklch(72% 0.06 250);
+        --nd-color-accent-high: oklch(85% 0.04 250);
+        --nd-color-warn-fg: oklch(82% 0.10 70);
+        --nd-color-warn-border: oklch(45% 0.08 70);
+        --nd-color-warn-bg: oklch(24% 0.04 70);
+      }
+    }
     .neurodock-button {
       pointer-events: auto;
       font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.65;
       padding: 6px 10px;
-      border: 1px solid #56564f;
-      background: #fafaf9;
-      color: #161615;
+      border: 1px solid var(--nd-color-hairline);
+      background: var(--nd-color-bg);
+      color: var(--nd-color-fg);
       cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
     }
-    .neurodock-button:focus {
-      outline: 2px solid #4a4a47;
+    .neurodock-button:focus-visible {
+      outline: 2px solid var(--nd-color-accent);
       outline-offset: 2px;
-    }
-    @media (prefers-color-scheme: dark) {
-      .neurodock-button {
-        background: #161615;
-        color: #fafaf9;
-        border-color: #cfcfcb;
-      }
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      .neurodock-button { transition: none; }
     }
     .neurodock-panel {
       pointer-events: auto;
@@ -89,28 +112,20 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       max-height: 80vh;
       overflow-y: auto;
       padding: 12px 14px 14px 14px;
-      border: 1px solid #56564f;
-      background: #fafaf9;
-      color: #161615;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
-      border-radius: 4px;
+      border: 1px solid var(--nd-color-hairline);
+      background: var(--nd-color-bg);
+      color: var(--nd-color-fg);
     }
     .neurodock-panel h3 {
-      font-family: inherit;
-    }
-    @media (prefers-color-scheme: dark) {
-      .neurodock-panel {
-        background: #262625;
-        color: #fafaf9;
-        border-color: #cfcfcb;
-      }
+      font-family: "Lexend Variable", "Lexend", inherit;
     }
     .neurodock-banner {
       margin-bottom: 8px;
       padding: 6px 8px;
-      border: 1px solid #7c5b1a;
-      background: rgba(124,91,26,0.08);
-      font-size: 12px;
+      border: 1px solid var(--nd-color-warn-border);
+      background: var(--nd-color-warn-bg);
+      color: var(--nd-color-warn-fg);
+      font-size: 14px;
     }
   `;
   shadow.appendChild(styleHost);

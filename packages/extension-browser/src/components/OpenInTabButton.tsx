@@ -72,7 +72,7 @@ export function OpenInTabButton({
       data-testid="open-in-tab-button"
       aria-label="Open NeuroDock in a full browser tab"
       title="Open in tab"
-      className="self-start border border-neutral-300 bg-white px-2 py-0.5 text-xs hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800 dark:focus-visible:outline-neutral-300"
+      className="border-hairline bg-bg text-fg hover:bg-bg-nav focus-visible:outline-accent self-start border px-2 py-0.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
     >
       Open in tab
     </button>

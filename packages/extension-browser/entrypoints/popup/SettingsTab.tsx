@@ -272,7 +272,7 @@ export function SettingsTab({
       ) : null}
 
       {selected === "mock" ? (
-        <p className="text-xs text-neutral-500">
+        <p className="text-fg-muted text-sm">
           Mock mode is a developer-only deterministic provider. Use it to verify
           the UI without a model. Output is always labelled [MOCK].
         </p>
@@ -370,14 +370,14 @@ function ProactiveGuardrails(): React.ReactElement {
 
   return (
     <fieldset
-      className="m-0 flex flex-col gap-3 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="border-hairline m-0 flex flex-col gap-3 border p-3"
       data-testid="proactive-guardrails"
     >
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Proactive guardrails
       </legend>
 
-      <label className="flex items-start gap-2 text-xs">
+      <label className="flex items-start gap-2 text-sm">
         <input
           type="checkbox"
           checked={checked}
@@ -390,7 +390,7 @@ function ProactiveGuardrails(): React.ReactElement {
             Extension watchdog (auto-detects hyperfocus / late-night /
             rumination)
           </span>
-          <span className="text-[11px] text-neutral-500">
+          <span className="text-fg-muted text-sm">
             Runs every 5 min. Surfaces a notification + amber toolbar badge when
             a pattern trips. Local-only; nothing leaves your device.
           </span>
@@ -398,32 +398,36 @@ function ProactiveGuardrails(): React.ReactElement {
       </label>
 
       <div
-        className="flex flex-col gap-1 border border-neutral-200 p-2 dark:border-neutral-800"
+        className="border-hairline flex flex-col gap-1 border p-2"
         data-testid="guardrail-phase1-info"
       >
-        <span className="text-xs font-medium">Claude Code hook (Phase 1)</span>
-        <span className="text-[11px] text-neutral-500">
+        <span className="text-sm font-medium text-fg">
+          Claude Code hook (Phase 1)
+        </span>
+        <span className="text-fg-muted text-sm">
           Auto-fires chronometric / rumination / sycophancy checks on every Nth
           Claude Code tool use. Banners on stderr.
         </span>
-        <code className="font-mono mt-1 block border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] dark:border-neutral-700 dark:bg-neutral-950">
+        <code className="font-mono border-hairline bg-bg-code text-fg mt-1 block border px-2 py-1 text-sm">
           neurodock install-hooks --self-test
         </code>
-        <span className="text-[11px] text-neutral-500">Disable with:</span>
-        <code className="font-mono block border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] dark:border-neutral-700 dark:bg-neutral-950">
+        <span className="text-fg-muted text-sm">Disable with:</span>
+        <code className="font-mono border-hairline bg-bg-code text-fg block border px-2 py-1 text-sm">
           export NEURODOCK_GUARDRAILS=off
         </code>
       </div>
 
       <div
-        className="flex flex-col gap-1 border border-neutral-200 p-2 dark:border-neutral-800"
+        className="border-hairline flex flex-col gap-1 border p-2"
         data-testid="guardrail-phase3-info"
       >
-        <span className="text-xs font-medium">Standalone daemon (Phase 3)</span>
-        <span className="text-[11px] text-neutral-500">
+        <span className="text-sm font-medium text-fg">
+          Standalone daemon (Phase 3)
+        </span>
+        <span className="text-fg-muted text-sm">
           Host-agnostic. Catches you working in the terminal at 02:00 too.
         </span>
-        <code className="font-mono mt-1 block border border-neutral-200 bg-neutral-50 px-2 py-1 text-[11px] dark:border-neutral-700 dark:bg-neutral-950">
+        <code className="font-mono border-hairline bg-bg-code text-fg mt-1 block border px-2 py-1 text-sm">
           neurodock install-hooks --install-daemon
         </code>
       </div>
@@ -482,13 +486,13 @@ function DebugTools(): React.ReactElement {
 
   return (
     <fieldset
-      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="border-hairline m-0 flex flex-col gap-2 border p-3"
       data-testid="debug-tools"
     >
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Debug tools
       </legend>
-      <label className="flex items-start gap-2 text-xs">
+      <label className="flex items-start gap-2 text-sm">
         <input
           type="checkbox"
           checked={checked}
@@ -498,7 +502,7 @@ function DebugTools(): React.ReactElement {
         />
         <span className="flex flex-col gap-0.5">
           <span className="font-medium">Log final prompt to console</span>
-          <span className="text-[11px] text-neutral-500">
+          <span className="text-fg-muted text-sm">
             Prints the full prompt (template + your input + schema + reader
             preferences) to the service-worker DevTools console before each
             translate call. Off by default. Local-only — nothing leaves your
@@ -587,15 +591,17 @@ function ReaderPreferences({
   return (
     <fieldset
       data-testid="reader-preferences"
-      className="m-0 flex flex-col gap-3 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="border-hairline m-0 flex flex-col gap-3 border p-3"
     >
-      <legend className="px-1 text-xs font-medium uppercase tracking-wider text-neutral-500">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Reader preferences (shapes every translation)
       </legend>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium">Which describe you?</label>
-        <p className="text-[11px] text-neutral-500">
+        <label className="text-sm font-medium text-fg">
+          Which describe you?
+        </label>
+        <p className="text-fg-muted text-sm">
           Self-ID only — no diagnosis required. Tick all that apply. Used to
           tailor prompts; never sent off-device unless cloud mode is on.
         </p>
@@ -605,7 +611,7 @@ function ReaderPreferences({
             return (
               <label
                 key={opt.value}
-                className="flex items-start gap-2 text-xs"
+                className="flex items-start gap-2 text-sm"
                 title={opt.hint}
               >
                 <input
@@ -617,7 +623,7 @@ function ReaderPreferences({
                 />
                 <span>
                   <span className="font-medium">{opt.label}</span>
-                  <span className="block text-[10px] text-neutral-500">
+                  <span className="text-fg-muted block text-sm">
                     {opt.hint}
                   </span>
                 </span>
@@ -628,7 +634,7 @@ function ReaderPreferences({
         {showAudhdHint ? (
           <p
             data-testid="audhd-hint"
-            className="mt-1 border border-amber-300 bg-amber-50 p-1.5 text-[11px] text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+            className="border-warn-border bg-warn-bg text-warn-fg mt-1 border p-1.5 text-sm"
           >
             Looks like you might want <strong>AuDHD</strong> — it's a fused
             block instead of stacking ADHD + ASD. Tick AuDHD and untick the
@@ -637,7 +643,7 @@ function ReaderPreferences({
         ) : null}
         <p
           data-testid="reader-prefs-model-size-note"
-          className="mt-2 text-[11px] italic text-neutral-500"
+          className="text-fg-muted mt-2 text-sm italic"
         >
           Reader preferences shape the prompt sent to the model. Larger models
           honor them better than smaller ones. With a 4B local model (e.g.
@@ -647,8 +653,8 @@ function ReaderPreferences({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium">Output shape</label>
-        <div className="flex flex-col gap-0.5 text-xs">
+        <label className="text-sm font-medium text-fg">Output shape</label>
+        <div className="flex flex-col gap-0.5 text-sm">
           {(
             [
               {
@@ -681,7 +687,7 @@ function ReaderPreferences({
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="max-chunk-size" className="text-xs font-medium">
+        <label htmlFor="max-chunk-size" className="text-sm font-medium text-fg">
           Max items in lists
         </label>
         <input
@@ -697,16 +703,19 @@ function ReaderPreferences({
             }
           }}
           data-testid="max-chunk-size"
-          className="w-20 border border-neutral-300 bg-white px-2 py-0.5 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+          className="border-hairline bg-bg text-fg w-20 border px-2 py-0.5 text-sm"
         />
-        <p className="text-[11px] text-neutral-500">
+        <p className="text-fg-muted text-sm">
           How many items the AI shows before stopping. Manifesto default is 5
           (ADHD-tuned). Schema lets you go up to 20.
         </p>
       </div>
 
       <div className="flex flex-col gap-1">
-        <label htmlFor="additional-notes" className="text-xs font-medium">
+        <label
+          htmlFor="additional-notes"
+          className="text-sm font-medium text-fg"
+        >
           Anything else the AI should know about you?
         </label>
         <textarea
@@ -722,9 +731,9 @@ function ReaderPreferences({
           maxLength={500}
           placeholder='Example: "I get overwhelmed by long paragraphs" or "please always quote the source verbatim"'
           data-testid="additional-notes"
-          className="w-full border border-neutral-300 bg-white p-2 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+          className="border-hairline bg-bg text-fg w-full border p-2 text-sm"
         />
-        <p className="text-[11px] text-neutral-500">
+        <p className="text-fg-muted text-sm">
           Treated as a literal instruction set to the AI. 500-character max.
         </p>
       </div>
@@ -808,14 +817,14 @@ function NonLocalhostNotice({
 
   return (
     <div
-      className="flex flex-col gap-1 border border-neutral-200 px-2 py-1 text-xs dark:border-neutral-800"
+      className="border-hairline flex flex-col gap-1 border px-2 py-1 text-sm"
       data-testid={`${testIdPrefix}-host-permission`}
     >
-      <span className="text-neutral-500">
+      <span className="text-fg-muted">
         Host: <code className="font-mono">{origin}</code>{" "}
         {granted === true ? (
           <span
-            className="text-success-light dark:text-success-dark"
+            className="text-fg-accent"
             data-testid={`${testIdPrefix}-host-permission-granted`}
           >
             (permission granted)
@@ -835,7 +844,7 @@ function NonLocalhostNotice({
         <button
           type="button"
           onClick={() => void onGrant()}
-          className="self-start border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+          className="border-hairline bg-bg text-fg hover:bg-bg-nav self-start border px-2 py-1 text-sm"
           data-testid={`${testIdPrefix}-host-permission-grant`}
         >
           Grant permission for {origin}
@@ -843,7 +852,7 @@ function NonLocalhostNotice({
       )}
       {error ? (
         <span
-          className="text-warn-light dark:text-warn-dark"
+          className="text-warn-fg"
           data-testid={`${testIdPrefix}-host-permission-error`}
         >
           {error}
@@ -907,22 +916,22 @@ function ImageTranslationPermission(): React.ReactElement {
 
   return (
     <fieldset
-      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="border-hairline m-0 flex flex-col gap-2 border p-3"
       data-testid="image-translation-permission"
     >
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Image translation
       </legend>
-      <p className="m-0 text-xs text-neutral-500">
+      <p className="m-0 text-fg-muted text-sm">
         Right-click any image → "NeuroDock: describe image (vision)" needs
         permission to fetch the image bytes (so it can base64-encode them for
         your vision model). Grant once for every HTTPS site, or accept the
         per-site prompt at right-click time.
       </p>
       {granted === null ? (
-        <p className="m-0 text-xs text-neutral-500">Checking…</p>
+        <p className="m-0 text-fg-muted text-sm">Checking…</p>
       ) : granted ? (
-        <div className="flex items-center justify-between gap-2 text-xs">
+        <div className="flex items-center justify-between gap-2 text-sm">
           <span>
             <strong>Granted</strong> — image translation works on every HTTPS
             site.
@@ -930,30 +939,26 @@ function ImageTranslationPermission(): React.ReactElement {
           <button
             type="button"
             onClick={() => void onRevoke()}
-            className="border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-1 text-sm"
             data-testid="image-perms-revoke"
           >
             Revoke
           </button>
         </div>
       ) : (
-        <div className="flex items-center justify-between gap-2 text-xs">
+        <div className="flex items-center justify-between gap-2 text-sm">
           <span>Not granted. You'll be prompted per-site instead.</span>
           <button
             type="button"
             onClick={() => void onGrant()}
-            className="border border-neutral-300 bg-white px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-900"
+            className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-1 text-sm"
             data-testid="image-perms-grant"
           >
             Enable for every site
           </button>
         </div>
       )}
-      {message ? (
-        <p className="m-0 text-xs text-amber-700 dark:text-amber-300">
-          {message}
-        </p>
-      ) : null}
+      {message ? <p className="text-warn-fg m-0 text-sm">{message}</p> : null}
     </fieldset>
   );
 }
@@ -987,13 +992,13 @@ function HostPermissionsPanel(): React.ReactElement {
 
   return (
     <fieldset
-      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="border-hairline m-0 flex flex-col gap-2 border p-3"
       data-testid="host-permissions-panel"
     >
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Host permissions
       </legend>
-      <details className="m-0 text-xs text-neutral-500">
+      <details className="m-0 text-fg-muted text-sm">
         <summary className="cursor-pointer">
           Always-granted hosts (click to view)
         </summary>
@@ -1024,13 +1029,13 @@ function HostPermissionsPanel(): React.ReactElement {
           </span>
         </div>
       </details>
-      <p className="m-0 text-xs text-neutral-500">
+      <p className="m-0 text-fg-muted text-sm">
         The list below shows additional hosts you've granted at runtime (e.g. a
         LAN-hosted LM Studio or Ollama).
       </p>
       {origins.length === 0 ? (
         <p
-          className="m-0 text-xs text-neutral-500"
+          className="m-0 text-fg-muted text-sm"
           data-testid="host-permissions-empty"
         >
           No additional hosts granted.
@@ -1040,7 +1045,7 @@ function HostPermissionsPanel(): React.ReactElement {
           {origins.map((o) => (
             <li
               key={o}
-              className="flex items-center justify-between gap-2 text-xs"
+              className="flex items-center justify-between gap-2 text-sm"
               data-testid={`host-permission-row-${o}`}
             >
               <code className="font-mono">{o}</code>
@@ -1114,10 +1119,10 @@ function ModeSelector({
 
   return (
     <fieldset
-      className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800"
+      className="border-hairline m-0 flex flex-col gap-2 border p-3"
       data-testid="mode-selector"
     >
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Where translation runs
       </legend>
       {options.map((opt) => (
@@ -1133,7 +1138,7 @@ function ModeSelector({
           />
           <span className="flex flex-col">
             <span className="font-medium">{opt.label}</span>
-            <span className="text-xs text-neutral-500">{opt.help}</span>
+            <span className="text-fg-muted text-sm">{opt.help}</span>
           </span>
         </label>
       ))}
@@ -1152,18 +1157,18 @@ function LocalOllamaSettings({
 }: LocalProviderProps): React.ReactElement {
   const endpoint = profile.localEndpoint || OLLAMA_DEFAULT_BASE_URL;
   return (
-    <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+    <fieldset className="border-hairline m-0 flex flex-col gap-2 border p-3">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Local Ollama
       </legend>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-xs text-neutral-500">Endpoint URL</span>
+        <span className="text-fg-muted text-sm">Endpoint URL</span>
         <input
           type="url"
           value={profile.localEndpoint}
           onChange={(e) => void onChange({ localEndpoint: e.target.value })}
           placeholder={OLLAMA_DEFAULT_BASE_URL}
-          className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+          className="border-hairline bg-bg text-fg border px-2 py-1"
           data-testid="local-endpoint-input"
         />
       </label>
@@ -1207,11 +1212,11 @@ function LocalLMStudioSettings({
       : LMSTUDIO_DEFAULT_BASE_URL;
 
   return (
-    <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+    <fieldset className="border-hairline m-0 flex flex-col gap-2 border p-3">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Local LM Studio
       </legend>
-      <p className="m-0 text-xs text-neutral-500">
+      <p className="m-0 text-fg-muted text-sm">
         Start LM Studio, load a model, and switch the Server tab to{" "}
         <code className="font-mono">Running</code>. The default base URL is{" "}
         <code className="font-mono">{LMSTUDIO_DEFAULT_BASE_URL}</code>. If LM
@@ -1235,29 +1240,29 @@ function LocalLMStudioSettings({
         open={showAdvanced}
         onToggle={(e) => setShowAdvanced((e.target as HTMLDetailsElement).open)}
       >
-        <summary className="cursor-pointer text-xs text-neutral-500">
+        <summary className="cursor-pointer text-fg-muted text-sm">
           Advanced (custom base URL, optional API key)
         </summary>
         <div className="mt-2 flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
-            <span className="text-xs text-neutral-500">Base URL</span>
+            <span className="text-fg-muted text-sm">Base URL</span>
             <input
               type="url"
               value={endpoint}
               onChange={(e) => void onChange({ localEndpoint: e.target.value })}
               placeholder={LMSTUDIO_DEFAULT_BASE_URL}
-              className="border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+              className="border-hairline bg-bg text-fg border px-2 py-1"
               data-testid="lmstudio-base-url-input"
             />
           </label>
           <div className="flex flex-col gap-1 text-sm">
-            <span className="text-xs text-neutral-500">
+            <span className="text-fg-muted text-sm">
               API key (only if you put LM Studio behind a reverse proxy)
             </span>
             {hasStoredKey ? (
               <div className="flex items-center gap-2">
                 <code
-                  className="border border-neutral-300 bg-neutral-50 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-950"
+                  className="border-hairline bg-bg-code text-fg border px-2 py-1 text-sm"
                   data-testid="lmstudio-api-key-masked"
                 >
                   ••••{last4}
@@ -1265,7 +1270,7 @@ function LocalLMStudioSettings({
                 <button
                   type="button"
                   onClick={() => void clearKey()}
-                  className="text-xs underline"
+                  className="text-fg-accent text-sm underline"
                   data-testid="lmstudio-api-key-clear"
                 >
                   Clear
@@ -1280,14 +1285,14 @@ function LocalLMStudioSettings({
                   placeholder="optional"
                   autoComplete="off"
                   spellCheck={false}
-                  className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+                  className="border-hairline bg-bg text-fg flex-1 border px-2 py-1"
                   data-testid="lmstudio-api-key-input"
                 />
                 <button
                   type="button"
                   onClick={() => void saveKey()}
                   disabled={pendingKey.length === 0}
-                  className="border border-neutral-300 bg-white px-2 py-1 text-xs disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
+                  className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-1 text-sm disabled:opacity-50"
                   data-testid="lmstudio-api-key-save"
                 >
                   Save
@@ -1394,8 +1399,8 @@ function CloudSettings({
   }, [onChange, providerId, profile.cloudApiKeys]);
 
   return (
-    <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
-      <legend className="px-1 text-xs uppercase tracking-wide text-neutral-500">
+    <fieldset className="border-hairline m-0 flex flex-col gap-2 border p-3">
+      <legend className="text-fg-muted px-1 text-sm font-medium">
         Cloud {providerId}
       </legend>
       <ModelPicker
@@ -1409,16 +1414,14 @@ function CloudSettings({
         testIdPrefix="cloud"
       />
       {modelHint(providerId) ? (
-        <span className="text-xs text-neutral-500">
-          {modelHint(providerId)}
-        </span>
+        <span className="text-fg-muted text-sm">{modelHint(providerId)}</span>
       ) : null}
       <div className="flex flex-col gap-1 text-sm">
-        <span className="text-xs text-neutral-500">API key</span>
+        <span className="text-fg-muted text-sm">API key</span>
         {hasStoredKey ? (
           <div className="flex items-center gap-2">
             <code
-              className="border border-neutral-300 bg-neutral-50 px-2 py-1 text-xs dark:border-neutral-700 dark:bg-neutral-950"
+              className="border-hairline bg-bg-code text-fg border px-2 py-1 text-sm"
               data-testid="cloud-api-key-masked"
             >
               ••••{last4}
@@ -1426,7 +1429,7 @@ function CloudSettings({
             <button
               type="button"
               onClick={() => void clearKey()}
-              className="text-xs underline"
+              className="text-fg-accent text-sm underline"
               data-testid="cloud-api-key-clear"
             >
               Clear
@@ -1441,21 +1444,21 @@ function CloudSettings({
               placeholder={apiKeyPlaceholder(providerId)}
               autoComplete="off"
               spellCheck={false}
-              className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+              className="border-hairline bg-bg text-fg flex-1 border px-2 py-1"
               data-testid="cloud-api-key-input"
             />
             <button
               type="button"
               onClick={() => void saveKey()}
               disabled={pendingKey.length === 0}
-              className="border border-neutral-300 bg-white px-2 py-1 text-xs disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
+              className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-1 text-sm disabled:opacity-50"
               data-testid="cloud-api-key-save"
             >
               Save
             </button>
           </div>
         )}
-        <span className="text-xs text-neutral-500">
+        <span className="text-fg-muted text-sm">
           Stored on this device only via <code>chrome.storage.local</code>.
           Never synced.
         </span>
@@ -1547,13 +1550,13 @@ function ModelPicker({
 
   return (
     <div className="flex flex-col gap-1 text-sm">
-      <span className="text-xs text-neutral-500">Model</span>
+      <span className="text-fg-muted text-sm">Model</span>
       <div className="flex items-center gap-2">
         {showDropdown ? (
           <select
             value={currentModel}
             onChange={(e) => handleModelChange(e.target.value)}
-            className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+            className="border-hairline bg-bg text-fg flex-1 border px-2 py-1"
             data-testid={`${testIdPrefix}-model-select`}
           >
             {currentModel && !models.includes(currentModel) ? (
@@ -1571,7 +1574,7 @@ function ModelPicker({
             value={currentModel}
             onChange={(e) => handleModelChange(e.target.value)}
             placeholder={defaultModel}
-            className="flex-1 border border-neutral-300 bg-white px-2 py-1 dark:border-neutral-700 dark:bg-neutral-900"
+            className="border-hairline bg-bg text-fg flex-1 border px-2 py-1"
             data-testid={`${testIdPrefix}-model-input`}
           />
         )}
@@ -1579,20 +1582,20 @@ function ModelPicker({
           type="button"
           onClick={() => void onRefresh()}
           disabled={state.status === "loading"}
-          className="border border-neutral-300 bg-white px-2 py-1 text-xs disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-900"
+          className="border-hairline bg-bg text-fg hover:bg-bg-nav border px-2 py-1 text-sm disabled:opacity-50"
           data-testid={`${testIdPrefix}-model-refresh`}
         >
           {state.status === "loading" ? "Loading…" : "Refresh models"}
         </button>
       </div>
       {state.status === "ok" && models.length === 0 ? (
-        <span className="text-xs text-neutral-500">
+        <span className="text-fg-muted text-sm">
           No models found. Load a model first, then try again.
         </span>
       ) : null}
       {state.status === "fail" ? (
         <span
-          className="text-warn-light dark:text-warn-dark text-xs"
+          className="text-warn-fg text-sm"
           data-testid={`${testIdPrefix}-model-error`}
         >
           {state.message}

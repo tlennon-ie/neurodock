@@ -103,11 +103,12 @@ describe("BriefMeetingView — content_translation rendering", () => {
 
     const kindChips = screen.getAllByTestId("content-translation-facet-kind");
     const labels = kindChips.map((el) => el.textContent);
-    expect(labels).toContain("INPUT");
-    expect(labels).toContain("ACTION");
-    expect(labels).toContain("GOAL");
-    expect(labels).toContain("FACT");
-    expect(labels).toContain("RULE");
+    // Visual identity refresh: sentence case chips, not ALL CAPS.
+    expect(labels).toContain("Input");
+    expect(labels).toContain("Action");
+    expect(labels).toContain("Goal");
+    expect(labels).toContain("Fact");
+    expect(labels).toContain("Rule");
   });
 
   it("demotes legacy four-section extraction into a closed Meeting transcript metadata collapsible", () => {

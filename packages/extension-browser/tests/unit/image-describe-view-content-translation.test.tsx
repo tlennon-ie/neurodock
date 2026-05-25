@@ -86,7 +86,9 @@ describe("ImageDescribeView — content_translation rendering", () => {
       screen.getByText("Decouple Deployment from Release"),
     ).toBeInTheDocument();
 
-    // Facet text and uppercase kind chip both appear.
+    // Facet text and sentence-case kind chip both appear. Visual identity
+    // refresh removed ALL CAPS labels per the design contract; the chips
+    // now read "Input", "Action", "Goal", "Context".
     expect(
       screen.getByText(
         "You have code ready to deploy but it is not ready for users yet.",
@@ -94,10 +96,10 @@ describe("ImageDescribeView — content_translation rendering", () => {
     ).toBeInTheDocument();
     const kindChips = screen.getAllByTestId("content-translation-facet-kind");
     const labels = kindChips.map((el) => el.textContent);
-    expect(labels).toContain("INPUT");
-    expect(labels).toContain("ACTION");
-    expect(labels).toContain("GOAL");
-    expect(labels).toContain("CONTEXT");
+    expect(labels).toContain("Input");
+    expect(labels).toContain("Action");
+    expect(labels).toContain("Goal");
+    expect(labels).toContain("Context");
   });
 
   it("demotes legacy fields into a closed-by-default Accessibility metadata collapsible", () => {
@@ -172,7 +174,9 @@ describe("ImageDescribeView — content_translation rendering", () => {
     };
     render(<ToolView tool="describe_image" data={data} />);
     const kindChip = screen.getByTestId("content-translation-facet-kind");
-    expect(kindChip.textContent).toBe("CONTEXT");
+    // Sentence case per the visual-identity refresh — the chip renders
+    // `Context` (label, no ALL CAPS) rather than the raw enum value.
+    expect(kindChip.textContent).toBe("Context");
     expect(screen.getByText("A new facet text.")).toBeInTheDocument();
   });
 });

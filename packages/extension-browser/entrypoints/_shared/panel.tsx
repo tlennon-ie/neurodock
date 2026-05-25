@@ -103,9 +103,10 @@ export function Panel({
           style={{
             marginBottom: 6,
             padding: "4px 6px",
-            border: "1px solid #c08a3a",
-            background: "rgba(192,138,58,0.08)",
-            fontSize: 12,
+            border: "1px solid var(--nd-color-warn-border, #c08a3a)",
+            background: "var(--nd-color-warn-bg, rgba(192,138,58,0.08))",
+            color: "var(--nd-color-warn-fg, #7c5b1a)",
+            fontSize: 14,
           }}
         >
           <strong>Heads up:</strong> your configured provider (
@@ -138,9 +139,9 @@ export function SourcePreview({ text }: { text: string }): React.ReactElement {
       style={{
         marginBottom: 8,
         padding: "6px 8px",
-        background: "rgba(0,0,0,0.05)",
-        borderLeft: "3px solid rgba(0,0,0,0.25)",
-        fontSize: 12,
+        background: "var(--nd-color-bg-nav, rgba(0,0,0,0.05))",
+        borderLeft: "3px solid var(--nd-color-hairline, rgba(0,0,0,0.25))",
+        fontSize: 14,
         fontStyle: isUrl ? "normal" : "italic",
         maxHeight: 220,
         overflow: "auto",
@@ -157,12 +158,16 @@ export function SourcePreview({ text }: { text: string }): React.ReactElement {
             display: "block",
             marginBottom: 4,
             objectFit: "contain",
-            background: "rgba(0,0,0,0.04)",
+            background: "var(--nd-color-bg-nav, rgba(0,0,0,0.04))",
           }}
         />
       ) : null}
       {isUrl ? (
-        <code style={{ fontFamily: "ui-monospace, monospace" }}>{text}</code>
+        <code
+          style={{ fontFamily: "var(--nd-font-mono, ui-monospace, monospace)" }}
+        >
+          {text}
+        </code>
       ) : (
         text
       )}
@@ -198,7 +203,9 @@ function ResultBody({
 }): React.ReactElement {
   if (!response.ok) {
     return (
-      <p style={{ color: "#7c5b1a", margin: 0 }}>Error: {response.error}</p>
+      <p style={{ color: "var(--nd-color-warn-fg, #7c5b1a)", margin: 0 }}>
+        Error: {response.error}
+      </p>
     );
   }
   const data = response.data;
@@ -219,8 +226,8 @@ function MockNotice(): React.ReactElement {
       style={{
         margin: "0 0 8px 0",
         padding: "4px 6px",
-        border: "1px dashed #56564f",
-        fontSize: 12,
+        border: "1px dashed var(--nd-color-hairline, #56564f)",
+        fontSize: 14,
       }}
     >
       Mock response — no LLM was called. Configure local Ollama or cloud mode in
@@ -238,9 +245,9 @@ function ProvenanceLine({
     <p
       style={{
         margin: "10px 0 0 0",
-        fontSize: 11,
-        color: "rgba(0,0,0,0.55)",
-        borderTop: "1px solid rgba(0,0,0,0.08)",
+        fontSize: 14,
+        color: "var(--nd-color-fg-muted, rgba(0,0,0,0.55))",
+        borderTop: "1px solid var(--nd-color-hairline, rgba(0,0,0,0.08))",
         paddingTop: 6,
       }}
       data-testid="provenance-line"
@@ -469,7 +476,10 @@ function coerceTranslatedFacets(value: unknown): readonly TranslatedFacet[] {
 }
 
 function facetKindLabel(kind: TranslatedFacetKind): string {
-  return kind.toUpperCase();
+  // Sentence case per the design contract — no ALL CAPS in UI strings.
+  // The chip's monospace + outline + size already signals "category".
+  if (kind.length === 0) return kind;
+  return kind.charAt(0).toUpperCase() + kind.slice(1);
 }
 
 function TranslatedEntryList({
@@ -501,15 +511,16 @@ function TranslatedEntryCard({
       data-testid="content-translation-entry"
       style={{
         padding: "10px 12px",
-        border: "1px solid rgba(0,0,0,0.18)",
+        border: "1px solid var(--nd-color-hairline, rgba(0,0,0,0.18))",
       }}
     >
       <h3
         style={{
           margin: "0 0 6px 0",
-          fontSize: 14,
+          fontSize: 16,
+          fontFamily: "var(--nd-font-heading, inherit)",
           fontWeight: 600,
-          lineHeight: 1.35,
+          lineHeight: 1.25,
         }}
         data-testid={`content-translation-entry-label-${index}`}
       >
@@ -554,12 +565,12 @@ function FacetRow({ facet }: { facet: TranslatedFacet }): React.ReactElement {
           flex: "0 0 auto",
           minWidth: 64,
           padding: "1px 6px",
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
+          fontSize: 11,
+          fontFamily: "var(--nd-font-mono, ui-monospace, monospace)",
+          letterSpacing: "0.04em",
           fontWeight: 600,
-          background: "rgba(0,0,0,0.06)",
-          color: "rgba(0,0,0,0.65)",
+          border: "1px solid var(--nd-color-hairline, rgba(0,0,0,0.18))",
+          color: "var(--nd-color-fg-muted, rgba(0,0,0,0.65))",
           textAlign: "center",
         }}
       >
@@ -697,7 +708,7 @@ function humaniseAction(action: string): string {
     case "clarify":
       return "they want clarification";
     case "acknowledge":
-      return "just acknowledge you've read it";
+      return "acknowledge you've read it";
     case "set_reminder":
       return "set a reminder to revisit";
     case "escalate":
@@ -737,10 +748,10 @@ function TldrCard({ text }: { text: string }): React.ReactElement {
     <div
       style={{
         padding: "10px 12px",
-        background: "rgba(0,0,0,0.04)",
-        borderLeft: "3px solid #56564f",
-        fontSize: 15,
-        lineHeight: 1.45,
+        background: "var(--nd-color-bg-nav, rgba(0,0,0,0.04))",
+        borderLeft: "3px solid var(--nd-color-accent, #56564f)",
+        fontSize: 16,
+        lineHeight: 1.5,
       }}
       data-testid="panel-tldr"
     >
@@ -762,26 +773,31 @@ function ActionCard({ next }: { next: NextActionData }): React.ReactElement {
       data-testid="panel-action"
       style={{
         padding: "10px 12px",
-        border: "1px solid rgba(0,0,0,0.18)",
+        border: "1px solid var(--nd-color-hairline, rgba(0,0,0,0.18))",
       }}
     >
       <h3
         style={{
           margin: "0 0 4px 0",
-          fontSize: 12,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          opacity: 0.7,
+          fontSize: 14,
+          fontFamily: "var(--nd-font-heading, inherit)",
+          color: "var(--nd-color-fg-muted, rgba(0,0,0,0.7))",
           fontWeight: 600,
         }}
       >
         Do this
       </h3>
-      <p style={{ margin: "0 0 6px 0", fontSize: 14, fontWeight: 600 }}>
+      <p style={{ margin: "0 0 6px 0", fontSize: 16, fontWeight: 600 }}>
         {capitalise(verb)}
       </p>
       {reason ? (
-        <p style={{ margin: "0 0 8px 0", fontSize: 13, opacity: 0.85 }}>
+        <p
+          style={{
+            margin: "0 0 8px 0",
+            fontSize: 14,
+            color: "var(--nd-color-fg-muted, rgba(0,0,0,0.85))",
+          }}
+        >
           {reason}
         </p>
       ) : null}
@@ -790,10 +806,9 @@ function ActionCard({ next }: { next: NextActionData }): React.ReactElement {
           <h4
             style={{
               margin: "8px 0 4px 0",
-              fontSize: 11,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              opacity: 0.6,
+              fontSize: 14,
+              fontFamily: "var(--nd-font-heading, inherit)",
+              color: "var(--nd-color-fg-muted, rgba(0,0,0,0.6))",
               fontWeight: 600,
             }}
           >
@@ -967,7 +982,7 @@ function ToneBar({
         style={{
           position: "relative",
           height: 6,
-          background: "rgba(0,0,0,0.08)",
+          background: "var(--nd-color-hairline, rgba(0,0,0,0.08))",
         }}
         aria-label={`${label} score ${v.toFixed(0)} out of 100`}
         role="progressbar"
@@ -980,7 +995,7 @@ function ToneBar({
             position: "absolute",
             inset: 0,
             width: `${v}%`,
-            background: "#56564f",
+            background: "var(--nd-color-accent, #56564f)",
           }}
         />
         {t !== null ? (
@@ -991,7 +1006,7 @@ function ToneBar({
               bottom: -2,
               left: `${t}%`,
               width: 2,
-              background: "#c08a3a",
+              background: "var(--nd-color-accent-high, #c08a3a)",
             }}
             aria-hidden="true"
           />
@@ -1231,10 +1246,10 @@ function Quote({ text }: { text: string }): React.ReactElement {
       style={{
         marginTop: 2,
         paddingLeft: 8,
-        borderLeft: "2px solid rgba(0,0,0,0.2)",
-        fontSize: 12,
+        borderLeft: "2px solid var(--nd-color-hairline, rgba(0,0,0,0.2))",
+        fontSize: 14,
         fontStyle: "italic",
-        opacity: 0.8,
+        color: "var(--nd-color-fg-muted, rgba(0,0,0,0.8))",
       }}
     >
       {text}
@@ -1258,10 +1273,9 @@ function Section({
       <h3
         style={{
           margin: "0 0 4px 0",
-          fontSize: 11,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          opacity: 0.65,
+          fontSize: 14,
+          fontFamily: "var(--nd-font-heading, inherit)",
+          color: "var(--nd-color-fg-muted, rgba(0,0,0,0.65))",
           fontWeight: 600,
         }}
       >
@@ -1274,25 +1288,27 @@ function Section({
 
 function ConfidenceBadge({ value }: { value: number }): React.ReactElement {
   const v = Math.max(0, Math.min(1, value));
-  const band: { label: string; bg: string } =
-    v >= 0.8
-      ? { label: "high", bg: "rgba(56,142,60,0.18)" }
-      : v >= 0.5
-        ? { label: "med", bg: "rgba(192,138,58,0.18)" }
-        : { label: "low", bg: "rgba(0,0,0,0.08)" };
+  // Hairline outline carries the confidence band — no decorative colour
+  // fills per the design contract (no gradients, no alarming reds, no
+  // signal greens). The textual label ("high" / "med" / "low") is the
+  // primary signal; the title attribute exposes the exact percentage to
+  // assistive tech.
+  const label = v >= 0.8 ? "high" : v >= 0.5 ? "med" : "low";
   return (
     <span
       style={{
         display: "inline-block",
         marginLeft: 4,
         padding: "0 6px",
-        fontSize: 10,
-        background: band.bg,
+        fontSize: 11,
+        fontFamily: "var(--nd-font-mono, ui-monospace, monospace)",
+        border: "1px solid var(--nd-color-hairline, rgba(0,0,0,0.18))",
+        color: "var(--nd-color-fg-muted, rgba(0,0,0,0.65))",
         verticalAlign: "middle",
       }}
       title={`${(v * 100).toFixed(0)}% confidence`}
     >
-      {band.label}
+      {label}
     </span>
   );
 }
@@ -1313,9 +1329,9 @@ function CopyableDraft({ text }: { text: string }): React.ReactElement {
       <div
         style={{
           padding: "6px 8px",
-          background: "rgba(0,0,0,0.04)",
-          borderLeft: "3px solid rgba(0,0,0,0.2)",
-          fontSize: 13,
+          background: "var(--nd-color-bg-nav, rgba(0,0,0,0.04))",
+          borderLeft: "3px solid var(--nd-color-hairline, rgba(0,0,0,0.2))",
+          fontSize: 14,
           whiteSpace: "pre-wrap",
           maxHeight: 160,
           overflowY: "auto",
@@ -1330,7 +1346,7 @@ function CopyableDraft({ text }: { text: string }): React.ReactElement {
         style={{
           marginTop: 4,
           padding: "2px 8px",
-          fontSize: 11,
+          fontSize: 13,
         }}
         aria-label="Copy draft to clipboard"
       >
