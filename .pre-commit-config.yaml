@@ -53,7 +53,7 @@ repos:
   # Python: ruff (lint + format) — versions tracked by pyproject.toml
   # -----------------------------------------------------------------
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+    rev: v0.15.13
     hooks:
       - id: ruff
         name: ruff (lint)
