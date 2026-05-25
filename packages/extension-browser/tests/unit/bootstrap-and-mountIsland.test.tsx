@@ -65,6 +65,7 @@ function buildProfile(
     cloudProvider: null,
     cloudModel: null,
     cloudApiKey: null,
+    cloudApiKeys: {},
     historyEnabled: false,
     displayName: "you",
     neurotypes: [],

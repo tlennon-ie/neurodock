@@ -1,5 +1,44 @@
 # @neurodock/extension-browser
 
+## 0.0.27
+
+### Fixed — Cloud API keys are now per-provider (privacy + UX)
+
+User-reported: after configuring OpenRouter, switching to "Cloud Google"
+in Settings showed the OpenRouter API key under the Google label —
+because the extension stored ONE `cloudApiKey` shared across all
+cloud providers.
+
+Two problems with the old shape:
+
+1. **Privacy footgun.** The OpenRouter key (visible as `••••last4`)
+   was rendered under "Cloud Google" while Google was selected.
+   Whatever audience was looking at the screen got the wrong key
+   attributed to the wrong provider.
+2. **UX trap.** Hitting Save in that state would overwrite the
+   OpenRouter key with whatever was typed for Google. Switching
+   back to OpenRouter would find an empty key field.
+
+0.0.27 introduces `cloudApiKeys: Readonly<Record<string, string>>`
+on `ExtensionProfile`. Each provider's key lives at its own key.
+Switching from OpenRouter to Google now shows an empty key field
+for Google AND keeps the OpenRouter key around for the next time you
+toggle back.
+
+**Migration:** the legacy single `cloudApiKey` is preserved as a
+denormalised pointer to the active provider's key. On profile load,
+if `cloudApiKeys` is empty but the legacy `cloudApiKey` is set, it's
+back-filled into `cloudApiKeys[cloudProvider]`. No re-enter required
+when upgrading from 0.0.26.
+
+Two regression tests pin the contract:
+
+- `preserves other providers' keys when clearing a single provider`
+- `saving a Google key preserves an existing OpenRouter key`
+
+Storage trust boundary unchanged — keys still live in
+`chrome.storage.local` only, never `sync`.
+
 ## 0.0.26
 
 ### Added — Google Gemini as a fourth cloud provider

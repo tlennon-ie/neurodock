@@ -40,6 +40,7 @@ function baseProfile(): ExtensionProfile {
     cloudProvider: null,
     cloudModel: null,
     cloudApiKey: null,
+    cloudApiKeys: {},
     historyEnabled: true,
     displayName: "you",
     neurotypes: [],

@@ -253,33 +253,39 @@ function resolveCloudProvider(
   profile: ExtensionProfile,
 ): CloudResolution | CloudResolveError {
   if (!profile.cloudProvider) return "MISSING_CLOUD_PROVIDER";
-  if (!profile.cloudApiKey) return "MISSING_CLOUD_KEY";
+  // 0.0.27: per-provider keys. Read `cloudApiKeys[cloudProvider]` first
+  // (the canonical store); fall back to the denormalised `cloudApiKey`
+  // for back-compat with anything that hasn't been re-saved since the
+  // migration to per-provider storage.
+  const apiKey =
+    profile.cloudApiKeys[profile.cloudProvider] ?? profile.cloudApiKey;
+  if (!apiKey) return "MISSING_CLOUD_KEY";
 
   if (profile.cloudProvider === "anthropic") {
     const model = profile.cloudModel ?? DEFAULT_MODELS.anthropic;
     return {
-      provider: createAnthropicProvider({ apiKey: profile.cloudApiKey }),
+      provider: createAnthropicProvider({ apiKey }),
       model,
     };
   }
   if (profile.cloudProvider === "openai") {
     const model = profile.cloudModel ?? DEFAULT_MODELS.openai;
     return {
-      provider: createOpenAIProvider({ apiKey: profile.cloudApiKey }),
+      provider: createOpenAIProvider({ apiKey }),
       model,
     };
   }
   if (profile.cloudProvider === "openrouter") {
     const model = profile.cloudModel ?? DEFAULT_MODELS.openrouter;
     return {
-      provider: createOpenRouterProvider({ apiKey: profile.cloudApiKey }),
+      provider: createOpenRouterProvider({ apiKey }),
       model,
     };
   }
   if (profile.cloudProvider === "google") {
     const model = profile.cloudModel ?? DEFAULT_MODELS.google;
     return {
-      provider: createGoogleProvider({ apiKey: profile.cloudApiKey }),
+      provider: createGoogleProvider({ apiKey }),
       model,
     };
   }

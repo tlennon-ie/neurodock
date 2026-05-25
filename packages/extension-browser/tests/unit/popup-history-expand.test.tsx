@@ -45,6 +45,7 @@ describe("Popup — History row click-to-expand", () => {
       cloudProvider: null,
       cloudModel: null,
       cloudApiKey: null,
+      cloudApiKeys: {},
       historyEnabled: true,
       displayName: "you",
       neurotypes: [],

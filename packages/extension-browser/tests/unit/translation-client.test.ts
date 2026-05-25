@@ -58,6 +58,7 @@ describe("translation-client", () => {
       cloudProvider: "anthropic",
       cloudModel: "claude-haiku-4-5",
       cloudApiKey: null,
+      cloudApiKeys: {},
     };
     const res = await translate(
       { tool: "check_tone", input: { text: "ok" } },
@@ -101,6 +102,7 @@ describe("translation-client", () => {
       cloudProvider: "openai",
       cloudModel: "gpt-4o-mini",
       cloudApiKey: "sk-test",
+      cloudApiKeys: {},
     };
     const res = await translate(
       { tool: "check_tone", input: { text: "Fix it now." } },
@@ -131,6 +133,7 @@ describe("translation-client", () => {
       cloudProvider: "openai",
       cloudModel: "gpt-4o-mini",
       cloudApiKey: "sk-test",
+      cloudApiKeys: {},
     };
     const res = await translate(
       { tool: "translate_incoming", input: { text: "hi" } },

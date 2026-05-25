@@ -114,6 +114,21 @@ export interface ExtensionProfile {
    * "Clear" controls. The plaintext key is never rendered back to the DOM.
    */
   readonly cloudApiKey: string | null;
+  /**
+   * 0.0.27: per-provider API keys, keyed by provider id ("anthropic",
+   * "openai", "openrouter", "google"). Pre-0.0.27 the extension stored
+   * one `cloudApiKey` shared across all cloud providers — toggling from
+   * OpenRouter to Google in Settings showed the OpenRouter key under
+   * Google's label, which was both a privacy footgun and a UX trap.
+   *
+   * The legacy `cloudApiKey` is preserved as a denormalised pointer to
+   * the *active* provider's key for back-compat with code paths that
+   * still read it directly. `cloudApiKeys` is the canonical store.
+   *
+   * Keys persist to `chrome.storage.local` only — same trust boundary
+   * as the rest of the profile.
+   */
+  readonly cloudApiKeys: Readonly<Record<string, string>>;
   readonly historyEnabled: boolean;
   readonly displayName: string;
   /**

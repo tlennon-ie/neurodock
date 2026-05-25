@@ -47,6 +47,10 @@ const DEFAULT_PROFILE: ExtensionProfile = Object.freeze({
   cloudProvider: null,
   cloudModel: null,
   cloudApiKey: null,
+  // 0.0.27: per-provider API key store. {} by default. Settings UI
+  // reads/writes per provider; legacy `cloudApiKey` is updated in
+  // parallel for back-compat with callers that haven't migrated yet.
+  cloudApiKeys: Object.freeze({}) as Readonly<Record<string, string>>,
   historyEnabled: false,
   displayName: "you",
   // 0.0.22: per-neurotype prompt tailoring. Defaults are the
@@ -324,6 +328,7 @@ function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
       typeof input.cloudApiKey === "string" && input.cloudApiKey.length > 0
         ? input.cloudApiKey
         : null,
+    cloudApiKeys: normaliseCloudApiKeys(input),
     historyEnabled: input.historyEnabled === true,
     displayName:
       typeof input.displayName === "string" && input.displayName.length > 0
@@ -352,6 +357,44 @@ function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
 
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null && !Array.isArray(x);
+}
+
+/**
+ * 0.0.27: normalise the per-provider cloud-key map and migrate any
+ * legacy single `cloudApiKey` into the new shape.
+ *
+ * Migration rules:
+ *
+ *   - If `input.cloudApiKeys` is a real object, take its string-valued
+ *     entries (drop anything that isn't a non-empty string).
+ *   - If the legacy single `cloudApiKey` is set AND no per-provider
+ *     entry exists for the active `cloudProvider`, back-fill it. This
+ *     means an upgrade from 0.0.26 → 0.0.27 carries the user's
+ *     OpenRouter (or whatever) key into `cloudApiKeys[openrouter]`
+ *     without forcing them to re-enter.
+ */
+function normaliseCloudApiKeys(
+  input: Partial<ExtensionProfile>,
+): Readonly<Record<string, string>> {
+  const out: Record<string, string> = {};
+  const raw = input.cloudApiKeys;
+  if (isRecord(raw)) {
+    for (const [key, value] of Object.entries(raw)) {
+      if (typeof value === "string" && value.length > 0) {
+        out[key] = value;
+      }
+    }
+  }
+  if (
+    typeof input.cloudProvider === "string" &&
+    input.cloudProvider.length > 0 &&
+    typeof input.cloudApiKey === "string" &&
+    input.cloudApiKey.length > 0 &&
+    out[input.cloudProvider] === undefined
+  ) {
+    out[input.cloudProvider] = input.cloudApiKey;
+  }
+  return Object.freeze(out);
 }
 
 /**

@@ -33,6 +33,7 @@ function profile(overrides: Partial<ExtensionProfile> = {}): ExtensionProfile {
     cloudProvider: null,
     cloudModel: null,
     cloudApiKey: null,
+    cloudApiKeys: {},
     historyEnabled: false,
     displayName: "you",
     neurotypes: [],

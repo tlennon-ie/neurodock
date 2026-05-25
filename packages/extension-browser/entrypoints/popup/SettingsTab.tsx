@@ -1345,26 +1345,51 @@ function CloudSettings({
   onChange,
 }: CloudSettingsProps): React.ReactElement {
   const [pendingKey, setPendingKey] = useState("");
-  const hasStoredKey = profile.cloudApiKey !== null;
-  const last4 = profile.cloudApiKey?.slice(-4) ?? "";
+  // 0.0.27: per-provider key — reads from `cloudApiKeys[providerId]`,
+  // not the shared `cloudApiKey`. So switching from OpenRouter to
+  // Google in Settings no longer shows the OpenRouter key under the
+  // Google label. Each provider's key persists independently.
+  const storedKey = profile.cloudApiKeys[providerId] ?? null;
+  const hasStoredKey = storedKey !== null;
+  const last4 = storedKey?.slice(-4) ?? "";
 
   const saveKey = useCallback(async () => {
     if (pendingKey.length === 0) return;
+    // Build the next per-provider key map. Other providers' keys
+    // stay intact — the whole point of 0.0.27 is that they survive
+    // toggling.
+    const nextKeys: Record<string, string> = { ...profile.cloudApiKeys };
+    nextKeys[providerId] = pendingKey;
     await onChange({
       cloudProvider: providerId,
       cloudModel: profile.cloudModel ?? DEFAULT_MODELS[providerId] ?? "",
+      cloudApiKeys: nextKeys,
+      // Keep `cloudApiKey` denormalised to the active provider so
+      // translation-client + any pre-migration callers that read it
+      // directly still work.
       cloudApiKey: pendingKey,
       mode: "cloud" as ExtensionMode,
     });
     setPendingKey("");
-  }, [onChange, pendingKey, providerId, profile.cloudModel]);
+  }, [
+    onChange,
+    pendingKey,
+    providerId,
+    profile.cloudModel,
+    profile.cloudApiKeys,
+  ]);
 
   const clearKey = useCallback(async () => {
+    // Only remove THIS provider's key. Other providers' keys survive
+    // so switching back to (say) OpenRouter still finds the saved key.
+    const nextKeys: Record<string, string> = { ...profile.cloudApiKeys };
+    delete nextKeys[providerId];
     await onChange({
+      cloudApiKeys: nextKeys,
       cloudApiKey: null,
       mode: "local" as ExtensionMode,
     });
-  }, [onChange]);
+  }, [onChange, providerId, profile.cloudApiKeys]);
 
   return (
     <fieldset className="m-0 flex flex-col gap-2 border border-neutral-200 p-3 dark:border-neutral-800">
@@ -1374,7 +1399,7 @@ function CloudSettings({
       <ModelPicker
         provider={providerId}
         baseUrl={null}
-        apiKey={profile.cloudApiKey}
+        apiKey={storedKey}
         currentModel={profile.cloudModel ?? ""}
         defaultModel={DEFAULT_MODELS[providerId] ?? ""}
         modelKey="cloudModel"

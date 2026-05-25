@@ -15,6 +15,7 @@ function baseProfile(
     cloudProvider: null,
     cloudModel: null,
     cloudApiKey: null,
+    cloudApiKeys: {},
     historyEnabled: false,
     displayName: "you",
     neurotypes: [],
@@ -46,6 +47,7 @@ describe("SettingsTab", () => {
           cloudProvider: "anthropic",
           cloudModel: "claude-haiku-4-5",
           cloudApiKey: null,
+          cloudApiKeys: {},
         })}
         onChange={onChange}
       />,
@@ -65,6 +67,7 @@ describe("SettingsTab", () => {
           cloudProvider: "anthropic",
           cloudModel: "claude-haiku-4-5",
           cloudApiKey: "sk-ant-abcdef1234",
+          cloudApiKeys: { anthropic: "sk-ant-abcdef1234" },
         })}
         onChange={onChange}
       />,
@@ -84,6 +87,39 @@ describe("SettingsTab", () => {
           cloudProvider: "openai",
           cloudModel: "gpt-4o-mini",
           cloudApiKey: "sk-openai-xxxx",
+          cloudApiKeys: { openai: "sk-openai-xxxx" },
+        })}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("cloud-api-key-clear"));
+    await waitFor(() => {
+      // 0.0.27: Clear removes THIS provider's key from `cloudApiKeys`
+      // (other providers' keys are preserved), and nulls the legacy
+      // denormalised `cloudApiKey` field.
+      expect(onChange).toHaveBeenCalledWith({
+        cloudApiKey: null,
+        cloudApiKeys: {},
+        mode: "local",
+      });
+    });
+  });
+
+  it("preserves other providers' keys when clearing a single provider (0.0.27 regression)", async () => {
+    // User has both OpenAI and OpenRouter keys saved, active is OpenAI.
+    // Clicking Clear on OpenAI must NOT touch the OpenRouter key.
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          mode: "cloud",
+          cloudProvider: "openai",
+          cloudModel: "gpt-4o-mini",
+          cloudApiKey: "sk-openai-xxxx",
+          cloudApiKeys: {
+            openai: "sk-openai-xxxx",
+            openrouter: "sk-or-yyyy",
+          },
         })}
         onChange={onChange}
       />,
@@ -92,6 +128,7 @@ describe("SettingsTab", () => {
     await waitFor(() => {
       expect(onChange).toHaveBeenCalledWith({
         cloudApiKey: null,
+        cloudApiKeys: { openrouter: "sk-or-yyyy" },
         mode: "local",
       });
     });
@@ -106,6 +143,7 @@ describe("SettingsTab", () => {
           cloudProvider: "anthropic",
           cloudModel: "claude-haiku-4-5",
           cloudApiKey: null,
+          cloudApiKeys: {},
         })}
         onChange={onChange}
       />,
@@ -119,6 +157,43 @@ describe("SettingsTab", () => {
         expect.objectContaining({
           cloudProvider: "anthropic",
           cloudApiKey: "sk-ant-new-key",
+          cloudApiKeys: { anthropic: "sk-ant-new-key" },
+          mode: "cloud",
+        }),
+      );
+    });
+  });
+
+  it("saving a Google key preserves an existing OpenRouter key (0.0.27 regression)", async () => {
+    // The user-reported bug: switching from OpenRouter to Google
+    // showed the OpenRouter key under Google's label. After 0.0.27
+    // the per-provider store keeps both keys independently.
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(
+      <SettingsTab
+        profile={baseProfile({
+          mode: "cloud",
+          cloudProvider: "google",
+          cloudModel: "gemini-2.0-flash",
+          cloudApiKey: null,
+          cloudApiKeys: { openrouter: "sk-or-existing" },
+        })}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.change(screen.getByTestId("cloud-api-key-input"), {
+      target: { value: "AIza-new-google-key" },
+    });
+    fireEvent.click(screen.getByTestId("cloud-api-key-save"));
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cloudProvider: "google",
+          cloudApiKey: "AIza-new-google-key",
+          cloudApiKeys: {
+            openrouter: "sk-or-existing",
+            google: "AIza-new-google-key",
+          },
           mode: "cloud",
         }),
       );
@@ -185,6 +260,7 @@ describe("SettingsTab", () => {
           cloudProvider: "openrouter",
           cloudModel: "openrouter/auto",
           cloudApiKey: null,
+          cloudApiKeys: {},
         })}
         onChange={onChange}
       />,
