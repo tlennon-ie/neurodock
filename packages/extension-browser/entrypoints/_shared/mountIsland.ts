@@ -47,6 +47,24 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
 
   const shadow = host.attachShadow({ mode: "open" });
   const styleHost = doc.createElement("style");
+  // Theme v2 — resolve the bundled webfonts to their extension-origin
+  // URLs so the in-page island matches the popup / tab typography
+  // instead of falling back to system-ui inside the host page.
+  // `chrome.runtime.getURL` is content-script safe and lives behind a
+  // try / catch so non-extension contexts (tests, dev harnesses) fall
+  // back to a relative URL string.
+  const fontUrl = (file: string): string => {
+    try {
+      const g = globalThis as unknown as {
+        chrome?: { runtime?: { getURL?: (p: string) => string } };
+      };
+      const getURL = g.chrome?.runtime?.getURL;
+      if (typeof getURL === "function") return getURL(`fonts/${file}`);
+    } catch {
+      /* fall through to relative URL */
+    }
+    return `/fonts/${file}`;
+  };
   // Minimal in-shadow reset. Tailwind classes do not work inside the shadow
   // unless we explicitly inject them; v0.0.1 keeps the in-page island
   // styling inline / minimal. The popup uses Tailwind; the in-page island
@@ -60,6 +78,29 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
   // Hairlines only — no decorative shadows, no gradients, no radii
   // beyond a 2px touch to soften the hard rectangle. Motion is disabled.
   styleHost.textContent = `
+    @font-face {
+      font-family: "Atkinson Hyperlegible";
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url("${fontUrl("atkinson-hyperlegible-400.woff2")}") format("woff2");
+    }
+    @font-face {
+      font-family: "Atkinson Hyperlegible";
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url("${fontUrl("atkinson-hyperlegible-700.woff2")}") format("woff2");
+    }
+    @font-face {
+      font-family: "Lexend Variable";
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+      src: url("${fontUrl(
+        "lexend-variable.woff2",
+      )}") format("woff2-variations");
+    }
     :host { all: initial; }
     :host {
       --nd-color-bg: oklch(98% 0.005 95);
@@ -86,6 +127,32 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
         --nd-color-warn-border: oklch(45% 0.08 70);
         --nd-color-warn-bg: oklch(24% 0.04 70);
       }
+      /* User forced light inside a dark OS — re-apply light palette. */
+      :host(.nd-theme-light) {
+        --nd-color-bg: oklch(98% 0.005 95);
+        --nd-color-bg-nav: oklch(97% 0.005 95);
+        --nd-color-fg: oklch(22% 0.01 250);
+        --nd-color-fg-muted: oklch(40% 0.01 250);
+        --nd-color-hairline: oklch(88% 0.005 95);
+        --nd-color-accent: oklch(45% 0.05 250);
+        --nd-color-accent-high: oklch(35% 0.05 250);
+        --nd-color-warn-fg: oklch(40% 0.08 70);
+        --nd-color-warn-border: oklch(80% 0.06 70);
+        --nd-color-warn-bg: oklch(95% 0.03 70);
+      }
+    }
+    /* User forced dark inside a light OS — apply dark palette directly. */
+    :host(.nd-theme-dark) {
+      --nd-color-bg: oklch(18% 0.005 250);
+      --nd-color-bg-nav: oklch(20% 0.005 250);
+      --nd-color-fg: oklch(92% 0.01 95);
+      --nd-color-fg-muted: oklch(72% 0.01 95);
+      --nd-color-hairline: oklch(28% 0.005 250);
+      --nd-color-accent: oklch(72% 0.06 250);
+      --nd-color-accent-high: oklch(85% 0.04 250);
+      --nd-color-warn-fg: oklch(82% 0.10 70);
+      --nd-color-warn-border: oklch(45% 0.08 70);
+      --nd-color-warn-bg: oklch(24% 0.04 70);
     }
     /* RFC A3 — high-contrast theme. Activated by setting the
        \`nd-high-contrast\` class on the shadow-root host element. */

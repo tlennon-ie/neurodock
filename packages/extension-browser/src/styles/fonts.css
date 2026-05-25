@@ -1,0 +1,65 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ *
+ * Bundled webfont declarations.
+ *
+ * The docs site loads these via @fontsource (Astro / Vite bundles them
+ * into /_astro/). The extension cannot pull from a CDN at runtime
+ * (CSP and the local-first guarantee both forbid it), so the files
+ * live under `public/fonts/` and ship inside the .zip.
+ *
+ * The files themselves are SIL OFL 1.1 — see `public/fonts/LICENSE.md`.
+ *
+ * `url("/fonts/...")` resolves against the extension origin
+ * (chrome-extension://<id>/fonts/...) because public/ is the static
+ * root in WXT. The leading slash is required so the popup
+ * (`/popup.html`) and the tab view (`/tab.html`) and the in-page
+ * island stylesheets (loaded via the SW URL) all resolve to the same
+ * absolute path.
+ *
+ * font-display: swap — the system fallback paints first, then the
+ * bundled face swaps in once the woff2 decodes. The fallback stack
+ * in tokens.css is chosen so the swap is visually minimal
+ * (Atkinson → system-ui; Lexend Variable → Atkinson → system-ui).
+ */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-400-italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lexend Variable";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/lexend-variable.woff2") format("woff2-variations");
+}
+
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("/fonts/jetbrains-mono-variable.woff2") format("woff2-variations");
+}
