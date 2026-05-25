@@ -148,32 +148,37 @@ export default defineConfig({
         "http://localhost:1234 " +
         "http://127.0.0.1:1234 " +
         // v0.0.4: port-restricted host wildcards for non-localhost local
-        // providers. Safer than <all_urls> because the port is fixed.
-        // The user must still grant the specific host via runtime
-        // chrome.permissions.request() before any fetch succeeds.
+        // providers (e.g. APIPA, Tailscale, LAN box). Safer than the
+        // previous bare http:/https: umbrella because the port is fixed
+        // to the well-known LLM dev-server ports. The user must still
+        // grant the specific host via runtime chrome.permissions.request()
+        // before any fetch can succeed — the CSP only lifts the
+        // platform-level block; host_permissions is the actual gate.
         "http://*:11434 " +
         "http://*:1234 " +
+        // Cloud-provider origins — explicit allow-list, no wildcards.
         "https://api.anthropic.com " +
         "https://api.openai.com " +
         "https://openrouter.ai " +
         "https://generativelanguage.googleapis.com " +
-        // 0.0.18: allow arbitrary HTTPS fetches AND data: URLs so the
-        // image-translation flow can pull image bytes from any site for
-        // local-LLM base64 encoding. The actual reach is still gated by
-        // optional_host_permissions which the user must grant per-host
-        // at runtime — this CSP entry just lifts the platform-level
-        // block. data: is required for screenshot-style image inputs
-        // and for the local base64 round-trip.
+        // data: is required for screenshot-style image inputs and for
+        // the local base64 round-trip used by describe_image.
         //
-        // 0.0.21: also allow arbitrary `http:` so right-click describe
-        // works for images on user-controlled local dev servers like
-        // `http://127.0.0.1:8000/...` (ML output samples, asset-pipeline
-        // previews, etc.) and LAN-hosted asset stores. Without this CSP
-        // entry the SW fetch was blocked before host_permissions ever
-        // got a chance to gate it, so users saw "Mock response" with no
-        // way to grant. Symmetrical with the existing https: umbrella.
-        "http: " +
-        "https: " +
+        // SECURITY NOTE (audit C1 — 2026-05-27):
+        // The previous CSP carried bare `http:` and `https:` wildcards
+        // so the SW could fetch image bytes from any user-granted host
+        // (right-click describe on arbitrary HTTPS/HTTP images). Those
+        // wildcards have been removed and replaced with explicit cloud-
+        // provider origins above. KNOWN LIMITATION: the SW fetch() for
+        // image bytes from non-listed HTTPS/HTTP origins will now be
+        // blocked by the CSP before host_permissions can gate it. The
+        // image-translation feature (describe_image on arbitrary sites)
+        // is therefore degraded until a proper solution is designed —
+        // either a separate per-host nonce mechanism, a proxy fetch
+        // through the content-script (which runs in the page origin, not
+        // the extension origin), or explicit per-provider CSP entries.
+        // Do NOT re-add `http:` or `https:` here without a security
+        // review — that was the C1 finding.
         "data:;",
     },
     browser_specific_settings: {
@@ -197,7 +202,12 @@ export default defineConfig({
   },
   vite: () => ({
     build: {
-      sourcemap: "inline",
+      // Security: do not ship inline sourcemaps in production bundles.
+      // Inline sourcemaps embed the original TypeScript source inside
+      // every .crx/.xpi file, leaking internal implementation details.
+      // Use "hidden" locally if you need DevTools debugging (generates
+      // separate .map files that are NOT included in the extension bundle).
+      sourcemap: false,
     },
   }),
 });

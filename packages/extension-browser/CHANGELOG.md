@@ -1,5 +1,26 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Security — tightened extension CSP (drop `http:`/`https:` wildcards in `connect-src`), removed inline sourcemaps from production bundle, hardened channel detection against URL spoofing
+
+Three security findings from the 2026-05-27 audit (C1, H1, H2) addressed. The
+bare `http:` and `https:` wildcards in `connect-src` that were introduced in
+v0.0.21/v0.0.22 for image-translation fetch support have been replaced with an
+explicit list of cloud-provider origins (`api.anthropic.com`, `api.openai.com`,
+`openrouter.ai`, `generativelanguage.googleapis.com`) plus the already-present
+port-restricted LM Studio and Ollama wildcards; a known limitation is that SW
+fetch() for image bytes from arbitrary HTTPS/HTTP sites will be CSP-blocked
+until a proxy approach is designed (finding C1). Inline sourcemaps have been
+removed from the production Vite build (`sourcemap: false`), preventing
+original TypeScript source from being embedded inside every distributed `.crx`
+or `.xpi` (finding H1). The `detectChannelFromUrl` helper was rewritten to
+parse URLs with the `URL` constructor and match on `hostname` only, closing
+a spoofability window where crafted URLs such as
+`https://evil.com/?q=mail.google.com` or `https://mail.google.com.evil.com/`
+could have been misclassified as the `email` channel (CodeQL alerts #28-29,
+finding H2).
+
 ## 0.0.33
 
 ### Added — pacing copilot (configurable break suggestions; opt-in default for OCD / AuDHD users)
