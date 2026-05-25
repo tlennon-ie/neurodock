@@ -60,6 +60,38 @@ Schema change is back-compat. Storage trust boundary unchanged — keys
 still live in `chrome.storage.local` only, never `sync`. AGPL-3.0-or-later
 header preserved.
 
+## [unreleased]
+
+### Added — In-extension notifications inbox with per-category mute
+
+Today the proactive watchdog and translation-fallback paths fire a
+`chrome.notifications` toast and that is the whole surface. If the user
+dismisses the toast or steps away from the desk it is gone. ND users
+explicitly asked for an inbox they can come back to on their own time.
+
+This release adds a Notifications tab to the popup that:
+
+- Lists every guardrail trip, proactive-watchdog signal, and notification-
+  fallback translation result, newest first, capped at 200 with LRU
+  eviction. Records live in `chrome.storage.local` only — never `sync`,
+  same privacy contract as History.
+- Lets the user mark individual rows read / unread, delete one, or bulk
+  mark-all-read / delete-all.
+- Exposes per-category mutes (`watchdog:hyperfocus`, `watchdog:deep_night`,
+  or the entire `watchdog` category) with relative-duration syntax
+  (`"1h"`, `"4h"`, `"30m"`) plus a permanent "Always" option. Muted
+  signals still LAND in the inbox — only the OS-toast is suppressed —
+  so the user can audit what got quieted while they were away.
+- Refreshes live while the popup is open via a
+  `notifications:updated` runtime broadcast, mirroring the existing
+  `history:updated` pattern.
+
+New module: `src/lib/notifications.ts` (storage + mute resolution).
+New component: `entrypoints/popup/NotificationsTab.tsx`.
+The proactive watchdog now records its signal to the inbox before it
+fires (or skips) the OS toast based on the mute state. The context-
+result fallback notification also mirrors into the inbox.
+
 ## 0.0.27
 
 ### Fixed — Cloud API keys are now per-provider (privacy + UX)
