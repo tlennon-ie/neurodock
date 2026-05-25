@@ -23,7 +23,7 @@ flowchart LR
   mock --> result
 ```
 
-## What it does (v0.0.2)
+## What it does
 
 - Floats a non-intrusive "Translate" button on text fields across Gmail, Slack web, Linear, Notion, GitHub, Google Docs, and Outlook web.
 - Adds a right-click context-menu action ("NeuroDock: translate selection") on any selected text within a permitted site.
@@ -83,7 +83,7 @@ If you forget step 4, **Refresh models** and **Test connection** will pop the sa
 
 Provider responses are parsed defensively and validated with Ajv against the relevant MCP output schema; validation failures surface a `LLM_OUTPUT_VALIDATION_FAILED` envelope with a Retry path. The popup syncs its profile with `~/.neurodock/profile.yaml` via the optional `@neurodock/native-host` native messaging bridge; when the host is not installed, the profile lives only in `chrome.storage.local`.
 
-### What v0.0.2 does NOT do (deferred to v0.0.3+)
+### Not yet shipped
 
 | Feature                                           | Status                                                                            |
 | ------------------------------------------------- | --------------------------------------------------------------------------------- |

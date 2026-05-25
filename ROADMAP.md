@@ -10,7 +10,7 @@ without something landing, that's fine — this is volunteer work, not a
 ship list. If you want to drive any of these, open an issue or comment
 on the existing one.
 
-> Updated: 2026-05-21.
+> Updated: 2026-05-25.
 
 ## Shipped (Q2 2026)
 
@@ -35,6 +35,34 @@ Landed since the v0.2.1 developer preview:
       hiberno-english, japanese-keigo, legal, sales).
 - [x] **Good-first-issue ramp** — 10 tickets filed; 9 closed across the
       v0.2.x cycle (see GitHub `good first issue` label).
+- [x] **Proactive guardrails** — three-phase auto-fire layer for
+      hyperfocus / rumination / sycophancy / late-night signals.
+      Phase 1: `neurodock install-hooks` wires a stdlib-only Python
+      hook into Claude Code (CLI v0.6.0). Phase 2: browser-extension
+      watchdog with toolbar-badge nudge (extension v0.0.24). Phase 3:
+      standalone autostart daemon for host-agnostic coverage. Opt-out
+      via `NEURODOCK_GUARDRAILS=off` or `install-hooks --uninstall`.
+      Design page: `/concepts/proactive-guardrails/`.
+- [x] **Per-neurotype prompt tailoring** — `buildNeurotypeAddendum`
+      shapes all five translation prompts per ADHD / ASD / AuDHD / OCD /
+      dyslexia / dyspraxia / Tourette / other. Reader-preferences UI in
+      Settings. Empty addendum for default profile, so existing installs
+      see no prompt change until they opt in. Landed in extension
+      v0.0.22 (2026-05-24).
+- [x] **LM Studio + Gmail silent-failure fix** — service-worker keepalive
+      defeats the MV3 idle kill mid-fetch; ACK contract on
+      `chrome.tabs.sendMessage` defeats the ambiguous-resolution
+      delivery bug. The top outstanding extension bug; closed in
+      v0.0.24 (2026-05-24).
+- [x] **Panel on any site (generic content-script injection)** — the
+      in-page panel now mounts on LinkedIn and other sites that aren't
+      in the nine declared `host_permissions` matches. Landed in
+      extension v0.0.23.
+- [x] **`record_fact` friendly errors** — `ToolError` payload gained
+      `hint` and `example` so wrong-shape input gets actionable guidance
+      instead of raw Pydantic errors. Closes the six-retry validation
+      loop documented on 2026-05-22. Landed in mcp-cognitive-graph
+      v0.0.4 (2026-05-24).
 
 ## Now — Q2 2026
 
@@ -43,10 +71,10 @@ Landed since the v0.2.1 developer preview:
 - [ ] **Browser-store submissions** — Chrome Web Store, Firefox Add-ons,
       Edge Add-ons. Build artefacts are clean; developer accounts +
       screenshots + privacy disclosures remain manual.
-- [ ] **Demo GIF / video** (issue #27) — until the docs site is deployed,
-      a short video is the lowest-friction "see it work" surface.
-- [ ] **Docs site DNS** — `docs.neurodock.org` build is clean; deployment
-      pending.
+- [ ] **Demo GIF / video** (issue #27) — a short video remains the
+      lowest-friction "see it work" surface.
+- [x] **Docs site DNS** — `neurodock.org` and `docs.neurodock.org` now
+      serve the Astro Starlight build from Cloudflare.
 
 ## Next — Q3 2026
 
@@ -60,7 +88,6 @@ Landed since the v0.2.1 developer preview:
       real providers behind the same MCP contract the extension uses.
 - [ ] **`mcp-cognitive-graph` semantic recall** — embedding rung tuned
       with real corpora; benchmark suite checked into `packages/evals/`.
-- [ ] **Docs site deploy** — `docs.neurodock.org` actually serving.
 - [ ] **`@neurodock/extension-browser` published** to store(s) and
       promoted on the docs site.
 

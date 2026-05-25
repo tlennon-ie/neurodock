@@ -7,6 +7,54 @@ repo-wide milestones.
 
 ## Repo-wide releases
 
+### v0.2.3 — 2026-05-24
+
+Proactive-guardrails week. The substrate's safety surfaces — chronometric
+breaks, hyperfocus warnings, rumination flags — now auto-fire instead of
+waiting for the user to remember to call them. Plus the LM Studio + Gmail
+silent-failure fix that closed the top outstanding extension bug.
+
+- **CLI v0.6.0** — `neurodock install-hooks` wires NeuroDock's proactive
+  guardrail layer into a fresh install. Bundled stdlib-only Python
+  scripts; no extra `pip install` step. Three artefacts: a Claude Code
+  hook (`SessionStart` / `PreToolUse` / `PostToolUse` / `Stop`), an
+  optional host-agnostic standalone daemon registered for autostart, and
+  a regression-pinned Windows-path fix that prevents the 0.0.22-class
+  hook-command lockout. Opt-out via `NEURODOCK_GUARDRAILS=off`.
+- **`neurodock-mcp-cognitive-graph` v0.0.4** — `record_fact` now returns
+  friendly, actionable errors when the caller sends wrong-shape input.
+  The `ToolError` payload gained `hint` and `example` fields so every
+  failure mode on the boundary surfaces "do this next" instead of a raw
+  Pydantic error. Closes the six-retry validation loop logged on
+  2026-05-22.
+- **Browser extension v0.0.17 → v0.0.24** — seven sideload-only
+  releases across the week, all in service of making the in-page
+  panel work the way users expected. Highlights:
+  - **v0.0.24** — LM Studio + Gmail silent-failure fix (the #1
+    outstanding bug). Service-worker keepalive defeats the MV3 idle
+    kill mid-fetch; new ACK contract on `chrome.tabs.sendMessage`
+    defeats the ambiguous-resolution delivery bug. Plus a settings UI
+    for the proactive-guardrail watchdog.
+  - **v0.0.23** — proactive watchdog in the SW (hyperfocus / deep-night
+    / rumination-host) plus generic content-script injection so the
+    panel mounts on any site, not just the nine declared host-permission
+    matches.
+  - **v0.0.22** — per-neurotype prompt tailoring across all five
+    translation prompts (ADHD / ASD / AuDHD / OCD / dyslexia /
+    dyspraxia / Tourette / other), reader-preferences UI in Settings,
+    toolbar-action progress + outcome badge, structural JSON repair
+    for truncated gemma output, HTTP-CSP fix for local dev servers.
+  - **v0.0.17–v0.0.21** — incremental fixes: LM Studio base64-encoded
+    images, model-list fetch proxied via SW (CORS), CSP widened for
+    arbitrary HTTPS image hosts, per-host permission requested at
+    right-click time, sync-callback fix so the permission prompt
+    actually fires, canvas-snapshot fallback for auth-gated /
+    inaccessible images, HTTP CSP for local dev servers, clickable
+    History rows with full request + response, source-image
+    thumbnails in History detail.
+- **CLI tests** 105/105 passing; **extension-browser tests** 260/260
+  passing; **mcp-cognitive-graph tests** 54/54 passing.
+
 ### v0.2.2 — 2026-05-21
 
 Agent-driven expansion of the developer preview. No breaking changes;

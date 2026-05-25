@@ -289,33 +289,39 @@ npm + PyPI. Latest substrate tag: `v0.2.4`.
 
 ### MCP servers (PyPI)
 
-- **`neurodock-mcp-chronometric` 0.0.2** — 5 tools, 22 tests, mypy `--strict`.
-- **`neurodock-mcp-cognitive-graph` 0.0.3** — 4 tools, SQLite + sqlite-vec
+- **`neurodock-mcp-chronometric`** — 5 tools, 22 tests, mypy `--strict`.
+- **`neurodock-mcp-cognitive-graph`** — 4 tools, SQLite + sqlite-vec
   - fastembed; 4-rung resolution cascade (exact → alias → fuzzy → embedding).
-- **`neurodock-mcp-task-fractionator` 0.0.3** — 2 tools, 32 tests; ISO 8601
+    Latest patch ships friendlier `record_fact` errors so wrong-shape input
+    no longer leaks raw Pydantic traces.
+- **`neurodock-mcp-task-fractionator`** — 2 tools, 32 tests; ISO 8601
   duration spec.
-- **`neurodock-mcp-translation` 0.0.2** — 4 tools, 29 tests; deterministic
+- **`neurodock-mcp-translation`** — 4 tools, 29 tests; deterministic
   baseline plus LLM refinement envelope.
-- **`neurodock-mcp-guardrail` 0.0.3** — all three detectors live: rumination,
+- **`neurodock-mcp-guardrail`** — all three detectors live: rumination,
   hyperfocus, sycophancy (48 tests, public heuristics).
-- **`neurodock-evals` 0.0.2** — air-gapped harness, 10 seed corpus examples,
+- **`neurodock-evals`** — air-gapped harness, 10 seed corpus examples,
   contribution pipeline.
-- **`neurodock-clinical` 0.0.0** — reserved name; importable detector library
+- **`neurodock-clinical`** — reserved name; importable detector library
   (currently a stub).
 
 ### CLI + browser surface (npm)
 
-- **`@neurodock/cli` 0.5.0** — 18 verbs across 7 groups: `init`, `install-all`,
+- **`@neurodock/cli`** — 19 verbs across 7 groups: `init`, `install-all`,
   `examples`, `doctor`, `validate`, `update`, `sync`, `uninstall`,
-  `host install/uninstall`, `profile show/validate`,
-  `plugin add/remove/list/enable/disable/validate`.
-- **`@neurodock/core` 0.0.1** — profile schema and plugin protocol manifests
+  `host install/uninstall`, `profile show/validate`, `install-hooks`,
+  `plugin add/remove/list/enable/disable/validate`. `install-hooks`
+  wires the proactive-guardrail hook into Claude Code and optionally
+  registers the standalone daemon.
+- **`@neurodock/core`** — profile schema and plugin protocol manifests
   (JSON Schema 2020-12).
-- **`@neurodock/native-host` 0.1.0** — optional Chrome Native Messaging host
+- **`@neurodock/native-host`** — optional Chrome Native Messaging host
   for the extension ↔ profile sync.
-- **`@neurodock/extension-browser` 0.0.4** — WXT MV3 build for Chrome / Firefox
+- **`@neurodock/extension-browser`** — WXT MV3 build for Chrome / Firefox
   / Edge. Seven sites wired. Five real LLM providers: Ollama, LM Studio,
-  Anthropic, OpenAI, OpenRouter. **Not yet store-published.**
+  Anthropic, OpenAI, OpenRouter. Includes the Phase 2 proactive watchdog
+  for hyperfocus / late-night / single-host rumination signals.
+  **Not yet store-published.**
 
 ### Skills + docs
 
