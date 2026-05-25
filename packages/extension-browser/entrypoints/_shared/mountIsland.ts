@@ -87,6 +87,37 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
         --nd-color-warn-bg: oklch(24% 0.04 70);
       }
     }
+    /* RFC A3 — high-contrast theme. Activated by setting the
+       \`nd-high-contrast\` class on the shadow-root host element. */
+    :host(.nd-high-contrast) {
+      --nd-color-bg: oklch(100% 0 0);
+      --nd-color-bg-nav: oklch(100% 0 0);
+      --nd-color-fg: oklch(0% 0 0);
+      --nd-color-fg-muted: oklch(20% 0 0);
+      --nd-color-hairline: oklch(0% 0 0);
+      --nd-color-accent: oklch(0% 0 0);
+      --nd-color-accent-high: oklch(0% 0 0);
+      --nd-focus-ring-width: 3px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :host(.nd-high-contrast) {
+        --nd-color-bg: oklch(0% 0 0);
+        --nd-color-bg-nav: oklch(0% 0 0);
+        --nd-color-fg: oklch(100% 0 0);
+        --nd-color-fg-muted: oklch(85% 0 0);
+        --nd-color-hairline: oklch(100% 0 0);
+        --nd-color-accent: oklch(100% 0 0);
+        --nd-color-accent-high: oklch(100% 0 0);
+      }
+    }
+    /* RFC A3 — focus mode. Tighter line-height + hide the cloud-mode
+       banner inside the island. */
+    :host(.nd-focus-mode) .neurodock-panel {
+      line-height: 1.45;
+    }
+    :host(.nd-focus-mode) .neurodock-banner {
+      display: none;
+    }
     .neurodock-button {
       pointer-events: auto;
       font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
@@ -99,7 +130,7 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       cursor: pointer;
     }
     .neurodock-button:focus-visible {
-      outline: 2px solid var(--nd-color-accent);
+      outline: var(--nd-focus-ring-width, 2px) solid var(--nd-color-accent);
       outline-offset: 2px;
     }
     .neurodock-panel {

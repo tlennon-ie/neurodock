@@ -10,7 +10,7 @@
  * Voice (plan.md §2): direct, plain, non-clinical. No "superpower" copy.
  * No diagnosis-gated language.
  */
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   defaultProfile,
   loadProfile,
@@ -25,6 +25,10 @@ import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
 import { OpenInTabButton } from "../../src/components/OpenInTabButton.js";
+import {
+  applyA11yToDocument,
+  loadA11yPreferences,
+} from "../../src/lib/accessibility.js";
 
 function isHistoryUpdatedMessage(msg: unknown): boolean {
   return (
@@ -72,6 +76,20 @@ export function App(): React.ReactElement {
       // store recovers. Surfacing this would be noise.
       setHistory([]);
     }
+  }, []);
+
+  // RFC A3: load and apply accessibility preferences as soon as the
+  // popup mounts so high-contrast / focus-mode classes land BEFORE the
+  // profile load completes. A paint with the default theme followed by
+  // a paint with the user's high-contrast preference would itself be
+  // an accessibility regression.
+  useEffect(() => {
+    void (async () => {
+      const a11y = await loadA11yPreferences();
+      if (typeof document !== "undefined") {
+        applyA11yToDocument(a11y, document);
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -294,29 +312,79 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
     { id: "notifications", label: "Notifications" },
     { id: "settings", label: "Settings" },
   ];
+  // RFC A3 — arrow-key navigation across the tab bar. Pattern follows
+  // WAI-ARIA Authoring Practices for tabs: Left/Right (and Up/Down)
+  // cycle, Home/End jump to first/last. Tab itself still moves focus
+  // OUT of the tab bar into the panel below.
+  const refs = useRef<Record<TabId, HTMLButtonElement | null>>({
+    home: null,
+    notifications: null,
+    settings: null,
+  });
+
+  const focusTab = useCallback((id: TabId) => {
+    const node = refs.current[id];
+    if (node) node.focus();
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const order: TabId[] = ["home", "notifications", "settings"];
+      const idx = order.indexOf(current);
+      if (idx === -1) return;
+      let nextId: TabId | null = null;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+        nextId = order[(idx + 1) % order.length] ?? null;
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+        nextId = order[(idx - 1 + order.length) % order.length] ?? null;
+      } else if (event.key === "Home") {
+        nextId = order[0] ?? null;
+      } else if (event.key === "End") {
+        nextId = order[order.length - 1] ?? null;
+      }
+      if (nextId === null) return;
+      event.preventDefault();
+      onChange(nextId);
+      focusTab(nextId);
+    },
+    [current, focusTab, onChange],
+  );
+
   return (
     <nav
       aria-label="Popup sections"
       className="border-hairline flex gap-1 border-b"
     >
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          type="button"
-          role="tab"
-          aria-selected={current === t.id}
-          onClick={() => onChange(t.id)}
-          className={
-            "-mb-px border-b-2 px-3 py-1 text-sm " +
-            (current === t.id
-              ? "border-accent text-fg-accent font-medium"
-              : "text-fg-muted hover:text-fg border-transparent")
-          }
-          data-testid={`tab-${t.id}`}
-        >
-          {t.label}
-        </button>
-      ))}
+      <div
+        role="tablist"
+        aria-label="Popup sections"
+        className="flex gap-1"
+        onKeyDown={handleKeyDown}
+        data-testid="popup-tab-list"
+      >
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            ref={(node) => {
+              refs.current[t.id] = node;
+            }}
+            type="button"
+            role="tab"
+            aria-selected={current === t.id}
+            tabIndex={current === t.id ? 0 : -1}
+            onClick={() => onChange(t.id)}
+            className={
+              "-mb-px border-b-2 px-3 py-1 text-sm " +
+              (current === t.id
+                ? "border-accent text-fg-accent font-medium"
+                : "text-fg-muted hover:text-fg border-transparent")
+            }
+            data-testid={`tab-${t.id}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
     </nav>
   );
 }

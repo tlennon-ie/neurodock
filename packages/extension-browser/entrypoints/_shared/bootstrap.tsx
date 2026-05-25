@@ -25,6 +25,11 @@ import { ContentApp } from "./contentApp.js";
 import { installImageSnapshotHandler } from "./imageSnapshot.js";
 import { installTranslationIndicatorBridge } from "./translationIndicatorBridge.js";
 import { defaultProfile } from "../../src/lib/profile.js";
+import {
+  A11Y_STORAGE_KEY,
+  applyA11yToDocument,
+  loadA11yPreferences,
+} from "../../src/lib/accessibility.js";
 import type {
   Channel,
   ExtensionProfile,
@@ -98,20 +103,37 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
   // Re-render after profile arrives.
   void requestProfile().then(render);
 
+  // RFC A3 — apply accessibility preferences to the shadow-root host
+  // element so `:host(.nd-high-contrast)` / `:host(.nd-focus-mode)`
+  // variants in the in-shadow stylesheet resolve. This runs in
+  // parallel with the profile fetch; the island is already mounted so
+  // the worst case is a single-tick re-paint when the prefs arrive.
+  void loadA11yPreferences().then((prefs) => {
+    applyA11yToDocument(prefs, island.shadow);
+  });
+
   // Subscribe to profile updates from the popup. `chrome.storage.local.set`
   // automatically fires `chrome.storage.onChanged` to every context that
   // has a listener — so when the user changes provider / mode / API key
   // in the popup, every open island re-renders with fresh state without
   // needing a manual tab reload.
+  //
+  // RFC A3: the same listener also picks up `neurodock.a11y.v1`
+  // changes so the in-page island flips between themes the moment the
+  // user toggles in Settings — no tab reload required.
   const storageListener = (
     changes: Record<string, chrome.storage.StorageChange>,
     areaName: string,
   ): void => {
     if (areaName !== "local") return;
-    if (!Object.prototype.hasOwnProperty.call(changes, PROFILE_STORAGE_KEY)) {
-      return;
+    if (Object.prototype.hasOwnProperty.call(changes, PROFILE_STORAGE_KEY)) {
+      void requestProfile().then(render);
     }
-    void requestProfile().then(render);
+    if (Object.prototype.hasOwnProperty.call(changes, A11Y_STORAGE_KEY)) {
+      void loadA11yPreferences().then((prefs) => {
+        applyA11yToDocument(prefs, island.shadow);
+      });
+    }
   };
 
   if (chrome?.storage?.onChanged?.addListener) {
