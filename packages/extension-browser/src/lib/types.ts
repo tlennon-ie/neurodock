@@ -371,7 +371,56 @@ export type RuntimeMessage =
    * Null on either side is non-fatal: the SW falls back to the
    * original-URL fetch path so the existing behaviour is preserved.
    */
-  | { readonly type: "image:snapshot"; readonly imageUrl: string };
+  | { readonly type: "image:snapshot"; readonly imageUrl: string }
+  /**
+   * 0.0.31: in-page progress indicator. The SW dispatches
+   * `translation:starting` to the originating tab when it begins a
+   * right-click-triggered translation, and `translation:complete` when
+   * the translate call settles. The content-script island renders a
+   * small Shadow-DOM badge anchored to the right-clicked image / cursor
+   * and morphs it from spinner → check / cross.
+   *
+   * `requestId` ties a start to its complete so concurrent translations
+   * (e.g. two images right-clicked in quick succession) get independent
+   * indicators. Anchors are described by either an image URL (the CS
+   * locates the live `<img>`'s bounding rect) or a cursor coordinate.
+   *
+   * Popup-initiated translations do NOT emit these messages — the popup
+   * has its own UI feedback and the host page has no useful anchor.
+   */
+  | {
+      readonly type: "translation:starting";
+      readonly requestId: string;
+      readonly target: TranslationIndicatorTarget;
+    }
+  | {
+      readonly type: "translation:complete";
+      readonly requestId: string;
+      readonly ok: boolean;
+      readonly errorMessage?: string;
+    };
+
+/**
+ * Where to anchor the in-page progress indicator. `image` anchors to a
+ * live `<img>` element whose `currentSrc` / `src` matches `imageUrl`,
+ * falling back to viewport coordinates if the element isn't found.
+ * `cursor` anchors to a fixed viewport position (the captured mouse
+ * coords at right-click time).
+ */
+export type TranslationIndicatorTarget =
+  | { readonly kind: "image"; readonly imageUrl: string }
+  | {
+      readonly kind: "cursor";
+      /**
+       * Viewport coords captured at right-click time. Optional because
+       * `chrome.contextMenus.onClicked` does NOT expose cursor coords
+       * to the SW — the SW emits `{kind: "cursor"}` and the content
+       * script falls back to its locally-tracked last-contextmenu
+       * position. When both sides know coords, the SW's win.
+       */
+      readonly x?: number;
+      readonly y?: number;
+    };
 
 export interface RuntimeResponseEnvelope<T = unknown> {
   readonly success: boolean;

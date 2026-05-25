@@ -23,6 +23,7 @@ import React from "react";
 import { mountIsland } from "./mountIsland.js";
 import { ContentApp } from "./contentApp.js";
 import { installImageSnapshotHandler } from "./imageSnapshot.js";
+import { installTranslationIndicatorBridge } from "./translationIndicatorBridge.js";
 import { defaultProfile } from "../../src/lib/profile.js";
 import type {
   Channel,
@@ -125,11 +126,20 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
   // gracefully falls back to its existing URL-fetch path.
   const removeImageSnapshotHandler = installImageSnapshotHandler();
 
+  // 0.0.31: install the in-page progress-indicator bridge. The service
+  // worker emits `translation:starting` / `translation:complete` for
+  // right-click-triggered translations; this bridge mounts a small
+  // Shadow-DOM badge anchored to the right-clicked image (or cursor)
+  // that spins while the translate is in flight and morphs to a tick
+  // or cross when it settles. See translationIndicator.ts for details.
+  const removeTranslationIndicatorBridge = installTranslationIndicatorBridge();
+
   return (): void => {
     if (chrome?.storage?.onChanged?.removeListener) {
       chrome.storage.onChanged.removeListener(storageListener);
     }
     removeImageSnapshotHandler();
+    removeTranslationIndicatorBridge();
     island.destroy();
   };
 }

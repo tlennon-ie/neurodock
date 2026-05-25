@@ -379,8 +379,18 @@ describe("contextMenus.onClicked dispatcher", () => {
     ) as Promise<void>[];
     await Promise.all(promises);
 
-    expect(tabsSendMessageSpy).toHaveBeenCalledOnce();
-    const [tabId, msg] = tabsSendMessageSpy.mock.calls[0] as [number, unknown];
+    // 0.0.31: the SW now also emits translation:starting +
+    // translation:complete on the same tab to drive the in-page
+    // progress indicator. The legacy assertion was "called once"; pin
+    // the specific context-result call instead so future indicator-
+    // protocol additions don't shake this regression test.
+    const contextCalls = tabsSendMessageSpy.mock.calls.filter(
+      (call) =>
+        (call[1] as { type?: string } | undefined)?.type ===
+        "neurodock:context-result",
+    );
+    expect(contextCalls).toHaveLength(1);
+    const [tabId, msg] = contextCalls[0] as [number, unknown];
     expect(tabId).toBe(7);
     expect(msg).toMatchObject({
       type: "neurodock:context-result",

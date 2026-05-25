@@ -30,6 +30,7 @@ import { withKeepalive } from "../src/lib/sw-keepalive.js";
 import type {
   RuntimeMessage,
   RuntimeResponseEnvelope,
+  TranslationIndicatorTarget,
   TranslationRequest,
   TranslationResponse,
 } from "../src/lib/types.js";
@@ -100,6 +101,10 @@ export function registerHandlers(): void {
           channel,
         },
         text,
+        // cursor anchor — SW has no coords (contextMenus.onClicked
+        // doesn't expose them), the content script's bridge falls back
+        // to its locally tracked last-contextmenu position.
+        { kind: "cursor" },
       ) as unknown as void;
     }
 
@@ -706,6 +711,13 @@ async function dispatchImageTranslate(
   channel: ReturnType<typeof detectChannelFromUrl>,
   imageUrl: string,
 ): Promise<void> {
+  // 0.0.31: the indicator anchors to the live <img> matched by the
+  // ORIGINAL right-clicked URL — not the snapshot data: URL, which
+  // never matches an on-page element.
+  const indicatorTarget: TranslationIndicatorTarget = {
+    kind: "image",
+    imageUrl,
+  };
   // 0.0.20: prefer the content-script canvas snapshot over the original
   // URL. The page already has the decoded image bytes in memory, so a
   // snapshot bypasses three failure modes the URL path can't recover
@@ -733,6 +745,7 @@ async function dispatchImageTranslate(
       channel,
     },
     imageUrl, // keep the original URL for the in-panel SourcePreview
+    indicatorTarget,
   );
 }
 
@@ -802,8 +815,50 @@ async function dispatchContextResult(
   channel: ReturnType<typeof detectChannelFromUrl>,
   request: TranslationRequest,
   sourceText: string,
+  indicatorTarget: TranslationIndicatorTarget | null = null,
 ): Promise<void> {
-  const response = await runTranslate(request, tabId);
+  // 0.0.31: notify the content script that a translation is in flight
+  // so it can render an in-page progress indicator anchored near the
+  // right-clicked target. The requestId ties the start to the
+  // eventual complete message; concurrent translations get independent
+  // indicators. Fire-and-forget — a missing content script (off-list
+  // host, transient SPA navigation) just means no indicator shows on
+  // this tab, and the existing badge / notification fallback covers it.
+  const requestId = generateRequestId();
+  if (indicatorTarget) {
+    void sendIndicatorMessage(tabId, {
+      type: "translation:starting",
+      requestId,
+      target: indicatorTarget,
+    });
+  }
+
+  let response: TranslationResponse;
+  try {
+    response = await runTranslate(request, tabId);
+  } catch (cause: unknown) {
+    if (indicatorTarget) {
+      void sendIndicatorMessage(tabId, {
+        type: "translation:complete",
+        requestId,
+        ok: false,
+        errorMessage:
+          cause instanceof Error ? cause.message : "Translation failed.",
+      });
+    }
+    throw cause;
+  }
+
+  if (indicatorTarget) {
+    void sendIndicatorMessage(tabId, {
+      type: "translation:complete",
+      requestId,
+      ok: response.ok && !response.mockMode,
+      ...(response.ok
+        ? {}
+        : { errorMessage: response.error ?? "Translation failed." }),
+    });
+  }
   const message = {
     type: "neurodock:context-result" as const,
     response,
@@ -843,6 +898,46 @@ async function dispatchContextResult(
     if (await tryDeliver(tabId, message)) return;
   }
   void notifyContextResultFallback(response, pageUrl);
+}
+
+/**
+ * Generate a unique request id for the indicator start/complete
+ * protocol. Uses crypto.randomUUID when available (always true in MV3
+ * service workers); falls back to a timestamp+random suffix for the
+ * vanishingly small set of test environments without it.
+ */
+function generateRequestId(): string {
+  const g = globalThis as unknown as {
+    crypto?: { randomUUID?: () => string };
+  };
+  if (typeof g.crypto?.randomUUID === "function") {
+    return g.crypto.randomUUID();
+  }
+  return `nd-${Date.now()}-${Math.floor(Math.random() * 1e9).toString(36)}`;
+}
+
+/**
+ * Send a `translation:starting` / `translation:complete` message to the
+ * content script in `tabId`. Fire-and-forget: a missing content script
+ * (off-list host, SPA navigation, or this is an image-only page that
+ * never mounted the island) just means the indicator never appears on
+ * that tab — the toolbar badge + the eventual panel / notification
+ * still cover the user.
+ */
+async function sendIndicatorMessage(
+  tabId: number,
+  message:
+    | Extract<RuntimeMessage, { type: "translation:starting" }>
+    | Extract<RuntimeMessage, { type: "translation:complete" }>,
+): Promise<void> {
+  const tabsApi = (globalThis as { chrome?: typeof chrome }).chrome?.tabs;
+  if (!tabsApi?.sendMessage) return;
+  try {
+    await tabsApi.sendMessage(tabId, message);
+  } catch {
+    // No listener / tab gone / receiver threw — non-fatal. The
+    // indicator is a progress affordance, not a correctness boundary.
+  }
 }
 
 /**
