@@ -1,5 +1,41 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Added — pacing copilot (configurable break suggestions; opt-in default for OCD / AuDHD users)
+
+Periodic, non-blocking pacing nudges land as in-page toasts in the
+content-script panel and as inbox rows in the popup. Three nudge kinds:
+
+- "break" — fires at the user-configured interval (default 45 min;
+  options 20 / 30 / 45 / 60).
+- "long_session" — fires when the session crosses 90 min wall-clock.
+- "timebox" — fires when a fresh session begins, asking if the user
+  wants to set a 25 / 50 min box. Opt-out per nudge.
+
+Voice constraints baked into the copy (mirrored from
+`packages/skills/hyperfocus-formatter/SKILL.md`): never the word
+"hyperfocus" or "focused" in any user-facing string; suggestions never
+commands ("Consider stepping away" not "Take a break"); sentence case;
+no exclamation marks. The `pacing-render-text.test.ts` tripwire fails
+the build if forbidden language leaks.
+
+Pacing nudges are default OFF for users whose `profile.neurotypes`
+contains `ocd` or `audhd` — unsolicited pacing prompts can feed
+rumination loops. Those users see a one-time "Enable pacing nudges?"
+prompt in the popup home view; default is Not now.
+
+- **New module**: `src/lib/pacing.ts` (pure decision logic) +
+  `src/lib/pacing-runtime.ts` (service-worker ticker wiring).
+- **New storage key**: `neurodock.pacing.v1` in chrome.storage.local
+  (never sync; never leaves the device).
+- **New runtime message**: `watchdog:nudge` broadcast from the SW pacing
+  ticker; consumed by the new `PacingNudge` toast in
+  `entrypoints/_shared/pacingNudge.tsx`.
+- **Settings UI**: new Pacing copilot section in `SettingsTab.tsx` with
+  enable toggle, interval select, and timebox-on-start toggle.
+- **Home UI**: one-time `PacingOptInPrompt` for OCD / AuDHD users.
+
 ## 0.0.32
 
 ### Changed — visual identity refresh matching docs site

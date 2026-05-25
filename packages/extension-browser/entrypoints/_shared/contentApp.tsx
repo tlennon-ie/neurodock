@@ -21,6 +21,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { FloatingButton } from "./floatingButton.js";
 import { Panel } from "./panel.js";
+import { PacingNudge } from "./pacingNudge.js";
 import { startSelectionWatcher, type Editable } from "./selectionWatcher.js";
 import type {
   Channel,
@@ -141,6 +142,7 @@ export function ContentApp({
         anchor={buttonAnchor ?? { top: -1000, left: -1000 }}
         onActivate={onActivate}
       />
+      <PacingNudge />
       {panelOpen ? (
         // 0.0.15: panel position is now CSS-only (top-right of viewport
         // with explicit right margin). Previous anchor-math approach

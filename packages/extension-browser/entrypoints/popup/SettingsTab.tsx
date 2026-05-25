@@ -38,6 +38,15 @@ import {
   type ModelFetchableProvider,
 } from "../../src/lib/providers/models.js";
 import {
+  DEFAULT_PACING_INTERVAL,
+  PACING_INTERVAL_OPTIONS,
+  hasOcdOrAudhd,
+  loadPacingPreferences,
+  savePacingPreferences,
+  type PacingInterval,
+  type PacingPreferences,
+} from "../../src/lib/pacing.js";
+import {
   hasImageTranslationGlobalAccess,
   listGrantedNonDefaultOrigins,
   requestHostPermission,
@@ -282,6 +291,8 @@ export function SettingsTab({
 
       <ProactiveGuardrails />
 
+      <PacingCopilotSection profile={profile} />
+
       <DebugTools />
 
       <ReaderPreferences profile={profile} onChange={onChange} />
@@ -509,6 +520,163 @@ function DebugTools(): React.ReactElement {
             device. View at{" "}
             <code className="font-mono">chrome://extensions</code> → NeuroDock →
             "service worker".
+          </span>
+        </span>
+      </label>
+    </fieldset>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Pacing copilot (RFC B3).
+//
+// Configurable break-suggestion cadence and timebox-on-start prompt.
+// Default ON for most users (45-min interval); default OFF for users
+// whose `profile.neurotypes` contains `ocd` or `audhd` — those users
+// see a one-time opt-in prompt instead of unsolicited nudges.
+//
+// Storage: chrome.storage.local["neurodock.pacing.v1"] (see pacing.ts).
+// ──────────────────────────────────────────────────────────────────────
+
+interface PacingCopilotSectionProps {
+  readonly profile: ExtensionProfile;
+}
+
+function PacingCopilotSection({
+  profile,
+}: PacingCopilotSectionProps): React.ReactElement {
+  const [prefs, setPrefs] = useState<PacingPreferences | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const loaded = await loadPacingPreferences(profile.neurotypes);
+      if (!cancelled) setPrefs(loaded);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.neurotypes]);
+
+  const update = useCallback(
+    async (patch: Partial<PacingPreferences>) => {
+      if (prefs === null) return;
+      const next: PacingPreferences = {
+        ...prefs,
+        ...patch,
+        schemaVersion: 1,
+      };
+      setPrefs(next);
+      try {
+        await savePacingPreferences(next);
+      } catch {
+        // Revert on failure so the UI reflects actual persisted state.
+        setPrefs(prefs);
+      }
+    },
+    [prefs],
+  );
+
+  if (prefs === null) {
+    return (
+      <fieldset
+        className="border-hairline m-0 flex flex-col gap-2 border p-3"
+        data-testid="pacing-copilot"
+      >
+        <legend className="text-fg-muted px-1 text-sm font-medium">
+          Pacing copilot
+        </legend>
+        <p className="text-fg-muted text-sm">Loading pacing preferences…</p>
+      </fieldset>
+    );
+  }
+
+  const showOptInHint =
+    hasOcdOrAudhd(profile.neurotypes) && !prefs.ocdOptInShown;
+
+  return (
+    <fieldset
+      className="border-hairline m-0 flex flex-col gap-3 border p-3"
+      data-testid="pacing-copilot"
+    >
+      <legend className="text-fg-muted px-1 text-sm font-medium">
+        Pacing copilot
+      </legend>
+
+      {showOptInHint ? (
+        <p
+          className="text-fg-muted text-sm"
+          data-testid="pacing-ocd-opt-in-hint"
+        >
+          Pacing nudges are off by default for your neurotype. Enable below only
+          if you want them.
+        </p>
+      ) : null}
+
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={prefs.enabled}
+          onChange={(event) =>
+            void update({
+              enabled: event.target.checked,
+              ocdOptInShown: true,
+            })
+          }
+          className="mt-0.5"
+          data-testid="pacing-enabled-toggle"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-medium">Enable pacing nudges</span>
+          <span className="text-fg-muted text-sm">
+            Periodic, dismissable suggestions to consider a short break during
+            long stretches. Sentence-case, no demanding language.
+          </span>
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="font-medium">Nudge interval</span>
+        <select
+          value={prefs.intervalMinutes}
+          onChange={(event) =>
+            void update({
+              intervalMinutes: Number(event.target.value) as PacingInterval,
+            })
+          }
+          disabled={!prefs.enabled}
+          className="border-hairline w-fit border bg-bg p-1"
+          data-testid="pacing-interval-select"
+        >
+          {PACING_INTERVAL_OPTIONS.map((minutes) => (
+            <option key={minutes} value={minutes}>
+              Every {minutes} min
+            </option>
+          ))}
+        </select>
+        <span className="text-fg-muted text-sm">
+          Default: every {DEFAULT_PACING_INTERVAL} min.
+        </span>
+      </label>
+
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={prefs.timeboxOnStart}
+          onChange={(event) =>
+            void update({ timeboxOnStart: event.target.checked })
+          }
+          disabled={!prefs.enabled}
+          className="mt-0.5"
+          data-testid="pacing-timebox-toggle"
+        />
+        <span className="flex flex-col gap-0.5">
+          <span className="font-medium">
+            Suggest a timebox when starting a new stretch
+          </span>
+          <span className="text-fg-muted text-sm">
+            When a new session begins, ask if you want to set a 25 or 50 minute
+            box. Off skips the prompt.
           </span>
         </span>
       </label>

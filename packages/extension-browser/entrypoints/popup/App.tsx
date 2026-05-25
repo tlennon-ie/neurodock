@@ -20,6 +20,12 @@ import {
 } from "../../src/lib/profile.js";
 import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
 import { listHistory, clearHistory } from "../../src/lib/storage.js";
+import {
+  hasOcdOrAudhd,
+  loadPacingPreferences,
+  savePacingPreferences,
+  type PacingPreferences,
+} from "../../src/lib/pacing.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
@@ -212,6 +218,8 @@ export function App(): React.ReactElement {
           </button>
         </div>
       ) : null}
+
+      <PacingOptInPrompt profile={profile} />
 
       <TabBar current={tab} onChange={setTab} />
 
@@ -608,4 +616,93 @@ function formatTimestamp(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// PacingOptInPrompt (RFC B3).
+//
+// One-time opt-in surface for users with `ocd` or `audhd` in their
+// neurotypes. Pacing prompts can feed rumination loops for those
+// users, so default is OFF and the popup must explicitly ask before
+// any nudges fire. Dismissable in either direction (Enable / Not now);
+// either path sets `ocdOptInShown = true` so the prompt does not
+// render again.
+// ──────────────────────────────────────────────────────────────────────
+
+interface PacingOptInPromptProps {
+  readonly profile: ExtensionProfile;
+}
+
+export function PacingOptInPrompt({
+  profile,
+}: PacingOptInPromptProps): React.ReactElement | null {
+  const [prefs, setPrefs] = useState<PacingPreferences | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const loaded = await loadPacingPreferences(profile.neurotypes);
+      if (!cancelled) setPrefs(loaded);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile.neurotypes]);
+
+  const respond = useCallback(
+    async (enabled: boolean) => {
+      if (prefs === null) return;
+      const next: PacingPreferences = {
+        ...prefs,
+        enabled,
+        ocdOptInShown: true,
+        schemaVersion: 1,
+      };
+      setPrefs(next);
+      try {
+        await savePacingPreferences(next);
+      } catch {
+        setPrefs(prefs);
+      }
+    },
+    [prefs],
+  );
+
+  if (prefs === null) return null;
+  if (!hasOcdOrAudhd(profile.neurotypes)) return null;
+  if (prefs.ocdOptInShown) return null;
+
+  return (
+    <section
+      role="region"
+      aria-label="Pacing copilot opt-in"
+      data-testid="pacing-opt-in-prompt"
+      className="border-warn-border bg-warn-bg text-warn-fg flex flex-col gap-2 border p-3 text-sm"
+    >
+      <div className="font-medium">Enable pacing nudges?</div>
+      <p className="m-0">
+        We can suggest a short break during long stretches. Default is off for
+        your neurotype because pacing prompts can feed rumination loops. You can
+        change this any time in Settings.
+      </p>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => void respond(true)}
+          data-testid="pacing-opt-in-enable"
+          className="border-hairline bg-bg text-fg border px-2 py-0.5"
+        >
+          Enable
+        </button>
+        <button
+          type="button"
+          onClick={() => void respond(false)}
+          data-testid="pacing-opt-in-dismiss"
+          className="border-hairline bg-bg text-fg border px-2 py-0.5"
+        >
+          Not now
+        </button>
+      </div>
+    </section>
+  );
 }

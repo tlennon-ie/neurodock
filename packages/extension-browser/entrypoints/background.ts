@@ -26,6 +26,7 @@ import {
 } from "../src/lib/proactive-watchdog.js";
 import { listHistory } from "../src/lib/storage.js";
 import { appendNotification, isMuted } from "../src/lib/notifications.js";
+import { startPacingTicker } from "../src/lib/pacing-runtime.js";
 import { withKeepalive } from "../src/lib/sw-keepalive.js";
 import type {
   RuntimeMessage,
@@ -227,6 +228,13 @@ export default defineBackground(() => {
   // signal trips. Opt-out via chrome.storage.local
   // `neurodock.watchdog.enabled` (default true).
   startProactiveWatchdog();
+  // RFC B3: Pacing copilot. Independent ticker (default 5 min) that
+  // evaluates the current session length against the user's pacing
+  // preferences and broadcasts `watchdog:nudge` to content scripts when
+  // a break / long-session / timebox suggestion applies. Default-off
+  // for users with ocd or audhd neurotypes — they get a one-time opt-in
+  // prompt in the popup before any nudges fire.
+  startPacingTicker();
 });
 
 function startProactiveWatchdog(): void {

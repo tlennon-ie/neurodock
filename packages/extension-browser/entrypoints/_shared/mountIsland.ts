@@ -127,6 +127,37 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       color: var(--nd-color-warn-fg);
       font-size: 14px;
     }
+    /* RFC B3: pacing-copilot toast. Same hairline + warn tokens as the
+       cloud banner so it sits inside the existing visual language. No
+       slide-in animation by default — opted in only under
+       prefers-reduced-motion: no-preference. */
+    .neurodock-toast {
+      pointer-events: auto;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      border: 1px solid var(--nd-color-hairline);
+      background: var(--nd-color-bg);
+      color: var(--nd-color-fg);
+      font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .neurodock-toast-body { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .neurodock-toast-title { font-weight: 600; font-family: "Lexend Variable", "Lexend", inherit; }
+    .neurodock-toast-text { color: var(--nd-color-fg-muted); }
+    .neurodock-toast-dismiss { align-self: flex-start; padding: 4px 8px; font-size: 13px; }
+    @media (prefers-reduced-motion: no-preference) {
+      .neurodock-toast {
+        opacity: 0;
+        animation: nd-toast-fade-in 120ms ease-out forwards;
+      }
+      @keyframes nd-toast-fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    }
   `;
   shadow.appendChild(styleHost);
 

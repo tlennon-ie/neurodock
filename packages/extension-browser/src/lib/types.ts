@@ -398,6 +398,29 @@ export type RuntimeMessage =
       readonly requestId: string;
       readonly ok: boolean;
       readonly errorMessage?: string;
+    }
+  /**
+   * RFC B3: Pacing copilot nudge broadcast.
+   *
+   * The proactive watchdog tick evaluates session length against the
+   * user's pacing preferences (default 45-min break interval). When a
+   * nudge fires the SW broadcasts this message to every tab plus the
+   * popup. The content-script island renders a non-blocking toast in
+   * the Shadow-DOM panel; the inbox row is appended separately via
+   * `appendNotification` so the user can audit dismissed nudges later.
+   *
+   * - "break": session crossed the user's interval (20 / 30 / 45 / 60).
+   * - "long_session": session crossed the 90-min hard threshold.
+   * - "timebox": a new session just started and timeboxOnStart is on.
+   *
+   * `minutesIn` is the wall-clock length of the current session, used
+   * for the toast copy. Never includes any user-facing string with
+   * "hyperfocus" — see packages/skills/hyperfocus-formatter/SKILL.md.
+   */
+  | {
+      readonly type: "watchdog:nudge";
+      readonly kind: "break" | "long_session" | "timebox";
+      readonly minutesIn: number;
     };
 
 /**
