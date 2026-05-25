@@ -19,6 +19,9 @@ mcp_dependencies:
     tools: [brief_meeting]
   - server: mcp-cognitive-graph
     tools: [record_fact, recall_decisions]
+  - server: mcp-task-fractionator
+    tools: [decompose]
+    optional: true
 profile_dependencies:
   - identity.neurotypes
   - identity.display_name
@@ -82,6 +85,23 @@ Follow these steps in order. Do not improvise extra tool calls.
    - `source = "meeting transcript via asd-meeting-translator"`
    - `confidence = 0.85`
      Do not write asks, ambiguous items, or `my_asks` rows. Decisions only. Cap at 10 writes per invocation; if the brief contains more decisions, write the first 10 in transcript order and note the truncation count in the closing line.
+
+6a. **Fractionate the asks of you into atomic tasks.** For each entry in `output.my_asks`, call `mcp-task-fractionator.decompose` exactly once, passing the ask text as the `goal` argument. The tool returns a list of atomic tasks sized 5–90 minutes each. Render the returned tasks back to the user under their parent ask, appended to the brief in a new section titled `### Atomic tasks from asks of you`, grouped one block per ask:
+
+    ```
+    ### Atomic tasks from asks of you
+    **<ask.text>**
+    - <task.title> · <task.estimate_minutes> min
+    - <task.title> · <task.estimate_minutes> min
+    ```
+
+    Rules:
+
+    - If `mcp-task-fractionator` is not configured or the tool is unavailable, skip this step entirely. Do not block the brief. Do not mention the missing tool in the output. The asks already appear in the `### Asks of you` section — that is the fallback surface.
+    - If `output.my_asks` is empty, skip this step. Do not render the section header.
+    - Cap at 5 asks fractionated per invocation. If more exist, fractionate the first 5 in transcript order and append a single trailing line: `(N further asks not fractionated)`.
+    - If `mcp-cognitive-graph.record_fact` is available, persist each fractionation once per parent ask: `subject = { type: "task_group", name: <ask.text truncated to 200 chars> }`, `predicate = "fractionated_from"`, `object = { type: "meeting", name: <project or "untitled meeting"> }`, `source = "asd-meeting-translator step 6a"`, `confidence = 0.8`. If `mcp-cognitive-graph` is not configured, skip the persistence — do not block on it.
+    - Errors from `decompose` are surfaced literally by error code on a single trailing line (e.g. `Fractionator error: GOAL_TOO_VAGUE`). Do not retry. Do not fall back to a paraphrase.
 
 7. **Stop.** No follow-up question.
 
