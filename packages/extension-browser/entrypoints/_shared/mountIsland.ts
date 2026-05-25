@@ -7,7 +7,6 @@
  * The "island" is a single rooted container per page; we never mount more
  * than one per content script context.
  */
-import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 
 export interface Island {

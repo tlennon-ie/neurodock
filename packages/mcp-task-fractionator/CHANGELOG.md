@@ -4,6 +4,18 @@ All notable changes to this package will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [unreleased]
+
+### Fixed — removed unreachable forward-reference block in sources/base.py
+
+The `if False:` guard around the type-checker-only imports in
+`sources/base.py` was replaced with the standard `if TYPE_CHECKING:` idiom.
+Both evaluate to `False` at runtime (no import is executed; no circular
+dependency is introduced), but `TYPE_CHECKING` is the canonical pattern that
+static-analysis tools recognise as intentional — eliminating CodeQL alert #11
+(unreachable statement). A regression test (`test_base_module_imports_cleanly_at_runtime`)
+asserts that reloading the module still returns the correct default source.
+
 ## [0.0.3] - 2026-05-22
 
 ### Changed

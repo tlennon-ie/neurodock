@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { atomicWriteOverwrite } from "../util/atomic-write.js";
 import type {
   ClientDiff,
   ClientId,
@@ -236,7 +237,9 @@ function applyClientDiff(
     merged.merged.mcpServers as Record<string, McpServerEntry>,
   );
   mkdirSync(dirname(cd.path), { recursive: true });
-  writeFileSync(cd.path, `${JSON.stringify(shaped, null, 2)}\n`, "utf8");
+  // Atomic overwrite: write to a .tmp sibling then rename into place to
+  // prevent a TOCTOU window between existsSync (above) and the write.
+  atomicWriteOverwrite(cd.path, `${JSON.stringify(shaped, null, 2)}\n`);
 }
 
 function resolveTemplatePath(profile: "minimal" | "example"): string {

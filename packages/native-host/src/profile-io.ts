@@ -8,8 +8,9 @@
  *   2. $XDG_CONFIG_HOME/neurodock/profile.yaml
  *   3. ~/.neurodock/profile.yaml
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
+import { atomicWriteOverwrite } from "./util/atomic-write.js";
 import { homedir } from "node:os";
 import { parse, parseDocument, stringify, type Document } from "yaml";
 
@@ -78,7 +79,10 @@ export function writeProfile(
     created = true;
     text = stringify(value);
   }
-  writeFileSync(path, text, "utf8");
+  // Atomic overwrite: the existsSync read-or-create branch above and this
+  // write share a TOCTOU window.  Rename-from-tmp preserves existing data
+  // (the merge has already happened into `text`) and closes the race.
+  atomicWriteOverwrite(path, text);
   return { path, created, bytesWritten: Buffer.byteLength(text, "utf8") };
 }
 

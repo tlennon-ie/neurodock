@@ -141,8 +141,8 @@ def _run_one_tick() -> int:
             elapsed = (now - datetime.fromisoformat(last_at)).total_seconds()
             if elapsed < DEDUP_SECONDS:
                 return 0
-        except ValueError:
-            pass
+        except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+            _log("daemon-dedup-parse-error", {"error": str(exc)})
     _surface(signal)
     state["last_surfaced"] = {
         "kind": signal["kind"],
@@ -225,12 +225,16 @@ def _notify_windows(title: str, message: str) -> None:
     # Use PowerShell BurntToast-free approach: New-BurntToastNotification
     # isn't always present. Use the built-in toast API via XML through
     # the Windows Runtime instead. Falls back to msg.exe on failure.
+    #
+    # Security: title and message come from hardcoded daemon logic today,
+    # but _escape_ps() defensively strips shell-metacharacters so future
+    # callers cannot inject PowerShell via the notification body.
     ps_script = (
         '[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime] | Out-Null;'
         '$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent('
         '[Windows.UI.Notifications.ToastTemplateType]::ToastText02);'
-        f'$template.GetElementsByTagName("text").Item(0).AppendChild($template.CreateTextNode("{_escape(title)}")) | Out-Null;'
-        f'$template.GetElementsByTagName("text").Item(1).AppendChild($template.CreateTextNode("{_escape(message)}")) | Out-Null;'
+        f'$template.GetElementsByTagName("text").Item(0).AppendChild($template.CreateTextNode("{_escape_ps(title)}")) | Out-Null;'
+        f'$template.GetElementsByTagName("text").Item(1).AppendChild($template.CreateTextNode("{_escape_ps(message)}")) | Out-Null;'
         '$notify = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("NeuroDock");'
         '$notify.Show([Windows.UI.Notifications.ToastNotification]::new($template));'
     )
@@ -243,8 +247,11 @@ def _notify_windows(title: str, message: str) -> None:
 
 
 def _notify_macos(title: str, message: str) -> None:
+    # Security: osascript -e interpolates title/message into the AppleScript
+    # source.  _escape_as() strips characters that would break out of the
+    # quoted string context inside the AppleScript literal.
     script = (
-        f'display notification "{_escape(message)}" with title "{_escape(title)}"'
+        f'display notification "{_escape_as(message)}" with title "{_escape_as(title)}"'
     )
     subprocess.run(
         ["osascript", "-e", script],
@@ -258,6 +265,8 @@ def _notify_linux(title: str, message: str) -> None:
     # Most desktop environments have notify-send. We don't fail loud if
     # it's absent — Linux server users without a display server will
     # see the daemon log entries but no toast.
+    # Security: title and message are passed as separate argv elements —
+    # no shell interpolation, no escaping required.
     subprocess.run(
         ["notify-send", "-a", "NeuroDock", title, message],
         check=False,
@@ -266,8 +275,43 @@ def _notify_linux(title: str, message: str) -> None:
     )
 
 
-def _escape(s: str) -> str:
-    return s.replace('"', '\\"').replace("\n", " ").replace("\r", " ")
+# Characters to STRIP from PowerShell double-quoted string interpolation.
+# Note: double-quote itself is NOT in this set — it is backslash-escaped
+# by _escape_ps() instead of being stripped, so the text node value is
+# preserved.  Backtick is the PS escape character, so it must be stripped.
+_PS_STRIP = str.maketrans(
+    "", "",
+    "`$(){};&|<>\\\n\r",
+)
+
+# Characters to STRIP from AppleScript double-quoted string interpolation.
+# AppleScript has no reliable backslash escape for double-quote inside a
+# quoted string (the behaviour is interpreter-version-dependent), so both
+# double-quote and backslash are stripped rather than escaped.
+_AS_STRIP = str.maketrans(
+    "", "",
+    '"\\&|;`\n\r',
+)
+
+
+def _escape_ps(s: str) -> str:
+    """Strip PS-dangerous chars; backslash-escape remaining double-quotes.
+
+    The double-quote is backslash-escaped (not stripped) so that the XML
+    text node still receives the literal quote character.
+    """
+    stripped = s.translate(_PS_STRIP)
+    return stripped.replace('"', '\\"')
+
+
+def _escape_as(s: str) -> str:
+    """Strip AppleScript-dangerous chars including double-quote.
+
+    AppleScript double-quoted literals cannot reliably escape a quote via
+    backslash on all macOS versions, so the double-quote is stripped
+    entirely rather than kept.
+    """
+    return s.translate(_AS_STRIP)
 
 
 # ── Autostart wiring ─────────────────────────────────────────────────────
@@ -449,8 +493,8 @@ def _save_daemon_state(state: dict[str, Any]) -> None:
     try:
         with DAEMON_STATE_FILE.open("w", encoding="utf-8") as fh:
             json.dump(state, fh)
-    except OSError:
-        pass
+    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        _log("daemon-state-save-error", {"error": str(exc)})
 
 
 def _log(event: str, data: dict[str, Any]) -> None:
@@ -463,8 +507,9 @@ def _log(event: str, data: dict[str, Any]) -> None:
         }
         with LOG_FILE.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry) + "\n")
-    except OSError:
-        pass
+    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        # Cannot recurse into _log here; write minimally to stderr.
+        sys.stderr.write(f"[neurodock-daemon] log-write-error: {exc}\n")
 
 
 def _now() -> datetime:

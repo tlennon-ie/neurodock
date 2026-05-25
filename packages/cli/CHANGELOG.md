@@ -1,5 +1,37 @@
 # @neurodock/cli changelog
 
+## [unreleased]
+
+### Security — atomic writes for CLI scaffolding (TOCTOU defence)
+
+`neurodock init`, `neurodock install-hooks`, and `neurodock plugin enable` previously
+used an `existsSync` check followed by a separate `writeFileSync`, leaving a
+TOCTOU (time-of-check / time-of-use) window in which a local attacker could swap the
+target path for a symlink between the two calls. All three sites now use atomic
+write primitives: new-file creation uses `O_CREAT | O_EXCL` (one kernel operation
+that makes the check-and-create atomic), while update-in-place sites write to a
+unique `.pid.ts.tmp` sibling and rename it into place — rename is atomic on POSIX
+and best-effort on Windows. A shared helper `src/util/atomic-write.ts` encapsulates
+both patterns.
+
+### Fixed — Python hooks no longer swallow exceptions silently
+
+Seven `except …: pass` blocks in `proactive_guardrail.py` and `neurodock_daemon.py`
+were changed to `except Exception as exc:` with structured logging. The affected
+sites are session-end timestamp parsing, session-file saves, prompt-file saves, log
+writes, and the daemon dedup-timestamp parse. `KeyboardInterrupt` and `SystemExit`
+continue to propagate because `except Exception` excludes them by design. The log
+write itself falls back to a minimal `sys.stderr` line to avoid infinite recursion.
+
+### Fixed — notification-text escape hardened (M5)
+
+`_escape()` in `neurodock_daemon.py` was split into two context-aware functions,
+`_escape_ps()` (PowerShell) and `_escape_as()` (AppleScript). Both strip the full
+set of shell-metacharacters that the original single-function omitted: backtick,
+`$(){}`, `;&|<>`, and backslash for PowerShell; `\\&|;\`` for AppleScript.
+Unit tests in `packages/cli/src/assets/hooks/test_daemon_escape.py` assert that
+injection payloads containing all dangerous characters produce literal-text output.
+
 ## 0.6.2
 
 ### Fixed — `neurodock --version` was hardcoded and stale (read package.json instead)
