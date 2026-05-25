@@ -1,9 +1,42 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ *
+ * Popup global styles. Tokens load first so utilities can resolve their
+ * CSS custom properties.
+ *
+ * Motion contract (mirrors docs overrides.css):
+ *   - Default: no animation, no transitions. Killed unconditionally so
+ *     even browsers that ignore prefers-reduced-motion stay still.
+ *   - Opt-in: when the user has prefers-reduced-motion: no-preference,
+ *     transitions for THIS specific list of properties are allowed at
+ *     the duration the token resolves to (120ms by default). This
+ *     mirrors the docs pattern — conditional, narrowly scoped — and
+ *     never regresses the "unconditional kill" rule.
+ *
+ * No gradients: any background-image set by a third-party (Tailwind
+ * `bg-gradient-*`, browser default in details/summary, etc.) is
+ * removed.
+ */
+
+@import "../../src/styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Reduced-motion default per plan.md §2. The popup never animates by
- * default; this rule keeps any third-party CSS from re-introducing motion. */
+/* Forbid gradients everywhere — mirrors docs overrides.css. */
+* {
+  background-image: none !important;
+}
+
+img,
+svg,
+picture {
+  background-image: initial !important;
+}
+
+/* Unconditional motion kill. Default browser state for this extension. */
 *,
 *::before,
 *::after {
@@ -11,6 +44,60 @@
   transition: none !important;
 }
 
-:root {
-  color-scheme: light dark;
+/* Opt-in motion. Only when the user explicitly has no-preference do we
+   permit a narrow set of compositor-friendly transitions at the
+   token-defined duration. This is the upgrade of the previous
+   unconditional kill — the original `animation: none / transition: none`
+   above still wins by default, but inside this media query specific
+   properties are re-enabled. */
+@media (prefers-reduced-motion: no-preference) {
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    transition:
+      color var(--nd-transition-duration) ease,
+      background-color var(--nd-transition-duration) ease,
+      border-color var(--nd-transition-duration) ease,
+      opacity var(--nd-transition-duration) ease !important;
+  }
+}
+
+body {
+  font-family: var(--nd-font-body);
+  line-height: var(--nd-line-height);
+  color: var(--nd-color-fg);
+  background: var(--nd-color-bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--nd-font-heading);
+  line-height: var(--nd-line-height-headings);
+  letter-spacing: -0.005em;
+  color: var(--nd-color-fg);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--nd-font-mono);
+}
+
+/* Focus rings — every interactive element gets a visible 2px ring
+   offset by 2px in the accent colour. This is the universal default;
+   components that need a different ring (e.g. inside a dense list)
+   override it explicitly. */
+:focus-visible {
+  outline: 2px solid var(--nd-color-accent);
+  outline-offset: 2px;
 }

@@ -224,10 +224,12 @@ describe("Popup — History row click-to-expand", () => {
     expect(
       screen.getByText("Decide whether your team has one of these situations."),
     ).toBeInTheDocument();
-    // Facet kind chips render (uppercase per spec).
+    // Facet kind chips render in sentence case (visual identity refresh
+    // banned ALL CAPS; the chip outline + monospace font carries the
+    // category signal instead).
     const kindChips = screen.getAllByTestId("content-translation-facet-kind");
     const kindTexts = kindChips.map((el) => el.textContent);
-    expect(kindTexts).toContain("CONTEXT");
-    expect(kindTexts).toContain("GOAL");
+    expect(kindTexts).toContain("Context");
+    expect(kindTexts).toContain("Goal");
   });
 });

@@ -42,7 +42,7 @@ export function AppShell({
   if (mode === "popup") {
     return (
       <main
-        className="flex flex-col gap-4 p-4"
+        className="bg-bg text-fg flex flex-col gap-4 p-4"
         data-testid="app-shell-popup"
         data-shell-mode="popup"
       >
@@ -58,12 +58,12 @@ export function AppShell({
   // navigation, main pane in the middle, optional aside on the right.
   return (
     <div
-      className="leading-nd min-h-screen bg-neutral-50 text-base text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100"
+      className="leading-nd bg-bg text-fg min-h-screen text-base"
       data-testid="app-shell-tab"
       data-shell-mode="tab"
     >
       <div className="mx-auto flex max-w-[1200px] flex-col gap-8 px-8 py-10">
-        <div className="flex flex-col gap-3">
+        <div className="border-hairline flex flex-col gap-3 border-b pb-6">
           {header}
           {banner}
         </div>

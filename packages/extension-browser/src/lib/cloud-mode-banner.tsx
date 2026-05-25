@@ -33,12 +33,9 @@ export function CloudModeBanner({
       role="status"
       aria-live="polite"
       data-testid="cloud-mode-banner"
-      className="font-body leading-nd flex items-start gap-3 border border-warn-light bg-neutral-50 px-4 py-3 text-sm text-neutral-900 dark:border-warn-dark dark:bg-neutral-900 dark:text-neutral-100"
+      className="font-body leading-nd border-warn-border bg-warn-bg text-fg flex items-start gap-3 border px-4 py-3 text-sm"
     >
-      <span
-        aria-hidden="true"
-        className="select-none font-mono text-warn-light dark:text-warn-dark"
-      >
+      <span aria-hidden="true" className="text-warn-fg select-none font-mono">
         cloud
       </span>
       <div className="flex-1">
@@ -49,7 +46,7 @@ export function CloudModeBanner({
         <button
           type="button"
           onClick={onSwitchToLocal}
-          className="mt-1 underline focus:outline-none focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark"
+          className="text-fg-accent focus-visible:outline-accent mt-1 underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           Switch back to local
         </button>

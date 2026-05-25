@@ -1,0 +1,130 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ *
+ * NeuroDock extension design tokens.
+ *
+ * Mirrors `docs/src/styles/tokens.css` verbatim so the extension surface
+ * matches the docs site. The naming convention follows the design
+ * contract: `--nd-color-*` for the extension scope. (The docs site uses
+ * `--sl-color-*` because Starlight owns its own variables.) The values
+ * are the same OKLCH coordinates, with the same semantic roles.
+ *
+ * Rules encoded here (per the design-system-keeper contract):
+ *   - Single neutral accent hue (desaturated slate-blue, hue 250).
+ *   - Two colour modes: calm light, dim dark. No gradients.
+ *   - Line-height >= 1.65 in body copy.
+ *   - prefers-reduced-motion is honoured below (motion disabled by
+ *     default; opt-in 120ms only inside no-preference).
+ *   - Typography: Atkinson Hyperlegible (body), Lexend (headings),
+ *     JetBrains Mono (code). System fallbacks are used because the
+ *     extension MUST be air-gappable and we do not bundle webfonts
+ *     (see SOURCE.md in public/icon for the deferred font work).
+ */
+
+:root {
+  /* Type stack — system fallbacks. The named families are listed first
+     so a host system with the fonts already installed picks them up.
+     The extension does NOT bundle the woff2 files to keep the package
+     small and air-gappable. */
+  --nd-font-body:
+    "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --nd-font-heading:
+    "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui,
+    -apple-system, sans-serif;
+  --nd-font-mono:
+    "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
+
+  /* Type scale — modest contrast, mirrors docs tokens.css */
+  --nd-text-base: 1rem;
+  --nd-text-sm: 0.9375rem;
+  --nd-text-lg: 1.125rem;
+  --nd-text-xl: 1.375rem;
+  --nd-text-2xl: 1.75rem;
+  --nd-text-3xl: 2.125rem;
+  --nd-line-height: 1.65;
+  --nd-line-height-headings: 1.25;
+
+  /* Motion — disabled by default per the contract. The opt-in 120ms
+     duration is bound inside the prefers-reduced-motion no-preference
+     block below. */
+  --nd-transition-duration: 0ms;
+
+  color-scheme: light dark;
+}
+
+/* Calm light — default theme */
+:root {
+  --nd-color-bg: oklch(98% 0.005 95);
+  --nd-color-bg-nav: oklch(97% 0.005 95);
+  --nd-color-bg-sidebar: oklch(97% 0.005 95);
+  --nd-color-bg-inline-code: oklch(94% 0.006 95);
+
+  --nd-color-fg: oklch(22% 0.01 250);
+  --nd-color-fg-accent: oklch(40% 0.04 250);
+  --nd-color-fg-muted: oklch(40% 0.01 250);
+  --nd-color-fg-invert: oklch(98% 0.005 95);
+
+  --nd-color-hairline: oklch(88% 0.005 95);
+  --nd-color-hairline-light: oklch(92% 0.005 95);
+  --nd-color-shade: oklch(80% 0.005 95);
+
+  --nd-color-accent: oklch(45% 0.05 250);
+  --nd-color-accent-low: oklch(85% 0.025 250);
+  --nd-color-accent-high: oklch(35% 0.05 250);
+
+  /* Status — desaturated, never alarming. Used only for the
+     persistent cloud-mode banner and save-error / fallback notices.
+     Hue picked to be distinguishable from the neutral accent while
+     still feeling part of the same calm palette. */
+  --nd-color-warn-fg: oklch(40% 0.08 70);
+  --nd-color-warn-border: oklch(80% 0.06 70);
+  --nd-color-warn-bg: oklch(95% 0.03 70);
+
+  --nd-color-error-fg: oklch(38% 0.10 25);
+  --nd-color-error-border: oklch(78% 0.08 25);
+  --nd-color-error-bg: oklch(95% 0.04 25);
+}
+
+/* Dim dark — never pure black */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --nd-color-bg: oklch(18% 0.005 250);
+    --nd-color-bg-nav: oklch(20% 0.005 250);
+    --nd-color-bg-sidebar: oklch(20% 0.005 250);
+    --nd-color-bg-inline-code: oklch(24% 0.006 250);
+
+    --nd-color-fg: oklch(92% 0.01 95);
+    --nd-color-fg-accent: oklch(82% 0.04 250);
+    --nd-color-fg-muted: oklch(72% 0.01 95);
+    --nd-color-fg-invert: oklch(18% 0.005 250);
+
+    --nd-color-hairline: oklch(28% 0.005 250);
+    --nd-color-hairline-light: oklch(26% 0.005 250);
+    --nd-color-shade: oklch(32% 0.005 250);
+
+    --nd-color-accent: oklch(72% 0.06 250);
+    --nd-color-accent-low: oklch(28% 0.04 250);
+    --nd-color-accent-high: oklch(85% 0.04 250);
+
+    --nd-color-warn-fg: oklch(82% 0.10 70);
+    --nd-color-warn-border: oklch(45% 0.08 70);
+    --nd-color-warn-bg: oklch(24% 0.04 70);
+
+    --nd-color-error-fg: oklch(82% 0.10 25);
+    --nd-color-error-border: oklch(45% 0.08 25);
+    --nd-color-error-bg: oklch(24% 0.05 25);
+  }
+}
+
+/* Opt-in motion. The default is 0ms (set above) so even browsers that
+   do not honour prefers-reduced-motion stay still by default. Only when
+   the user explicitly has no-preference do we permit the 120ms
+   transition slot. */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --nd-transition-duration: 120ms;
+  }
+}

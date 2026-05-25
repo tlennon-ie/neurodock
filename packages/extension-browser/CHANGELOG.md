@@ -1,5 +1,97 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Changed — visual identity refresh matching docs site
+
+Every popup, tab, content-script panel, and shadow-root island now reads
+its colour, type, and motion from a shared token contract that mirrors
+`docs/src/styles/tokens.css` verbatim. The refresh standardises the
+extension on the same calm-light / dim-dark OKLCH palette the docs site
+uses (single neutral accent at hue 250, never pure black, no gradients),
+the same `Atkinson Hyperlegible` / `Lexend` / `JetBrains Mono` type
+stack, and the same opt-in-only motion default (transitions disabled by
+default; 120ms allowed only inside `@media (prefers-reduced-motion:
+no-preference)`).
+
+- **Tokens added** (new file `src/styles/tokens.css`): `--nd-color-bg`,
+  `--nd-color-bg-nav`, `--nd-color-bg-sidebar`, `--nd-color-bg-inline-code`,
+  `--nd-color-fg`, `--nd-color-fg-accent`, `--nd-color-fg-muted`,
+  `--nd-color-fg-invert`, `--nd-color-hairline`, `--nd-color-hairline-light`,
+  `--nd-color-shade`, `--nd-color-accent` (+ `-low`, `-high`),
+  `--nd-color-warn-fg` / `-border` / `-bg`, `--nd-color-error-fg` /
+  `-border` / `-bg`, `--nd-font-body`, `--nd-font-heading`, `--nd-font-mono`,
+  `--nd-text-{base,sm,lg,xl,2xl,3xl}`, `--nd-line-height`,
+  `--nd-line-height-headings`, `--nd-transition-duration`.
+- **Surfaces touched**: `entrypoints/popup/{App,SettingsTab,NotificationsTab}.tsx`,
+  `entrypoints/popup/styles.css`, `entrypoints/tab/{App.tsx,styles.css}`,
+  `entrypoints/_shared/{panel.tsx,mountIsland.ts}`,
+  `src/components/{AppShell,OpenInTabButton}.tsx`,
+  `src/lib/cloud-mode-banner.tsx`, `tailwind.config.ts`.
+- **Tailwind**: `theme.colors` now maps every utility to a CSS custom
+  property (`bg: 'var(--nd-color-bg)'` etc.). Hard-coded hex was removed
+  from every component. Legacy `neutral.*`, `accent.{light,dark}`, and
+  `warn.{light,dark}` keys remain as aliases over the same tokens so
+  test fixtures and migration call sites stay green.
+- **Hierarchy fixes**: popup tabs use a hairline-separated underline (no
+  pill backgrounds). Tab-view left rail uses a left-edge accent instead
+  of a background fill. Headers across both surfaces drop the
+  `text-3xl` / `text-xl` Tailwind defaults in favour of the two-stop
+  scale (22px page titles, 18px section headers, 14px secondary, 16px
+  body in popup; 17px body in tab).
+- **No more shadows**, **no more gradients**: explicit
+  `background-image: none !important` mirrors `docs/src/styles/overrides.css`,
+  and the in-shadow `.neurodock-panel` / `.neurodock-button` styles drop
+  their `box-shadow` rules. Hairlines only.
+- **No ALL CAPS in UI strings**: `content_translation` facet chips
+  ("INPUT", "ACTION", …) now render in sentence case ("Input", "Action",
+  …) with a hairline outline + monospace font carrying the category
+  signal. The chip background fill is gone — outline only. Three test
+  files (`image-describe-view-content-translation`,
+  `brief-meeting-view-content-translation`, `popup-history-expand`)
+  were updated to match.
+- **No emoji**: none existed in extension UI before; the constraint is
+  documented in the contract.
+- **Focus rings**: a global `:focus-visible { outline: 2px solid
+var(--nd-color-accent); outline-offset: 2px; }` declared in both
+  popup and tab globals catches every interactive element.
+- **Status banners** (save-error, silent-fallback, cloud-mode, AuDHD
+  hint) now use the calm, desaturated warn / error palette instead of
+  Tailwind's `red-*` / `amber-*` scales.
+
+**Icon strategy**: ImageMagick is not available on this build host, so
+the PNGs in `public/icon/` are unchanged from 0.0.31. A new
+`public/icon/SOURCE.md` documents the regeneration recipe (source SVG
+at `docs/public/favicon.svg`, transparent background, 12.5% safe-area
+padding, ImageMagick pipeline for `{16,32,48,128,256}.png`) and flags
+the 16×16 legibility consideration. Regenerating the PNGs is a
+Maintainer follow-up.
+
+**Font bundling**: the docs site loads `Atkinson Hyperlegible`,
+`Lexend Variable`, and `JetBrains Mono Variable` via `@fontsource`
+packages. To keep the extension air-gappable and avoid adding new
+dependencies, the refresh ships system fallbacks only — the named
+families are listed first so a host with the fonts already installed
+picks them up automatically. Bundling the woff2 files into
+`public/fonts/` is a follow-up.
+
+**WCAG contrast ratios** (computed by converting OKLCH → linear-sRGB →
+relative luminance and applying the standard `(L_lighter + 0.05) /
+(L_darker + 0.05)` formula). All exceed 4.5:1:
+
+| pair                  | light   | dark    |
+| --------------------- | ------- | ------- |
+| fg on bg              | 16.34:1 | 14.85:1 |
+| fg-accent on bg       | 8.67:1  | 10.81:1 |
+| bg on accent (button) | 7.00:1  | 7.62:1  |
+| fg-muted on bg        | 8.69:1  | 7.59:1  |
+| warn-fg on warn-bg    | 8.07:1  | 9.33:1  |
+| error-fg on error-bg  | 8.77:1  | 9.21:1  |
+
+Hairline tokens are decorative (not contrast-bound). The opt-in motion
+duration stays at 0ms by default and rises to 120ms only when the user
+explicitly has `prefers-reduced-motion: no-preference`.
+
 ## 0.0.31
 
 ### Fixed — `describe_image` / `brief_meeting` now render `content_translation` (UI was silently dropping it)

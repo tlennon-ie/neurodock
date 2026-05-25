@@ -89,8 +89,10 @@ export function TabApp(): React.ReactElement {
 
   const header = (
     <header className="flex flex-col gap-2">
-      <h1 className="font-heading m-0 text-3xl font-medium">NeuroDock</h1>
-      <p className="m-0 max-w-[60ch] text-neutral-600 dark:text-neutral-400">
+      <h1 className="font-heading text-fg m-0 text-[1.375rem] font-medium tracking-tight">
+        NeuroDock
+      </h1>
+      <p className="text-fg-muted m-0 max-w-[60ch]">
         Decode subtext. Check tone. Local-first by default. This is the full-tab
         view — same data as the toolbar popup, more room to read.
       </p>
@@ -107,7 +109,7 @@ export function TabApp(): React.ReactElement {
         <div
           role="alert"
           data-testid="tab-save-error"
-          className="flex items-start justify-between gap-3 border border-red-300 bg-red-50 p-3 text-sm text-red-900 dark:border-red-700 dark:bg-red-950 dark:text-red-100"
+          className="border-error-border bg-error-bg text-error-fg flex items-start justify-between gap-3 border p-3 text-sm"
         >
           <span>
             <strong>Save failed.</strong> {data.saveError}
@@ -115,7 +117,7 @@ export function TabApp(): React.ReactElement {
           <button
             type="button"
             onClick={data.dismissSaveError}
-            className="border border-red-300 px-2 py-0.5 text-xs dark:border-red-700"
+            className="border-error-border border px-2 py-0.5 text-sm"
             aria-label="Dismiss save error"
           >
             Dismiss
@@ -151,7 +153,7 @@ export function TabApp(): React.ReactElement {
       ) : null}
       {view === "notifications" ? <NotificationsPlaceholder /> : null}
       {data.loaded ? null : (
-        <p className="text-sm text-neutral-500">Loading your profile…</p>
+        <p className="text-fg-muted text-sm">Loading your profile…</p>
       )}
     </AppShell>
   );
@@ -174,7 +176,7 @@ function SideNav({ current, onChange }: SideNavProps): React.ReactElement {
     },
   ];
   return (
-    <nav aria-label="Sections" className="flex flex-col gap-1">
+    <nav aria-label="Sections" className="flex flex-col">
       {items.map((item) => {
         const active = current === item.id;
         return (
@@ -185,16 +187,21 @@ function SideNav({ current, onChange }: SideNavProps): React.ReactElement {
             aria-current={active ? "page" : undefined}
             data-testid={`tab-nav-${item.id}`}
             className={
-              "flex flex-col items-start gap-0.5 border-l-2 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:focus-visible:outline-neutral-300 " +
+              "border-hairline focus-visible:outline-accent flex flex-col items-start gap-0.5 border-l-2 px-3 py-2 text-left text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
               (active
-                ? "border-neutral-900 bg-neutral-100 dark:border-neutral-100 dark:bg-neutral-900"
-                : "border-transparent text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900")
+                ? "border-l-accent text-fg-accent"
+                : "border-l-transparent text-fg-muted hover:text-fg")
             }
           >
-            <span className="font-heading font-medium text-neutral-900 dark:text-neutral-100">
+            <span
+              className={
+                "font-heading font-medium " +
+                (active ? "text-fg-accent" : "text-fg")
+              }
+            >
               {item.label}
             </span>
-            <span className="text-xs text-neutral-500">{item.hint}</span>
+            <span className="text-fg-muted text-sm">{item.hint}</span>
           </button>
         );
       })}
@@ -219,14 +226,17 @@ function HomeSection({
       <section aria-labelledby="status-heading" className="flex flex-col gap-2">
         <h2
           id="status-heading"
-          className="font-heading m-0 text-xl font-medium"
+          className="font-heading text-fg m-0 text-[1.125rem] font-medium"
         >
           Status
         </h2>
         <ModeSummary profile={profile} />
       </section>
       <section aria-labelledby="sync-heading" className="flex flex-col gap-2">
-        <h2 id="sync-heading" className="font-heading m-0 text-xl font-medium">
+        <h2
+          id="sync-heading"
+          className="font-heading text-fg m-0 text-[1.125rem] font-medium"
+        >
           Profile sync
         </h2>
         <ProfileSyncLine status={syncStatus} />
@@ -234,24 +244,21 @@ function HomeSection({
       <section aria-labelledby="recent-heading" className="flex flex-col gap-2">
         <h2
           id="recent-heading"
-          className="font-heading m-0 text-xl font-medium"
+          className="font-heading text-fg m-0 text-[1.125rem] font-medium"
         >
           Recent activity
         </h2>
         {recent.length === 0 ? (
-          <p className="m-0 text-sm text-neutral-500">
+          <p className="m-0 text-fg-muted text-sm">
             No translations yet. Right-click selected text or an image on a
             supported site to start.
           </p>
         ) : (
           <ul className="m-0 flex list-none flex-col gap-2 p-0 text-sm">
             {recent.map((entry) => (
-              <li
-                key={entry.id}
-                className="border-l-2 border-neutral-300 pl-3 dark:border-neutral-700"
-              >
-                <div className="font-mono text-xs">{entry.tool}</div>
-                <div className="text-xs text-neutral-500">
+              <li key={entry.id} className="border-l-hairline border-l-2 pl-3">
+                <div className="text-fg font-mono text-sm">{entry.tool}</div>
+                <div className="text-fg-muted text-sm">
                   {formatTimestamp(entry.timestamp)} · {entry.mode} ·{" "}
                   {entry.provider ?? "unknown"}
                 </div>
@@ -287,11 +294,11 @@ function HistorySection({
         <div className="flex flex-col gap-1">
           <h2
             id="history-heading"
-            className="font-heading m-0 text-xl font-medium"
+            className="font-heading text-fg m-0 text-[1.125rem] font-medium"
           >
             History
           </h2>
-          <p className="m-0 max-w-[60ch] text-sm text-neutral-600 dark:text-neutral-400">
+          <p className="text-fg-muted m-0 max-w-[60ch] text-sm">
             Every translation NeuroDock has produced on this device, with the
             full structured response inline. Nothing on this page leaves your
             browser.
@@ -302,7 +309,7 @@ function HistorySection({
             type="button"
             onClick={() => void onClearHistory()}
             data-testid="tab-clear-history"
-            className="self-start border border-neutral-300 bg-white px-2 py-1 text-xs hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+            className="border-hairline bg-bg text-fg hover:bg-bg-nav focus-visible:outline-accent self-start border px-2 py-1 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             aria-label="Wipe all NeuroDock translation history"
           >
             Wipe history ({history.length})
@@ -321,7 +328,7 @@ function HistorySection({
         </span>
       </label>
       {profile.historyEnabled && history.length === 0 ? (
-        <p className="text-sm text-neutral-500">
+        <p className="text-fg-muted text-sm">
           No translations yet. Right-click selected text or an image on a
           supported site to start.
         </p>
@@ -332,7 +339,7 @@ function HistorySection({
             <li
               key={entry.id}
               data-testid="tab-history-row"
-              className="border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
+              className="border-hairline bg-bg border p-4"
             >
               <HistoryEntryDetail entry={entry} />
             </li>
@@ -356,7 +363,7 @@ function HistoryEntryDetail({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="font-mono text-sm">{entry.tool}</div>
-        <div className="text-xs text-neutral-500">
+        <div className="text-fg-muted text-sm">
           {formatTimestamp(entry.timestamp)} · {entry.mode} · {provider}
         </div>
       </div>
@@ -371,17 +378,17 @@ function HistoryEntryDetail({
               data={response.data as Record<string, unknown>}
             />
           ) : (
-            <p className="text-sm text-red-700 dark:text-red-300">
+            <p className="text-error-fg text-sm">
               Error: {response.error ?? "Unknown error"}
             </p>
           )}
-          <p className="text-xs text-neutral-500">
+          <p className="text-fg-muted text-sm">
             via {response.provenance.provider} · {response.provenance.model} ·{" "}
             {response.provenance.mode}
           </p>
         </>
       ) : (
-        <p className="text-sm text-neutral-500">
+        <p className="text-fg-muted text-sm">
           (No detail saved — this row predates the response-persistence
           feature.)
         </p>
@@ -408,11 +415,11 @@ function SettingsSection({
       <header className="flex flex-col gap-1">
         <h2
           id="settings-heading"
-          className="font-heading m-0 text-xl font-medium"
+          className="font-heading text-fg m-0 text-[1.125rem] font-medium"
         >
           Settings
         </h2>
-        <p className="m-0 max-w-[60ch] text-sm text-neutral-600 dark:text-neutral-400">
+        <p className="text-fg-muted m-0 max-w-[60ch] text-sm">
           Provider, model, and privacy controls. The same settings the popup
           exposes — laid out with room to read.
         </p>
@@ -431,11 +438,11 @@ function NotificationsPlaceholder(): React.ReactElement {
     >
       <h2
         id="notifications-heading"
-        className="font-heading m-0 text-xl font-medium"
+        className="font-heading text-fg m-0 text-[1.125rem] font-medium"
       >
         Notifications
       </h2>
-      <p className="m-0 max-w-[60ch] text-sm text-neutral-600 dark:text-neutral-400">
+      <p className="text-fg-muted m-0 max-w-[60ch] text-sm">
         A full inbox of background events lands here once the notifications
         feature ships. Until then this section is reserved space so the rest of
         the tab view does not shift when it arrives.
@@ -450,32 +457,30 @@ interface ProfileSyncLineProps {
 
 function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   if (status === null) {
-    return <p className="text-sm text-neutral-500">Checking native host…</p>;
+    return <p className="text-fg-muted text-sm">Checking native host…</p>;
   }
   if (status.source === "native-host") {
     return (
-      <div className="flex flex-col gap-0.5 text-sm text-neutral-600 dark:text-neutral-400">
+      <div className="text-fg-muted flex flex-col gap-0.5 text-sm">
         <span>
-          <strong>native host (active).</strong> Reading and writing{" "}
+          <strong>Native host active.</strong> Reading and writing{" "}
           <code className="font-mono">~/.neurodock/profile.yaml</code>.
         </span>
-        {status.detail ? (
-          <span className="text-neutral-500">{status.detail}</span>
-        ) : null}
+        {status.detail ? <span>{status.detail}</span> : null}
       </div>
     );
   }
   return (
-    <div className="flex flex-col gap-1 border border-neutral-200 bg-neutral-50 p-3 text-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <span className="text-neutral-700 dark:text-neutral-300">
-        <strong>extension-local.</strong> Profile lives only inside this
+    <div className="border-hairline bg-bg-nav flex flex-col gap-1 border p-3 text-sm">
+      <span className="text-fg">
+        <strong>Extension-local.</strong> Profile lives only inside this
         browser.
       </span>
-      <span className="text-neutral-600 dark:text-neutral-400">
+      <span className="text-fg-muted">
         Install the native host to keep this extension in sync with{" "}
         <code className="font-mono">~/.neurodock/profile.yaml</code>:
       </span>
-      <code className="select-all bg-neutral-100 px-2 py-1 font-mono dark:bg-neutral-800">
+      <code className="bg-bg-code border-hairline select-all border px-2 py-1 font-mono">
         pnpx @neurodock/native-host install
       </code>
     </div>
@@ -503,11 +508,9 @@ function ModeSummary({ profile }: ModeSummaryProps): React.ReactElement {
   }
   return (
     <div className="flex flex-col gap-1">
-      <p className="m-0 text-base text-neutral-700 dark:text-neutral-300">
-        {label}
-      </p>
+      <p className="text-fg m-0 text-base">{label}</p>
       <p
-        className="m-0 text-sm text-neutral-500"
+        className="m-0 text-fg-muted text-sm"
         data-testid="tab-profile-identity"
       >
         Profile: <strong>{profile.displayName || "you"}</strong>

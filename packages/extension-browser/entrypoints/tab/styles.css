@@ -1,26 +1,88 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ *
+ * Tab view global styles. Same token contract as the popup; the only
+ * differences are the slightly larger root font-size (17px) and the
+ * wider reading measure permitted by the tab surface.
+ */
+
+@import "../../src/styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Respect prefers-reduced-motion: the tab view never animates unless
- * the user explicitly opts in. Mirrors the popup's reduced-motion
- * default per plan.md §2. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
+* {
+  background-image: none !important;
+}
+
+img,
+svg,
+picture {
+  background-image: initial !important;
+}
+
+/* Unconditional motion kill. Same pattern as the popup so the two
+   surfaces behave identically by default. */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  button,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    transition:
+      color var(--nd-transition-duration) ease,
+      background-color var(--nd-transition-duration) ease,
+      border-color var(--nd-transition-duration) ease,
+      opacity var(--nd-transition-duration) ease !important;
   }
 }
 
-:root {
-  color-scheme: light dark;
-}
-
-/* The tab view earns the room to breathe the popup cannot afford.
- * Body text sits at 17px / 1.65 line-height with a ~70ch reading
- * measure on the main pane. */
+/* The tab view earns room to breathe the popup cannot afford: 17px
+   body with 1.65 line-height and a ~70ch reading measure on the main
+   pane. */
 html {
   font-size: 17px;
+}
+
+body {
+  font-family: var(--nd-font-body);
+  line-height: var(--nd-line-height);
+  color: var(--nd-color-fg);
+  background: var(--nd-color-bg);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--nd-font-heading);
+  line-height: var(--nd-line-height-headings);
+  letter-spacing: -0.005em;
+  color: var(--nd-color-fg);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--nd-font-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--nd-color-accent);
+  outline-offset: 2px;
 }

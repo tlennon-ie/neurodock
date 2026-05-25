@@ -305,9 +305,14 @@ export function findImageElementByUrl(
 // ─── Styles + SVG glyphs ─────────────────────────────────────────────────────
 
 function buildStyles(reducedMotion: boolean, fadeOutMs: number): string {
-  // Colours mirror the existing in-page panel palette
-  // (mountIsland.ts) so we don't introduce a new theme surface.
-  // Dark scheme picks the same #fafaf9 / #262625 pair the panel uses.
+  // Colours are baked OKLCH-equivalent values pulled from
+  // `src/styles/tokens.css`. The shadow-root host uses `all: initial`
+  // so CSS custom properties declared on the page do not inherit; we
+  // restate them here so the indicator stays on the same calm palette
+  // as the popup/tab. Hairlines only — no box-shadow, no saturated
+  // success-green or failure-red. Success uses the neutral accent
+  // (slate-blue, hue 250); failure uses the desaturated warn amber
+  // (hue 70) the cloud-mode banner uses.
   return `
     :host { all: initial; }
     .nd-indicator {
@@ -317,13 +322,12 @@ function buildStyles(reducedMotion: boolean, fadeOutMs: number): string {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: rgba(250, 250, 249, 0.92);
-      border: 1px solid #56564f;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      background: oklch(98% 0.005 95);
+      border: 1px solid oklch(88% 0.005 95);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #161615;
+      color: oklch(22% 0.01 250);
       font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
       font-size: 11px;
       line-height: 1;
@@ -332,9 +336,9 @@ function buildStyles(reducedMotion: boolean, fadeOutMs: number): string {
     }
     @media (prefers-color-scheme: dark) {
       .nd-indicator {
-        background: rgba(38, 38, 37, 0.92);
-        border-color: #cfcfcb;
-        color: #fafaf9;
+        background: oklch(18% 0.005 250);
+        border-color: oklch(28% 0.005 250);
+        color: oklch(92% 0.01 95);
       }
     }
     .nd-glyph {
@@ -350,14 +354,26 @@ function buildStyles(reducedMotion: boolean, fadeOutMs: number): string {
       display: block;
     }
     .nd-indicator[data-state="success"] {
-      background: rgba(46, 110, 50, 0.95);
-      border-color: rgba(46, 110, 50, 0.95);
-      color: #ffffff;
+      background: oklch(85% 0.025 250);
+      border-color: oklch(45% 0.05 250);
+      color: oklch(35% 0.05 250);
     }
     .nd-indicator[data-state="failure"] {
-      background: rgba(155, 35, 35, 0.95);
-      border-color: rgba(155, 35, 35, 0.95);
-      color: #ffffff;
+      background: oklch(95% 0.03 70);
+      border-color: oklch(80% 0.06 70);
+      color: oklch(40% 0.08 70);
+    }
+    @media (prefers-color-scheme: dark) {
+      .nd-indicator[data-state="success"] {
+        background: oklch(28% 0.04 250);
+        border-color: oklch(72% 0.06 250);
+        color: oklch(85% 0.04 250);
+      }
+      .nd-indicator[data-state="failure"] {
+        background: oklch(24% 0.04 70);
+        border-color: oklch(45% 0.08 70);
+        color: oklch(82% 0.10 70);
+      }
     }
     .nd-indicator[data-state="success-fade"],
     .nd-indicator[data-state="failure-fade"] {
@@ -377,7 +393,6 @@ function buildStyles(reducedMotion: boolean, fadeOutMs: number): string {
     .nd-reduced-label {
       font-size: 10px;
       letter-spacing: 0.02em;
-      text-transform: uppercase;
       white-space: nowrap;
     }
     ${reducedMotion ? "" : buildSpinnerKeyframes()}
