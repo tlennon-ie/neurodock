@@ -46,7 +46,7 @@ import platform
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -117,7 +117,7 @@ def _run_forever() -> int:
     except KeyboardInterrupt:
         _log("daemon-stop", {"reason": "sigint"})
         return 0
-    except Exception as exc:  # noqa: BLE001 — must not crash autostart
+    except Exception as exc:  # broad-except: must not crash autostart
         _log("daemon-error", {"error": str(exc)})
         return 1
 
@@ -217,7 +217,7 @@ def _surface(signal: dict[str, Any]) -> None:
             _notify_macos(title, message)
         else:
             _notify_linux(title, message)
-    except Exception as exc:  # noqa: BLE001 — never crash on a notify failure
+    except Exception as exc:
         _log("notify-error", {"error": str(exc)})
 
 
@@ -468,7 +468,7 @@ def _log(event: str, data: dict[str, Any]) -> None:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc).astimezone()
+    return datetime.now(UTC).astimezone()
 
 
 # ── Self-test ────────────────────────────────────────────────────────────

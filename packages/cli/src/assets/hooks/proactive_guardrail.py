@@ -56,8 +56,7 @@ import json
 import os
 import re
 import sys
-from dataclasses import dataclass
-from datetime import datetime, time, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -118,7 +117,7 @@ def main() -> int:
             _on_stop(payload)
         elif kind == "self-test":
             return _self_test()
-    except Exception as exc:  # noqa: BLE001 — must never block the user
+    except Exception as exc:
         _log("error", {"kind": kind, "error": str(exc)})
     return 0
 
@@ -342,7 +341,7 @@ def _clock_band(now: datetime) -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc).astimezone()
+    return datetime.now(UTC).astimezone()
 
 
 # ── Payload extraction (best-effort against Claude Code shape) ───────────
@@ -423,7 +422,7 @@ def _parse_iso(value: str) -> datetime:
     try:
         return datetime.fromisoformat(value)
     except ValueError:
-        return datetime.min.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=UTC)
 
 
 # ── Output ───────────────────────────────────────────────────────────────
