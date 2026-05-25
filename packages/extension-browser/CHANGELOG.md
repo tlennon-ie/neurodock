@@ -1,5 +1,30 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Fixed — `describe_image` / `brief_meeting` now render `content_translation` (UI was silently dropping it)
+
+0.0.30 shipped the prompt + schema rewrite that made the model emit a
+per-item Input/Action/Goal `content_translation` scaffold, but the
+panel views in `entrypoints/_shared/panel.tsx` were never updated and
+still read only the legacy `description` / `inferred_purpose` /
+`transcribed_text` / `my_asks` / `decisions` fields — so the model's
+ND-actionable output was silently dropped before reaching the DOM, in
+both the in-page panel and the popup History row expand (which reuses
+the same `ToolView` dispatcher). The two views now read
+`content_translation` first, render each entry as a card with the
+label as a heading and each facet shown as a small uppercase kind chip
+(`INPUT`, `ACTION`, `GOAL`, `RULE`, `FACT`, `BENEFIT`, `CONTEXT`)
+followed by its text, and demote the legacy fields into a
+closed-by-default "Accessibility metadata" / "Meeting transcript
+metadata" collapsible. Decorative imagery and chat-only meetings
+(`content_translation: null`) and legacy v0.1.x responses (field
+omitted) fall through to the pre-0.0.30 layout unchanged. A one-line
+`console.debug` diagnostic in `translation-client.ts` confirms at a
+glance whether the model is actually emitting the field on dogfood
+runs. No new dependencies, no new colors — reuses the existing
+`Section` / `Collapsible` / `TldrCard` primitives.
+
 ## 0.0.30 — translate-not-summarize, for real this time
 
 The 0.0.28 ship added a `content_translation` field to the `describe_image`

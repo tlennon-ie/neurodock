@@ -194,6 +194,21 @@ export async function translate<T = unknown>(
     };
   }
 
+  // 0.0.31: one-line diagnostic so we can confirm at a glance whether
+  // the model is actually emitting `content_translation` on dogfood
+  // runs. Diagnostic-only — no payload text is logged. Gated to the
+  // two tools that carry the field so unrelated tools don't spam the
+  // console.
+  if (request.tool === "describe_image" || request.tool === "brief_meeting") {
+    const payload = validated.data as { content_translation?: unknown };
+    const ct = payload?.content_translation;
+    // eslint-disable-next-line no-console
+    console.debug(
+      `[neurodock] ${request.tool} content_translation:`,
+      Array.isArray(ct) ? `${ct.length} entries` : ct,
+    );
+  }
+
   return {
     ok: true,
     tool: request.tool,

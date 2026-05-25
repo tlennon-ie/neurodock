@@ -172,4 +172,62 @@ describe("Popup — History row click-to-expand", () => {
     );
     expect((toggle as HTMLButtonElement).disabled).toBe(true);
   });
+
+  // 0.0.31 regression: when content_translation is populated, the
+  // History row expand surface (which reuses ToolView from panel.tsx)
+  // must render the per-item Input/Action/Goal scaffold the model
+  // emitted — not silently drop it back to the legacy fields. This
+  // pins the popup-history side of the bug shipped in 0.0.30 where
+  // the UI ignored the new field.
+  it("renders content_translation in expanded history rows when populated", async () => {
+    const response = describeImageResponse();
+    const responseWithTranslation: TranslationResponse = {
+      ...response,
+      data: {
+        ...(response.data as Record<string, unknown>),
+        content_translation: [
+          {
+            label: "1. Use Cases",
+            facets: [
+              {
+                kind: "context",
+                text: "Lists situations where feature flags add value.",
+              },
+              {
+                kind: "goal",
+                text: "Decide whether your team has one of these situations.",
+              },
+            ],
+          },
+        ],
+      },
+    };
+    vi.spyOn(storage, "listHistory").mockResolvedValue([
+      entry({ response: responseWithTranslation }),
+    ]);
+    render(<App />);
+    const toggle = await screen.findByTestId(
+      "history-row-toggle-describe_image",
+    );
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId("history-row-detail")).toBeInTheDocument();
+    });
+    // The translated entry surface is rendered (primary surface).
+    expect(screen.getByTestId("content-translation-list")).toBeInTheDocument();
+    expect(screen.getByText("1. Use Cases")).toBeInTheDocument();
+    expect(
+      screen.getByText("Lists situations where feature flags add value."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Decide whether your team has one of these situations."),
+    ).toBeInTheDocument();
+    // Facet kind chips render (uppercase per spec).
+    const kindChips = screen.getAllByTestId("content-translation-facet-kind");
+    const kindTexts = kindChips.map((el) => el.textContent);
+    expect(kindTexts).toContain("CONTEXT");
+    expect(kindTexts).toContain("GOAL");
+  });
 });
