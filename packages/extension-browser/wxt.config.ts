@@ -182,6 +182,18 @@ export default defineConfig({
         strict_min_version: "115.0",
       },
     },
+    // Tab view (entrypoints/tab/ → tab.html). Marked web-accessible so
+    // chrome.tabs.create({ url: chrome.runtime.getURL("tab.html") })
+    // from the popup can open it as a regular tab. The page runs in
+    // the extension origin (chrome-extension://<id>/), so this entry
+    // only governs which top-level frames are allowed to navigate to
+    // the page — not any new data exposure. Required by MV3.
+    web_accessible_resources: [
+      {
+        resources: ["tab.html"],
+        matches: ["<all_urls>"],
+      },
+    ],
   },
   vite: () => ({
     build: {

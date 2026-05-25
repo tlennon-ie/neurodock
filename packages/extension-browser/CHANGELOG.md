@@ -1,5 +1,11 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Added
+
+- Open in tab — expanded view with wider layout and shared data.
+
 ## 0.0.27
 
 ### Fixed — Cloud API keys are now per-provider (privacy + UX)
