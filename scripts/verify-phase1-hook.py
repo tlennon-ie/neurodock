@@ -14,13 +14,11 @@ Run:
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOOK_PATH = (
@@ -47,13 +45,13 @@ class ScenarioResult:
     detail: str = ""
 
 
-def _backup(path: Path) -> Optional[bytes]:
+def _backup(path: Path) -> bytes | None:
     if not path.exists():
         return None
     return path.read_bytes()
 
 
-def _restore(path: Path, original: Optional[bytes]) -> None:
+def _restore(path: Path, original: bytes | None) -> None:
     if original is None:
         if path.exists():
             path.unlink()
@@ -66,7 +64,7 @@ def _seed_session(started_minutes_ago: int, tool_count_pre: int) -> None:
     pushes tool_count to a multiple of PRETOOL_CHECK_EVERY_N."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     started_at = (
-        datetime.now(timezone.utc).astimezone()
+        datetime.now(UTC).astimezone()
         - timedelta(minutes=started_minutes_ago)
     ).isoformat()
     payload = {"started_at": started_at, "tool_count": tool_count_pre}
@@ -89,8 +87,8 @@ def _run_pretool(prompt: str) -> tuple[int, str, str]:
 def _run_scenario(
     name: str,
     started_minutes_ago: int,
-    expect_substr: Optional[str],
-    forbid_substr: Optional[str] = None,
+    expect_substr: str | None,
+    forbid_substr: str | None = None,
 ) -> ScenarioResult:
     # tool_count_pre = PRETOOL_CHECK_EVERY_N - 1, so after the hook's +1
     # the new tool_count is exactly PRETOOL_CHECK_EVERY_N (a multiple

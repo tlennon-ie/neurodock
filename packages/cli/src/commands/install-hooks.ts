@@ -180,6 +180,27 @@ export async function runInstallHooks(
         messages.push(
           `[install-hooks] daemon autostart: ${result.stdout.trim()}`,
         );
+        // Also START the daemon immediately so the user does not have to
+        // wait for the next login. Detached + unref so it survives this
+        // process exit. The 2026-05-26 silent-failure incident was caused
+        // exactly by registering autostart but never actually launching
+        // the daemon, so the next 6h session ran with no guardrail tick.
+        try {
+          const { spawn } = await import("node:child_process");
+          const child = spawn("python", [daemonTarget, "run"], {
+            detached: true,
+            stdio: "ignore",
+          });
+          child.unref();
+          messages.push(
+            "[install-hooks] daemon started in background (run 'neurodock guardrail status' to confirm).",
+          );
+        } catch (cause) {
+          const msg = cause instanceof Error ? cause.message : "spawn failed";
+          messages.push(
+            `[install-hooks] daemon autostart registered but background-launch failed (${msg}). It will run on next login.`,
+          );
+        }
       }
     }
   } else if (options.installDaemon === true && options.dryRun) {

@@ -1,6 +1,35 @@
 # @neurodock/cli changelog
 
-## [unreleased]
+## 0.7.0
+
+### Fixed — proactive-guardrail wiring after 2026-05-26 silent-failure incident
+
+The user spent 6 hours coding without a single break warning from the
+substrate. Diagnosis: the Phase 1 hook was writing a degraded session
+shape (`{tool_count: N}` with no `started_at`), and the Phase 3 daemon
+had never been started on the machine — only registered for autostart,
+which would have fired at next login (i.e. never, in a long session).
+Three plumbing fixes, no new heuristics or severity tiers (clinical
+ETHICS contract honoured — `mcp-guardrail` unchanged):
+
+- **Phase 1 hook defensive bootstrap**: on `PreToolUse`, if
+  `started_at` is missing from session state, set it to `now()`
+  rather than silently degrade. Adds `last_active_at` on each
+  PreToolUse for the same reason. The existing elapsed-time
+  heuristic can finally compute against a real anchor.
+- **`neurodock install-hooks --install-daemon` now actually starts
+  the daemon** after registering autostart, via a detached + unref'd
+  spawn. Previously it only set up the HKCU Run / LaunchAgent /
+  systemd-user entry, which means the user had to log out + back in
+  to see the first daemon tick.
+- **`neurodock guardrail status`**: new read-only diagnostic
+  subcommand that prints which pieces of the wiring are present
+  (hook registered? session shape healthy? daemon script on disk?
+  autostart registered? daemon alive in last 15 min?) so the user
+  can see at a glance which piece is missing before another long
+  session goes silent.
+
+No heuristic thresholds touched. No clinical sign-off required.
 
 ### Security — atomic writes for CLI scaffolding (TOCTOU defence)
 

@@ -13,6 +13,7 @@ import { runSync } from "./commands/sync.js";
 import { runUninstall } from "./commands/uninstall.js";
 import { runHostInstall, runHostUninstall } from "./commands/host.js";
 import { runInstallHooks } from "./commands/install-hooks.js";
+import { runGuardrailStatus } from "./commands/guardrail.js";
 import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
 import { runExamples } from "./commands/examples.js";
 import {
@@ -418,6 +419,19 @@ export function buildProgram(): Command {
         process.exit(r.exitCode);
       },
     );
+
+  const guardrailCmd = program
+    .command("guardrail")
+    .description("diagnose the proactive guardrail wiring (hooks, daemon)");
+  guardrailCmd
+    .command("status")
+    .description(
+      "print which proactive-guardrail pieces are wired and which are missing",
+    )
+    .action(() => {
+      const r = runGuardrailStatus({ print });
+      process.exit(r.exitCode);
+    });
 
   const hostCmd = program
     .command("host")

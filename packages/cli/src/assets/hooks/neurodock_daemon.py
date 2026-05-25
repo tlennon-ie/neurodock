@@ -141,7 +141,7 @@ def _run_one_tick() -> int:
             elapsed = (now - datetime.fromisoformat(last_at)).total_seconds()
             if elapsed < DEDUP_SECONDS:
                 return 0
-        except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        except Exception as exc:
             _log("daemon-dedup-parse-error", {"error": str(exc)})
     _surface(signal)
     state["last_surfaced"] = {
@@ -493,7 +493,7 @@ def _save_daemon_state(state: dict[str, Any]) -> None:
     try:
         with DAEMON_STATE_FILE.open("w", encoding="utf-8") as fh:
             json.dump(state, fh)
-    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+    except Exception as exc:
         _log("daemon-state-save-error", {"error": str(exc)})
 
 
@@ -507,7 +507,7 @@ def _log(event: str, data: dict[str, Any]) -> None:
         }
         with LOG_FILE.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry) + "\n")
-    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+    except Exception as exc:
         # Cannot recurse into _log here; write minimally to stderr.
         sys.stderr.write(f"[neurodock-daemon] log-write-error: {exc}\n")
 

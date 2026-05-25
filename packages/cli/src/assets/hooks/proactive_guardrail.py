@@ -143,7 +143,17 @@ def _on_session_start(_payload: dict[str, Any]) -> None:
 
 def _on_pre_tool(payload: dict[str, Any]) -> None:
     state = _load_session()
+    # Defensive bootstrap: if SessionStart never fired (e.g. hook installed
+    # mid-session, or the Claude Code event is suppressed in a given client),
+    # the elapsed-time heuristics need an anchor. Set started_at on the first
+    # PreToolUse rather than silently degrade. The user's 2026-05-26 silent-
+    # failure incident hit exactly this path — state had {tool_count: N} with
+    # no started_at, so _evaluate_hyperfocus returned None forever.
+    if not isinstance(state.get("started_at"), str):
+        state["started_at"] = _now().isoformat()
+        _log("session-bootstrap", {"reason": "missing-started_at"})
     state["tool_count"] = int(state.get("tool_count", 0)) + 1
+    state["last_active_at"] = _now().isoformat()
     _save_session(state)
 
     prompt = _extract_user_prompt(payload)
@@ -178,7 +188,7 @@ def _on_stop(_payload: dict[str, Any]) -> None:
         try:
             elapsed = _now() - datetime.fromisoformat(started)
             duration_min = int(elapsed.total_seconds() // 60)
-        except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+        except Exception as exc:
             _log("session-end-parse-error", {"error": str(exc)})
     _save_session({})  # clear
     _log("session-end", {"duration_min": duration_min})
@@ -393,7 +403,7 @@ def _save_session(state: dict[str, Any]) -> None:
     try:
         with SESSION_FILE.open("w", encoding="utf-8") as fh:
             json.dump(state, fh)
-    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+    except Exception as exc:
         _log("session-save-error", {"error": str(exc)})
 
 
@@ -414,7 +424,7 @@ def _record_prompt(text: str) -> None:
     try:
         with PROMPTS_FILE.open("w", encoding="utf-8") as fh:
             json.dump(prompts, fh)
-    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+    except Exception as exc:
         _log("prompt-save-error", {"error": str(exc)})
 
 
@@ -445,7 +455,7 @@ def _log(event: str, data: dict[str, Any]) -> None:
         }
         with LOG_FILE.open("a", encoding="utf-8") as fh:
             fh.write(json.dumps(entry) + "\n")
-    except Exception as exc:  # noqa: BLE001 — must not crash the user-facing path
+    except Exception as exc:
         # Cannot recurse into _log here; write minimally to stderr.
         sys.stderr.write(f"[neurodock-guardrail] log-write-error: {exc}\n")
 
