@@ -64,8 +64,18 @@ export type WatchdogSignal =
   | { type: "rumination_host"; host: string; count: number };
 
 export interface NotifyAdapter {
-  /** Show a Chrome notification with the given title + body. */
-  readonly notify: (title: string, message: string) => void;
+  /**
+   * Show a Chrome notification with the given title + body. The third
+   * argument is the originating signal (subcategory + counts) so the
+   * caller can route the same event into the in-extension notifications
+   * inbox AND honour per-category mutes. The lib never inspects the
+   * signal — it's pass-through only.
+   */
+  readonly notify: (
+    title: string,
+    message: string,
+    signal?: WatchdogSignal,
+  ) => void;
 }
 
 export interface WatchdogDeps {
@@ -227,7 +237,7 @@ export function startWatchdog(
       }
       const rendered = renderSignal(signal);
       if (deps.notify) {
-        deps.notify.notify(rendered.title, rendered.message);
+        deps.notify.notify(rendered.title, rendered.message, signal);
       } else {
         // eslint-disable-next-line no-console
         console.warn(

@@ -25,6 +25,7 @@ import {
   DEFAULT_WATCHDOG_CONFIG,
 } from "../src/lib/proactive-watchdog.js";
 import { listHistory } from "../src/lib/storage.js";
+import { appendNotification, isMuted } from "../src/lib/notifications.js";
 import { withKeepalive } from "../src/lib/sw-keepalive.js";
 import type {
   RuntimeMessage,
@@ -230,34 +231,61 @@ function startProactiveWatchdog(): void {
         listHistory: (limit) => listHistory(limit),
         isEnabled: async () => readWatchdogEnabled(),
         notify: {
-          notify: (title, message) => {
-            const g = globalThis as unknown as {
-              chrome?: {
-                notifications?: {
-                  create?: (opts: {
-                    type: string;
-                    iconUrl: string;
-                    title: string;
-                    message: string;
-                    priority?: number;
-                  }) => void;
+          notify: (title, message, signal) => {
+            const subcategory = signal?.type ?? "unknown";
+            // Log to the in-extension inbox first so the user can audit
+            // even signals that get muted at the OS-toast layer. Fire-
+            // and-forget — never block the watchdog tick on storage.
+            void (async () => {
+              try {
+                await appendNotification({
+                  category: "watchdog",
+                  subcategory,
+                  title,
+                  body: message,
+                  meta: signal as unknown as Readonly<Record<string, unknown>>,
+                });
+              } catch {
+                // Inbox write is non-essential; never propagate.
+              }
+            })();
+            // Respect per-category mutes for the OS-toast surface only.
+            void (async () => {
+              try {
+                if (await isMuted("watchdog", subcategory)) return;
+              } catch {
+                // If the mute lookup throws, fall through and show the
+                // toast — safer to be slightly chatty than silently
+                // suppress a signal the user expects.
+              }
+              const g = globalThis as unknown as {
+                chrome?: {
+                  notifications?: {
+                    create?: (opts: {
+                      type: string;
+                      iconUrl: string;
+                      title: string;
+                      message: string;
+                      priority?: number;
+                    }) => void;
+                  };
                 };
               };
-            };
-            try {
-              g.chrome?.notifications?.create?.({
-                type: "basic",
-                iconUrl: "icon/128.png",
-                title,
-                message,
-                priority: 1,
-              });
-            } catch {
-              // Notifications API can throw if the icon path resolves
-              // outside the extension at runtime. The badge change
-              // already gives the user a visible signal; nothing more
-              // to do here.
-            }
+              try {
+                g.chrome?.notifications?.create?.({
+                  type: "basic",
+                  iconUrl: "icon/128.png",
+                  title,
+                  message,
+                  priority: 1,
+                });
+              } catch {
+                // Notifications API can throw if the icon path resolves
+                // outside the extension at runtime. The badge change
+                // already gives the user a visible signal; nothing more
+                // to do here.
+              }
+            })();
           },
         },
       },
@@ -537,6 +565,21 @@ async function notifyContextResultFallback(
     // notifications.create can throw if the icon path resolves outside
     // the extension at runtime. Nothing better to fall back to — the
     // result is still in History when enabled.
+  }
+  // Mirror into the in-extension notifications inbox so the user can
+  // come back to dismissed/missed translation results. Categorised as
+  // `translation_error` when the response failed, `system` when it
+  // succeeded but had to land in a notification instead of in-page.
+  try {
+    await appendNotification({
+      category: ok ? "system" : "translation_error",
+      subcategory: response.tool,
+      title,
+      body: message,
+      meta: { host, mockMode: response.mockMode },
+    });
+  } catch {
+    // Inbox write is non-essential; never bubble up.
   }
 }
 

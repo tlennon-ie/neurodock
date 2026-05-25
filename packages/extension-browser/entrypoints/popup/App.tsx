@@ -22,6 +22,7 @@ import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
 import { listHistory, clearHistory } from "../../src/lib/storage.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
+import { NotificationsTab } from "./NotificationsTab.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
 
 function isHistoryUpdatedMessage(msg: unknown): boolean {
@@ -47,7 +48,7 @@ function isProfileUpdatedMessage(msg: unknown): msg is ProfileUpdatedMessage {
   );
 }
 
-type TabId = "home" | "settings";
+type TabId = "home" | "notifications" | "settings";
 
 export function App(): React.ReactElement {
   const [profile, setProfile] = useState<ExtensionProfile>(defaultProfile());
@@ -215,9 +216,11 @@ export function App(): React.ReactElement {
           onToggleHistory={(enabled) => update({ historyEnabled: enabled })}
           onClearHistory={handleClearHistory}
         />
-      ) : (
+      ) : null}
+      {tab === "notifications" ? <NotificationsTab /> : null}
+      {tab === "settings" ? (
         <SettingsTab profile={profile} onChange={update} />
-      )}
+      ) : null}
 
       <section aria-labelledby="sync-heading" className="flex flex-col gap-1">
         <h2
@@ -282,6 +285,7 @@ interface TabBarProps {
 function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
   const tabs: { id: TabId; label: string }[] = [
     { id: "home", label: "Home" },
+    { id: "notifications", label: "Notifications" },
     { id: "settings", label: "Settings" },
   ];
   return (
