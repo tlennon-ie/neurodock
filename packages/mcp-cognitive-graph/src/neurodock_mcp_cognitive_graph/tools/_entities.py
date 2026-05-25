@@ -170,7 +170,7 @@ def resolve_object(
             f"object.type is required (or use `literal`); must be one of {valid_types}.",
             hint=(
                 f"Either add `type` to `object` (one of: {', '.join(valid_types)}) "
-                "and a `name`, or use `{\"literal\": \"...\"}` for free-text values."
+                'and a `name`, or use `{"literal": "..."}` for free-text values.'
             ),
             example=_VALID_CALL_EXAMPLE,
         )

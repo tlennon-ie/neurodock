@@ -67,8 +67,8 @@ DEDUP_SECONDS = 30 * 60
 # Heuristic thresholds — mirror the Phase 1 hook so the user gets a
 # consistent experience whether they're in Claude Code or not.
 HYPERFOCUS_BREAK_MINUTES = 90
-DEEP_NIGHT_HOURS = range(0, 6)   # 00:00..05:59 local
-LATE_NIGHT_HOURS = range(22, 24) # 22:00..23:59 local
+DEEP_NIGHT_HOURS = range(0, 6)  # 00:00..05:59 local
+LATE_NIGHT_HOURS = range(22, 24)  # 22:00..23:59 local
 
 
 def main() -> int:
@@ -133,10 +133,7 @@ def _run_one_tick() -> int:
     last = state.get("last_surfaced", {})
     last_kind = last.get("kind")
     last_at = last.get("at")
-    if (
-        last_kind == signal["kind"]
-        and isinstance(last_at, str)
-    ):
+    if last_kind == signal["kind"] and isinstance(last_at, str):
         try:
             elapsed = (now - datetime.fromisoformat(last_at)).total_seconds()
             if elapsed < DEDUP_SECONDS:
@@ -230,13 +227,13 @@ def _notify_windows(title: str, message: str) -> None:
     # but _escape_ps() defensively strips shell-metacharacters so future
     # callers cannot inject PowerShell via the notification body.
     ps_script = (
-        '[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime] | Out-Null;'
-        '$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent('
-        '[Windows.UI.Notifications.ToastTemplateType]::ToastText02);'
+        "[Windows.UI.Notifications.ToastNotificationManager,Windows.UI.Notifications,ContentType=WindowsRuntime] | Out-Null;"
+        "$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent("
+        "[Windows.UI.Notifications.ToastTemplateType]::ToastText02);"
         f'$template.GetElementsByTagName("text").Item(0).AppendChild($template.CreateTextNode("{_escape_ps(title)}")) | Out-Null;'
         f'$template.GetElementsByTagName("text").Item(1).AppendChild($template.CreateTextNode("{_escape_ps(message)}")) | Out-Null;'
         '$notify = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("NeuroDock");'
-        '$notify.Show([Windows.UI.Notifications.ToastNotification]::new($template));'
+        "$notify.Show([Windows.UI.Notifications.ToastNotification]::new($template));"
     )
     subprocess.run(
         ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
@@ -250,9 +247,7 @@ def _notify_macos(title: str, message: str) -> None:
     # Security: osascript -e interpolates title/message into the AppleScript
     # source.  _escape_as() strips characters that would break out of the
     # quoted string context inside the AppleScript literal.
-    script = (
-        f'display notification "{_escape_as(message)}" with title "{_escape_as(title)}"'
-    )
+    script = f'display notification "{_escape_as(message)}" with title "{_escape_as(title)}"'
     subprocess.run(
         ["osascript", "-e", script],
         check=False,
@@ -280,7 +275,8 @@ def _notify_linux(title: str, message: str) -> None:
 # by _escape_ps() instead of being stripped, so the text node value is
 # preserved.  Backtick is the PS escape character, so it must be stripped.
 _PS_STRIP = str.maketrans(
-    "", "",
+    "",
+    "",
     "`$(){};&|<>\\\n\r",
 )
 
@@ -289,7 +285,8 @@ _PS_STRIP = str.maketrans(
 # quoted string (the behaviour is interpreter-version-dependent), so both
 # double-quote and backslash are stripped rather than escaped.
 _AS_STRIP = str.maketrans(
-    "", "",
+    "",
+    "",
     '"\\&|;`\n\r',
 )
 
@@ -323,8 +320,7 @@ def _install_autostart() -> int:
     daemon_script = (HOOK_DIR / "neurodock_daemon.py").resolve()
     if not daemon_script.exists():
         sys.stderr.write(
-            f"daemon script not found at {daemon_script} — run "
-            "`neurodock install-hooks` first.\n"
+            f"daemon script not found at {daemon_script} — run `neurodock install-hooks` first.\n"
         )
         return 1
     if system == "Windows":
@@ -346,25 +342,26 @@ def _uninstall_autostart() -> int:
 def _install_windows_autostart(daemon_script: Path) -> int:
     # Register an HKCU Run entry so the daemon launches at user logon.
     # No admin rights required.
-    cmd = (
-        f'python "{str(daemon_script).replace(chr(92), "/")}" run'
-    )
+    cmd = f'python "{str(daemon_script).replace(chr(92), "/")}" run'
     try:
         subprocess.run(
             [
-                "reg", "add", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
-                "/v", "NeuroDockGuardrail",
-                "/t", "REG_SZ",
-                "/d", cmd,
+                "reg",
+                "add",
+                r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
+                "/v",
+                "NeuroDockGuardrail",
+                "/t",
+                "REG_SZ",
+                "/d",
+                cmd,
                 "/f",
             ],
             check=True,
             capture_output=True,
             timeout=10,
         )
-        sys.stdout.write(
-            "Registered HKCU Run entry. Daemon will launch at next logon.\n"
-        )
+        sys.stdout.write("Registered HKCU Run entry. Daemon will launch at next logon.\n")
         return 0
     except subprocess.CalledProcessError as exc:
         sys.stderr.write(f"reg add failed: {exc.stderr.decode(errors='ignore')}\n")
@@ -375,8 +372,11 @@ def _uninstall_windows_autostart() -> int:
     try:
         subprocess.run(
             [
-                "reg", "delete", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
-                "/v", "NeuroDockGuardrail",
+                "reg",
+                "delete",
+                r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run",
+                "/v",
+                "NeuroDockGuardrail",
                 "/f",
             ],
             check=True,
@@ -454,9 +454,7 @@ WantedBy=default.target
 
 
 def _uninstall_linux_systemd_user_unit() -> int:
-    unit = (
-        Path.home() / ".config" / "systemd" / "user" / "neurodock-guardrail.service"
-    )
+    unit = Path.home() / ".config" / "systemd" / "user" / "neurodock-guardrail.service"
     subprocess.run(
         ["systemctl", "--user", "disable", "--now", "neurodock-guardrail.service"],
         check=False,

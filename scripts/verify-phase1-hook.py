@@ -21,15 +21,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOK_PATH = (
-    REPO_ROOT
-    / "packages"
-    / "cli"
-    / "src"
-    / "assets"
-    / "hooks"
-    / "proactive_guardrail.py"
-)
+HOOK_PATH = REPO_ROOT / "packages" / "cli" / "src" / "assets" / "hooks" / "proactive_guardrail.py"
 STATE_DIR = Path.home() / ".neurodock" / "state"
 SESSION_FILE = STATE_DIR / "guardrail-session.json"
 PROMPTS_FILE = STATE_DIR / "guardrail-prompts.json"
@@ -64,8 +56,7 @@ def _seed_session(started_minutes_ago: int, tool_count_pre: int) -> None:
     pushes tool_count to a multiple of PRETOOL_CHECK_EVERY_N."""
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     started_at = (
-        datetime.now(UTC).astimezone()
-        - timedelta(minutes=started_minutes_ago)
+        datetime.now(UTC).astimezone() - timedelta(minutes=started_minutes_ago)
     ).isoformat()
     payload = {"started_at": started_at, "tool_count": tool_count_pre}
     SESSION_FILE.write_text(json.dumps(payload), encoding="utf-8")
@@ -178,9 +169,7 @@ def main() -> int:
         if r.detail:
             print(f"       detail:   {_safe(r.detail)}")
         print()
-    print(
-        f"Summary: {sum(1 for r in results if r.passed)}/{len(results)} passed"
-    )
+    print(f"Summary: {sum(1 for r in results if r.passed)}/{len(results)} passed")
     return 0 if all_passed else 1
 
 

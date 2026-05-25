@@ -18,9 +18,7 @@ from pathlib import Path
 # Import the daemon module from its asset path without installing it.
 # ---------------------------------------------------------------------------
 
-_DAEMON_PATH = (
-    Path(__file__).parent / "neurodock_daemon.py"
-)
+_DAEMON_PATH = Path(__file__).parent / "neurodock_daemon.py"
 
 _spec = importlib.util.spec_from_file_location("neurodock_daemon", _DAEMON_PATH)
 assert _spec is not None and _spec.loader is not None

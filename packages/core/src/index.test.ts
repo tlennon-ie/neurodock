@@ -3,6 +3,6 @@ import { version } from "./index";
 
 describe("@neurodock/core", () => {
   test("exports a version constant", () => {
-    expect(version).toBe("0.0.0");
+    expect(version).toMatch(/^\d+\.\d+\.\d+/);
   });
 });

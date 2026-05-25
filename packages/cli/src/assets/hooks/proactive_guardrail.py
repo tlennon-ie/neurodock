@@ -70,9 +70,9 @@ PROMPTS_FILE = STATE_DIR / "guardrail-prompts.json"
 
 # Hyperfocus heuristic — mirrors packages/mcp-guardrail/heuristics/hyperfocus.py
 HYPERFOCUS_BREAK_MINUTES_DEFAULT = 90
-HYPERFOCUS_GENTLE_RATIO = 0.60      # 54 min
-HYPERFOCUS_NUDGE_RATIO = 1.00       # 90 min
-HYPERFOCUS_HARD_RATIO = 4.0 / 3.0   # 120 min
+HYPERFOCUS_GENTLE_RATIO = 0.60  # 54 min
+HYPERFOCUS_NUDGE_RATIO = 1.00  # 90 min
+HYPERFOCUS_HARD_RATIO = 4.0 / 3.0  # 120 min
 
 # Rumination heuristic — Jaccard similarity over normalised word sets.
 RUMINATION_WINDOW_MINUTES_DEFAULT = 90
@@ -88,8 +88,8 @@ MAX_PROMPT_HISTORY = 200
 
 # Deep-night / late-night clock bands trigger an early-warning banner
 # at session-start. End-of-day defaults align with `profile.example.yaml`.
-DEEP_NIGHT_HOURS = range(0, 6)       # 00:00..05:59 local
-LATE_NIGHT_HOURS = range(22, 24)     # 22:00..23:59 local
+DEEP_NIGHT_HOURS = range(0, 6)  # 00:00..05:59 local
+LATE_NIGHT_HOURS = range(22, 24)  # 22:00..23:59 local
 
 
 # ── Main dispatch ────────────────────────────────────────────────────────
@@ -258,10 +258,7 @@ def _evaluate_rumination() -> str | None:
     if len(prompts) < RUMINATION_THRESHOLD_DEFAULT:
         return None
     window_start = _now() - timedelta(minutes=RUMINATION_WINDOW_MINUTES_DEFAULT)
-    recent = [
-        p for p in prompts
-        if _parse_iso(p.get("at", "")) >= window_start
-    ]
+    recent = [p for p in prompts if _parse_iso(p.get("at", "")) >= window_start]
     if len(recent) < RUMINATION_THRESHOLD_DEFAULT:
         return None
     # Compare the latest prompt to the others.
@@ -287,17 +284,30 @@ def _evaluate_sycophancy(response: str) -> str | None:
         return None
     opener = response.lstrip()[:200].lower()
     absolutes = [
-        "absolutely", "exactly right", "you're right",
-        "you are right", "great point", "excellent point",
-        "perfect", "spot on", "100%", "100 percent",
+        "absolutely",
+        "exactly right",
+        "you're right",
+        "you are right",
+        "great point",
+        "excellent point",
+        "perfect",
+        "spot on",
+        "100%",
+        "100 percent",
     ]
     hits = [phrase for phrase in absolutes if phrase in opener]
     if not hits:
         return None
     # If the response contains a trade-off marker, treat it as balanced.
     tradeoff_markers = [
-        "however", "trade-off", "tradeoff", "downside",
-        "but ", "although", "the cost is", "the risk is",
+        "however",
+        "trade-off",
+        "tradeoff",
+        "downside",
+        "but ",
+        "although",
+        "the cost is",
+        "the risk is",
     ]
     if any(marker in response.lower() for marker in tradeoff_markers):
         return None
@@ -317,16 +327,80 @@ def _jaccard_similarity(a: str, b: str) -> float:
     return intersection / union if union > 0 else 0.0
 
 
-_STOP_WORDS = frozenset({
-    "the", "a", "an", "and", "or", "but", "is", "are", "was", "were",
-    "be", "been", "being", "have", "has", "had", "do", "does", "did",
-    "will", "would", "could", "should", "may", "might", "must",
-    "shall", "can", "of", "in", "on", "at", "to", "for", "with",
-    "by", "from", "as", "if", "then", "else", "when", "where", "why",
-    "how", "what", "which", "who", "this", "that", "these", "those",
-    "i", "you", "he", "she", "it", "we", "they", "me", "him", "her",
-    "us", "them", "my", "your", "his", "its", "our", "their",
-})
+_STOP_WORDS = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "must",
+        "shall",
+        "can",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "with",
+        "by",
+        "from",
+        "as",
+        "if",
+        "then",
+        "else",
+        "when",
+        "where",
+        "why",
+        "how",
+        "what",
+        "which",
+        "who",
+        "this",
+        "that",
+        "these",
+        "those",
+        "i",
+        "you",
+        "he",
+        "she",
+        "it",
+        "we",
+        "they",
+        "me",
+        "him",
+        "her",
+        "us",
+        "them",
+        "my",
+        "your",
+        "his",
+        "its",
+        "our",
+        "their",
+    }
+)
 
 
 def _normalise_for_similarity(text: str) -> set[str]:

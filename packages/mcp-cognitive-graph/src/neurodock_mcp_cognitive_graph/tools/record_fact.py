@@ -39,7 +39,7 @@ def _validate_confidence(confidence: float | None) -> float:
         raise ToolError(
             "CONFIDENCE_OUT_OF_RANGE",
             "confidence must be a number in [0, 1].",
-            hint=("Pass confidence as a number between 0 and 1, or omit it to " "default to 1.0."),
+            hint=("Pass confidence as a number between 0 and 1, or omit it to default to 1.0."),
             example={**_VALID_CALL_EXAMPLE, "confidence": 0.8},
         ) from exc
     if not (0.0 <= value <= 1.0):
