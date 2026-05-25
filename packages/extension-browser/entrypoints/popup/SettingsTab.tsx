@@ -55,6 +55,7 @@ import {
   revokeImageTranslationGlobalAccess,
 } from "../../src/lib/permissions.js";
 import { ProviderTest } from "./ProviderTest.js";
+import { AccessibilitySection } from "./AccessibilitySection.js";
 
 /**
  * 0.0.16 — route popup model-list fetches through the service worker.
@@ -288,6 +289,8 @@ export function SettingsTab({
       ) : null}
 
       <ProviderTest profile={profile} />
+
+      <AccessibilitySection />
 
       <ProactiveGuardrails />
 

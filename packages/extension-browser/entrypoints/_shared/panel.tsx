@@ -836,8 +836,17 @@ function Collapsible({
   defaultOpen?: boolean;
 }): React.ReactElement {
   const [open, setOpen] = useState(defaultOpen);
+  // RFC A3 — Esc closes the disclosure when focus is inside it.
+  // Implemented at the section level so focus on either the toggle
+  // button or any child control closes the section on Esc.
+  const onKeyDown = (event: React.KeyboardEvent<HTMLElement>): void => {
+    if (event.key === "Escape" && open) {
+      event.stopPropagation();
+      setOpen(false);
+    }
+  };
   return (
-    <section>
+    <section onKeyDown={onKeyDown}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

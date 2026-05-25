@@ -36,6 +36,65 @@ prompt in the popup home view; default is Not now.
   enable toggle, interval select, and timebox-on-start toggle.
 - **Home UI**: one-time `PacingOptInPrompt` for OCD / AuDHD users.
 
+### Added — accessibility and focus modes (high-contrast theme, keyboard map, distraction-reduced focus mode)
+
+Implements RFC A3. Two persisted preferences land under a new
+`neurodock.a11y.v1` key in `chrome.storage.local` (never `sync`):
+
+- **High-contrast theme** — bumps `--nd-color-fg` to pure-ish black on
+  pure-ish white (inverted in dark mode), promotes hairlines to bolder
+  strokes, and forces the focus ring to 3 pixels. Reuses the existing
+  0.0.32 OKLCH token contract; no new colour names introduced. Applied
+  via the `:root.nd-high-contrast` and `:host(.nd-high-contrast)`
+  variants in `src/styles/tokens.css` plus the in-shadow stylesheet in
+  `entrypoints/_shared/mountIsland.ts`, so popup, tab view, and
+  every per-site island flip in lockstep.
+- **Focus mode** — distraction-reduced surface. Tightens line-height
+  from 1.65 to 1.45, caps the tab-view reading measure to ~55ch
+  (popup is already tight at 400px), and hides the cloud-mode banner
+  while idle (the toolbar icon still carries the cloud signal).
+  Collapsibles default closed (already the existing default; the
+  toggle reaffirms it).
+- **Keyboard-first popup tab bar** — arrow keys (Left/Right/Up/Down)
+  cycle through Home / Notifications / Settings with wraparound, and
+  Home / End jump to the first / last tab. Implements the WAI-ARIA
+  Authoring Practices `tablist` pattern. `tabIndex` rolls so only the
+  active tab is in the tab order.
+- **Esc closes any open Collapsible** in the in-page result panel,
+  whether focus sits on the toggle button or anywhere inside the
+  expanded section.
+- **Skip-to-content link** in the tab view — visually hidden until
+  focused, the first focusable element on the page, jumps past the
+  navigation to `#nd-tab-main`.
+- **Keyboard map** block at the bottom of Settings → Accessibility
+  documents Tab / Enter / Space / Esc / Arrow-keys for users who do
+  not already know the convention.
+
+New module: `src/lib/accessibility.ts` (load / save / apply, idempotent
+class toggles, accepts both `Document` and `ShadowRoot`).
+
+New component: `entrypoints/popup/AccessibilitySection.tsx`, rendered
+inside `SettingsTab` between the existing Provider test and the
+Proactive guardrails panel.
+
+`entrypoints/_shared/bootstrap.tsx` now applies the preferences to the
+shadow-root host on mount and re-applies on `chrome.storage.onChanged`
+so toggling in Settings flips every open island without a tab reload.
+
+Tests added:
+
+- `tests/unit/accessibility.test.ts` — load / save round-trip, default
+  fallback, migration of empty storage, garbage-input normalisation,
+  idempotent apply on `Document` and on `ShadowRoot`.
+- `tests/unit/popup-accessibility-section.test.tsx` — toggle each
+  preference, assert chrome.storage.local writes the new shape, assert
+  the document classes flip, rehydration from a pre-existing stored
+  value.
+- `tests/unit/popup-arrow-key-tabs.test.tsx` — arrow keys cycle, Home
+  / End jump, unrelated keys pass through, `tabIndex` rolls.
+- `tests/unit/tab-skip-link.test.tsx` — link rendered, targets
+  `#nd-tab-main`, sits first in DOM order before the AppShell wrapper.
+
 ## 0.0.32
 
 ### Changed — visual identity refresh matching docs site

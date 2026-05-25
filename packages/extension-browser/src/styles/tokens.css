@@ -128,3 +128,112 @@
     --nd-transition-duration: 120ms;
   }
 }
+
+/*
+ * High-contrast theme (RFC A3 — Accessibility and focus modes).
+ *
+ * Toggled by the user via Settings → Accessibility. The class is
+ * applied to `<html>` for popup + tab surfaces, and to the shadow-root
+ * host element for in-page islands (so `:host(.nd-high-contrast)`
+ * resolves inside the shadow tree).
+ *
+ * Rules:
+ *   - Foreground promoted to pure-ish (lightness 0% in light mode,
+ *     100% in dark mode) so contrast lands well above WCAG AAA.
+ *   - Background pushed to the opposite pole for the same reason.
+ *   - Hairlines promoted to the muted foreground value — bolder than
+ *     the default 88% / 28% hairline so card edges stop disappearing.
+ *   - Focus rings move from 2px to 3px (declared in popup + tab
+ *     globals; the variable is read there to centralise the rule).
+ */
+:root.nd-high-contrast {
+  --nd-color-bg: oklch(100% 0 0);
+  --nd-color-bg-nav: oklch(100% 0 0);
+  --nd-color-bg-sidebar: oklch(100% 0 0);
+  --nd-color-bg-inline-code: oklch(96% 0 0);
+
+  --nd-color-fg: oklch(0% 0 0);
+  --nd-color-fg-accent: oklch(0% 0 0);
+  --nd-color-fg-muted: oklch(20% 0 0);
+  --nd-color-fg-invert: oklch(100% 0 0);
+
+  --nd-color-hairline: oklch(0% 0 0);
+  --nd-color-hairline-light: oklch(20% 0 0);
+  --nd-color-shade: oklch(20% 0 0);
+
+  --nd-color-accent: oklch(0% 0 0);
+  --nd-color-accent-low: oklch(85% 0 0);
+  --nd-color-accent-high: oklch(0% 0 0);
+
+  --nd-focus-ring-width: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.nd-high-contrast {
+    --nd-color-bg: oklch(0% 0 0);
+    --nd-color-bg-nav: oklch(0% 0 0);
+    --nd-color-bg-sidebar: oklch(0% 0 0);
+    --nd-color-bg-inline-code: oklch(10% 0 0);
+
+    --nd-color-fg: oklch(100% 0 0);
+    --nd-color-fg-accent: oklch(100% 0 0);
+    --nd-color-fg-muted: oklch(85% 0 0);
+    --nd-color-fg-invert: oklch(0% 0 0);
+
+    --nd-color-hairline: oklch(100% 0 0);
+    --nd-color-hairline-light: oklch(80% 0 0);
+    --nd-color-shade: oklch(80% 0 0);
+
+    --nd-color-accent: oklch(100% 0 0);
+    --nd-color-accent-low: oklch(20% 0 0);
+    --nd-color-accent-high: oklch(100% 0 0);
+  }
+}
+
+/*
+ * Focus mode (distraction-reduced).
+ *
+ * Tighter typography rhythm and a narrower reading measure. Banners
+ * that are merely informational hide while idle (the popup checks the
+ * `.nd-focus-mode` class on its root to decide whether to render the
+ * cloud-mode banner when cloud mode is configured but no request is
+ * actively in flight).
+ *
+ * The reading-measure cap only applies inside the tab view's content
+ * pane; the popup is already tight at 400px and the in-page island is
+ * fixed-width.
+ */
+:root.nd-focus-mode {
+  --nd-line-height: 1.45;
+}
+
+/* In-shadow variants. Both class names also resolve when set on the
+   host element of a shadow root via `:host(.nd-…)`. The values mirror
+   the document-level rules above so the popup, tab, and in-page
+   islands stay visually identical. */
+:host(.nd-high-contrast) {
+  --nd-color-bg: oklch(100% 0 0);
+  --nd-color-bg-nav: oklch(100% 0 0);
+  --nd-color-fg: oklch(0% 0 0);
+  --nd-color-fg-muted: oklch(20% 0 0);
+  --nd-color-hairline: oklch(0% 0 0);
+  --nd-color-accent: oklch(0% 0 0);
+  --nd-color-accent-high: oklch(0% 0 0);
+  --nd-focus-ring-width: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(.nd-high-contrast) {
+    --nd-color-bg: oklch(0% 0 0);
+    --nd-color-bg-nav: oklch(0% 0 0);
+    --nd-color-fg: oklch(100% 0 0);
+    --nd-color-fg-muted: oklch(85% 0 0);
+    --nd-color-hairline: oklch(100% 0 0);
+    --nd-color-accent: oklch(100% 0 0);
+    --nd-color-accent-high: oklch(100% 0 0);
+  }
+}
+
+:host(.nd-focus-mode) {
+  --nd-line-height: 1.45;
+}

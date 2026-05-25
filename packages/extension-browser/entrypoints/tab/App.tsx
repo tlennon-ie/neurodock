@@ -32,6 +32,10 @@ import { ToolView, SourcePreview } from "../_shared/panel.js";
 import { AppShell } from "../../src/components/AppShell.js";
 import { useAppData } from "../../src/components/useAppData.js";
 import type { ProfileSyncStatus } from "../../src/lib/profile.js";
+import {
+  applyA11yToDocument,
+  loadA11yPreferences,
+} from "../../src/lib/accessibility.js";
 
 type TabView = "home" | "history" | "settings" | "notifications";
 
@@ -59,6 +63,19 @@ function initialView(): TabView {
 export function TabApp(): React.ReactElement {
   const data = useAppData({ historyPageSize: 100 });
   const [view, setView] = useState<TabView>(initialView);
+
+  // RFC A3: apply persisted accessibility preferences as early as
+  // possible so high-contrast / focus-mode classes are on the
+  // documentElement before the heavy data layer (history, sync probe)
+  // resolves and re-renders.
+  useEffect(() => {
+    void (async () => {
+      const a11y = await loadA11yPreferences();
+      if (typeof document !== "undefined") {
+        applyA11yToDocument(a11y, document);
+      }
+    })();
+  }, []);
 
   // Keep `view` synced with the URL so back/forward and shared links
   // restore the intended section. We do not deep-link into individual
@@ -130,32 +147,47 @@ export function TabApp(): React.ReactElement {
   const nav = <SideNav current={view} onChange={navigate} />;
 
   return (
-    <AppShell mode="tab" header={header} banner={banner} nav={nav}>
-      {view === "home" ? (
-        <HomeSection
-          profile={data.profile}
-          history={data.history}
-          syncStatus={data.syncStatus}
-        />
-      ) : null}
-      {view === "history" ? (
-        <HistorySection
-          profile={data.profile}
-          history={data.history}
-          onToggleHistory={(enabled) =>
-            void data.update({ historyEnabled: enabled })
-          }
-          onClearHistory={data.clearAllHistory}
-        />
-      ) : null}
-      {view === "settings" ? (
-        <SettingsSection profile={data.profile} onChange={data.update} />
-      ) : null}
-      {view === "notifications" ? <NotificationsPlaceholder /> : null}
-      {data.loaded ? null : (
-        <p className="text-fg-muted text-sm">Loading your profile…</p>
-      )}
-    </AppShell>
+    <>
+      {/* RFC A3 — skip-to-content link. Visually hidden until focused;
+          the first focusable element on the page so a keyboard user
+          can jump past the navigation directly to the main content
+          region (id `nd-tab-main`). */}
+      <a
+        href="#nd-tab-main"
+        className="nd-skip-link"
+        data-testid="tab-skip-link"
+      >
+        Skip to main content
+      </a>
+      <AppShell mode="tab" header={header} banner={banner} nav={nav}>
+        <div id="nd-tab-main" tabIndex={-1} className="flex flex-col gap-8">
+          {view === "home" ? (
+            <HomeSection
+              profile={data.profile}
+              history={data.history}
+              syncStatus={data.syncStatus}
+            />
+          ) : null}
+          {view === "history" ? (
+            <HistorySection
+              profile={data.profile}
+              history={data.history}
+              onToggleHistory={(enabled) =>
+                void data.update({ historyEnabled: enabled })
+              }
+              onClearHistory={data.clearAllHistory}
+            />
+          ) : null}
+          {view === "settings" ? (
+            <SettingsSection profile={data.profile} onChange={data.update} />
+          ) : null}
+          {view === "notifications" ? <NotificationsPlaceholder /> : null}
+          {data.loaded ? null : (
+            <p className="text-fg-muted text-sm">Loading your profile…</p>
+          )}
+        </div>
+      </AppShell>
+    </>
   );
 }
 
