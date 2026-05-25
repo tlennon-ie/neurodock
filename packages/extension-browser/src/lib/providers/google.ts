@@ -11,8 +11,11 @@
  * Docs: https://ai.google.dev/gemini-api/docs/openai
  *
  * Default model is `gemini-2.0-flash` — fast, cheap, vision-capable.
- * Users can override with any Gemini slug (e.g. `gemini-2.5-flash`,
- * `gemini-1.5-pro`).
+ * Users can override with any Gemini chat-completion model — every
+ * Gemini family member from 1.5 onwards is multimodal, so
+ * `gemini-pro-latest`, `gemini-flash-latest`, `gemini-3.5-flash`,
+ * `gemini-3-pro-preview`, `gemini-2.5-pro`, `gemini-1.5-pro`, etc.
+ * all work for both text and image input.
  *
  * Vision: Google's endpoint accepts both http(s) image URLs AND base64
  * data URLs verbatim, so — unlike LM Studio — we do NOT need to pre-fetch
@@ -197,8 +200,8 @@ function buildGoogleContent(request: ProviderRequest): GoogleMessageContent {
   if (!isVisionCapableGoogleModel(request.model)) {
     throw new Error(
       `VISION_MODEL_REQUIRED: model "${request.model}" doesn't appear to ` +
-        `support image input. Try gemini-2.0-flash, gemini-2.5-flash, or ` +
-        `gemini-1.5-pro in Settings.`,
+        `support image input. Try gemini-pro-latest, gemini-flash-latest, ` +
+        `gemini-2.5-flash, or gemini-2.0-flash in Settings.`,
     );
   }
   return [
@@ -211,19 +214,32 @@ function buildGoogleContent(request: ProviderRequest): GoogleMessageContent {
 }
 
 /**
- * Coarse allowlist for Gemini models known to accept image input. Every
- * Gemini 1.5 / 2.0 / 2.5 model is vision-capable per the public docs;
- * older `gemini-pro` (text-only) and embedding models are not. The
- * failure mode is a clear VISION_MODEL_REQUIRED error rather than an
- * opaque Google 400.
+ * Pre-flight check: is this model expected to accept image input?
+ *
+ * Every Gemini chat-completion model from 1.5 onwards is multimodal —
+ * vision is the default, not an opt-in. The previous version of this
+ * function hardcoded the known minor-version slugs (`gemini-1.5`,
+ * `gemini-2.0`, `gemini-2.5`) and rejected anything outside that
+ * window, so current aliases the user types from the Google docs
+ * (`gemini-pro-latest`, `gemini-flash-latest`, `gemini-3-pro-preview`,
+ * `gemini-3.5-flash`, …) failed our pre-flight check even though the
+ * Google endpoint itself accepts them. That guard is now inverted:
+ * accept any `gemini-*` slug, and only reject the known non-chat
+ * Google model families (embeddings + AQA). New Gemini chat models
+ * will work without a code change; only embedding/AQA slugs route
+ * to a friendly client-side error before we hit the wire.
+ *
+ * Failure mode if a future non-vision Gemini family ever ships: a
+ * Google 400 will surface via `normaliseGoogleError` with the
+ * server-supplied detail.
  */
+const NON_CHAT_GOOGLE_SLUG = /(embedding|^aqa$|^aqa[-_])/i;
+
 export function isVisionCapableGoogleModel(model: string): boolean {
-  const m = model.toLowerCase();
-  if (m.includes("gemini-1.5")) return true;
-  if (m.includes("gemini-2.0")) return true;
-  if (m.includes("gemini-2.5")) return true;
-  if (m.includes("gemini-2-pro")) return true;
-  return false;
+  const m = model.toLowerCase().trim();
+  if (m.length === 0) return false;
+  if (NON_CHAT_GOOGLE_SLUG.test(m)) return false;
+  return /^gemini[-/]/.test(m) || m === "gemini";
 }
 
 async function consumeSse(

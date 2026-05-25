@@ -328,19 +328,40 @@ describe("google provider", () => {
 });
 
 describe("isVisionCapableGoogleModel", () => {
-  it("returns true for gemini-1.5 / 2.0 / 2.5 families", () => {
+  it("returns true for established gemini-1.5 / 2.0 / 2.5 families", () => {
     expect(isVisionCapableGoogleModel("gemini-1.5-flash")).toBe(true);
     expect(isVisionCapableGoogleModel("gemini-1.5-pro")).toBe(true);
     expect(isVisionCapableGoogleModel("gemini-2.0-flash")).toBe(true);
     expect(isVisionCapableGoogleModel("gemini-2.0-flash-exp")).toBe(true);
     expect(isVisionCapableGoogleModel("gemini-2.5-flash")).toBe(true);
+    expect(isVisionCapableGoogleModel("gemini-2.5-pro")).toBe(true);
   });
 
-  it("returns false for unrecognised or text-only slugs", () => {
+  it("returns true for current `-latest` aliases and gemini-3 slugs", () => {
+    // Regression: these are the slugs the user actually types into
+    // Settings from the Google docs. The old hardcoded allowlist
+    // (`gemini-1.5`/`2.0`/`2.5` only) rejected them with a misleading
+    // VISION_MODEL_REQUIRED before we ever hit the wire.
+    expect(isVisionCapableGoogleModel("gemini-pro-latest")).toBe(true);
+    expect(isVisionCapableGoogleModel("gemini-flash-latest")).toBe(true);
+    expect(isVisionCapableGoogleModel("gemini-3.5-flash")).toBe(true);
+    expect(isVisionCapableGoogleModel("gemini-3-pro-preview")).toBe(true);
+    expect(isVisionCapableGoogleModel("gemini-3-flash")).toBe(true);
+  });
+
+  it("tolerates the `models/` prefix Google's list endpoint returns", () => {
+    expect(isVisionCapableGoogleModel("models/gemini-2.0-flash")).toBe(false);
+    // (The prefix is stripped in fetchGoogleModels; if it slips through
+    // we don't claim vision support — bare slugs only.)
+  });
+
+  it("returns false for non-chat Google model families", () => {
     expect(isVisionCapableGoogleModel("text-embedding-004")).toBe(false);
-    expect(isVisionCapableGoogleModel("gemini-pro")).toBe(false);
+    expect(isVisionCapableGoogleModel("embedding-001")).toBe(false);
+    expect(isVisionCapableGoogleModel("gemini-embedding-001")).toBe(false);
     expect(isVisionCapableGoogleModel("aqa")).toBe(false);
     expect(isVisionCapableGoogleModel("not-a-real-model")).toBe(false);
+    expect(isVisionCapableGoogleModel("")).toBe(false);
   });
 });
 

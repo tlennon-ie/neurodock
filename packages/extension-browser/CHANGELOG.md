@@ -1,5 +1,22 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Fixed — Google Gemini vision allowlist no longer rejects current model slugs (`gemini-pro-latest`, `gemini-3.5-flash`, etc.)
+
+The Google provider's pre-flight vision check hardcoded the
+`gemini-1.5` / `2.0` / `2.5` / `2-pro` slug families and rejected
+anything outside that window with a misleading `VISION_MODEL_REQUIRED`
+error — even when the user picked a current alias like
+`gemini-pro-latest`, `gemini-flash-latest`, `gemini-3.5-flash`, or
+`gemini-3-pro-preview` that Google's endpoint accepts. The check is
+inverted: we now accept any `gemini-*` slug and only fail closed for
+the known non-chat Google families (embeddings, AQA), so new Gemini
+chat releases work without an extension update. Chose approach B
+(widen the allowlist) over dropping it entirely so the user still
+gets a clear client-side error when they accidentally pick an
+embedding model for image input.
+
 ## 0.0.29
 
 ### Added — Notifications inbox + Open-in-tab expanded view
