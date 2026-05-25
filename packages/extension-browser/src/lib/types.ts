@@ -185,10 +185,46 @@ export interface NextAction {
 }
 
 /**
+ * v0.2.0 schema — the per-item Input/Action/Goal scaffold a
+ * neurodivergent reader actually consumes. Mirrors the
+ * `$defs.TranslatedFacet` block of
+ * `packages/mcp-translation/schemas/describe_image.schema.json`.
+ *
+ * `kind` is intentionally a string-literal union (not an enum) so
+ * unknown values from a future schema bump degrade gracefully: per
+ * the schema policy, forward-compatible callers MUST treat unknown
+ * kinds as `context`. The widening to `string` for that fallback
+ * happens at the render layer, not the type.
+ */
+export type TranslatedFacetKind =
+  | "input"
+  | "action"
+  | "goal"
+  | "rule"
+  | "fact"
+  | "benefit"
+  | "context";
+
+export interface TranslatedFacet {
+  readonly kind: TranslatedFacetKind;
+  readonly text: string;
+}
+
+export interface TranslatedEntry {
+  readonly label: string;
+  readonly facets: readonly TranslatedFacet[];
+}
+
+/**
  * Output shape of the `describe_image` tool. REQUIRES a vision-capable
  * model — text-only models return an error with code
  * `VISION_MODEL_REQUIRED`. See `packages/mcp-translation/schemas/
  * describe_image.schema.json` for the canonical wire contract.
+ *
+ * v0.2.0 adds `content_translation` — the PRIMARY surface for a
+ * neurodivergent reader. Optional + nullable: legacy v0.1.x
+ * responses (field omitted) and decorative imagery (`null`) both
+ * validate. When populated as an array it MUST contain >=1 entry.
  */
 export interface DescribeImageResult {
   readonly description: string;
@@ -197,6 +233,7 @@ export interface DescribeImageResult {
   readonly key_elements: readonly string[];
   readonly inferred_purpose: string;
   readonly accessibility_notes: string | null;
+  readonly content_translation?: readonly TranslatedEntry[] | null;
   readonly eval_corpus_slice: string;
   readonly model_provenance: ModelProvenance;
 }

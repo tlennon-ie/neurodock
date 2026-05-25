@@ -19,6 +19,9 @@
 import React, { useState } from "react";
 import type {
   ExtensionProfile,
+  TranslatedEntry,
+  TranslatedFacet,
+  TranslatedFacetKind,
   TranslationResponse,
 } from "../../src/lib/types.js";
 
@@ -302,6 +305,68 @@ function ImageDescribeView({
     data.accessibility_notes.length > 0
       ? data.accessibility_notes
       : null;
+  const translation = coerceTranslatedEntries(data.content_translation);
+
+  // v0.2.0 / 0.0.31: when the model emits content_translation, it is the
+  // PRIMARY surface a neurodivergent reader consumes. The legacy fields
+  // (description, key_elements, transcribed_text, accessibility_notes,
+  // inferred_purpose) are accessibility-tech metadata and get demoted to
+  // a closed-by-default Collapsible. When content_translation is null /
+  // missing / empty (decorative imagery, or legacy v0.1.x responses), we
+  // fall back to the pre-0.0.30 layout so nothing regresses.
+  if (translation.length > 0) {
+    return (
+      <div
+        data-testid="image-describe-translation"
+        style={{ display: "flex", flexDirection: "column", gap: 10 }}
+      >
+        <TranslatedEntryList entries={translation} />
+
+        <Collapsible label="Accessibility metadata">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {description.length > 0 ? (
+              <Section label="Literal description">
+                <p style={{ margin: 0 }}>{description}</p>
+              </Section>
+            ) : null}
+            {inferredPurpose.length > 0 ? (
+              <Section label="What it's for">
+                <p style={{ margin: 0 }}>{inferredPurpose}</p>
+              </Section>
+            ) : null}
+            {containsText && transcribedText ? (
+              <Section label="Text in the image">
+                <CopyableDraft text={transcribedText} />
+              </Section>
+            ) : null}
+            {keyElements.length > 0 ? (
+              <Section label={`Key elements (${keyElements.length})`}>
+                <ul
+                  style={{
+                    margin: "4px 0 0 0",
+                    paddingLeft: 18,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 3,
+                  }}
+                >
+                  {keyElements.map((e, i) => (
+                    <li key={i}>{e}</li>
+                  ))}
+                </ul>
+              </Section>
+            ) : null}
+            {altText ? (
+              <Section label="Suggested alt text">
+                <p style={{ margin: 0, fontStyle: "italic" }}>{altText}</p>
+              </Section>
+            ) : null}
+          </div>
+        </Collapsible>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {description.length > 0 ? <TldrCard text={description} /> : null}
@@ -341,6 +406,166 @@ function ImageDescribeView({
           <p style={{ margin: 0, fontStyle: "italic" }}>{altText}</p>
         </Section>
       ) : null}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// content_translation (v0.2.0 — shared by describe_image + brief_meeting)
+// ─────────────────────────────────────────────────────────────────────────
+
+const KNOWN_FACET_KINDS: readonly TranslatedFacetKind[] = [
+  "input",
+  "action",
+  "goal",
+  "rule",
+  "fact",
+  "benefit",
+  "context",
+];
+
+/**
+ * Validate + narrow an unknown value into a `TranslatedEntry[]`. The
+ * runtime guard is intentionally tolerant: we are reading model output
+ * that has already passed Ajv against the schema upstream, but the
+ * panel still defends against `null`, missing fields, wrong types, or
+ * legacy v0.1.x responses where the field is simply absent.
+ *
+ * Returns an empty array when the field is null / undefined / empty /
+ * malformed — callers treat empty as "fall back to legacy layout".
+ */
+function coerceTranslatedEntries(value: unknown): readonly TranslatedEntry[] {
+  if (!Array.isArray(value)) return [];
+  const out: TranslatedEntry[] = [];
+  for (const raw of value) {
+    if (!isRecord(raw)) continue;
+    const label = typeof raw.label === "string" ? raw.label : "";
+    if (label.length === 0) continue;
+    const facets = coerceTranslatedFacets(raw.facets);
+    if (facets.length === 0) continue;
+    out.push({ label, facets });
+  }
+  return out;
+}
+
+function coerceTranslatedFacets(value: unknown): readonly TranslatedFacet[] {
+  if (!Array.isArray(value)) return [];
+  const out: TranslatedFacet[] = [];
+  for (const raw of value) {
+    if (!isRecord(raw)) continue;
+    const text = typeof raw.text === "string" ? raw.text : "";
+    if (text.length === 0) continue;
+    const kindRaw = typeof raw.kind === "string" ? raw.kind : "";
+    // Per the schema policy, unknown kinds MUST be treated as `context`
+    // by forward-compatible callers.
+    const kind: TranslatedFacetKind = (
+      KNOWN_FACET_KINDS as readonly string[]
+    ).includes(kindRaw)
+      ? (kindRaw as TranslatedFacetKind)
+      : "context";
+    out.push({ kind, text });
+  }
+  return out;
+}
+
+function facetKindLabel(kind: TranslatedFacetKind): string {
+  return kind.toUpperCase();
+}
+
+function TranslatedEntryList({
+  entries,
+}: {
+  entries: readonly TranslatedEntry[];
+}): React.ReactElement {
+  return (
+    <div
+      data-testid="content-translation-list"
+      style={{ display: "flex", flexDirection: "column", gap: 10 }}
+    >
+      {entries.map((entry, i) => (
+        <TranslatedEntryCard key={i} entry={entry} index={i} />
+      ))}
+    </div>
+  );
+}
+
+function TranslatedEntryCard({
+  entry,
+  index,
+}: {
+  entry: TranslatedEntry;
+  index: number;
+}): React.ReactElement {
+  return (
+    <section
+      data-testid="content-translation-entry"
+      style={{
+        padding: "10px 12px",
+        border: "1px solid rgba(0,0,0,0.18)",
+      }}
+    >
+      <h3
+        style={{
+          margin: "0 0 6px 0",
+          fontSize: 14,
+          fontWeight: 600,
+          lineHeight: 1.35,
+        }}
+        data-testid={`content-translation-entry-label-${index}`}
+      >
+        {entry.label}
+      </h3>
+      <ul
+        style={{
+          listStyle: "none",
+          margin: 0,
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+        }}
+      >
+        {entry.facets.map((facet, fi) => (
+          <li key={fi}>
+            <FacetRow facet={facet} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function FacetRow({ facet }: { facet: TranslatedFacet }): React.ReactElement {
+  return (
+    <div
+      data-testid="content-translation-facet"
+      style={{
+        display: "flex",
+        alignItems: "baseline",
+        gap: 8,
+        fontSize: 14,
+        lineHeight: 1.5,
+      }}
+    >
+      <span
+        data-testid="content-translation-facet-kind"
+        aria-label={`facet kind ${facet.kind}`}
+        style={{
+          flex: "0 0 auto",
+          minWidth: 64,
+          padding: "1px 6px",
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          fontWeight: 600,
+          background: "rgba(0,0,0,0.06)",
+          color: "rgba(0,0,0,0.65)",
+          textAlign: "center",
+        }}
+      >
+        {facetKindLabel(facet.kind)}
+      </span>
+      <span style={{ flex: "1 1 auto" }}>{facet.text}</span>
     </div>
   );
 }
@@ -871,6 +1096,70 @@ function BriefMeetingView({
   const ambiguous = Array.isArray(data.ambiguous_items)
     ? (data.ambiguous_items as MeetingAmbiguous[])
     : [];
+  const translation = coerceTranslatedEntries(data.content_translation);
+
+  // v0.2.0 / 0.0.31: same pattern as describe_image — when the model
+  // emits content_translation, it is the primary surface; the legacy
+  // four-section extraction is demoted to a collapsed transcript-metadata
+  // block. Legacy responses (field null / missing / empty) fall through
+  // to the pre-0.0.30 four-section layout unchanged.
+  if (translation.length > 0) {
+    return (
+      <div
+        data-testid="brief-meeting-translation"
+        style={{ display: "flex", flexDirection: "column", gap: 10 }}
+      >
+        <TranslatedEntryList entries={translation} />
+
+        <Collapsible label="Meeting transcript metadata">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Section label="Asks on me">
+              <AskList items={myAsks} />
+            </Section>
+            <Section label="My asks of others">
+              <AskList items={othersAsks} />
+            </Section>
+            <Section label="Decisions">
+              {decisions.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>(none)</p>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  {decisions.map((d, i) => (
+                    <li key={i}>
+                      {d.text}
+                      {d.decided_by && d.decided_by.length > 0
+                        ? ` (by ${d.decided_by.join(", ")})`
+                        : null}
+                      {d.quoted_span?.text ? (
+                        <Quote text={d.quoted_span.text} />
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+            <Section label="Unclear">
+              {ambiguous.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>(none)</p>
+              ) : (
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  {ambiguous.map((a, i) => (
+                    <li key={i}>
+                      <strong>{a.reason ?? "other"}</strong>: {a.text}
+                      {a.quoted_span?.text ? (
+                        <Quote text={a.quoted_span.text} />
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+          </div>
+        </Collapsible>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <Section label="Asks on me">
