@@ -19,6 +19,7 @@
  * removed.
  */
 
+@import "../../src/styles/fonts.css";
 @import "../../src/styles/tokens.css";
 
 @tailwind base;

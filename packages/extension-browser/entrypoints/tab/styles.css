@@ -7,6 +7,7 @@
  * wider reading measure permitted by the tab surface.
  */
 
+@import "../../src/styles/fonts.css";
 @import "../../src/styles/tokens.css";
 
 @tailwind base;

@@ -29,6 +29,11 @@ import {
   applyA11yToDocument,
   loadA11yPreferences,
 } from "../../src/lib/accessibility.js";
+import {
+  THEME_MODE_STORAGE_KEY,
+  applyThemeModeToDocument,
+  loadThemeMode,
+} from "../../src/lib/theme-mode.js";
 import type {
   Channel,
   ExtensionProfile,
@@ -111,6 +116,13 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
     applyA11yToDocument(prefs, island.shadow);
   });
 
+  // Theme v2 — apply the user's themeMode override to the shadow host so
+  // `:host(.nd-theme-light)` / `:host(.nd-theme-dark)` flip the palette
+  // inside the island in lockstep with the popup / tab toggle.
+  void loadThemeMode().then((mode) => {
+    applyThemeModeToDocument(mode, island.shadow);
+  });
+
   // Subscribe to profile updates from the popup. `chrome.storage.local.set`
   // automatically fires `chrome.storage.onChanged` to every context that
   // has a listener — so when the user changes provider / mode / API key
@@ -131,6 +143,11 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
     if (Object.prototype.hasOwnProperty.call(changes, A11Y_STORAGE_KEY)) {
       void loadA11yPreferences().then((prefs) => {
         applyA11yToDocument(prefs, island.shadow);
+      });
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, THEME_MODE_STORAGE_KEY)) {
+      void loadThemeMode().then((mode) => {
+        applyThemeModeToDocument(mode, island.shadow);
       });
     }
   };

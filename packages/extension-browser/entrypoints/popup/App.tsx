@@ -32,10 +32,15 @@ import { NotificationsTab } from "./NotificationsTab.js";
 import { OnboardingWizard } from "./OnboardingWizard.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
 import { OpenInTabButton } from "../../src/components/OpenInTabButton.js";
+import { ThemeModeToggle } from "../../src/components/ThemeModeToggle.js";
 import {
   applyA11yToDocument,
   loadA11yPreferences,
 } from "../../src/lib/accessibility.js";
+import {
+  applyThemeModeToDocument,
+  loadThemeMode,
+} from "../../src/lib/theme-mode.js";
 
 function isHistoryUpdatedMessage(msg: unknown): boolean {
   return (
@@ -90,11 +95,19 @@ export function App(): React.ReactElement {
   // profile load completes. A paint with the default theme followed by
   // a paint with the user's high-contrast preference would itself be
   // an accessibility regression.
+  //
+  // Theme v2: load + apply the user's themeMode override in the same
+  // pre-paint window so a dark-mode-forced user does not see a flash
+  // of the light palette before the profile resolves.
   useEffect(() => {
     void (async () => {
-      const a11y = await loadA11yPreferences();
+      const [a11y, mode] = await Promise.all([
+        loadA11yPreferences(),
+        loadThemeMode(),
+      ]);
       if (typeof document !== "undefined") {
         applyA11yToDocument(a11y, document);
+        applyThemeModeToDocument(mode, document);
       }
     })();
   }, []);
@@ -206,14 +219,17 @@ export function App(): React.ReactElement {
     <main className="text-fg flex flex-col gap-4 p-4">
       <header className="flex items-start justify-between gap-2">
         <div>
-          <h1 className="font-heading text-fg m-0 text-base font-medium">
+          <h1 className="font-heading text-fg-accent m-0 text-base font-semibold tracking-tight">
             NeuroDock
           </h1>
           <p className="text-fg-muted m-0 text-sm">
             Decode subtext. Check tone. Local-first by default.
           </p>
         </div>
-        <OpenInTabButton view={tab} />
+        <div className="flex items-center gap-2">
+          <ThemeModeToggle iconSize={16} />
+          <OpenInTabButton view={tab} />
+        </div>
       </header>
 
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />

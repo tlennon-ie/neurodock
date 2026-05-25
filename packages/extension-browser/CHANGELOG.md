@@ -1,6 +1,6 @@
 # @neurodock/extension-browser
 
-## [unreleased]
+## 0.0.34
 
 ### Security — tightened extension CSP (drop `http:`/`https:` wildcards in `connect-src`), removed inline sourcemaps from production bundle, hardened channel detection against URL spoofing
 
@@ -20,6 +20,63 @@ a spoofability window where crafted URLs such as
 `https://evil.com/?q=mail.google.com` or `https://mail.google.com.evil.com/`
 could have been misclassified as the `email` channel (CodeQL alerts #28-29,
 finding H2).
+
+### Changed — theme v2 alignment with docs site (light + dark + user toggle + per-surface fidelity)
+
+The 0.0.32 visual-identity refresh shipped the OKLCH tokens verbatim
+but the extension still looked unlike the docs site because the
+typography fell back to `system-ui` and there was no user-controlled
+light / dark switch. 0.0.34 closes both gaps and tidies the popup +
+tab header hierarchy.
+
+- **Bundled webfonts**: `Atkinson Hyperlegible` 400 / 400-italic / 700,
+  `Lexend Variable`, and `JetBrains Mono Variable` ship as woff2 under
+  `public/fonts/` (SIL OFL 1.1 — see `public/fonts/LICENSE.md`). New
+  `src/styles/fonts.css` declares the `@font-face` rules; popup + tab
+  stylesheets import it before tokens.css. The shadow-DOM stylesheet
+  in `mountIsland.ts` references the same files via
+  `chrome.runtime.getURL("fonts/...")` so in-page islands match the
+  popup typography. `web_accessible_resources` gains a `fonts/*.woff2`
+  entry to permit the cross-origin reach.
+- **User theme override**: new `themeMode: "system" | "light" | "dark"`
+  preference (default `"system"`) lives under `neurodock.themeMode.v1`
+  in `chrome.storage.local` (never `sync`). New
+  `src/lib/theme-mode.ts` owns load / save / apply with the same
+  early-paint pattern as `accessibility.ts`. New
+  `src/components/ThemeModeToggle.tsx` renders a single icon button
+  that cycles System → Light → Dark on click. Wired into the popup
+  header (16px icon) and the tab view header (18px icon). The flip is
+  synchronous — the class lands on `<html>` on the click tick; the
+  persist round-trip is best-effort.
+- **Token override paths**: `src/styles/tokens.css` gains
+  `:root.nd-theme-light` / `:root.nd-theme-dark` rules that beat the
+  OS media query in both directions (light forced inside a dark OS,
+  dark forced inside a light OS). `mountIsland.ts` mirrors the same
+  rules as `:host(.nd-theme-light)` / `:host(.nd-theme-dark)` for the
+  shadow-root islands.
+- **Bootstrap propagation**: `entrypoints/_shared/bootstrap.tsx` reads
+  `themeMode` on mount and re-reads it via the
+  `chrome.storage.onChanged` listener so toggling theme in the popup
+  flips every open in-page island without a tab reload (same pattern
+  the A3 accessibility flip already uses).
+- **Header tidy**: popup + tab `<h1>` move from `font-medium text-fg`
+  to `font-semibold text-fg-accent tracking-tight` so they match the
+  docs site `.site-title` weight + accent colour. The popup header
+  now hosts a flex row with the theme toggle alongside the existing
+  Open-in-tab button.
+- **Icon parity**: confirmed (`cmp` byte-identical) that
+  `public/icon/{16,32,48,128,256}.png` match `docs/public/icon/*.png`
+  shipped in 0.0.32 — no regeneration needed.
+
+### Migration notes
+
+- No schema change to `ExtensionProfile` — themeMode is a sibling
+  preference under its own storage key, so existing installs are
+  untouched and the first popup open paints with `"system"` mode.
+- The font fallback stack (`"Atkinson Hyperlegible", system-ui, ...`)
+  is unchanged in tokens.css, so on the first paint before the woff2
+  decodes the surface still renders with `system-ui` exactly as
+  before — there is no FOIT (`font-display: swap` is set).
 
 ## 0.0.33
 

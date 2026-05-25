@@ -198,6 +198,14 @@ export default defineConfig({
         resources: ["tab.html"],
         matches: ["<all_urls>"],
       },
+      // Theme v2 — bundled webfonts must be reachable from the in-page
+      // shadow-root islands so the host-page CSS does not fall back to
+      // system-ui inside the panel. Listed by extension only; serving
+      // them does not grant the page any new capability (woff2 is inert).
+      {
+        resources: ["fonts/*.woff2"],
+        matches: ["<all_urls>"],
+      },
     ],
   },
   vite: () => ({

@@ -88,7 +88,23 @@
   --nd-color-error-bg: oklch(95% 0.04 25);
 }
 
-/* Dim dark — never pure black */
+/* Dim dark — never pure black.
+ *
+ * Two paths apply this block, in increasing-specificity order:
+ *   1. `@media (prefers-color-scheme: dark)` — OS-driven default.
+ *   2. `:root.nd-theme-dark`                — user override (theme v2).
+ *
+ * The user override wins because:
+ *   - inside the media query, `:root.nd-theme-light` (declared below)
+ *     re-applies the light block so a user-forced light theme survives
+ *     a dark OS.
+ *   - outside the media query, `:root.nd-theme-dark` is the only thing
+ *     that activates the dark block, so a user-forced dark theme
+ *     survives a light OS.
+ *
+ * `themeMode: "system"` removes both classes so the media query has
+ * sole control. See `src/lib/theme-mode.ts` for the applier.
+ */
 @media (prefers-color-scheme: dark) {
   :root {
     --nd-color-bg: oklch(18% 0.005 250);
@@ -117,6 +133,64 @@
     --nd-color-error-border: oklch(45% 0.08 25);
     --nd-color-error-bg: oklch(24% 0.05 25);
   }
+
+  /* User forced light inside a dark OS — re-apply the light palette. */
+  :root.nd-theme-light {
+    --nd-color-bg: oklch(98% 0.005 95);
+    --nd-color-bg-nav: oklch(97% 0.005 95);
+    --nd-color-bg-sidebar: oklch(97% 0.005 95);
+    --nd-color-bg-inline-code: oklch(94% 0.006 95);
+
+    --nd-color-fg: oklch(22% 0.01 250);
+    --nd-color-fg-accent: oklch(40% 0.04 250);
+    --nd-color-fg-muted: oklch(40% 0.01 250);
+    --nd-color-fg-invert: oklch(98% 0.005 95);
+
+    --nd-color-hairline: oklch(88% 0.005 95);
+    --nd-color-hairline-light: oklch(92% 0.005 95);
+    --nd-color-shade: oklch(80% 0.005 95);
+
+    --nd-color-accent: oklch(45% 0.05 250);
+    --nd-color-accent-low: oklch(85% 0.025 250);
+    --nd-color-accent-high: oklch(35% 0.05 250);
+
+    --nd-color-warn-fg: oklch(40% 0.08 70);
+    --nd-color-warn-border: oklch(80% 0.06 70);
+    --nd-color-warn-bg: oklch(95% 0.03 70);
+
+    --nd-color-error-fg: oklch(38% 0.10 25);
+    --nd-color-error-border: oklch(78% 0.08 25);
+    --nd-color-error-bg: oklch(95% 0.04 25);
+  }
+}
+
+/* User forced dark inside a light OS — apply the dark palette directly. */
+:root.nd-theme-dark {
+  --nd-color-bg: oklch(18% 0.005 250);
+  --nd-color-bg-nav: oklch(20% 0.005 250);
+  --nd-color-bg-sidebar: oklch(20% 0.005 250);
+  --nd-color-bg-inline-code: oklch(24% 0.006 250);
+
+  --nd-color-fg: oklch(92% 0.01 95);
+  --nd-color-fg-accent: oklch(82% 0.04 250);
+  --nd-color-fg-muted: oklch(72% 0.01 95);
+  --nd-color-fg-invert: oklch(18% 0.005 250);
+
+  --nd-color-hairline: oklch(28% 0.005 250);
+  --nd-color-hairline-light: oklch(26% 0.005 250);
+  --nd-color-shade: oklch(32% 0.005 250);
+
+  --nd-color-accent: oklch(72% 0.06 250);
+  --nd-color-accent-low: oklch(28% 0.04 250);
+  --nd-color-accent-high: oklch(85% 0.04 250);
+
+  --nd-color-warn-fg: oklch(82% 0.10 70);
+  --nd-color-warn-border: oklch(45% 0.08 70);
+  --nd-color-warn-bg: oklch(24% 0.04 70);
+
+  --nd-color-error-fg: oklch(82% 0.10 25);
+  --nd-color-error-border: oklch(45% 0.08 25);
+  --nd-color-error-bg: oklch(24% 0.05 25);
 }
 
 /* Opt-in motion. The default is 0ms (set above) so even browsers that
