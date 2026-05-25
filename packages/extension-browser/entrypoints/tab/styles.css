@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Respect prefers-reduced-motion: the tab view never animates unless
+ * the user explicitly opts in. Mirrors the popup's reduced-motion
+ * default per plan.md §2. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+/* The tab view earns the room to breathe the popup cannot afford.
+ * Body text sits at 17px / 1.65 line-height with a ~70ch reading
+ * measure on the main pane. */
+html {
+  font-size: 17px;
+}

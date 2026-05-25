@@ -1,5 +1,51 @@
 # @neurodock/extension-browser
 
+## 0.0.29
+
+### Added — Notifications inbox + Open-in-tab expanded view
+
+Two ND-requested surfaces ship together.
+
+**Notifications inbox.** The popup gets a Notifications tab next to
+History. Today the proactive watchdog and translation-fallback paths fire
+a `chrome.notifications` toast and that is the whole surface — if the user
+dismisses the toast or steps away, it is gone. The inbox lists every
+guardrail trip, proactive-watchdog signal, and notification-fallback
+translation result, newest first, capped at 200 with LRU eviction. The
+user can mark rows read / unread, delete one, or bulk mark-all-read /
+delete-all. Per-category mutes (`watchdog:hyperfocus`,
+`watchdog:deep_night`, or the entire `watchdog` category) accept
+relative-duration syntax (`"1h"`, `"4h"`, `"30m"`) plus a permanent
+"Always" option. Muted signals still LAND in the inbox — only the
+OS-toast is suppressed — so the user can audit what got quieted while
+they were away. The popup refreshes live via a `notifications:updated`
+runtime broadcast, mirroring the existing `history:updated` pattern.
+
+New module: `src/lib/notifications.ts`. New component:
+`entrypoints/popup/NotificationsTab.tsx`. The proactive watchdog now
+records its signal to the inbox before it fires (or skips) the OS toast
+based on the mute state. The context-result fallback notification also
+mirrors into the inbox. Records live in `chrome.storage.local` only —
+never `sync`, same privacy contract as History.
+
+**Open in tab.** The popup is cramped — many features need more room
+than ~400×600 Chrome gives us. A new "Open in tab" button in the popup
+header opens a full-page view at `chrome.runtime.getURL("tab.html")`
+sharing the SAME stores and data layer as the popup. Tab view uses a
+~1200px max-width layout with a left rail (Home / History / Settings /
+Notifications), 17px body / 1.65 line-height, and ~70ch reading measure.
+History rows render expanded by default (no click-to-expand). Hash
+protocol supports `#view=home|history|settings|notifications` so the
+popup can pre-select the same section.
+
+New entrypoint: `entrypoints/tab/` (registered as a
+`web_accessible_resource`). New shared shell: `src/components/AppShell.tsx`,
+`useAppData.ts`, `OpenInTabButton.tsx`. No data duplication — popup and
+tab read the same storage.
+
+Both surfaces are keyboard-first, honour `prefers-reduced-motion`, and
+introduce no new dependencies or new colors.
+
 ## 0.0.28
 
 ### Changed — `describe_image` and `brief_meeting` translate, not summarise
@@ -59,38 +105,6 @@ give you the WHO-SAID-WHAT but not the WHAT-TO-DO scaffold.
 Schema change is back-compat. Storage trust boundary unchanged — keys
 still live in `chrome.storage.local` only, never `sync`. AGPL-3.0-or-later
 header preserved.
-
-## [unreleased]
-
-### Added — In-extension notifications inbox with per-category mute
-
-Today the proactive watchdog and translation-fallback paths fire a
-`chrome.notifications` toast and that is the whole surface. If the user
-dismisses the toast or steps away from the desk it is gone. ND users
-explicitly asked for an inbox they can come back to on their own time.
-
-This release adds a Notifications tab to the popup that:
-
-- Lists every guardrail trip, proactive-watchdog signal, and notification-
-  fallback translation result, newest first, capped at 200 with LRU
-  eviction. Records live in `chrome.storage.local` only — never `sync`,
-  same privacy contract as History.
-- Lets the user mark individual rows read / unread, delete one, or bulk
-  mark-all-read / delete-all.
-- Exposes per-category mutes (`watchdog:hyperfocus`, `watchdog:deep_night`,
-  or the entire `watchdog` category) with relative-duration syntax
-  (`"1h"`, `"4h"`, `"30m"`) plus a permanent "Always" option. Muted
-  signals still LAND in the inbox — only the OS-toast is suppressed —
-  so the user can audit what got quieted while they were away.
-- Refreshes live while the popup is open via a
-  `notifications:updated` runtime broadcast, mirroring the existing
-  `history:updated` pattern.
-
-New module: `src/lib/notifications.ts` (storage + mute resolution).
-New component: `entrypoints/popup/NotificationsTab.tsx`.
-The proactive watchdog now records its signal to the inbox before it
-fires (or skips) the OS toast based on the mute state. The context-
-result fallback notification also mirrors into the inbox.
 
 ## 0.0.27
 

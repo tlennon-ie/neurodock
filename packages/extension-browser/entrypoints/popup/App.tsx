@@ -24,6 +24,7 @@ import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
+import { OpenInTabButton } from "../../src/components/OpenInTabButton.js";
 
 function isHistoryUpdatedMessage(msg: unknown): boolean {
   return (
@@ -178,11 +179,14 @@ export function App(): React.ReactElement {
 
   return (
     <main className="flex flex-col gap-4 p-4">
-      <header>
-        <h1 className="font-heading m-0 text-lg font-medium">NeuroDock</h1>
-        <p className="m-0 text-sm text-neutral-600 dark:text-neutral-400">
-          Decode subtext. Check tone. Local-first by default.
-        </p>
+      <header className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="font-heading m-0 text-lg font-medium">NeuroDock</h1>
+          <p className="m-0 text-sm text-neutral-600 dark:text-neutral-400">
+            Decode subtext. Check tone. Local-first by default.
+          </p>
+        </div>
+        <OpenInTabButton view={tab} />
       </header>
 
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />
