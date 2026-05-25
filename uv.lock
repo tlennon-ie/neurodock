@@ -1420,7 +1420,7 @@ provides-extras = ["test"]
 
 [[package]]
 name = "neurodock-mcp-translation"
-version = "0.0.2"
+version = "0.2.0"
 source = { editable = "packages/mcp-translation" }
 dependencies = [
     { name = "fastmcp" },

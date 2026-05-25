@@ -3,7 +3,7 @@
   "$id": "https://schemas.neurodock.org/mcp-translation/v0.2.0/describe_image.schema.json",
   "title": "describe_image",
   "description": "Describe an image for a neurodivergent reader. The caller sends an image URL (or data URL); the server orchestrates a prompt against a vision-capable LLM and returns a literal description, transcribed text if any, key elements, inferred purpose, an alt-text suggestion, AND (v0.2.0+) a `content_translation` — a per-item Input/Action/Goal-style scaffold for structured content (numbered lists, frameworks, flowcharts, infographics). REQUIRES A VISION-CAPABLE MODEL — text-only models will reject the request with VISION_MODEL_REQUIRED. The server stores no image bytes; URLs are not logged.",
-  "$comment": "v0.2.0 (2026-05-25): adds optional `content_translation` field to describe_image and brief_meeting. The field carries reader-translated facets (input/action/goal/rule/fact/benefit/context) so structured-content images and meeting items become ND-actionable scaffolds rather than OCR-style summaries. Field is OPTIONAL — legacy responses without it still validate. See `.claude-reports/2026-05-25-translate-not-summarize/REPORT.md`.",
+  "$comment": "v0.2.0 (2026-05-25): adds optional `content_translation` field to describe_image and brief_meeting. The field carries reader-translated facets (input/action/goal/rule/fact/benefit/context) so structured-content images and meeting items become ND-actionable scaffolds rather than OCR-style summaries. Field is OPTIONAL at the schema level (legacy v0.1.x responses with no `content_translation` key still validate, and `null` is permitted for decorative imagery), but when present as an array it now requires `minItems: 1` — an empty array is rejected so models can't dodge the field with `[]`. See `.claude-reports/2026-05-25-translate-still-broken/`.",
   "version": "0.2.0",
   "type": "object",
   "properties": {
@@ -85,8 +85,10 @@
         },
         "content_translation": {
           "type": ["array", "null"],
+          "minItems": 1,
           "maxItems": 30,
-          "description": "v0.2.0 — Reader-translated scaffold of the image's structured content. Populate WHEN the image contains structured content the reader would otherwise have to decode visually: numbered lists, comparison tables, flowcharts, frameworks, infographic panels, step diagrams. Each entry is one item from that structure (one list element, one panel, one flowchart node). Set to null OR an empty array when the image is purely decorative (avatar, logo, mood photo) — the existing description/key_elements fields carry it then. The legacy fields (description, key_elements, transcribed_text) still fire either way so accessibility tooling doesn't regress; content_translation is the field a neurodivergent reader actually reads when they want to act on the image's content.",
+          "$comment": "Required (non-null, >=1 entry) for INSTRUCTIONAL/STRUCTURED images (numbered lists, frameworks, flowcharts, infographics, document-page screenshots with section headings) AND for DATA VISUALISATION images (charts, graphs, dashboards). Null is ONLY for purely decorative content (avatar, logo, mood photo, single icon). Empty arrays are not permitted — the schema enforces minItems:1 for the array branch; use null for decorative.",
+          "description": "v0.2.0 — Reader-translated scaffold of the image's structured content. The PRIMARY output a neurodivergent reader consumes. REQUIRED (array with >=1 entry) when the image carries any instructional or structured content the reader would otherwise have to decode visually: numbered lists, comparison tables, flowcharts, frameworks, infographic panels, step diagrams, document-page screenshots with section headings, chart series. Each entry is one item from that structure (one list element, one panel, one flowchart node, one section heading). Set to NULL ONLY when the image is purely decorative (avatar, logo, mood photo, single icon, stock background). The legacy fields (description, key_elements, transcribed_text) still fire either way so accessibility tooling doesn't regress; content_translation is the field a neurodivergent reader actually reads when they want to act on the image's content.",
           "items": { "$ref": "#/$defs/TranslatedEntry" }
         },
         "eval_corpus_slice": {
@@ -190,6 +192,6 @@
       "lmstudio": ["any LM Studio model whose card declares vision support"]
     },
     "rejection_error_code": "VISION_MODEL_REQUIRED",
-    "policy": "Additive-only within v0.x.x while pre-1.0. v0.2.0 added optional `content_translation` and the `$defs.TranslatedEntry` / `$defs.TranslatedFacet` types; legacy v0.1.x responses (omitting the field) still validate. Removing or retyping a field requires a new major version."
+    "policy": "Additive-only within v0.x.x while pre-1.0. v0.2.0 added optional `content_translation` and the `$defs.TranslatedEntry` / `$defs.TranslatedFacet` types; legacy v0.1.x responses (omitting the field) still validate, and `content_translation: null` is permitted for decorative imagery. v0.2.0 (2026-05-25 clarification) tightened the array branch to `minItems: 1` so models cannot dodge populating the field with an empty array — this is a behavioural tightening, not a wire-shape change: any legacy response that already used null or a non-empty array continues to validate. Removing or retyping a field requires a new major version."
   }
 }

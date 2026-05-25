@@ -3,7 +3,7 @@
   "$id": "https://schemas.neurodock.org/mcp-translation/v0.2.0/brief_meeting.schema.json",
   "title": "brief_meeting",
   "description": "Convert a meeting transcript into a four-section structured brief: my_asks (asks of the recipient), others_asks (asks the recipient is making of others), decisions (concrete commitments reached), and ambiguous_items (things left unresolved or unclear). Per plan.md §7 acceptance, ambiguous_items MUST quote the exact transcript span. v0.2.0 adds an optional `content_translation` field that turns each ask/decision/ambiguous item into an Input/Action/Goal-style scaffold so a neurodivergent reader gets the WHAT-TO-DO, not just the WHO-SAID-WHAT. The server orchestrates a structured prompt against the caller's MCP-client LLM; the server itself performs NO LLM calls.",
-  "$comment": "v0.2.0 (2026-05-25): adds optional `content_translation` field. See describe_image.schema.json for the same field on that surface and `.claude-reports/2026-05-25-translate-not-summarize/REPORT.md` for the design.",
+  "$comment": "v0.2.0 (2026-05-25): adds optional `content_translation` field. Field is optional at the schema level (legacy v0.1.x responses still validate, and `null` is permitted for chat-only meetings), but when present as an array now requires `minItems: 1` so models can't dodge the field with `[]`. See describe_image.schema.json for the same field on that surface and `.claude-reports/2026-05-25-translate-still-broken/` for the design.",
   "version": "0.2.0",
   "type": "object",
   "properties": {
@@ -86,8 +86,10 @@
         },
         "content_translation": {
           "type": ["array", "null"],
+          "minItems": 1,
           "maxItems": 50,
-          "description": "v0.2.0 — Optional reader-translated scaffold of the meeting. Each entry corresponds to a single ask, decision, or ambiguous item and decomposes it into Input/Action/Goal facets the reader can act on. WHEN populated, each entry's `label` SHOULD identify which list item it translates (e.g. 'my_asks[0]: own the migration script'). Set to null OR empty array when the brief is a chat-only meeting with nothing to act on. The legacy four-section fields (my_asks/others_asks/decisions/ambiguous_items) still fire either way for back-compat; content_translation is the field a neurodivergent reader reads when they want the WHAT-TO-DO scaffold, not the WHO-SAID-WHAT extraction.",
+          "$comment": "Required (non-null, >=1 entry) WHEN the brief carries at least one ask, decision, or actionable ambiguous item — i.e. whenever my_asks/others_asks/decisions/ambiguous_items collectively contain anything to act on. Null is ONLY for chat-only meetings whose four legacy sections are all empty. Empty arrays are not permitted — the schema enforces minItems:1 for the array branch; use null when nothing is actionable.",
+          "description": "v0.2.0 — Reader-translated scaffold of the meeting. The PRIMARY output a neurodivergent reader consumes. Each entry corresponds to a single ask, decision, or ambiguous item and decomposes it into Input/Action/Goal facets the reader can act on. Each entry's `label` SHOULD identify which list item it translates (e.g. 'my_asks[0]: own the migration script'). Set to null ONLY when the brief is a chat-only meeting with nothing to act on (all four legacy sections empty). The legacy four-section fields (my_asks/others_asks/decisions/ambiguous_items) still fire either way for back-compat; content_translation is the field a neurodivergent reader reads when they want the WHAT-TO-DO scaffold, not the WHO-SAID-WHAT extraction.",
           "items": { "$ref": "#/$defs/TranslatedEntry" }
         },
         "eval_corpus_slice": {
@@ -243,7 +245,7 @@
     }
   ],
   "compatibility": {
-    "policy": "Additive-only within v0.x.x. v0.2.0 added optional `content_translation` plus the `$defs.TranslatedEntry` / `$defs.TranslatedFacet` types. The verbatim-anchor requirement on ambiguous_items is part of the v0.1.0 contract and cannot be relaxed without a major bump. New ambiguity reason codes are minor bumps. Renaming or retyping any field requires a new major version with a parallel $id.",
+    "policy": "Additive-only within v0.x.x. v0.2.0 added optional `content_translation` plus the `$defs.TranslatedEntry` / `$defs.TranslatedFacet` types. v0.2.0 (2026-05-25 clarification) tightened the array branch to `minItems: 1` — this is a behavioural tightening, not a wire-shape change: any legacy response that already used null or a non-empty array continues to validate. The verbatim-anchor requirement on ambiguous_items is part of the v0.1.0 contract and cannot be relaxed without a major bump. New ambiguity reason codes are minor bumps. Renaming or retyping any field requires a new major version with a parallel $id.",
     "side_effects": "None. Pure read. The server stores no input and emits no telemetry. Persisting the brief to mcp-cognitive-graph is the caller's responsibility.",
     "idempotency": "Server-side idempotent. LLM-side determinism depends on the caller's model and sampling settings; the verbatim-anchor check rejects responses whose spans cannot be located, which provides a soft consistency guarantee.",
     "privacy": "local-only-by-default. The server itself does not call any provider. Meeting transcripts are highly sensitive (third-party speakers, internal strategy); cloud-mode for brief_meeting SHOULD surface a stronger consent prompt than other tools — that is the extension's responsibility, not this server's."

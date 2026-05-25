@@ -5,6 +5,52 @@ All notable changes to `neurodock-mcp-translation` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning per .
 
+## [0.2.0] - 2026-05-25 — translate-not-summarize, for real this time
+
+The 0.1.0 / v0.2.0-schema ship added `content_translation` as an OPTIONAL
+field on `describe_image` and `brief_meeting`. The schema landed; the
+behaviour did not. User dogfooded the post-ship build on a Harness
+"Feature Flags: An Essential Guide" documentation page and on two
+different local models got back layout-summary outputs with
+`content_translation: null`.
+
+Diagnosis (see `.claude-reports/2026-05-25-translate-still-broken/DIAGNOSIS.md`):
+
+1. The `describe_image.prompt.md` opened with a one-sentence framing
+   followed by a long schema-describing section. Local 4B-class models
+   obey roles; the prompt did not declare one.
+2. The required-keys list put `description` first and added a
+   parenthetical demotion of `content_translation`. Models walked the
+   list literally.
+3. The only worked example was an EI infographic with explicit
+   input/action/goal phrasing pre-baked. Document-page screenshots had
+   no anchor.
+4. The schema permitted `content_translation: []` — a small-model escape
+   hatch that bypassed the field entirely.
+
+Changes in this minor bump:
+
+- `prompts/describe_image.prompt.md` rewritten — leads with the user's
+  verbatim "Cognitive Accessibility Expert" role + Crucial Rules. Adds
+  a DECORATIVE / INSTRUCTIONAL / DATA-VIZ decision tree. Adds a worked
+  example for the Harness Feature Flags page (the exact failure case).
+  Demotes the legacy `description` / `key_elements` / `transcribed_text`
+  fields as "accessibility-tech metadata, NOT the primary output".
+- `prompts/brief_meeting.prompt.md` rewritten — same Cognitive
+  Accessibility Expert framing. `content_translation` is now the
+  priority output; legacy four sections become accessibility-audit
+  metadata.
+- `schemas/describe_image.schema.json` and `schemas/brief_meeting.schema.json`:
+  add `minItems: 1` to the array branch of `content_translation`. Empty
+  arrays are rejected; null remains permitted; legacy responses that
+  omit the field still validate. Schema $id stays at v0.2.0 — this is a
+  behavioural tightening, not a wire-shape change.
+- `pyproject.toml` → `version = "0.2.0"` to match the schema.
+
+Back-compat: legacy `content_translation: null` continues to validate.
+The only newly-rejected shape is `content_translation: []` which was
+never useful.
+
 ## [0.1.0] - 2026-05-25
 
 ### Added — translate-not-summarise: `content_translation` on describe_image and brief_meeting

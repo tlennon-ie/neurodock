@@ -1,5 +1,81 @@
 # @neurodock/extension-browser
 
+## 0.0.30 — translate-not-summarize, for real this time
+
+The 0.0.28 ship added a `content_translation` field to the `describe_image`
+and `brief_meeting` schemas but the BEHAVIOUR never moved. The user
+dogfooded the post-0.0.28 build against a Harness "Feature Flags: An
+Essential Guide" doc page (a structured document with a "1. Use Cases"
+section, a "Decouple Deployment from Release" subsection, and a code
+block) and got back, on two different models:
+
+> "A technical document page describes use cases for feature flags, featuring main text, a code block, and the Harness company logo"
+> "Academic whitepaper abstract page displaying five paragraphs of black text and a single bulleted item on a white sheet labeled page five."
+
+Both were OCR/summary outputs. `content_translation` was null or omitted.
+
+Why 0.0.28 didn't move the needle:
+
+1. The prompt's opening line was a one-sentence framing ("you are
+   TRANSLATING...") followed immediately by a long schema-describing
+   section. Local 4B-class models obey roles; we gave them a schema.
+2. The required-keys list put `description` first and added a
+   parenthetical demotion of `content_translation`. A model walking the
+   list literally filled `description` and treated null as a valid
+   completion.
+3. The only worked example was an "8 Ways to Display Emotional
+   Intelligence" infographic with explicit input/action/goal phrasing
+   already present. Document-page screenshots (the case that actually
+   broke) had no anchor and fell back to "describe what's on the page".
+4. The per-NT addenda were conditional ("when the image has structured
+   content, cap entries at N") — never invariant.
+5. The schema allowed `content_translation: []` to pass validation — an
+   escape hatch a small model could (and did) use.
+
+What 0.0.30 ships:
+
+- `describe_image.prompt.md` rewritten to lead with the user's verbatim
+  "Cognitive Accessibility Expert" role + Crucial Rules (DO NOT transcribe
+  / DO NOT describe layout / Logic First / Remove Ambiguity). Adds a
+  DECORATIVE / INSTRUCTIONAL / DATA-VIZ decision tree that explicitly
+  classifies document-page screenshots as INSTRUCTIONAL. Adds a worked
+  example for the Harness Feature Flags page (the exact failure case).
+  Demotes the legacy `description` / `key_elements` / `transcribed_text`
+  fields as "accessibility-tech metadata, NOT the primary output".
+- `brief_meeting.prompt.md` rewritten to lead with the same Cognitive
+  Accessibility Expert framing; `content_translation` is now the priority
+  output and the legacy four sections are accessibility-audit metadata.
+- `describe_image.schema.json` and `brief_meeting.schema.json` add
+  `minItems: 1` to the array branch of `content_translation`. Empty
+  arrays are now rejected; null (decorative / chat-only) remains
+  permitted; legacy responses that omit the field still validate. Schema
+  version stays v0.2.0 — this is a behavioural tightening, not a
+  wire-shape change.
+- `neurotype-addendum.ts` now starts every concrete
+  `(describe_image, NT)` and `(brief_meeting, NT)` block with the
+  invariant: "Always populate `content_translation` with one entry per
+  logical item ... Use null ONLY if ...". The content_translation rule
+  is the FIRST bullet in each block (was previously last and ignored).
+
+New tests:
+
+- `tests/unit/describe_image_prompt.test.ts` — pins the new framing
+  (Cognitive Accessibility Expert, DO NOT transcribe, MUST contain at
+  least 1 entry, Harness worked example present, placeholders preserved).
+- `tests/unit/neurotype-addendum-content-translation-required.test.ts` —
+  every concrete `(describe_image, NT)` and `(brief_meeting, NT)` block
+  contains "Always populate" + "content_translation" + "Use null ONLY"
+  and places the invariant BEFORE legacy-field rules.
+- `tests/unit/validation-content-translation-required.test.ts` — schema
+  accepts `null`, accepts populated arrays, accepts the field being
+  omitted; rejects `[]`.
+
+Back-compat: legacy `describe_image` / `brief_meeting` responses from
+0.0.28 with `content_translation: null` continue to validate. The only
+newly-rejected shape is `content_translation: []` which was never useful.
+
+Diagnostic write-up: `.claude-reports/2026-05-25-translate-still-broken/`.
+
 ## 0.0.29
 
 ### Added — Notifications inbox + Open-in-tab expanded view

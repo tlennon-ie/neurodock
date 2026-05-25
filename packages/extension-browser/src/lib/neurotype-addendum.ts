@@ -225,57 +225,65 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
     adhd: (max) =>
       [
         "Reader preferences (ADHD) — describe_image:",
-        "- 'description': 1 sentence. Lead with the inferred purpose in 4-7 words, then what's visually shown.",
+        "- INVARIANT: Always populate `content_translation` with one entry per logical item in the image (numbered points, bullets, framework slots, chart series, document sections). Use null ONLY if the image is a decorative avatar/logo/icon with no readable instructional content.",
+        "- `content_translation`: cap entries at " +
+          max +
+          ". Each facet text is verb-led and 8 words or fewer ('Wait 5 seconds.', not 'It might be advisable to wait roughly five seconds'). Prefer `action` + `goal` facets — those are what the ADHD reader scans for.",
+        "- 'description': 1 sentence (metadata field). Lead with the inferred purpose in 4-7 words, then what's visually shown.",
         "- 'key_elements': cap at " +
           max +
           ". Most prominent first. Stop ranking when you'd be reaching.",
         "- 'inferred_purpose': a noun phrase, not a sentence. 'Promotional slide' not 'This is a promotional slide that…'.",
         "- No qualifiers ('perhaps', 'appears to', 'seems'). Commit, or flag the uncertainty in 'accessibility_notes'.",
         "- 'accessibility_notes': 1 sentence max. Skip if there is nothing assistive-tech-relevant to add.",
-        "- 'content_translation' (v0.2.0): when the image has structured content, cap entries at " +
-          max +
-          ". Each facet text is verb-led and 8 words or fewer ('Wait 5 seconds.', not 'It might be advisable to wait roughly five seconds').",
       ].join("\n"),
 
     asd: () =>
       [
         "Reader preferences (autism) — describe_image:",
+        "- INVARIANT: Always populate `content_translation` with one entry per logical item in the image (numbered points, bullets, framework slots, chart series, document sections). Use null ONLY if the image is a decorative avatar/logo/icon with no readable instructional content.",
+        "- `content_translation`: each facet text is a literal commitment, no idioms. Quote the source label verbatim in the 'label' field (e.g. label = '1. Emotional Control (The \"Pause\" Strategy)' exactly as the image renders it). Decode any source idiom literally inside facets ('touch base' → 'send a follow-up message').",
         "- Build 'key_elements' (literal nouns + adjectives) BEFORE writing 'description'. The description then references those elements in visual-prominence order, without inferring meaning.",
         "- 'inferred_purpose': if text + visual evidence doesn't make purpose unambiguous, write 'I can't tell from the image alone' and explain in 'accessibility_notes' what would resolve it (e.g. the surrounding page text).",
         "- Banned soft hedges in 'description': 'kind of', 'sort of', 'looks like'. Use 'shows' or 'contains' instead.",
         "- 'transcribed_text': exact verbatim. If partially obscured, transcribe what's visible and mark the cut with '[…]'.",
         "- No metaphor anywhere. 'Speech-bubble shape' not 'a thought floating above her head'.",
-        "- 'content_translation' (v0.2.0): each facet text is a literal commitment, no idioms. Quote the source label verbatim in the 'label' field (e.g. label = '1. Emotional Control (The \"Pause\" Strategy)' exactly as the image renders it). Decode any source idiom literally inside facets ('touch base' → 'send a follow-up message').",
       ].join("\n"),
 
     audhd: (max) =>
       [
         "Reader preferences (AuDHD) — describe_image:",
-        "- 'description': 1 sentence. Lead with the literal subject in 4-7 words, then the inferred purpose.",
+        "- INVARIANT: Always populate `content_translation` with one entry per logical item in the image (numbered points, bullets, framework slots, chart series, document sections). Use null ONLY if the image is a decorative avatar/logo/icon with no readable instructional content.",
+        "- `content_translation`: cap entries at " +
+          max +
+          "; each facet is verb-led, literal, 8 words or fewer, no idioms. Quote source labels verbatim.",
+        "- 'description': 1 sentence (metadata). Lead with the literal subject in 4-7 words, then the inferred purpose.",
         "- 'key_elements': cap at " +
           max +
           ". Literal nouns + adjectives, visual-prominence order, no meaning-inference.",
         "- 'inferred_purpose': noun phrase, not sentence. When unambiguous, commit ('Promotional slide'). When not, write 'I can't tell from the image alone'.",
         "- Banned: 'perhaps', 'appears to', 'kind of', 'sort of', 'looks like'. Use 'shows' or 'contains'; flag genuine uncertainty in 'accessibility_notes'.",
         "- 'transcribed_text': exact verbatim. Mark obscured portions with '[…]'.",
-        "- 'content_translation' (v0.2.0): cap entries at " +
-          max +
-          "; each facet is verb-led, literal, 8 words or fewer, no idioms. Quote source labels verbatim.",
       ].join("\n"),
 
     ocd: () =>
       [
         "Reader preferences (OCD) — describe_image:",
+        "- INVARIANT: Always populate `content_translation` with one entry per logical item in the image (numbered points, bullets, framework slots, chart series, document sections). Use null ONLY if the image is a decorative avatar/logo/icon with no readable instructional content.",
+        "- `content_translation`: in 'action' and 'rule' facets, avoid 'must', 'urgent', 'critical', 'don't forget' unless the source uses those exact words. Prefer 'consider', 'you may want to', 'when ready'. Don't amplify pressure beyond the source.",
         "- In 'description' and 'inferred_purpose', don't say a slide is 'missing' something or 'incomplete' unless the image literally shows that. Slides are point-in-time snapshots; absence of an element is not a defect.",
         "- Avoid 'error', 'wrong', 'broken', 'mistake', 'should' in 'description'.",
         "- 'accessibility_notes': low-pressure framing. 'Consider adding alt-text describing X' not 'Alt-text is missing and must be added'.",
         "- If text is obscured in 'transcribed_text', describe what's visible without amplifying the concern.",
-        "- 'content_translation' (v0.2.0): in 'action' and 'rule' facets, avoid 'must', 'urgent', 'critical', 'don't forget' unless the source uses those exact words. Prefer 'consider', 'you may want to', 'when ready'. Don't amplify pressure beyond the source.",
       ].join("\n"),
 
     dyslexia: (max) =>
       [
         "Reader preferences (dyslexia) — describe_image:",
+        "- INVARIANT: Always populate `content_translation` with one entry per logical item in the image (numbered points, bullets, framework slots, chart series, document sections). Use null ONLY if the image is a decorative avatar/logo/icon with no readable instructional content.",
+        "- `content_translation`: each facet text max 15 words, one idea per facet, common words ('use' not 'utilise'), no semicolons. Cap entries at " +
+          max +
+          ".",
         "- 'description': 1 sentence, max 15 words. Replace 'depicted' with 'shown', 'inferred' with 'guessed', 'transcribed' with 'copied'.",
         "- 'key_elements': simple nouns, cap at " +
           max +
@@ -283,21 +291,19 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'inferred_purpose': 5 words or fewer. 'Promotional banner', 'Bar chart', 'UI screenshot'.",
         "- One idea per sentence everywhere. No semicolons. No em-dashes inside sentences.",
         "- 'accessibility_notes': plain words. 'Hard to read' not 'low legibility'.",
-        "- 'content_translation' (v0.2.0): each facet text max 15 words, one idea per facet, common words ('use' not 'utilise'), no semicolons. Cap entries at " +
-          max +
-          ".",
       ].join("\n"),
 
     dyspraxia: (max) =>
       [
         "Reader preferences (dyspraxia) — describe_image:",
+        "- INVARIANT: Always populate `content_translation` with one entry per logical item in the image (numbered points, bullets, framework slots, chart series, document sections). Use null ONLY if the image is a decorative avatar/logo/icon with no readable instructional content.",
+        "- `content_translation`: order entries top-to-bottom / left-to-right as they appear in the image, not by importance. Use absolute dates inside facets when the source uses any date ('Wednesday 28 May', not 'next week'). Never write 'as above' inside a facet — name the prior label.",
         "- For sequenced visuals (numbered steps, flowcharts, timelines), describe in the order they appear in the image. Don't reorder by importance.",
         "- 'key_elements': ordered top-to-bottom / left-to-right, not by prominence. Cap at " +
           max +
           ".",
         "- 'description': name spatial relationships explicitly ('logo top-left, headline centre, CTA button bottom-right') rather than 'the above'.",
         "- 'transcribed_text': preserve original order even if visually scattered; use line breaks between disjoint blocks.",
-        "- 'content_translation' (v0.2.0): order entries top-to-bottom / left-to-right as they appear in the image, not by importance. Use absolute dates inside facets when the source uses any date ('Wednesday 28 May', not 'next week'). Never write 'as above' inside a facet — name the prior label.",
       ].join("\n"),
   },
 
@@ -525,73 +531,79 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
     adhd: (max) =>
       [
         "Reader preferences (ADHD) — brief_meeting:",
+        "- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.",
+        "- `content_translation`: cap entries at " +
+          max +
+          "; each facet verb-led and 8 words or fewer. Label each entry as 'my_asks[i]' / 'decisions[i]' so the reader can jump back to the verbatim quote.",
         "- 'my_asks': cap at " +
           max +
           ", highest-priority first. Each ask is verb-led ('Send the spec to Bob') in 8 words or fewer.",
         "- 'others_asks': same cap and shape.",
         "- 'decisions[]': 1 short sentence each. State the decision, not the discussion.",
         "- 'ambiguous_items[]': include ONLY items the reader needs to chase. Skip 'minor topics raised'.",
-        "- 'content_translation' (v0.2.0): cap entries at " +
-          max +
-          "; each facet verb-led and 8 words or fewer. Label each entry as 'my_asks[i]' / 'decisions[i]' so the reader can jump back to the verbatim quote.",
       ].join("\n"),
 
     asd: () =>
       [
         "Reader preferences (autism) — brief_meeting:",
+        "- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.",
+        "- `content_translation`: each facet is a literal commitment. Decode source idioms inside facets ('circle back' → 'reply later'). Quote the source 'asker' speaker in the 'label' field.",
         "- 'my_asks[].text' and 'others_asks[].text': quote the original speaker verbatim in parentheses when paraphrasing ('Send the spec (\"can you ping me the spec by Fri?\")').",
         "- 'decisions[]': state the decision and the speaker who made it. Don't infer consensus that wasn't stated.",
         "- 'ambiguous_items[]': flag any item where the transcript depends on tone or shared context not in the text. Reason 'verbal agreement implied but not stated' is a legitimate ambiguity.",
         "- No idioms in any text field ('touch base', 'circle back', 'loop in').",
-        "- 'content_translation' (v0.2.0): each facet is a literal commitment. Decode source idioms inside facets ('circle back' → 'reply later'). Quote the source 'asker' speaker in the 'label' field.",
       ].join("\n"),
 
     audhd: (max) =>
       [
         "Reader preferences (AuDHD) — brief_meeting:",
+        "- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.",
+        "- `content_translation`: cap at " +
+          max +
+          "; verb-led, literal, 8 words or fewer, no idioms. Label each entry as 'my_asks[i]' / 'decisions[i]'.",
         "- 'my_asks' / 'others_asks': cap at " +
           max +
           ", verb-led, 8 words or fewer. Quote source verbatim in parentheses when paraphrasing.",
         "- 'decisions[]': 1 sentence each, name the speaker; don't infer unstated consensus.",
         "- 'ambiguous_items[]': flag tone-dependent items with reason 'verbal agreement implied but not stated'. Skip 'minor topics raised'.",
         "- No idioms anywhere.",
-        "- 'content_translation' (v0.2.0): cap at " +
-          max +
-          "; verb-led, literal, 8 words or fewer, no idioms. Label each entry as 'my_asks[i]' / 'decisions[i]'.",
       ].join("\n"),
 
     ocd: () =>
       [
         "Reader preferences (OCD) — brief_meeting:",
+        "- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.",
+        "- `content_translation`: in 'action' facets, avoid 'must', 'urgent', 'ASAP', 'critical' unless the source used them. Prefer 'when you have a minute'. Don't amplify pressure beyond the transcript.",
         "- 'my_asks[]': don't add asks that weren't actually assigned to the reader. If the transcript is ambiguous about who owns an action, put it in 'ambiguous_items[]' instead.",
         "- 'ambiguous_items[]': distinguish 'unclear who owns this' from 'this needs follow-up'. Reason field should name which kind of ambiguity.",
         "- No 'must', 'urgent', 'critical' in 'my_asks[].text' unless the speaker used those words.",
         "- 'decisions[]': don't flag a decision as 'final' unless the transcript explicitly closes it.",
-        "- 'content_translation' (v0.2.0): in 'action' facets, avoid 'must', 'urgent', 'ASAP', 'critical' unless the source used them. Prefer 'when you have a minute'. Don't amplify pressure beyond the transcript.",
       ].join("\n"),
 
     dyslexia: (max) =>
       [
         "Reader preferences (dyslexia) — brief_meeting:",
+        "- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.",
+        "- `content_translation`: each facet text max 15 words, one idea per facet, common words, no semicolons. Cap entries at " +
+          max +
+          ".",
         "- All list fields: cap at " + max + ", each item max 15 words.",
         "- Plain language. 'Bob will send the spec' not 'Bob will action distribution of the specification'.",
         "- 'decisions[]': one decision per item. Don't combine two decisions into one sentence with 'and'.",
         "- 'ambiguous_items[].reason': 1 short sentence; no semicolons.",
-        "- 'content_translation' (v0.2.0): each facet text max 15 words, one idea per facet, common words, no semicolons. Cap entries at " +
-          max +
-          ".",
       ].join("\n"),
 
     dyspraxia: (max) =>
       [
         "Reader preferences (dyspraxia) — brief_meeting:",
+        "- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.",
+        "- `content_translation`: order entries by transcript appearance, not priority. Absolute dates inside facets. Never 'as above' — name the prior label.",
         "- 'my_asks' / 'others_asks': ordered by when they appear in the transcript, not by priority. Cap at " +
           max +
           ".",
         "- Use absolute dates in 'text' fields when the transcript implies a deadline ('Wednesday 28 May' rather than 'next week').",
         "- 'decisions[]': name the topic explicitly each time. Don't write 'as discussed above' or 'the prior point'.",
         "- Group related items together — don't interleave asks from different topics.",
-        "- 'content_translation' (v0.2.0): order entries by transcript appearance, not priority. Absolute dates inside facets. Never 'as above' — name the prior label.",
       ].join("\n"),
   },
 };
