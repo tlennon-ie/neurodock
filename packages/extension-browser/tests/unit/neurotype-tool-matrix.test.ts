@@ -56,6 +56,7 @@ const TOOL_FIELD_HINTS: Record<TranslationTool, readonly string[]> = {
     "inferred_purpose",
     "transcribed_text",
     "accessibility_notes",
+    "content_translation",
   ],
   translate_incoming: [
     "explicit_ask",
@@ -77,7 +78,13 @@ const TOOL_FIELD_HINTS: Record<TranslationTool, readonly string[]> = {
     "tone_shift",
     "structural_changes",
   ],
-  brief_meeting: ["my_asks", "others_asks", "decisions", "ambiguous_items"],
+  brief_meeting: [
+    "my_asks",
+    "others_asks",
+    "decisions",
+    "ambiguous_items",
+    "content_translation",
+  ],
 };
 
 /**
@@ -219,6 +226,32 @@ describe("neurotype-tool matrix — same-tool, different-neurotype differentiati
     expect(adhd).not.toContain("BEFORE writing");
     expect(dyslexia).not.toContain("BEFORE writing");
   });
+});
+
+describe("neurotype-tool matrix — v0.2.0 content_translation field is referenced for translate-shaped tools", () => {
+  // The schema added `content_translation` to describe_image and
+  // brief_meeting in v0.2.0. Every concrete NT block on those tools MUST
+  // teach the model how to shape that field — otherwise the per-NT
+  // differentiation regresses to "decorate the OCR description".
+  const TOOLS_WITH_CONTENT_TRANSLATION: ReadonlyArray<TranslationTool> = [
+    "describe_image",
+    "brief_meeting",
+  ];
+
+  for (const tool of TOOLS_WITH_CONTENT_TRANSLATION) {
+    for (const neurotype of CONCRETE_NEUROTYPES) {
+      it(`(${tool}, ${neurotype}) addendum references 'content_translation'`, () => {
+        const out = buildNeurotypeAddendum(
+          profile({ neurotypes: [neurotype] }),
+          tool,
+        );
+        expect(
+          out,
+          `expected (${tool}, ${neurotype}) addendum to teach 'content_translation' shaping. Got:\n${out}`,
+        ).toContain("content_translation");
+      });
+    }
+  }
 });
 
 describe("neurotype-tool matrix — tool overload falls back gracefully", () => {

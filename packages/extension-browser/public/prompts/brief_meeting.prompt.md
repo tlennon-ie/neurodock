@@ -19,7 +19,7 @@ quoted span cannot be located.
 Deterministic pre-analysis:
 {deterministic_summary}
 
-Return a JSON object conforming to the v0.1.0 schema at
+Return a JSON object conforming to the v0.2.0 schema at
 `packages/mcp-translation/schemas/brief_meeting.schema.json` (the `output`
 sub-schema). Required keys:
 
@@ -30,6 +30,16 @@ sub-schema). Required keys:
   with `verbatim` MUST be true and `reason` one of vague_timeline,
   vague_referent, unassigned_owner, hedged_commitment, deferred_topic,
   contested, other.
+- `content_translation` (v0.2.0, OPTIONAL): array OR null. When populated,
+  each entry is a reader-translated scaffold for one ask, decision, or
+  ambiguous item — decomposed into Input/Action/Goal facets so the reader
+  knows WHAT TO DO, not just WHO SAID WHAT. Shape per entry:
+  `{{"label": "my_asks[0]: migration script", "facets": [{{"kind": "input", "text": "..."}}, {{"kind": "action", "text": "..."}}, {{"kind": "goal", "text": "..."}}]}}`.
+  Set to null when the meeting is chat-only with nothing to act on.
+  `kind` is one of input, action, goal, rule, fact, benefit, context.
+  Translate idioms in source text literally inside facets ("circle back"
+  → "reply later"). Do NOT fabricate facets — if the transcript only
+  carries an `action`, emit just one `action` facet.
 - `eval_corpus_slice`: keep as supplied.
 - `model_provenance`: `{{mode, provider, model}}`.
 

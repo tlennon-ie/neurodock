@@ -232,6 +232,9 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'inferred_purpose': a noun phrase, not a sentence. 'Promotional slide' not 'This is a promotional slide that…'.",
         "- No qualifiers ('perhaps', 'appears to', 'seems'). Commit, or flag the uncertainty in 'accessibility_notes'.",
         "- 'accessibility_notes': 1 sentence max. Skip if there is nothing assistive-tech-relevant to add.",
+        "- 'content_translation' (v0.2.0): when the image has structured content, cap entries at " +
+          max +
+          ". Each facet text is verb-led and 8 words or fewer ('Wait 5 seconds.', not 'It might be advisable to wait roughly five seconds').",
       ].join("\n"),
 
     asd: () =>
@@ -242,6 +245,7 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- Banned soft hedges in 'description': 'kind of', 'sort of', 'looks like'. Use 'shows' or 'contains' instead.",
         "- 'transcribed_text': exact verbatim. If partially obscured, transcribe what's visible and mark the cut with '[…]'.",
         "- No metaphor anywhere. 'Speech-bubble shape' not 'a thought floating above her head'.",
+        "- 'content_translation' (v0.2.0): each facet text is a literal commitment, no idioms. Quote the source label verbatim in the 'label' field (e.g. label = '1. Emotional Control (The \"Pause\" Strategy)' exactly as the image renders it). Decode any source idiom literally inside facets ('touch base' → 'send a follow-up message').",
       ].join("\n"),
 
     audhd: (max) =>
@@ -254,6 +258,9 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'inferred_purpose': noun phrase, not sentence. When unambiguous, commit ('Promotional slide'). When not, write 'I can't tell from the image alone'.",
         "- Banned: 'perhaps', 'appears to', 'kind of', 'sort of', 'looks like'. Use 'shows' or 'contains'; flag genuine uncertainty in 'accessibility_notes'.",
         "- 'transcribed_text': exact verbatim. Mark obscured portions with '[…]'.",
+        "- 'content_translation' (v0.2.0): cap entries at " +
+          max +
+          "; each facet is verb-led, literal, 8 words or fewer, no idioms. Quote source labels verbatim.",
       ].join("\n"),
 
     ocd: () =>
@@ -263,6 +270,7 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- Avoid 'error', 'wrong', 'broken', 'mistake', 'should' in 'description'.",
         "- 'accessibility_notes': low-pressure framing. 'Consider adding alt-text describing X' not 'Alt-text is missing and must be added'.",
         "- If text is obscured in 'transcribed_text', describe what's visible without amplifying the concern.",
+        "- 'content_translation' (v0.2.0): in 'action' and 'rule' facets, avoid 'must', 'urgent', 'critical', 'don't forget' unless the source uses those exact words. Prefer 'consider', 'you may want to', 'when ready'. Don't amplify pressure beyond the source.",
       ].join("\n"),
 
     dyslexia: (max) =>
@@ -275,6 +283,9 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'inferred_purpose': 5 words or fewer. 'Promotional banner', 'Bar chart', 'UI screenshot'.",
         "- One idea per sentence everywhere. No semicolons. No em-dashes inside sentences.",
         "- 'accessibility_notes': plain words. 'Hard to read' not 'low legibility'.",
+        "- 'content_translation' (v0.2.0): each facet text max 15 words, one idea per facet, common words ('use' not 'utilise'), no semicolons. Cap entries at " +
+          max +
+          ".",
       ].join("\n"),
 
     dyspraxia: (max) =>
@@ -286,6 +297,7 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
           ".",
         "- 'description': name spatial relationships explicitly ('logo top-left, headline centre, CTA button bottom-right') rather than 'the above'.",
         "- 'transcribed_text': preserve original order even if visually scattered; use line breaks between disjoint blocks.",
+        "- 'content_translation' (v0.2.0): order entries top-to-bottom / left-to-right as they appear in the image, not by importance. Use absolute dates inside facets when the source uses any date ('Wednesday 28 May', not 'next week'). Never write 'as above' inside a facet — name the prior label.",
       ].join("\n"),
   },
 
@@ -519,6 +531,9 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'others_asks': same cap and shape.",
         "- 'decisions[]': 1 short sentence each. State the decision, not the discussion.",
         "- 'ambiguous_items[]': include ONLY items the reader needs to chase. Skip 'minor topics raised'.",
+        "- 'content_translation' (v0.2.0): cap entries at " +
+          max +
+          "; each facet verb-led and 8 words or fewer. Label each entry as 'my_asks[i]' / 'decisions[i]' so the reader can jump back to the verbatim quote.",
       ].join("\n"),
 
     asd: () =>
@@ -528,6 +543,7 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'decisions[]': state the decision and the speaker who made it. Don't infer consensus that wasn't stated.",
         "- 'ambiguous_items[]': flag any item where the transcript depends on tone or shared context not in the text. Reason 'verbal agreement implied but not stated' is a legitimate ambiguity.",
         "- No idioms in any text field ('touch base', 'circle back', 'loop in').",
+        "- 'content_translation' (v0.2.0): each facet is a literal commitment. Decode source idioms inside facets ('circle back' → 'reply later'). Quote the source 'asker' speaker in the 'label' field.",
       ].join("\n"),
 
     audhd: (max) =>
@@ -539,6 +555,9 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'decisions[]': 1 sentence each, name the speaker; don't infer unstated consensus.",
         "- 'ambiguous_items[]': flag tone-dependent items with reason 'verbal agreement implied but not stated'. Skip 'minor topics raised'.",
         "- No idioms anywhere.",
+        "- 'content_translation' (v0.2.0): cap at " +
+          max +
+          "; verb-led, literal, 8 words or fewer, no idioms. Label each entry as 'my_asks[i]' / 'decisions[i]'.",
       ].join("\n"),
 
     ocd: () =>
@@ -548,6 +567,7 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- 'ambiguous_items[]': distinguish 'unclear who owns this' from 'this needs follow-up'. Reason field should name which kind of ambiguity.",
         "- No 'must', 'urgent', 'critical' in 'my_asks[].text' unless the speaker used those words.",
         "- 'decisions[]': don't flag a decision as 'final' unless the transcript explicitly closes it.",
+        "- 'content_translation' (v0.2.0): in 'action' facets, avoid 'must', 'urgent', 'ASAP', 'critical' unless the source used them. Prefer 'when you have a minute'. Don't amplify pressure beyond the transcript.",
       ].join("\n"),
 
     dyslexia: (max) =>
@@ -557,6 +577,9 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- Plain language. 'Bob will send the spec' not 'Bob will action distribution of the specification'.",
         "- 'decisions[]': one decision per item. Don't combine two decisions into one sentence with 'and'.",
         "- 'ambiguous_items[].reason': 1 short sentence; no semicolons.",
+        "- 'content_translation' (v0.2.0): each facet text max 15 words, one idea per facet, common words, no semicolons. Cap entries at " +
+          max +
+          ".",
       ].join("\n"),
 
     dyspraxia: (max) =>
@@ -568,6 +591,7 @@ const TOOL_BLOCKS: Record<TranslationTool, ToolMatrix> = {
         "- Use absolute dates in 'text' fields when the transcript implies a deadline ('Wednesday 28 May' rather than 'next week').",
         "- 'decisions[]': name the topic explicitly each time. Don't write 'as discussed above' or 'the prior point'.",
         "- Group related items together — don't interleave asks from different topics.",
+        "- 'content_translation' (v0.2.0): order entries by transcript appearance, not priority. Absolute dates inside facets. Never 'as above' — name the prior label.",
       ].join("\n"),
   },
 };

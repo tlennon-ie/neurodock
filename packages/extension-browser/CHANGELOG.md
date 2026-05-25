@@ -1,5 +1,65 @@
 # @neurodock/extension-browser
 
+## 0.0.28
+
+### Changed — `describe_image` and `brief_meeting` translate, not summarise
+
+User dogfooded `describe_image` on an "8 Ways to Display Emotional
+Intelligence" infographic. The output was OCR-shaped:
+
+> An infographic on emotional intelligence presents 8 methods …
+
+What the user actually wanted was a per-point Input/Action/Goal scaffold
+they could act on. Diagnosis: the v0.1.0 output schema had nowhere to put
+that scaffold — `description` is capped at 600 chars / 3 sentences,
+`key_elements` is a flat noun list. No amount of prompt tweaking could
+emit a shape the schema forbids.
+
+Same disease on `brief_meeting`: flat `my_asks[]` / `decisions[]` / etc.
+give you the WHO-SAID-WHAT but not the WHAT-TO-DO scaffold.
+
+0.0.28 ships:
+
+1. **Schema bump to v0.2.0** for both surfaces. New optional field
+   `content_translation: TranslatedEntry[] | null` on `describe_image`
+   and `brief_meeting`. Each entry has a `label` and 1–8 `facets`, where
+   each facet is `{ kind, text }` and `kind` is one of `input`,
+   `action`, `goal`, `rule`, `fact`, `benefit`, `context`. Additive —
+   legacy responses (without the field) still validate.
+
+2. **Prompt rewrite** for `describe_image`. The model is now told it
+   is TRANSLATING the image, not describing it. A counter-example
+   citing the EI infographic teaches the difference between OCR
+   ("the infographic shows 8 methods") and translation (8 entries
+   with Input/Action/Goal facets per method). `brief_meeting` gets a
+   smaller additive instruction for the same field.
+
+3. **Per-neurotype matrix updates** in `src/lib/neurotype-addendum.ts`.
+   Every concrete (`describe_image` × NT) and (`brief_meeting` × NT)
+   block now teaches the model how to shape `content_translation`:
+
+   - ADHD: verb-led, 8 words / facet, cap at `maxChunkSize`.
+   - ASD/autism: literal commitments, source-label verbatim, idiom decode.
+   - AuDHD: fused — verb-led + literal, no idioms, cap.
+   - OCD: low-pressure phrasing in `action`/`rule` facets.
+   - Dyslexia: ≤15 words / facet, common words, no semicolons.
+   - Dyspraxia: source-image order, absolute dates, no "as above".
+
+4. **Tests.**
+
+   - `validation.test.ts`: legacy-without-field validates (back-compat),
+     new-with-field validates, decorative `null` validates, unknown
+     facet `kind` rejected.
+   - `neurotype-tool-matrix.test.ts`: every concrete describe_image and
+     brief_meeting NT block must mention `content_translation`.
+
+5. **Sample outputs** for the EI infographic across all 6 NTs at
+   `.claude-reports/2026-05-25-translate-not-summarize/SAMPLE-OUTPUTS.md`.
+
+Schema change is back-compat. Storage trust boundary unchanged — keys
+still live in `chrome.storage.local` only, never `sync`. AGPL-3.0-or-later
+header preserved.
+
 ## 0.0.27
 
 ### Fixed — Cloud API keys are now per-provider (privacy + UX)

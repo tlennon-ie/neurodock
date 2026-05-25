@@ -1,9 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/describe_image.schema.json",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.2.0/describe_image.schema.json",
   "title": "describe_image",
-  "description": "Describe an image for a neurodivergent reader. The caller sends an image URL (or data URL); the server orchestrates a prompt against a vision-capable LLM and returns a literal description, transcribed text if any, key elements, inferred purpose, and an alt-text suggestion. REQUIRES A VISION-CAPABLE MODEL — text-only models will reject the request with VISION_MODEL_REQUIRED. The server stores no image bytes; URLs are not logged.",
-  "version": "0.1.0",
+  "description": "Describe an image for a neurodivergent reader. The caller sends an image URL (or data URL); the server orchestrates a prompt against a vision-capable LLM and returns a literal description, transcribed text if any, key elements, inferred purpose, an alt-text suggestion, AND (v0.2.0+) a `content_translation` — a per-item Input/Action/Goal-style scaffold for structured content (numbered lists, frameworks, flowcharts, infographics). REQUIRES A VISION-CAPABLE MODEL — text-only models will reject the request with VISION_MODEL_REQUIRED. The server stores no image bytes; URLs are not logged.",
+  "$comment": "v0.2.0 (2026-05-25): adds optional `content_translation` field to describe_image and brief_meeting. The field carries reader-translated facets (input/action/goal/rule/fact/benefit/context) so structured-content images and meeting items become ND-actionable scaffolds rather than OCR-style summaries. Field is OPTIONAL — legacy responses without it still validate. See `.claude-reports/2026-05-25-translate-not-summarize/REPORT.md`.",
+  "version": "0.2.0",
   "type": "object",
   "properties": {
     "input": {
@@ -82,6 +83,12 @@
           "maxLength": 400,
           "description": "Optional one-line alt-text suggestion suitable for assistive technology. Null when the image is purely decorative. When non-null, MUST be a single sentence."
         },
+        "content_translation": {
+          "type": ["array", "null"],
+          "maxItems": 30,
+          "description": "v0.2.0 — Reader-translated scaffold of the image's structured content. Populate WHEN the image contains structured content the reader would otherwise have to decode visually: numbered lists, comparison tables, flowcharts, frameworks, infographic panels, step diagrams. Each entry is one item from that structure (one list element, one panel, one flowchart node). Set to null OR an empty array when the image is purely decorative (avatar, logo, mood photo) — the existing description/key_elements fields carry it then. The legacy fields (description, key_elements, transcribed_text) still fire either way so accessibility tooling doesn't regress; content_translation is the field a neurodivergent reader actually reads when they want to act on the image's content.",
+          "items": { "$ref": "#/$defs/TranslatedEntry" }
+        },
         "eval_corpus_slice": {
           "type": "string",
           "minLength": 1,
@@ -100,6 +107,54 @@
             "model": { "type": "string" }
           },
           "description": "Honest declaration of which mode/provider/model handled this request. The cloud-mode banner in the extension is gated on `mode === 'cloud'`."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "TranslatedEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "facets"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Heading/identifier of this item as it appears in the source image — e.g. '1. Emotional Control', 'Step 3: Deploy', 'Risk: high'. Quote source text verbatim where the source provides a label. Free-text where the source uses position-only (e.g. 'Top-left panel')."
+        },
+        "facets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "description": "Reader-translated facets for this entry. Each facet decomposes the item into an Input / Action / Goal style scaffold. Use 1 facet for the simplest content (a single rule); use multiple facets when the source provides distinct input/action/goal/benefit components.",
+          "items": { "$ref": "#/$defs/TranslatedFacet" }
+        }
+      }
+    },
+    "TranslatedFacet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "input",
+            "action",
+            "goal",
+            "rule",
+            "fact",
+            "benefit",
+            "context"
+          ],
+          "description": "Facet kind. `input` = the trigger or starting state. `action` = what to do (verb-led). `goal` = the desired end state or purpose. `rule` = an absolute or conditional statement. `fact` = a stated truth. `benefit` = the payoff. `context` = framing or background that doesn't fit the other kinds. Unknown values MUST be treated as `context` by forward-compatible callers."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600,
+          "description": "The translated text of this facet, written in NeuroDock voice (direct, literal, non-clinical). Per-neurotype addenda may further constrain word count and idiom usage."
         }
       }
     }
@@ -135,6 +190,6 @@
       "lmstudio": ["any LM Studio model whose card declares vision support"]
     },
     "rejection_error_code": "VISION_MODEL_REQUIRED",
-    "policy": "Additive-only within v0.1.x. New optional output fields MAY land in v0.1.x. Removing or retyping a field requires a new major version."
+    "policy": "Additive-only within v0.x.x while pre-1.0. v0.2.0 added optional `content_translation` and the `$defs.TranslatedEntry` / `$defs.TranslatedFacet` types; legacy v0.1.x responses (omitting the field) still validate. Removing or retyping a field requires a new major version."
   }
 }

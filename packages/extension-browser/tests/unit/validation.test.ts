@@ -150,6 +150,176 @@ describe("normaliseLLMOutput", () => {
     expect(res.errors.join(" ")).toMatch(/eval_corpus_slice|model_provenance/);
   });
 
+  it("describe_image WITHOUT content_translation still validates (v0.2.0 back-compat)", () => {
+    // REGRESSION: v0.2.0 added an optional `content_translation` field.
+    // Pre-0.2.0 responses (omitting the field) MUST still validate.
+    const legacyShape = {
+      description: "A round avatar with a stylised brain motif.",
+      contains_text: false,
+      key_elements: ["circle", "brain icon"],
+      inferred_purpose: "GitHub user avatar.",
+      eval_corpus_slice: "describe_image-v0.1.0",
+      model_provenance: {
+        mode: "local" as const,
+        provider: "lmstudio",
+        model: "gemma-4-e4b",
+      },
+    };
+    const res = validateOutput("describe_image", legacyShape);
+    expect(res.errors).toEqual([]);
+    expect(res.ok).toBe(true);
+  });
+
+  it("describe_image WITH content_translation validates (v0.2.0 new shape)", () => {
+    const newShape = {
+      description:
+        "An octagonal infographic about emotional intelligence with eight numbered panels.",
+      contains_text: true,
+      transcribed_text:
+        "8 Ways to Display Emotional Intelligence\n1. Emotional Control\n2. Logical Trust\n3. Clarity",
+      key_elements: ["octagonal diagram", "lightbulb icon", "eight panels"],
+      inferred_purpose: "Educational infographic.",
+      accessibility_notes:
+        "Infographic listing eight emotional-intelligence techniques.",
+      content_translation: [
+        {
+          label: "1. Emotional Control (The 'Pause' Strategy)",
+          facets: [
+            { kind: "input", text: "You feel an emotion." },
+            {
+              kind: "action",
+              text: "Stop moving, stop talking. Wait 5 seconds.",
+            },
+            {
+              kind: "goal",
+              text: "Treat the emotion as data, not a command.",
+            },
+          ],
+        },
+        {
+          label: "2. Logical Trust (The 'First-Pass' Protocol)",
+          facets: [
+            {
+              kind: "rule",
+              text: "Assume the other person is trying to help until proven otherwise.",
+            },
+            { kind: "action", text: "Grant trust immediately." },
+            { kind: "benefit", text: "Reduces vigilance overhead." },
+          ],
+        },
+      ],
+      eval_corpus_slice: "describe_image-v0.2.0",
+      model_provenance: {
+        mode: "local" as const,
+        provider: "lmstudio",
+        model: "qwen2-vl-7b",
+      },
+    };
+    const res = validateOutput("describe_image", newShape);
+    expect(res.errors).toEqual([]);
+    expect(res.ok).toBe(true);
+  });
+
+  it("describe_image with content_translation=null validates (decorative-image case)", () => {
+    const decorative = {
+      description: "A logo with a stylised mountain silhouette.",
+      contains_text: false,
+      key_elements: ["mountain silhouette", "circular border"],
+      inferred_purpose: "Company logo.",
+      content_translation: null,
+      eval_corpus_slice: "describe_image-v0.2.0",
+      model_provenance: {
+        mode: "local" as const,
+        provider: "ollama",
+        model: "llava",
+      },
+    };
+    const res = validateOutput("describe_image", decorative);
+    expect(res.errors).toEqual([]);
+    expect(res.ok).toBe(true);
+  });
+
+  it("describe_image rejects content_translation with an unknown facet kind", () => {
+    const bogus = {
+      description: "A diagram.",
+      contains_text: false,
+      key_elements: [],
+      inferred_purpose: "Diagram.",
+      content_translation: [
+        {
+          label: "1. Step One",
+          facets: [{ kind: "wishful_thinking", text: "x" }],
+        },
+      ],
+      eval_corpus_slice: "describe_image-v0.2.0",
+      model_provenance: {
+        mode: "local" as const,
+        provider: "ollama",
+        model: "llava",
+      },
+    };
+    const res = validateOutput("describe_image", bogus);
+    expect(res.ok).toBe(false);
+    expect(res.errors.join(" ")).toMatch(/kind|enum/);
+  });
+
+  it("brief_meeting WITHOUT content_translation still validates (v0.2.0 back-compat)", () => {
+    const legacyBrief = {
+      my_asks: [],
+      others_asks: [],
+      decisions: [],
+      ambiguous_items: [],
+      eval_corpus_slice: "brief_meeting-v0.1.0",
+      model_provenance: {
+        mode: "local" as const,
+        provider: "ollama",
+        model: "llama3.1:8b-instruct",
+      },
+    };
+    const res = validateOutput("brief_meeting", legacyBrief);
+    expect(res.errors).toEqual([]);
+    expect(res.ok).toBe(true);
+  });
+
+  it("brief_meeting WITH content_translation validates (v0.2.0 new shape)", () => {
+    const newBrief = {
+      my_asks: [
+        {
+          text: "Own the migration script and have it ready by Wednesday.",
+          asker: "Priya",
+          due: "Wednesday",
+          quoted_span: {
+            start_char: 0,
+            end_char: 10,
+            text: "stub-span ",
+          },
+        },
+      ],
+      others_asks: [],
+      decisions: [],
+      ambiguous_items: [],
+      content_translation: [
+        {
+          label: "my_asks[0]: migration script",
+          facets: [
+            { kind: "input", text: "Priya assigned you the migration script." },
+            { kind: "action", text: "Finish the script by Wednesday." },
+            { kind: "goal", text: "Rollout starts on time." },
+          ],
+        },
+      ],
+      eval_corpus_slice: "brief_meeting-v0.2.0",
+      model_provenance: {
+        mode: "cloud" as const,
+        provider: "anthropic",
+        model: "claude-sonnet-4.6",
+      },
+    };
+    const res = validateOutput("brief_meeting", newBrief);
+    expect(res.errors).toEqual([]);
+    expect(res.ok).toBe(true);
+  });
+
   it("strips provider-added top-level fields before validation (REGRESSION: Gemini 'additional properties')", () => {
     // 0.0.26 — Gemini (direct or via OpenRouter) routinely returns
     // `safety_ratings`, `citations`, `groundings`, or `finish_reason`

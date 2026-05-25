@@ -1,9 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://schemas.neurodock.org/mcp-translation/v0.1.0/brief_meeting.schema.json",
+  "$id": "https://schemas.neurodock.org/mcp-translation/v0.2.0/brief_meeting.schema.json",
   "title": "brief_meeting",
-  "description": "Convert a meeting transcript into a four-section structured brief: my_asks (asks of the recipient), others_asks (asks the recipient is making of others), decisions (concrete commitments reached), and ambiguous_items (things left unresolved or unclear). Per plan.md §7 acceptance, ambiguous_items MUST quote the exact transcript span. The server orchestrates a structured prompt against the caller's MCP-client LLM; the server itself performs NO LLM calls.",
-  "version": "0.1.0",
+  "description": "Convert a meeting transcript into a four-section structured brief: my_asks (asks of the recipient), others_asks (asks the recipient is making of others), decisions (concrete commitments reached), and ambiguous_items (things left unresolved or unclear). Per plan.md §7 acceptance, ambiguous_items MUST quote the exact transcript span. v0.2.0 adds an optional `content_translation` field that turns each ask/decision/ambiguous item into an Input/Action/Goal-style scaffold so a neurodivergent reader gets the WHAT-TO-DO, not just the WHO-SAID-WHAT. The server orchestrates a structured prompt against the caller's MCP-client LLM; the server itself performs NO LLM calls.",
+  "$comment": "v0.2.0 (2026-05-25): adds optional `content_translation` field. See describe_image.schema.json for the same field on that surface and `.claude-reports/2026-05-25-translate-not-summarize/REPORT.md` for the design.",
+  "version": "0.2.0",
   "type": "object",
   "properties": {
     "input": {
@@ -82,6 +83,12 @@
           "description": "Things the transcript leaves unresolved, deferred, or unclear. Each item MUST quote the exact transcript span verbatim (verbatim=true and quoted_span populated). Items where verbatim is false are not permitted in v0.1.0 — the field exists for forward-compatibility with summarised ambiguity that might land in v0.2. Ordered by transcript appearance.",
           "maxItems": 50,
           "items": { "$ref": "#/$defs/AmbiguousItem" }
+        },
+        "content_translation": {
+          "type": ["array", "null"],
+          "maxItems": 50,
+          "description": "v0.2.0 — Optional reader-translated scaffold of the meeting. Each entry corresponds to a single ask, decision, or ambiguous item and decomposes it into Input/Action/Goal facets the reader can act on. WHEN populated, each entry's `label` SHOULD identify which list item it translates (e.g. 'my_asks[0]: own the migration script'). Set to null OR empty array when the brief is a chat-only meeting with nothing to act on. The legacy four-section fields (my_asks/others_asks/decisions/ambiguous_items) still fire either way for back-compat; content_translation is the field a neurodivergent reader reads when they want the WHAT-TO-DO scaffold, not the WHO-SAID-WHAT extraction.",
+          "items": { "$ref": "#/$defs/TranslatedEntry" }
         },
         "eval_corpus_slice": {
           "type": "string",
@@ -236,12 +243,58 @@
     }
   ],
   "compatibility": {
-    "policy": "Additive-only within v0.1.x. New optional output fields (e.g. mermaid_sequence_diagram, action_item_priorities) MAY land in v0.1.x. The verbatim-anchor requirement on ambiguous_items is part of the v0.1.0 contract and cannot be relaxed without a major bump. New ambiguity reason codes are minor bumps. Renaming or retyping any field requires a new major version with a parallel $id.",
+    "policy": "Additive-only within v0.x.x. v0.2.0 added optional `content_translation` plus the `$defs.TranslatedEntry` / `$defs.TranslatedFacet` types. The verbatim-anchor requirement on ambiguous_items is part of the v0.1.0 contract and cannot be relaxed without a major bump. New ambiguity reason codes are minor bumps. Renaming or retyping any field requires a new major version with a parallel $id.",
     "side_effects": "None. Pure read. The server stores no input and emits no telemetry. Persisting the brief to mcp-cognitive-graph is the caller's responsibility.",
     "idempotency": "Server-side idempotent. LLM-side determinism depends on the caller's model and sampling settings; the verbatim-anchor check rejects responses whose spans cannot be located, which provides a soft consistency guarantee.",
     "privacy": "local-only-by-default. The server itself does not call any provider. Meeting transcripts are highly sensitive (third-party speakers, internal strategy); cloud-mode for brief_meeting SHOULD surface a stronger consent prompt than other tools — that is the extension's responsibility, not this server's."
   },
   "$defs": {
+    "TranslatedEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "facets"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Heading/identifier of this item — typically references which list slot it translates (e.g. 'my_asks[0]: migration script') so the reader can map the scaffold back to the verbatim-anchored source field."
+        },
+        "facets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "description": "Reader-translated facets — Input/Action/Goal scaffold for this item.",
+          "items": { "$ref": "#/$defs/TranslatedFacet" }
+        }
+      }
+    },
+    "TranslatedFacet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "text"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "input",
+            "action",
+            "goal",
+            "rule",
+            "fact",
+            "benefit",
+            "context"
+          ],
+          "description": "Facet kind — same enum as describe_image.TranslatedFacet for cross-tool consistency. Unknown values MUST be treated as `context` by forward-compatible callers."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600,
+          "description": "The translated text of this facet, in NeuroDock voice. Per-neurotype addenda may further constrain word count and idiom usage."
+        }
+      }
+    },
     "Ask": {
       "type": "object",
       "additionalProperties": false,

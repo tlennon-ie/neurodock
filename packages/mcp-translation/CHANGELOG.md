@@ -5,6 +5,45 @@ All notable changes to `neurodock-mcp-translation` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning per .
 
+## [0.1.0] - 2026-05-25
+
+### Added — translate-not-summarise: `content_translation` on describe_image and brief_meeting
+
+User-reported dogfood: `describe_image` on a structured infographic
+("8 Ways to Display Emotional Intelligence") returned an OCR-style
+single-sentence summary instead of the per-point Input/Action/Goal
+scaffold a neurodivergent reader needs to act on the content. Diagnosis
+was structural — the v0.1.0 schema had nowhere to put a per-item
+explanation scaffold. Same shape problem affects `brief_meeting`'s
+flat ask/decision lists.
+
+This is a minor (additive) bump. Legacy responses without the new field
+still validate.
+
+- `schemas/describe_image.schema.json` → `version: 0.2.0`. Adds optional
+  `content_translation: TranslatedEntry[] | null` to the output, plus
+  `$defs.TranslatedEntry` and `$defs.TranslatedFacet`. Facet `kind` enum:
+  `input`, `action`, `goal`, `rule`, `fact`, `benefit`, `context`. Field
+  is populated for structured content (lists, frameworks, flowcharts,
+  infographics) and set to `null` for decorative imagery.
+- `schemas/brief_meeting.schema.json` → `version: 0.2.0`. Adds the same
+  optional `content_translation` field plus the same `$defs` shapes. Each
+  entry's `label` SHOULD reference which list item it translates
+  (`my_asks[0]: migration script`) so the reader can map back to the
+  verbatim-anchored source.
+- `prompts/describe_image.prompt.md` rewritten with explicit
+  TRANSLATE-not-SUMMARISE framing and a worked counter-example showing
+  the EI infographic case. The legacy `description` / `key_elements` /
+  `transcribed_text` fields still fire so accessibility tooling does not
+  regress.
+- `prompts/brief_meeting.prompt.md` extended with an additive
+  `content_translation` instruction.
+
+Verbatim-anchor enforcement on `brief_meeting.ambiguous_items` is
+unchanged. The server still performs no LLM calls — the new field is a
+prompt-asset / schema-shape pair, executed by the caller's MCP client
+exactly like every other field.
+
 ## [0.0.2] - 2026-05-22
 
 ### Changed
