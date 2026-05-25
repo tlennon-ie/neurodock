@@ -1,23 +1,17 @@
 # ------------------------------------------------------------------------------
 # Code scanning requires the repo to be public OR GitHub Advanced Security (paid).
-# This workflow is intentionally NOT run on pull_request while the repo is
-# private — it would always fail at the upload-sarif step (Code Scanning API
-# is unavailable for private repos without GHAS), producing a permanent red X
-# on every PR.
-#
-# Re-enable pull_request triggers when the repo goes public (or GHAS is
-# enabled) by restoring:
-#
-#   pull_request:
-#     branches: [main]
-#
-# under the `on:` block below.
+# The repo is now public, so pull_request is re-enabled to give PR authors
+# scanning feedback before merge. Do NOT switch to `pull_request_target` —
+# that grants write-scoped GITHUB_TOKEN to forked-PR code (privilege-
+# escalation trap).
 # ------------------------------------------------------------------------------
 
 name: CodeQL
 
 on:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
   schedule:
     - cron: "0 6 * * 1" # Weekly Monday at 06:00 UTC

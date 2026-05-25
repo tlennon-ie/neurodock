@@ -14,6 +14,8 @@ jobs:
   ts:
     name: TypeScript (lint, typecheck, test, build)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
@@ -47,6 +49,8 @@ jobs:
   python:
     name: Python (ruff, mypy --strict, pytest)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
