@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from neurodock_mcp_task_fractionator.types import Task
 
@@ -46,8 +46,8 @@ class PendingTaskSource(Protocol):
 
 def load_pending_task_source(
     *,
-    in_memory: InMemoryPendingTaskSource | None = None,
-    graph: CognitiveGraphPendingTaskSource | None = None,
+    in_memory: PendingTaskSource | None = None,
+    graph: PendingTaskSource | None = None,
     env: dict[str, str] | None = None,
 ) -> PendingTaskSource:
     """Pick a source per the ``NEURODOCK_TASK_SOURCE`` env var.
@@ -75,16 +75,9 @@ def load_pending_task_source(
     return in_memory if in_memory is not None else InMemoryPendingTaskSource()
 
 
-# Forward references for the type-checker; the runtime imports inside
-# :func:`load_pending_task_source` keep the module free of cycles.
-# TYPE_CHECKING is False at runtime (no import cost, no circular import),
-# but True when mypy/pyright runs, so the names are resolvable to the type
-# checker.  This replaces the previous `if False:` pattern which CodeQL
-# correctly flagged as an unreachable block (alert #11).
-if TYPE_CHECKING:
-    from neurodock_mcp_task_fractionator.sources.graph import (
-        CognitiveGraphPendingTaskSource,
-    )
-    from neurodock_mcp_task_fractionator.sources.memory import (
-        InMemoryPendingTaskSource,
-    )
+# Concrete classes (InMemoryPendingTaskSource, CognitiveGraphPendingTaskSource)
+# live in sibling modules and import this module's Protocol. To avoid a cyclic
+# import that CodeQL flagged as `py/unsafe-cyclic-import`, the factory
+# function's `in_memory` / `graph` parameters are typed as the Protocol itself
+# (`PendingTaskSource | None`) rather than the concrete classes. Callers pass
+# the right concrete subclass; the Protocol gives them structural typing.
