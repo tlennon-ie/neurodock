@@ -68,6 +68,7 @@ describe("Popup — live notifications inbox updates", () => {
       outputFormat: "answer_first",
       maxChunkSize: 5,
       additionalNotes: null,
+      onboardingComplete: true,
     });
     vi.spyOn(profileModule, "getSyncStatus").mockResolvedValue({
       source: "extension-local",

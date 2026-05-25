@@ -158,6 +158,21 @@ export interface ExtensionProfile {
    * `identity.additional_notes`.
    */
   readonly additionalNotes: string | null;
+  /**
+   * Roadmap A1: guided onboarding wizard completion flag.
+   *
+   * Absent or `false` on a brand-new profile means the wizard should
+   * render in place of the regular popup layout the next time the user
+   * opens it. `true` means the wizard has been completed (or skipped
+   * past) and the regular layout should render.
+   *
+   * Optional so existing call sites that hand-build a profile in tests
+   * stay compilable; `normaliseProfile()` always settles it to a real
+   * boolean before persistence. The migration guard there infers `true`
+   * for any pre-A1 profile that already has a provider configured, so
+   * an upgrade never re-shows the wizard to an existing user.
+   */
+  readonly onboardingComplete?: boolean;
 }
 
 export interface ModelProvenance {

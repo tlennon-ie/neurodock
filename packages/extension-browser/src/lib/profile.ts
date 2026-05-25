@@ -61,7 +61,13 @@ const DEFAULT_PROFILE: ExtensionProfile = Object.freeze({
   outputFormat: "answer_first" as const,
   maxChunkSize: 5,
   additionalNotes: null,
+  // Roadmap A1: brand-new profiles must see the wizard. Migration of
+  // pre-A1 profiles to `true` happens in `normaliseProfile()`.
+  onboardingComplete: false,
 });
+
+const OLLAMA_DEFAULT_ENDPOINT = "http://localhost:11434";
+const LMSTUDIO_DEFAULT_ENDPOINT = "http://localhost:1234/v1";
 
 export type ProfileSource = "native-host" | "extension-local";
 
@@ -300,7 +306,9 @@ function isOutputFormat(x: unknown): x is OutputFormat {
   return typeof x === "string" && OUTPUT_FORMAT_ENUM.has(x as OutputFormat);
 }
 
-function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
+export function normaliseProfile(
+  input: Partial<ExtensionProfile>,
+): ExtensionProfile {
   return {
     mode: normaliseMode(input),
     localProvider: input.localProvider === "lmstudio" ? "lmstudio" : "ollama",
@@ -352,7 +360,58 @@ function normaliseProfile(input: Partial<ExtensionProfile>): ExtensionProfile {
       input.additionalNotes.length > 0
         ? input.additionalNotes
         : null,
+    onboardingComplete: resolveOnboardingComplete(input),
   };
+}
+
+/**
+ * Roadmap A1 migration guard.
+ *
+ * Decision rules:
+ *   - If the input already carries an explicit boolean, honour it.
+ *   - Otherwise (the key is absent — a profile that was written before
+ *     A1 landed), infer completion from whether the user has already
+ *     configured a provider:
+ *       * any cloud provider id set, OR
+ *       * any cloud key stored in the per-provider map, OR
+ *       * the legacy single cloud key set, OR
+ *       * a local endpoint that is not the bare default for the
+ *         currently-selected local provider.
+ *     If any of those are true, set `onboardingComplete: true` so the
+ *     wizard never re-prompts an existing user.
+ *   - A brand-new profile (no providers configured, all defaults) gets
+ *     `false` and sees the wizard on first popup open.
+ */
+function resolveOnboardingComplete(input: Partial<ExtensionProfile>): boolean {
+  if (typeof input.onboardingComplete === "boolean") {
+    return input.onboardingComplete;
+  }
+  if (
+    typeof input.cloudProvider === "string" &&
+    input.cloudProvider.length > 0
+  ) {
+    return true;
+  }
+  if (typeof input.cloudApiKey === "string" && input.cloudApiKey.length > 0) {
+    return true;
+  }
+  if (isRecord(input.cloudApiKeys)) {
+    for (const v of Object.values(input.cloudApiKeys)) {
+      if (typeof v === "string" && v.length > 0) return true;
+    }
+  }
+  // Local endpoint customised beyond the per-provider default counts
+  // as "configured". The bare defaults do not.
+  const localEndpoint = input.localEndpoint;
+  if (typeof localEndpoint === "string" && localEndpoint.length > 0) {
+    const provider = input.localProvider === "lmstudio" ? "lmstudio" : "ollama";
+    const defaultEndpoint =
+      provider === "lmstudio"
+        ? LMSTUDIO_DEFAULT_ENDPOINT
+        : OLLAMA_DEFAULT_ENDPOINT;
+    if (localEndpoint !== defaultEndpoint) return true;
+  }
+  return false;
 }
 
 function isRecord(x: unknown): x is Record<string, unknown> {

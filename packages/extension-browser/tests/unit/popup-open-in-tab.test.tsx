@@ -66,6 +66,7 @@ describe("Popup — Open in tab", () => {
       outputFormat: "answer_first",
       maxChunkSize: 5,
       additionalNotes: null,
+      onboardingComplete: true,
     });
     vi.spyOn(profileModule, "getSyncStatus").mockResolvedValue({
       source: "extension-local",
