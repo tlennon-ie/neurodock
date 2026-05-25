@@ -170,4 +170,31 @@ describe("translation-client", () => {
     );
     expect(detectChannelFromUrl("https://example.invalid/")).toBe("generic");
   });
+
+  it("rejects URL spoofing attempts in detectChannelFromUrl (H2 hardening)", () => {
+    // Query-string spoof: mail.google.com appears in the query, not the hostname.
+    expect(
+      detectChannelFromUrl("https://evil.com/redirect?u=mail.google.com"),
+    ).toBe("generic");
+    // Subdomain spoof: mail.google.com is a suffix of the hostname.
+    expect(detectChannelFromUrl("https://mail.google.com.evil.com/path")).toBe(
+      "generic",
+    );
+    // Path spoof: mail.google.com is in the path segment.
+    expect(detectChannelFromUrl("https://evil.com/mail.google.com/")).toBe(
+      "generic",
+    );
+    // Legitimate subdomain: mail-archive.mail.google.com → email.
+    expect(detectChannelFromUrl("https://mail-archive.mail.google.com/")).toBe(
+      "email",
+    );
+    // Invalid URL: URL constructor throws → generic.
+    expect(detectChannelFromUrl("https://invalid-url")).toBe("generic");
+    // github subdomain: enterprise.github.com → github.
+    expect(detectChannelFromUrl("https://enterprise.github.com/orgs")).toBe(
+      "github",
+    );
+    // notion subdomain: team.notion.so → notion.
+    expect(detectChannelFromUrl("https://team.notion.so/page")).toBe("notion");
+  });
 });

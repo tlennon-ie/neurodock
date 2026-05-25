@@ -22,9 +22,19 @@ vi.mock("wxt/utils/define-background", () => ({
 
 vi.mock("../../src/lib/translation-client.js", () => ({
   translate: vi.fn(),
+  // Mirror the hardened hostname-based logic from translation-client.ts
+  // (H2 fix, 2026-05-27): match on hostname only, not substring, so
+  // spoofed URLs like `https://evil.com/?q=mail.google.com` are rejected.
   detectChannelFromUrl: vi.fn((url: string) => {
-    if (url.includes("mail.google.com")) return "email";
-    if (url.includes("app.slack.com")) return "slack";
+    let hostname: string;
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      return "generic";
+    }
+    if (hostname === "mail.google.com" || hostname.endsWith(".mail.google.com"))
+      return "email";
+    if (hostname === "app.slack.com") return "slack";
     return "generic";
   }),
 }));

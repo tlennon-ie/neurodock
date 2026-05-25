@@ -373,13 +373,32 @@ export function isCloudMode(profile: ExtensionProfile): boolean {
 }
 
 export function detectChannelFromUrl(url: string): Channel {
-  if (url.includes("mail.google.com")) return "email";
-  if (url.includes("outlook.")) return "email";
-  if (url.includes("app.slack.com")) return "slack";
-  if (url.includes("linear.app")) return "linear";
-  if (url.includes("github.com")) return "github";
-  if (url.includes("notion.so")) return "notion";
-  if (url.includes("docs.google.com")) return "gdocs";
+  // Security: parse the URL and match on hostname only so that crafted
+  // URLs such as `https://evil.com/?q=mail.google.com` or
+  // `https://mail.google.com.evil.com/` cannot spoof the channel.
+  // CodeQL alerts #28-29 (2026-05-27 audit, finding H2).
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    return "generic";
+  }
+  if (hostname === "mail.google.com" || hostname.endsWith(".mail.google.com"))
+    return "email";
+  // Outlook: match the three known TLDs used by Microsoft's hosted mail.
+  if (
+    hostname === "outlook.live.com" ||
+    hostname === "outlook.office.com" ||
+    hostname === "outlook.office365.com"
+  )
+    return "email";
+  if (hostname === "app.slack.com") return "slack";
+  if (hostname === "linear.app") return "linear";
+  if (hostname === "github.com" || hostname.endsWith(".github.com"))
+    return "github";
+  if (hostname === "notion.so" || hostname.endsWith(".notion.so"))
+    return "notion";
+  if (hostname === "docs.google.com") return "gdocs";
   return "generic";
 }
 
