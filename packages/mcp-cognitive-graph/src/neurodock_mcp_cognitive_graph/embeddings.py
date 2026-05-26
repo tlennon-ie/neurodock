@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Embedding backend for v0.0.2 fuzzy-and-embedding entity recall.
 
 Wraps :mod:`fastembed`'s small all-MiniLM-class model (``BAAI/bge-small-en-v1.5``

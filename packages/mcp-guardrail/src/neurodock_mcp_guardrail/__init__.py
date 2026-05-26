@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """NeuroDock guardrail MCP server.
 
 All three detectors are live at v0.0.2:

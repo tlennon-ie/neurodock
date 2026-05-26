@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """``idle_status`` implementation.
 
 The consent gate is the only place we read from ``profile.privacy.os_idle_consent``.

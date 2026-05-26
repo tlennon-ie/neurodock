@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Unit tests for the check_sycophancy v0.0.2 live runtime."""
 
 from __future__ import annotations

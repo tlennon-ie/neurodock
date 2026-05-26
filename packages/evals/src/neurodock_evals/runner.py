@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Run a single example through a single tool's deterministic baseline.
 
 The runner is air-gapped: it imports the translation tools directly and

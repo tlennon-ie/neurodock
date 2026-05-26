@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Shared pytest fixtures for the eval harness suite."""
 
 from __future__ import annotations

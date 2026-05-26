@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """NeuroDock proactive-guardrail daemon (Phase 3).
 
 A long-running poller that watches the same state files the Phase 1

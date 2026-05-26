@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pydantic models for the eval harness.
 
 Mirrors `schemas/example.schema.json` and `schemas/annotation.schema.json`.

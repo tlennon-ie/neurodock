@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Embedding rung of the recall_entity resolution cascade.
 
 We do NOT load the real fastembed model in CI: the first invocation would

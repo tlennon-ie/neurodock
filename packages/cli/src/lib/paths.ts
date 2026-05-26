@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import { join } from "node:path";
 import { existsSync, statSync } from "node:fs";
 import type { ClientLocation, ClientId } from "../types.js";

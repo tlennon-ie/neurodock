@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Local heuristic decomposition engine for v0.0.1.
 
 Per ADR 0003 §2 there is **no LLM call inside this server**. v0.0.1 uses a

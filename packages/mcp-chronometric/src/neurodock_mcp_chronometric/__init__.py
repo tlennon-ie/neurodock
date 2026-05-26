@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """NeuroDock chronometric MCP server — time, idle, and break management.
 
 v0.0.1 — in-memory implementation of the five tools specified in

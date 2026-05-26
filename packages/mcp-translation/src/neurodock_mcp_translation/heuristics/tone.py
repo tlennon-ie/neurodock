@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Tone scoring heuristics.
 
 Word-list-based scoring for the three axes the v0.1.0 schema specifies:

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Shared fixtures for ``mcp-guardrail`` tests.
 
 The server is stateless, so fixtures are intentionally minimal: there is no

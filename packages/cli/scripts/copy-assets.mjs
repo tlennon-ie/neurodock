@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Copy non-TS assets from `src/assets/` into `dist/assets/` after tsc.
  *

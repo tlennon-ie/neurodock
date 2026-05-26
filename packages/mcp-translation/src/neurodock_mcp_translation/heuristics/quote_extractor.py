@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Quote extraction for meeting-transcript heuristics.
 
 Each function scans the transcript line-by-line, identifies candidate spans

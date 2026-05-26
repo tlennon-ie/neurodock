@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pydantic models for chronometric tool inputs and outputs.
 
 These models are the in-Python source of truth and must round-trip cleanly with

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Entity resolution.
 
 The full four-rung cascade defined in ``recall_entity.schema.json``:

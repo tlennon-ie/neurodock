@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Clock abstraction so tools can be tested with frozen time."""
 
 from __future__ import annotations

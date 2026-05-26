@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """FastMCP server registration for the task fractionator tools.
 
 Two tools are registered (`decompose`, `next_one`). The server is pure glue —

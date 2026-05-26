@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Generic content script — runs on ANY page that the user grants
  * permission for, programmatically injected by the SW on right-click

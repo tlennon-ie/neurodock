@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Regex-based anonymiser for contributed eval examples.
 
 A safety net, not a substitute for human judgement — see `CONTRIBUTING.md`.

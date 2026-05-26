@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Energy-zone heuristic (v0.1.0 clock-band table from ADR 0001).
 
 The mapping intentionally lives in one small module so the heuristic is

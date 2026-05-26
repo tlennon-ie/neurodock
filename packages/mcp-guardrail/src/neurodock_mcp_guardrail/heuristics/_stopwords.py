@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Hand-rolled English stoplist for the word-overlap Jaccard heuristic.
 
 NOTE (clinical review): Per ADR 0006 §6 and ``ETHICS.md`` commitment 3, any

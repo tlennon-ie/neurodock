@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Smoke test — gives CI something concrete to run in Phase 0."""
 
 from neurodock_clinical import __version__

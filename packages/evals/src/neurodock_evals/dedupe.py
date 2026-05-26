@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """SimHash-style fingerprinting for near-duplicate detection.
 
 We don't ship a heavyweight similarity library because:

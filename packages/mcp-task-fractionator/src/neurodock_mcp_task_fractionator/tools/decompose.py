@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """``decompose`` tool implementation.
 
 Thin wrapper around :func:`neurodock_mcp_task_fractionator.decomposer.decompose`.

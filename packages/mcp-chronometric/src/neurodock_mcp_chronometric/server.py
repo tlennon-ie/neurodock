@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """FastMCP server registration for the chronometric tools.
 
 The server binds a fresh :class:`SessionState` and :class:`Clock` to the

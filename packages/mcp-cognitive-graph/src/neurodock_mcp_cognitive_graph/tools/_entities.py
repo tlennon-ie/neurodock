@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Subject and object resolution helpers used by ``record_fact``.
 
 Extracted out of ``record_fact.py`` to keep each tool file under the

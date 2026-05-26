@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Tool implementations. One module per tool."""
 
 from neurodock_mcp_cognitive_graph.tools.recall_decisions import recall_decisions

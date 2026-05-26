@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Linux registration. Drops a manifest into each browser's per-user
  * NativeMessagingHosts directory under $XDG_CONFIG_HOME or ~/.config.

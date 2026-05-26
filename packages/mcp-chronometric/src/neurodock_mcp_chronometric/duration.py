@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """ISO 8601 duration formatting.
 
 We only need the ``PnDTnHnMnS`` subset for chronometric outputs. The output is

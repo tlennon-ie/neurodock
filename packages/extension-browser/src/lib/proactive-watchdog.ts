@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Extension proactive watchdog (Phase 2 of the proactive-guardrails
  * proposal — see `.claude-reports/2026-05-24-proactive-guardrails/PROPOSAL.md`).

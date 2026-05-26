@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pluggable pending-task sources for ``next_one``.
 
 Per ADR 0003 §1 the task fractionator is stateless. ``next_one`` reads pending

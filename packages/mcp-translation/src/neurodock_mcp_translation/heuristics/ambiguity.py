@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Ambiguity detection for incoming messages.
 
 Each pattern carries a reason code (matching the v0.1.0 schema enum) and an

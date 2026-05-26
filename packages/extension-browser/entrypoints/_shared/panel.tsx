@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Result panel — renders a TranslationResponse as structured, ND-readable
  * UI (no JSON dumps). Each tool gets a dedicated view component:

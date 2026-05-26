@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Runner integration tests against the translation deterministic baselines."""
 
 from __future__ import annotations

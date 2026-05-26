@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Synchronous SQLite-backed storage for the cognitive graph.
 
 The store lives at ``~/.neurodock/cognitive-graph.sqlite`` by default and is

@@ -7,6 +7,10 @@ repo-wide milestones.
 
 ## Repo-wide releases
 
+### [unreleased]
+
+- **Hygiene (audit M4)** — SPDX AGPL-3.0-or-later headers added to ~232 source files across all packages. No functional change.
+
 ### v0.2.3 — 2026-05-24
 
 Proactive-guardrails week. The substrate's safety surfaces — chronometric

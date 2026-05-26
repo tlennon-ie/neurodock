@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import { readFileSync } from "node:fs";
 import chalk from "chalk";
 import { readEnv, colorEnabled } from "../lib/env.js";

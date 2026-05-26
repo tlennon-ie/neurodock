@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Nearest-neighbour search over stored entity embeddings.
 
 Two execution paths produce identical results for the test corpus:

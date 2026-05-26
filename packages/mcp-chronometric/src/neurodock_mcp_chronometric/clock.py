@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Clock abstraction so every time read is testable.
 
 All other modules MUST read time through a :class:`Clock` instance instead of

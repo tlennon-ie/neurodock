@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """In-memory session state.
 
 v0.0.1 keeps everything in memory. The ADR mandates SQLite persistence before

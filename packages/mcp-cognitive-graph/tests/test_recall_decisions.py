@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Tests for the ``recall_decisions`` tool."""
 
 from __future__ import annotations

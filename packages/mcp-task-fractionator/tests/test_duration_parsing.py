@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Unit tests for ISO 8601 ``time_budget`` parsing."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Closed phrase lists for the hyperfocus and sycophancy heuristics.
 
 Per ADR 0006 and ETHICS.md commitment 3, any change requires

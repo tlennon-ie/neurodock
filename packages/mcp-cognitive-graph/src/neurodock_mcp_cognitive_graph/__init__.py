@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """NeuroDock cognitive graph MCP server.
 
 Persistent entity memory and recall, exposed as an MCP server. Implements the

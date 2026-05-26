@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Prompt-template assets for the translation server.
 
 Templates are stored as ``.prompt.md`` files alongside this module and loaded

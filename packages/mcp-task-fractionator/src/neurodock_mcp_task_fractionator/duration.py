@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """ISO 8601 duration parsing for ``time_budget``.
 
 Per ADR 0003 §3 the input format is strict: the same regex used by

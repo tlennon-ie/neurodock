@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Word-overlap Jaccard heuristic for ``check_rumination`` v0.1.0.
 
 NOTE (clinical review): Per ADR 0006 and ``ETHICS.md`` commitment 3, any

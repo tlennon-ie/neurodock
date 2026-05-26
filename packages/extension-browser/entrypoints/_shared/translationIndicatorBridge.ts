@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Content-script ↔ service-worker bridge for the in-page translation
  * progress indicator (0.0.31).

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Heuristics for ``weekly_rollup``.
 
 Per ADR 0002 open question 3 we resolve to **option 1**: keep the heuristic

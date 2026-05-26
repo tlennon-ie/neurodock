@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Release-gate verification — pulls a freshly-published npm tarball
  * from the registry, installs it in a scratch directory, and runs

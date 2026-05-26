@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Source protocol + factory for pluggable pending-task sources."""
 
 from __future__ import annotations

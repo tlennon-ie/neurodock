@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Load and validate a versioned eval corpus from disk.
 
 A corpus slice is a directory under `packages/evals/corpora/<server>/<slice>/`

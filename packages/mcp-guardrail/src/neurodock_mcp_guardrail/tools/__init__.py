@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Tool implementations for ``mcp-guardrail``.
 
 One tool per module. The server in :mod:`neurodock_mcp_guardrail.server`

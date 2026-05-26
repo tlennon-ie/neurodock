@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Inner TS payload for verify-phase2-watchdog. Loaded via tsx from the
  * extension-browser package so its module resolver is in scope.

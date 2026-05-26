@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import { Command } from "commander";
 import chalk from "chalk";
 import { readFileSync } from "node:fs";

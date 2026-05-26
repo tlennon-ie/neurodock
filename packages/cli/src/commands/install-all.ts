@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { readEnv, type EnvSnapshot } from "../lib/env.js";
 import { runInit, type InitRunResult } from "./init.js";

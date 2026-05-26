@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Unit tests for the ``check_rumination`` tool.
 
 These cover the contract behaviours called out in ADR 0006 §2, §6, §9 and

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """FastMCP server registration for the four translation tools.
 
 Per ADR 0005 §1 the server itself does NOT import any LLM vendor SDK. Each

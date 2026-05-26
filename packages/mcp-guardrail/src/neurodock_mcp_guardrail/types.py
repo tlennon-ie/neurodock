@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pydantic models mirroring the JSON Schemas."""
 
 from __future__ import annotations

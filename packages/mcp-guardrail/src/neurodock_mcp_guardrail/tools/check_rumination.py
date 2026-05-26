@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """``check_rumination`` tool implementation.
 
 Stateless detector. Given the user's current prompt and recent prior prompts,

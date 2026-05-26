@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Shared fixtures for the task fractionator tests.
 
 Tests get a fresh, isolated source per case. UUIDs are frozen via an iterator

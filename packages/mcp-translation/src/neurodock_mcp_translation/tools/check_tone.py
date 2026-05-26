@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Implementation of the ``check_tone`` tool.
 
 Scores the outgoing message on three axes via word-list heuristics, computes

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """FastMCP server wiring for the cognitive graph.
 
 This module wires the four tool implementations to FastMCP, exposes the

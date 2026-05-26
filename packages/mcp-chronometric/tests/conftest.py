@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Shared fixtures for chronometric tests.
 
 Tests get a fresh, isolated state and a frozen clock per-test. No test ever

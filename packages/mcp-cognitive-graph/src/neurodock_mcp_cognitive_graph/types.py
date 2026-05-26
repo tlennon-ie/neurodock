@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pydantic v2 models — the source of truth for tool input/output shapes.
 
 These models conform to the JSON Schemas in

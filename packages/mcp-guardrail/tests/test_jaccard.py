@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Unit tests for the word-overlap Jaccard heuristic.
 
 These tests pin the maths: any future tweak to tokenisation, the stoplist,

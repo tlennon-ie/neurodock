@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 // Loader-applied defaults per ADR 0004 §15. The schema declares these as
 // `default` values, but JSON Schema validation does not apply defaults — the
 // loader must. Keep this table in sync with profile.schema.json.

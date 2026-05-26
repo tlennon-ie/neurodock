@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Protocol-conformance: boot FastMCP in-process, invoke each of the four
 tools over MCP, and validate each ``deterministic_analysis`` against the
 v0.1.0 ``output`` sub-schema using ``jsonschema``.

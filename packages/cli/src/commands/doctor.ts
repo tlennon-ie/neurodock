@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import type { CheckResult } from "../types.js";

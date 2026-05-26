@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """``record_fact`` tool implementation.
 
 Open question 2 of ADR 0002 is resolved here as **option 2 (append-only with

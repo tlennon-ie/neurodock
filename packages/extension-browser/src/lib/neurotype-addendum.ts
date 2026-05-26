@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 /**
  * Per-tool per-neurotype prompt addenda — see
  * `.claude-reports/2026-05-25-neurotype-differentiation/REPORT.md`.

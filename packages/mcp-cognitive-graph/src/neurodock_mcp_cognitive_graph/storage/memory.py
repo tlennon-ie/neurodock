@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pure-Python in-memory storage backing.
 
 Used in tests for determinism and as a reference implementation against which

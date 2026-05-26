@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Tests for the M5 notification-text escape functions in neurodock_daemon.py.
 
 Security regression test: verify that shell-injection characters in title/

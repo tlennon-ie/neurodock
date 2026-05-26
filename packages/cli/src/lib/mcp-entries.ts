@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import { existsSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type { McpServerEntry } from "../types.js";

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Load + validate every seed example shipped with v0.0.1."""
 
 from __future__ import annotations

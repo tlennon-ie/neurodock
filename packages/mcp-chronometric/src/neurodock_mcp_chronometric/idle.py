@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """OS idle probe — consent-gated.
 
 The consent gate is the only place in this server where we touch the OS. The

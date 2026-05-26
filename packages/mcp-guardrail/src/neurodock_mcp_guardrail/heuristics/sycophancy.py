@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Sycophancy pattern heuristics for check_sycophancy v0.0.2.
 
 Per ADR 0006 and ETHICS.md commitment 3, changes require clinical-reviewer

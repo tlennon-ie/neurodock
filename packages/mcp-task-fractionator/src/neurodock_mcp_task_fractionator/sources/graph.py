@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Cognitive-graph-backed pending-task source.
 
 v0.0.1 stub: the cognitive-graph client is being built in a parallel agent run

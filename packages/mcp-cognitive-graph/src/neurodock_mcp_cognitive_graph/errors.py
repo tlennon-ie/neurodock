@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Structured tool errors.
 
 Tool functions raise :class:`ToolError` with a code from the schema's ``errors``

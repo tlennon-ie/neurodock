@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 // Public interfaces shared across the CLI.
 
 export type Platform = "darwin" | "linux" | "win32";

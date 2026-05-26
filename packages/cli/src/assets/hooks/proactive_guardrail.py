@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """NeuroDock proactive guardrail — Claude Code hook (self-contained).
 
 Bundled with `@neurodock/cli`; copied to `~/.neurodock/hooks/` by

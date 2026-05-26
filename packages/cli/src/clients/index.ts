@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import type { ClientId, McpServerEntry } from "../types.js";
 import type { EnvSnapshot } from "../lib/env.js";
 import { claudeDesktopAdapter } from "./claude-desktop.js";

@@ -1,3 +1,7 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (c) 2026 NeuroDock contributors.
+ */
 import type { ClientAdapter } from "./index.js";
 import type { McpServerEntry } from "../types.js";
 import { cursorConfigPaths } from "../lib/paths.js";

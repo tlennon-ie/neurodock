@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Pydantic v2 models for task fractionator inputs and outputs.
 
 These models mirror the JSON Schemas in

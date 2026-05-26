@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Thin loader for ``~/.neurodock/profile.yaml``.
 
 Only the fields the chronometric server needs are read in v0.0.1:

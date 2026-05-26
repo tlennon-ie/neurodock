@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Detection heuristics for ``mcp-guardrail``.
 
 Per ``ETHICS.md`` commitment 3, every heuristic ships its source code in the

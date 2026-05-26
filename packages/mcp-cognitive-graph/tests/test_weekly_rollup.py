@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Tests for the ``weekly_rollup`` tool."""
 
 from __future__ import annotations

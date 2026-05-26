@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Resolution cascade ordering.
 
 Each test sets up an ambiguous corpus and asserts which rung wins. The

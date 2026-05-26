@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """End-to-end verification of the Phase 1 Python proactive guardrail hook.
 
 Drives `proactive_guardrail.py pre-tool` via subprocess for three

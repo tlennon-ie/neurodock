@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Protocol conformance tests for the live v0.0.2 server."""
 
 from __future__ import annotations

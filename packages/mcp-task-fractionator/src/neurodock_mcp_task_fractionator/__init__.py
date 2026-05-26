@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """NeuroDock task fractionator MCP server.
 
 v0.0.1 — implements two tools per ADR 0003 and the JSON Schemas in

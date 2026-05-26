@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """``next_one`` tool implementation.
 
 Reads pending tasks from a :class:`PendingTaskSource` and returns exactly one

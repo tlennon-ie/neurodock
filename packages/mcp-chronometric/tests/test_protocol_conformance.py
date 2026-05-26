@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Protocol conformance: boot the FastMCP server in-process, call each of the
 five tools via the MCP protocol, and validate every response against the JSON
 schema in ``packages/mcp-chronometric/schemas/``.

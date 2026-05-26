@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2026 NeuroDock contributors.
 """Fuzzy rung of the recall_entity resolution cascade.
 
 These tests verify the third rung only (rapidfuzz WRatio against name +
