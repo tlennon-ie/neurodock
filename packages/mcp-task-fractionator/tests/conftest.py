@@ -91,11 +91,3 @@ def sample_tasks(uuid_factory: Any) -> list[Task]:
             tags=["closeout"],
         ),
     ]
-
-
-VAGUE_GOALS: tuple[str, ...] = (
-    "do the thing",
-    "make it better",
-    "handle stuff",
-)
-"""Known-vague-goal corpus that MUST trigger DECOMPOSITION_UNAVAILABLE."""

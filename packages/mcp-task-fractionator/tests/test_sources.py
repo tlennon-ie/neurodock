@@ -66,13 +66,14 @@ def test_base_module_imports_cleanly_at_runtime() -> None:
     """
     import importlib
 
+    from neurodock_mcp_task_fractionator.sources import base as base_mod
+    from neurodock_mcp_task_fractionator.sources.memory import (
+        InMemoryPendingTaskSource,
+    )
+
     # Force a fresh import cycle to make sure the TYPE_CHECKING guard
     # does not accidentally execute at module load time.
-    import neurodock_mcp_task_fractionator.sources.base as base_mod
-
     importlib.reload(base_mod)
     source = base_mod.load_pending_task_source(env={})
     # The memory source is the safe default — graph is a stub.
-    from neurodock_mcp_task_fractionator.sources.memory import InMemoryPendingTaskSource
-
     assert isinstance(source, InMemoryPendingTaskSource)

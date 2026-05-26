@@ -22,7 +22,6 @@ import {
   afterEach,
   type MockInstance,
 } from "vitest";
-import React from "react";
 import { act } from "@testing-library/react";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────

@@ -13,7 +13,7 @@
  * Idempotent — runs after every build, overwrites destination.
  */
 import { cpSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));

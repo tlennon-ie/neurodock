@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { TabApp } from "../../entrypoints/tab/App.js";
 
 async function clearChromeStorage(): Promise<void> {
