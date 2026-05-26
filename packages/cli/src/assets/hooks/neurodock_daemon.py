@@ -342,7 +342,14 @@ def _uninstall_autostart() -> int:
 def _install_windows_autostart(daemon_script: Path) -> int:
     # Register an HKCU Run entry so the daemon launches at user logon.
     # No admin rights required.
-    cmd = f'python "{str(daemon_script).replace(chr(92), "/")}" run'
+    #
+    # Use `pythonw.exe` (windows-subsystem) not `python.exe` (console-
+    # subsystem) so the daemon runs invisibly. With `python.exe` the
+    # Run-key launch flashes a black console window on every login
+    # because the binary is linked against the console subsystem.
+    # `pythonw.exe` ships alongside `python.exe` in every Windows
+    # Python install — same interpreter, same site-packages, no console.
+    cmd = f'pythonw "{str(daemon_script).replace(chr(92), "/")}" run'
     try:
         subprocess.run(
             [

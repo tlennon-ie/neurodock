@@ -1,5 +1,17 @@
 # @neurodock/cli changelog
 
+## 0.7.1
+
+### Fixed — Windows: daemon autostart no longer flashes a black console window
+
+The 0.7.0 HKCU Run entry used `python.exe` (console subsystem) which
+flashed a visible terminal window on every Windows login. Switched to
+`pythonw.exe` (windows subsystem — same interpreter, no console).
+The post-install detached spawn in `install-hooks` does the same and
+also passes `windowsHide: true` on the spawn options. No behavioural
+change on macOS or Linux. Existing 0.7.0 installs should re-run
+`neurodock install-hooks --install-daemon` to refresh the Run entry.
+
 ## 0.7.0
 
 ### Fixed — proactive-guardrail wiring after 2026-05-26 silent-failure incident

@@ -185,11 +185,19 @@ export async function runInstallHooks(
         // process exit. The 2026-05-26 silent-failure incident was caused
         // exactly by registering autostart but never actually launching
         // the daemon, so the next 6h session ran with no guardrail tick.
+        //
+        // On Windows: use `pythonw.exe` (windows-subsystem) not `python.exe`
+        // (console-subsystem) so the background daemon doesn't pop a black
+        // terminal window. Same interpreter, no console. Pair with
+        // `windowsHide: true` for belt-and-braces on the spawn itself.
         try {
           const { spawn } = await import("node:child_process");
-          const child = spawn("python", [daemonTarget, "run"], {
+          const isWindows = process.platform === "win32";
+          const pythonExe = isWindows ? "pythonw" : "python";
+          const child = spawn(pythonExe, [daemonTarget, "run"], {
             detached: true,
             stdio: "ignore",
+            windowsHide: true,
           });
           child.unref();
           messages.push(
