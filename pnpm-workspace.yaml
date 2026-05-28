@@ -22,3 +22,6 @@ overrides:
   # uuid <11.1.1 is a transitive dep with a security advisory.
   # node-notifier still pulls uuid@8.3.2. Force the patched version.
   "uuid": "^11.1.1"
+  # tmp <0.2.6 has a path-traversal advisory (GHSA-52f5-9888-hmc6).
+  # wxt → web-ext-run still pulls tmp@0.2.5. Force the patched version.
+  "tmp": "^0.2.6"
