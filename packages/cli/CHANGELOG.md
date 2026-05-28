@@ -1,5 +1,24 @@
 # @neurodock/cli changelog
 
+## 0.7.2
+
+### Fixed — `npx @neurodock/cli install-all` failed on `init` with "Could not locate template: profile.example.yaml"
+
+The 0.7.x tarball only shipped `dist/`, but `init`, `validate`, and
+`plugin validate` all resolved their templates and JSON schemas through
+relative paths into the workspace `packages/core/schemas/` folder. That
+folder is not part of the cli tarball, so every fresh `npx` install
+failed the moment `install-all` finished wiring the MCP servers and
+tried to scaffold a profile.
+
+Fix: `scripts/copy-assets.mjs` now also copies `packages/core/schemas/`
+into `dist/assets/schemas/` at build time, and the three resolvers
+(`commands/init.ts`, `profile/validator.ts`, `lib/plugin-schema.ts`)
+check that bundled location first before falling back to the workspace
+candidates used during local development. No behaviour change in the
+monorepo; published tarball now contains the schemas required by every
+first-run code path.
+
 ## 0.7.1
 
 ### Fixed — Windows: daemon autostart no longer flashes a black console window

@@ -251,6 +251,10 @@ function resolveTemplatePath(profile: "minimal" | "example"): string {
     profile === "minimal" ? "profile.minimal.yaml" : "profile.example.yaml";
   const here = dirname(fileURLToPath(import.meta.url));
   const candidates = [
+    // Published tarball: copy-assets.mjs places schemas under dist/assets/schemas/.
+    // dist/commands/init.js → ../assets/schemas/<filename>
+    resolve(here, "..", "assets", "schemas", filename),
+    // Dev/workspace fall-backs (running from src or monorepo layout).
     resolve(here, "..", "..", "..", "core", "schemas", filename),
     resolve(here, "..", "..", "..", "..", "core", "schemas", filename),
     resolve(here, "..", "..", "core", "schemas", filename),

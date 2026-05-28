@@ -26,7 +26,10 @@ function resolveSchemaPath(): string {
   // Mirrors profile/validator.ts resolveSchemaPath() — try a few candidates so
   // the file works from dist/, src/ under vitest, and as a published bin.
   const here = dirname(fileURLToPath(import.meta.url));
+  // Published tarball location first (dist/assets/schemas/, populated by
+  // scripts/copy-assets.mjs), then dev/workspace fall-backs.
   const candidates = [
+    resolve(here, "..", "assets", "schemas", "plugin.schema.json"),
     resolve(here, "..", "..", "..", "core", "schemas", "plugin.schema.json"),
     resolve(
       here,

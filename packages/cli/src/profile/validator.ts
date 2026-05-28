@@ -26,8 +26,10 @@ function resolveSchemaPath(): string {
   // From dist/profile/validator.js → ../../../core/schemas/profile.schema.json
   // From src/profile/validator.ts in tests → same relative ancestry via vitest.
   const here = dirname(fileURLToPath(import.meta.url));
-  // Try the compiled location first (dist/profile/) and fall back to src/profile/
+  // Published tarball location first (dist/assets/schemas/, populated by
+  // scripts/copy-assets.mjs), then dev/workspace fall-backs.
   const candidates = [
+    resolve(here, "..", "assets", "schemas", "profile.schema.json"),
     resolve(here, "..", "..", "..", "core", "schemas", "profile.schema.json"),
     resolve(
       here,
