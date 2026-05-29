@@ -1,5 +1,38 @@
 # @neurodock/extension-browser
 
+## 0.0.35
+
+### Added — notifications inbox in the full-tab view
+
+The tab view's Notifications section was a reserved placeholder ("a full
+inbox of background events lands here once the notifications feature
+ships"). It now renders the real inbox. Rather than build a second
+surface, the tab view reuses the same `NotificationsTab` component the
+popup already ships — a single source of truth over
+`src/lib/notifications.ts`, so the two surfaces never drift. Background
+events (proactive pacing nudges, guardrail signals, translation errors)
+collect there with per-item read/unread + delete, bulk mark-all-read /
+delete-all, and per-category mute controls. A short intro precedes the
+inbox for the roomier tab layout; everything still stays inside the
+browser (`chrome.storage.local`, never `sync`).
+
+### Changed — History (and the in-page result panel) show a clickable image thumbnail instead of a raw URL
+
+A `describe_image` history row whose source was an extension-less CDN
+URL — e.g. a LinkedIn image like
+`https://media.licdn.com/dms/image/v2/…/1775633530817?e=…&v=beta` —
+rendered as a monospaced URL blob because the old thumbnail heuristic
+only recognised URLs ending in a known image extension (`.png`, `.jpg`,
+…). `SourcePreview` now takes an `isImageSource` hint, set by the three
+call sites that KNOW the source is an image (`describe_image` rows in
+the popup + tab history, and the describe_image result panel). When set,
+an http(s) source renders as a thumbnail regardless of its URL shape,
+and the thumbnail is a link that opens the full image in a new tab
+(`target="_blank"` + `rel="noopener noreferrer"`). The raw URL string is
+no longer shown alongside the image. `data:` sources still render a
+thumbnail but are left un-linked, because Chrome blocks top-level
+navigation to `data:` URLs and an inert link would mislead.
+
 ## 0.0.34
 
 ### Security — tightened extension CSP (drop `http:`/`https:` wildcards in `connect-src`), removed inline sourcemaps from production bundle, hardened channel detection against URL spoofing

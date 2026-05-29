@@ -174,14 +174,19 @@ describe("Tab entrypoint", () => {
     });
   });
 
-  it("renders the notifications placeholder slot when nav points there", async () => {
+  it("renders the real notifications inbox when nav points there", async () => {
     vi.spyOn(storage, "listHistory").mockResolvedValue([]);
     window.location.hash = "#view=notifications";
     render(<TabApp />);
+    // 0.0.35: the placeholder was replaced by the shared NotificationsTab
+    // inbox — the same component the popup uses, rendered over
+    // src/lib/notifications.ts. Assert both the tab-view wrapper and the
+    // reused inbox component are present.
     await waitFor(() => {
       expect(
-        screen.getByTestId("tab-notifications-placeholder"),
+        screen.getByTestId("tab-notifications-section"),
       ).toBeInTheDocument();
     });
+    expect(screen.getByTestId("notifications-tab")).toBeInTheDocument();
   });
 });

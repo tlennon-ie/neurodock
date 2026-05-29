@@ -667,7 +667,12 @@ function HistoryEntryDetail({
   const sourceText = extractSourcePreview(entry);
   return (
     <div className="flex flex-col gap-2">
-      {sourceText.length > 0 ? <SourcePreview text={sourceText} /> : null}
+      {sourceText.length > 0 ? (
+        <SourcePreview
+          text={sourceText}
+          isImageSource={entry.tool === "describe_image"}
+        />
+      ) : null}
       {response.ok && response.data !== null ? (
         <ToolView
           tool={response.tool}

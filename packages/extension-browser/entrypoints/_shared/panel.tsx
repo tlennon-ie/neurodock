@@ -119,7 +119,10 @@ export function Panel({
         </div>
       ) : null}
       {sourceText && sourceText.length > 0 ? (
-        <SourcePreview text={sourceText} />
+        <SourcePreview
+          text={sourceText}
+          isImageSource={response?.tool === "describe_image"}
+        />
       ) : null}
       {loading ? <p style={{ margin: 0 }}>Translating…</p> : null}
       {!loading && response ? <ResultBody response={response} /> : null}
@@ -128,15 +131,35 @@ export function Panel({
   );
 }
 
-export function SourcePreview({ text }: { text: string }): React.ReactElement {
-  const isUrl = /^https?:\/\//.test(text) || text.startsWith("data:");
-  // 0.0.21: when the source is an image URL (right-click describe), also
-  // show a small thumbnail of the image — knowing the URL alone wasn't
-  // enough to tell *which* image you described, especially when several
-  // similar avatars or thumbnails sit next to each other on a page.
-  const isImage =
+export function SourcePreview({
+  text,
+  isImageSource = false,
+}: {
+  readonly text: string;
+  /**
+   * 0.0.35: the caller KNOWS this source is an image (e.g. a
+   * `describe_image` history row or the describe_image result panel).
+   * When set, an http(s) / data: source is rendered as a thumbnail even
+   * if the URL has no file extension. Many image CDNs (LinkedIn, X,
+   * Google) serve from extension-less URLs like
+   * `.../1775633530817?e=…&v=beta` that the regex heuristic below can
+   * never match — those rows used to fall back to a raw URL string.
+   */
+  readonly isImageSource?: boolean;
+}): React.ReactElement {
+  const isHttp = /^https?:\/\//.test(text);
+  const isData = text.startsWith("data:");
+  const isUrl = isHttp || isData;
+  // Extension-based heuristic for the in-page right-click case where the
+  // caller may not know the source kind.
+  const looksLikeImage =
     text.startsWith("data:image/") ||
     /^https?:\/\/[^\s]+\.(png|jpe?g|gif|webp|svg|avif|bmp)(\?|$)/i.test(text);
+  const isImage = (isImageSource && isUrl) || looksLikeImage;
+  // Only http(s) sources get a working "open in new tab" link. Chrome
+  // blocks top-level navigation to `data:` URLs, so a linked data: image
+  // would be an inert, confusing affordance — render those un-linked.
+  const openHref = isImage && isHttp ? text : null;
   return (
     <div
       data-testid="context-source-preview"
@@ -153,20 +176,8 @@ export function SourcePreview({ text }: { text: string }): React.ReactElement {
       }}
     >
       {isImage ? (
-        <img
-          src={text}
-          alt="Source image (right-clicked)"
-          style={{
-            maxWidth: "100%",
-            maxHeight: 140,
-            display: "block",
-            marginBottom: 4,
-            objectFit: "contain",
-            background: "var(--nd-color-bg-nav, rgba(0,0,0,0.04))",
-          }}
-        />
-      ) : null}
-      {isUrl ? (
+        <SourceImageThumbnail src={text} openHref={openHref} />
+      ) : isUrl ? (
         <code
           style={{ fontFamily: "var(--nd-font-mono, ui-monospace, monospace)" }}
         >
@@ -176,6 +187,53 @@ export function SourcePreview({ text }: { text: string }): React.ReactElement {
         text
       )}
     </div>
+  );
+}
+
+/**
+ * 0.0.35: the source image rendered as a thumbnail. When `openHref` is
+ * set the thumbnail becomes a link that opens the full image in a new
+ * tab — the user asked for "a thumbnail instead of a URL, and clicking
+ * it opens the image". The link carries `rel="noopener noreferrer"` so
+ * the opened tab cannot reach back into this extension page.
+ */
+function SourceImageThumbnail({
+  src,
+  openHref,
+}: {
+  readonly src: string;
+  readonly openHref: string | null;
+}): React.ReactElement {
+  const img = (
+    <img
+      src={src}
+      alt={
+        openHref !== null
+          ? "Source image — opens the full image in a new tab"
+          : "Source image"
+      }
+      data-testid="source-image-thumbnail"
+      style={{
+        maxWidth: "100%",
+        maxHeight: 140,
+        display: "block",
+        objectFit: "contain",
+        background: "var(--nd-color-bg-nav, rgba(0,0,0,0.04))",
+      }}
+    />
+  );
+  if (openHref === null) return img;
+  return (
+    <a
+      href={openHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open image in a new tab"
+      data-testid="source-image-link"
+      style={{ display: "inline-block", cursor: "zoom-in" }}
+    >
+      {img}
+    </a>
   );
 }
 

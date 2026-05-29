@@ -16,9 +16,9 @@
  *    click-to-expand — every row shows the full structured response).
  *  - Multi-section settings reached via a left rail rather than the
  *    popup's accordion.
- *  - A roomy notifications inbox slot (placeholder here — agent B
- *    delivers the actual inbox; this view exposes the slot via the
- *    shared AppShell so the data shape can settle first).
+ *  - A roomy notifications inbox (0.0.35: now the real inbox, rendered
+ *    via the shared `NotificationsTab` over `src/lib/notifications.ts` —
+ *    the same component the popup uses, so the two surfaces never drift).
  *
  * URL hash protocol: `#view=home|history|settings|notifications`
  * forwarded from the popup. We restore the section but DO NOT deep-link
@@ -32,6 +32,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
 import { CloudModeBanner } from "../../src/lib/cloud-mode-banner.js";
 import { SettingsTab } from "../popup/SettingsTab.js";
+import { NotificationsTab } from "../popup/NotificationsTab.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
 import { AppShell } from "../../src/components/AppShell.js";
 import { useAppData } from "../../src/components/useAppData.js";
@@ -201,7 +202,7 @@ export function TabApp(): React.ReactElement {
           {view === "settings" ? (
             <SettingsSection profile={data.profile} onChange={data.update} />
           ) : null}
-          {view === "notifications" ? <NotificationsPlaceholder /> : null}
+          {view === "notifications" ? <NotificationsSection /> : null}
           {data.loaded ? null : (
             <p className="text-fg-muted text-sm">Loading your profile…</p>
           )}
@@ -422,7 +423,10 @@ function HistoryEntryDetail({
       {response ? (
         <>
           {extractSourcePreview(entry).length > 0 ? (
-            <SourcePreview text={extractSourcePreview(entry)} />
+            <SourcePreview
+              text={extractSourcePreview(entry)}
+              isImageSource={entry.tool === "describe_image"}
+            />
           ) : null}
           {response.ok && response.data !== null ? (
             <ToolView
@@ -481,25 +485,27 @@ function SettingsSection({
   );
 }
 
-function NotificationsPlaceholder(): React.ReactElement {
+/**
+ * 0.0.35: the notifications inbox now ships in the tab view. It renders
+ * the same self-contained `NotificationsTab` the popup uses (single
+ * source of truth over `src/lib/notifications.ts`) so the two surfaces
+ * stay in sync — no data duplication, mirroring the History + Settings
+ * sections. A short intro precedes it for the roomy tab layout; the
+ * component owns its own "Notifications" heading and controls.
+ */
+function NotificationsSection(): React.ReactElement {
   return (
-    <section
-      aria-labelledby="notifications-heading"
-      className="flex flex-col gap-2"
-      data-testid="tab-notifications-placeholder"
+    <div
+      className="flex flex-col gap-4"
+      data-testid="tab-notifications-section"
     >
-      <h2
-        id="notifications-heading"
-        className="font-heading text-fg m-0 text-[1.125rem] font-medium"
-      >
-        Notifications
-      </h2>
       <p className="text-fg-muted m-0 max-w-[60ch] text-sm">
-        A full inbox of background events lands here once the notifications
-        feature ships. Until then this section is reserved space so the rest of
-        the tab view does not shift when it arrives.
+        Background events — proactive pacing nudges, guardrail signals, and
+        translation errors — collect here so you can come back to them on your
+        own time. Everything on this page stays inside your browser.
       </p>
-    </section>
+      <NotificationsTab />
+    </div>
   );
 }
 
