@@ -201,26 +201,13 @@ Use `neurodock sync`.
 **The cognitive substrate in a real session** — you talk to Claude normally;
 under the hood it calls NeuroDock's MCP tools to remember, pace, and decompose.
 
-<p align="center">
-  <video src="https://github.com/tlennon-ie/neurodock/releases/download/demo-assets/AgentDemo.mp4" controls muted width="100%">
-    Your browser can't play this inline.
-    <a href="https://github.com/tlennon-ie/neurodock/releases/download/demo-assets/AgentDemo.mp4">Download the agent demo (MP4)</a>.
-  </video>
-</p>
+https://github.com/user-attachments/assets/bcbf65ce-88dd-4f83-8dc1-d56bdde01bed
 
 **The browser extension** — translating corporate-speak inline on Gmail, Slack,
 and the rest, right where you read it, without context-switching back to Claude.
 
-<p align="center">
-  <video src="https://github.com/tlennon-ie/neurodock/releases/download/demo-assets/ExtensionDemo.mp4" controls muted width="100%">
-    Your browser can't play this inline.
-    <a href="https://github.com/tlennon-ie/neurodock/releases/download/demo-assets/ExtensionDemo.mp4">Download the extension demo (MP4)</a>.
-  </video>
-</p>
+https://github.com/user-attachments/assets/5fa25044-923e-4c25-95bd-f1bd63fb3d6e
 
-> Videos not playing in your viewer? Direct links:
-> [agent demo](https://github.com/tlennon-ie/neurodock/releases/download/demo-assets/AgentDemo.mp4) ·
-> [extension demo](https://github.com/tlennon-ie/neurodock/releases/download/demo-assets/ExtensionDemo.mp4).
 > Prefer a written walkthrough? Try the [Claude Desktop walkthrough](./examples/claude-desktop/README.md).
 
 ## Browser extension (optional)
