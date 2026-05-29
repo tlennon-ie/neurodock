@@ -190,5 +190,8 @@ tmp/
 # !uv.lock
 # (intentionally not listed above so they're tracked)
 icon-high*
+# Demo videos are hosted on the GitHub "demo-assets" release, not committed
+# (keeps the repo lean and respects the 512KB pre-commit guard). See README.
+assets/*.mp4
 changes.md
 media.md
