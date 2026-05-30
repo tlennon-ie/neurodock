@@ -14,6 +14,7 @@ Three concerns are covered:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
@@ -196,23 +197,28 @@ def test_main_http_cli_flag(monkeypatch: pytest.MonkeyPatch, run_recorder: _RunR
 # --------------------------------------------------------------------------- #
 
 
-async def test_http_build_exposes_only_decompose() -> None:
-    """The HTTP build CONTAINS decompose and does NOT contain next_one."""
+def test_http_build_exposes_only_decompose() -> None:
+    """The HTTP build CONTAINS decompose and does NOT contain next_one.
+
+    Synchronous (``asyncio.run``) rather than ``async def`` so it does not depend
+    on pytest-asyncio auto-mode — CI runs ``pytest`` from the repo root where the
+    per-package ``asyncio_mode = "auto"`` does not apply.
+    """
 
     http_server = build_server(source=InMemoryPendingTaskSource(), http_mode=True)
 
-    names = {tool.name for tool in await http_server.list_tools()}
+    names = {tool.name for tool in asyncio.run(http_server.list_tools())}
 
     assert "decompose" in names
     assert "next_one" not in names
     assert names == {"decompose"}
 
 
-async def test_stdio_build_exposes_both_tools() -> None:
+def test_stdio_build_exposes_both_tools() -> None:
     """The stdio build CONTAINS both decompose and next_one (unchanged today)."""
 
     stdio_server = build_server(source=InMemoryPendingTaskSource())
 
-    names = {tool.name for tool in await stdio_server.list_tools()}
+    names = {tool.name for tool in asyncio.run(stdio_server.list_tools())}
 
     assert names == {"decompose", "next_one"}
