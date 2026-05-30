@@ -165,3 +165,55 @@ jobs:
           fi
         env:
           PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+  mcp-registry:
+    name: Publish to MCP Registry
+    # Runs after PyPI: the registry verifies each package's ownership via the
+    # `mcp-name:` marker in the *published* PyPI README, so the new versions
+    # must be on PyPI first (ADR 0008 / 0009).
+    needs: [pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC auth to the MCP Registry for io.github.tlennon-ie/*
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          ./mcp-publisher --help >/dev/null
+
+      # GitHub Actions OIDC — no browser, no stored secret. The token's audience
+      # is derived from the default registry URL; id-token: write is required.
+      - name: Authenticate (GitHub OIDC)
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish each server.json
+        run: |
+          set -u
+          published=0; skipped=0; failed=0
+          for sj in packages/mcp-*/server.json; do
+            pkg_dir=$(dirname "$sj")
+            # Keep server.json in lockstep with the package's pyproject version
+            # (exactly what the pypi job built and published).
+            ver=$(grep -m1 '^version = ' "$pkg_dir/pyproject.toml" | cut -d'"' -f2)
+            tmp=$(mktemp)
+            jq --arg v "$ver" '.version = $v | (.packages[]?.version) |= $v' "$sj" > "$tmp" && mv "$tmp" "$sj"
+            echo "::group::publish $sj ($ver)"
+            if ./mcp-publisher publish "$sj" 2>&1 | tee /tmp/pub.log; then
+              published=$((published + 1))
+            elif grep -qiE "already (exists|published)|version .* exists" /tmp/pub.log; then
+              echo "already published — skipping"
+              skipped=$((skipped + 1))
+            else
+              echo "::warning::failed to publish $sj"
+              failed=$((failed + 1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "MCP registry: $published published, $skipped already-present, $failed failed"
+          if [ "$failed" -gt 0 ] && [ "$published" -eq 0 ] && [ "$skipped" -eq 0 ]; then
+            echo "::error::every registry publish failed"
+            exit 1
+          fi
