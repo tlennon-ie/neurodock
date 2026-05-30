@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "neurodock",
+  "version": "0.1.0",
+  "description": "Local-first cognitive substrate for neurodivergent professionals. Bundles the five NeuroDock MCP servers and a set of ND-aware skills for communication decoding, task decomposition, working-memory recall, and clinical guardrails.",
+  "author": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "homepage": "https://neurodock.org/",
+  "repository": "https://github.com/tlennon-ie/neurodock",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "neurodivergent",
+    "adhd",
+    "autism",
+    "audhd",
+    "accessibility",
+    "executive-function",
+    "mcp"
+  ],
+  "mcpServers": "./.mcp.json"
+}

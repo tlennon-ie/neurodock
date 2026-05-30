@@ -175,6 +175,38 @@ Want to see it work without installing from PyPI/npm at all?
 
 </details>
 
+<details>
+<summary><strong>Prefer a plugin, a one-click desktop extension, or the MCP Registry?</strong></summary>
+
+The `install-all` command above is the recommended path. The same servers are
+also distributed through three standard channels — all install the identical
+local stdio servers, so you can pick whichever fits your client:
+
+**Claude Code plugin** — bundles the five MCP servers _and_ a set of ND-aware
+skills in one step. Requires [`uv`](https://docs.astral.sh/uv/) (the servers
+run via `uvx`).
+
+```
+/plugin marketplace add tlennon-ie/neurodock
+/plugin install neurodock@neurodock
+```
+
+**Claude Desktop extension (`.mcpb`)** — one-click install, no config editing.
+One bundle per server under [`mcpb/`](./mcpb/); build with
+`npx @anthropic-ai/mcpb pack mcpb/neurodock-mcp-translation` and drag the
+`.mcpb` onto Claude Desktop → Settings → Extensions. Requires `uv`.
+
+**Official MCP Registry** — each server ships a
+[`server.json`](./packages/mcp-translation/server.json) and is published to
+[registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io)
+under the `io.github.tlennon-ie/*` namespace, so MCP-aware clients can discover
+them directly.
+
+See [ADR 0008 — distribution & remote strategy](./docs/decisions/0008-distribution-and-remote-strategy.md)
+for how these fit together and the (separate) plan for a hosted remote server.
+
+</details>
+
 ## Update
 
 ```sh
@@ -389,6 +421,7 @@ Design rationale lives in `docs/decisions/`:
 - ADR 0005 — translation tool design
 - ADR 0006 — guardrail tool design
 - ADR 0007 — plugin protocol
+- ADR 0008 — distribution & remote strategy
 
 ## Contributing
 

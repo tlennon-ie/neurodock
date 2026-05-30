@@ -1,0 +1,43 @@
+{
+  "manifest_version": "0.3",
+  "name": "neurodock-mcp-guardrail",
+  "display_name": "NeuroDock Guardrail",
+  "version": "0.0.3",
+  "description": "Advisory detectors for rumination, hyperfocus, and sycophancy. Never silently blocks.",
+  "long_description": "Clinical-guardrail MCP server for neurodivergent professionals. Provides advisory detectors for three patterns that unmodified LLM interaction tends to amplify: rumination loops (OCD), unregulated hyperfocus (ADHD), and sycophancy / over-validation. Every detector is advisory only — it never silently blocks an action and always returns override options. Part of NeuroDock, a local-first cognitive substrate. The detectors are stateless and make no network calls.",
+  "author": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "homepage": "https://neurodock.org/",
+  "documentation": "https://github.com/tlennon-ie/neurodock/tree/main/packages/mcp-guardrail",
+  "support": "https://github.com/tlennon-ie/neurodock/issues",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "keywords": ["neurodivergent", "ocd", "adhd", "wellbeing", "mcp"],
+  "server": {
+    "type": "binary",
+    "entry_point": "uvx",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-guardrail"]
+    }
+  },
+  "tools": [
+    {
+      "name": "check_rumination",
+      "description": "Advisory: detect whether the current prompt is a semantic repeat within a rolling window."
+    },
+    {
+      "name": "check_hyperfocus",
+      "description": "Advisory: detect unregulated hyperfocus from session length and signals."
+    },
+    {
+      "name": "check_sycophancy",
+      "description": "Advisory: detect sycophancy / over-validation in a draft response."
+    }
+  ]
+}

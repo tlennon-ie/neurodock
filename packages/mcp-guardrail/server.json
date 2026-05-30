@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.tlennon-ie/neurodock-mcp-guardrail",
+  "title": "NeuroDock Guardrail",
+  "description": "Advisory detectors for rumination, hyperfocus, and sycophancy. Never silently blocks.",
+  "version": "0.0.3",
+  "websiteUrl": "https://neurodock.org/",
+  "repository": {
+    "url": "https://github.com/tlennon-ie/neurodock",
+    "source": "github",
+    "subfolder": "packages/mcp-guardrail"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "neurodock-mcp-guardrail",
+      "version": "0.0.3",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

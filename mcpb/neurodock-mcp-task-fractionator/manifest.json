@@ -1,0 +1,45 @@
+{
+  "manifest_version": "0.3",
+  "name": "neurodock-mcp-task-fractionator",
+  "display_name": "NeuroDock Task Fractionator",
+  "version": "0.0.3",
+  "description": "Decompose a vague goal into atomic 5-90 minute tasks and surface the next safe action.",
+  "long_description": "Local-first goal-decomposition MCP server for neurodivergent professionals. Turns a vague goal into a small ordered list of atomic 5-90 minute tasks, each with acceptance criteria and dependencies, against an 'I can start now' bar. Also surfaces the single safe next action from pending work. Part of NeuroDock, a local-first cognitive substrate.",
+  "author": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "homepage": "https://neurodock.org/",
+  "documentation": "https://github.com/tlennon-ie/neurodock/tree/main/packages/mcp-task-fractionator",
+  "support": "https://github.com/tlennon-ie/neurodock/issues",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "keywords": [
+    "neurodivergent",
+    "adhd",
+    "task-decomposition",
+    "executive-function",
+    "mcp"
+  ],
+  "server": {
+    "type": "binary",
+    "entry_point": "uvx",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-task-fractionator"]
+    }
+  },
+  "tools": [
+    {
+      "name": "decompose",
+      "description": "Decompose a goal into atomic 5-90 minute tasks with acceptance criteria and dependencies."
+    },
+    {
+      "name": "next_one",
+      "description": "Surface the single safe next action from pending tasks."
+    }
+  ]
+}

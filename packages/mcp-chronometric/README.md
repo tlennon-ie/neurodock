@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.tlennon-ie/neurodock-mcp-chronometric -->
+
 # neurodock-mcp-chronometric
 
 Time, idle, and break management as an MCP server. Part of [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.

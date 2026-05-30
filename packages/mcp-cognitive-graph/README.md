@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.tlennon-ie/neurodock-mcp-cognitive-graph -->
+
 # `neurodock-mcp-cognitive-graph`
 
 Persistent entity memory for the NeuroDock substrate, exposed as an MCP

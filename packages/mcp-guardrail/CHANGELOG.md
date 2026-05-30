@@ -5,6 +5,19 @@ All notable changes to `neurodock-mcp-guardrail` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning.
 
+## [unreleased]
+
+### Added — opt-in HTTP transport (ADR 0009 Phase 2)
+
+`main()` can now run over **Streamable HTTP** in addition to stdio. The default is
+unchanged: with no HTTP signal it runs **stdio**, byte-for-byte identical to before.
+HTTP is opt-in via the `NEURODOCK_HTTP` env var (truthy `1`/`true`/`yes`/`on`,
+case-insensitive) or a `--http` flag, binding `NEURODOCK_HTTP_HOST` (default
+`127.0.0.1`) and `NEURODOCK_HTTP_PORT` (default `8000`). No auth yet — the bare flag
+binds to localhost only (ADR 0009 §3). Detector logic, thresholds, and schemas are
+unchanged. Transport selection lives in a new pure `transport.py` helper shared (by
+identical copy) across the three stateless servers.
+
 ## [0.0.3] - 2026-05-22
 
 ### Changed

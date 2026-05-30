@@ -2,9 +2,14 @@
 # Copyright (c) 2026 NeuroDock contributors.
 """FastMCP server registration for the task fractionator tools.
 
-Two tools are registered (`decompose`, `next_one`). The server is pure glue —
-the heuristic engine lives in :mod:`decomposer`, the source protocol lives in
+Two tools exist (`decompose`, `next_one`). The server is pure glue — the
+heuristic engine lives in :mod:`decomposer`, the source protocol lives in
 :mod:`sources`, and Pydantic models live in :mod:`types`.
+
+Transport (ADR 0009 sections 1-2): stdio is the default and exposes BOTH
+tools. HTTP is opt-in (env ``NEURODOCK_HTTP`` truthy or ``--http``) and exposes
+ONLY ``decompose`` — ``next_one`` reads the local cognitive graph and is
+therefore not remote-safe, so it is registered in stdio mode only.
 
 Per ADR 0003 §7 nothing in this module logs goal text or project names.
 """
@@ -12,6 +17,7 @@ Per ADR 0003 §7 nothing in this module logs goal text or project names.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from typing import Any
 
@@ -39,6 +45,10 @@ from neurodock_mcp_task_fractionator.tools.next_one import (
     next_one,
 )
 from neurodock_mcp_task_fractionator.topological import DependencyCycleError
+from neurodock_mcp_task_fractionator.transport import (
+    TransportConfig,
+    select_transport,
+)
 
 SERVER_NAME = "neurodock-mcp-task-fractionator"
 SERVER_VERSION = "0.0.1"
@@ -54,12 +64,22 @@ class _ToolError(RuntimeError):
         self.code = code
 
 
-def build_server(*, source: PendingTaskSource | None = None) -> FastMCP[Any]:
-    """Construct a fully wired FastMCP server with both tools registered.
+def build_server(
+    *,
+    source: PendingTaskSource | None = None,
+    http_mode: bool = False,
+) -> FastMCP[Any]:
+    """Construct a wired FastMCP server.
 
     ``source`` controls where ``next_one`` reads pending tasks from. Production
     callers pass nothing and the env-var-driven factory selects the default.
     Tests pass a stub source explicitly.
+
+    ``http_mode`` enforces the ADR 0008/0009 remote boundary: when ``True`` the
+    server registers ONLY ``decompose`` (the stateless, remote-safe tool) and
+    omits ``next_one`` entirely, because ``next_one`` reads the local cognitive
+    graph and must never be reachable over a network transport. When ``False``
+    (the stdio default) BOTH tools are registered, unchanged from today.
     """
 
     effective_source: PendingTaskSource = (
@@ -118,49 +138,75 @@ def build_server(*, source: PendingTaskSource | None = None) -> FastMCP[Any]:
             raise _ToolError("ACCEPTANCE_CRITERIA_REQUIRED", str(exc)) from exc
         return result.model_dump(exclude_none=False)
 
-    @mcp.tool(
-        name="next_one",
-        description=(
-            "Return exactly one task for the given project — the single thing "
-            "the user should do next — with reasoning and a confidence number. "
-            "Errors with NO_TASKS_AVAILABLE when nothing is pending."
-        ),
-    )
-    def _next_one(project: str) -> dict[str, Any]:
-        _LOG.info("tool_invoked", extra={"tool": "next_one"})
-        try:
-            result = next_one(project=project, source=effective_source)
-        except ProjectRequiredError as exc:
-            raise _ToolError("PROJECT_REQUIRED", str(exc)) from exc
-        except ProjectTooLongError as exc:
-            raise _ToolError("PROJECT_TOO_LONG", str(exc)) from exc
-        except NoTasksAvailableError as exc:
-            raise _ToolError("NO_TASKS_AVAILABLE", str(exc)) from exc
-        except AllTasksBlockedError as exc:
-            raise _ToolError(
-                "ALL_TASKS_BLOCKED",
-                (f"blocked_task_id: {exc.blocked_task_id}; blocker_ids: {exc.blocker_ids}"),
-            ) from exc
-        except CognitiveGraphUnavailableError as exc:
-            raise _ToolError("COGNITIVE_GRAPH_UNAVAILABLE", str(exc)) from exc
-        return result.model_dump(exclude_none=False)
+    # ``next_one`` reads the LOCAL cognitive graph and is NOT remote-safe
+    # (ADR 0008/0009). It is registered in stdio mode only; in HTTP mode it is
+    # absent from the tool list entirely.
+    if not http_mode:
+
+        @mcp.tool(
+            name="next_one",
+            description=(
+                "Return exactly one task for the given project — the single thing "
+                "the user should do next — with reasoning and a confidence number. "
+                "Errors with NO_TASKS_AVAILABLE when nothing is pending."
+            ),
+        )
+        def _next_one(project: str) -> dict[str, Any]:
+            _LOG.info("tool_invoked", extra={"tool": "next_one"})
+            try:
+                result = next_one(project=project, source=effective_source)
+            except ProjectRequiredError as exc:
+                raise _ToolError("PROJECT_REQUIRED", str(exc)) from exc
+            except ProjectTooLongError as exc:
+                raise _ToolError("PROJECT_TOO_LONG", str(exc)) from exc
+            except NoTasksAvailableError as exc:
+                raise _ToolError("NO_TASKS_AVAILABLE", str(exc)) from exc
+            except AllTasksBlockedError as exc:
+                raise _ToolError(
+                    "ALL_TASKS_BLOCKED",
+                    (f"blocked_task_id: {exc.blocked_task_id}; blocker_ids: {exc.blocker_ids}"),
+                ) from exc
+            except CognitiveGraphUnavailableError as exc:
+                raise _ToolError("COGNITIVE_GRAPH_UNAVAILABLE", str(exc)) from exc
+            return result.model_dump(exclude_none=False)
 
     return mcp
 
 
 # Module-level "default" server, useful for ``python -m`` invocation and for
-# smoke tests that just want to confirm registration succeeds.
+# smoke tests that just want to confirm registration succeeds. This is the
+# stdio build (BOTH tools), matching the default transport.
 app: FastMCP[Any] = build_server()
 
 
 def main() -> None:
-    """Console-script entrypoint: run the server over stdio."""
+    """Console-script entrypoint.
+
+    Default transport is stdio (BOTH tools). HTTP is opt-in via the
+    ``NEURODOCK_HTTP`` env var or the ``--http`` flag, and serves ONLY
+    ``decompose`` (ADR 0009 sections 1-2).
+    """
 
     logging.basicConfig(
         stream=sys.stderr,
         level=logging.INFO,
         format='{"logger":"%(name)s","level":"%(levelname)s","msg":"%(message)s"}',
     )
+
+    config: TransportConfig = select_transport(os.environ, sys.argv[1:])
+
+    if config.transport == "http":
+        # Build a dedicated HTTP server that registers ONLY ``decompose``.
+        # ``next_one`` is omitted so it cannot be reached over the network.
+        http_app: FastMCP[Any] = build_server(http_mode=True)
+        _LOG.info(
+            "transport_selected",
+            extra={"transport": "http", "host": config.host, "port": config.port},
+        )
+        http_app.run(transport="http", host=config.host, port=config.port)
+        return
+
+    _LOG.info("transport_selected", extra={"transport": "stdio"})
     app.run()
 
 

@@ -1,0 +1,19 @@
+{
+  "name": "neurodock",
+  "description": "Official NeuroDock marketplace: the local-first cognitive substrate for neurodivergent professionals — MCP servers and ND-aware skills.",
+  "owner": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "plugins": [
+    {
+      "name": "neurodock",
+      "source": "./claude-code/neurodock",
+      "description": "Local-first cognitive substrate for neurodivergent professionals: five MCP servers (time, memory, task decomposition, communication decoding, clinical guardrails) plus ND-aware skills.",
+      "version": "0.1.0",
+      "author": {
+        "name": "NeuroDock contributors"
+      }
+    }
+  ]
+}

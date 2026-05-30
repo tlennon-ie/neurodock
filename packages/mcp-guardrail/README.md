@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.tlennon-ie/neurodock-mcp-guardrail -->
+
 # neurodock-mcp-guardrail
 
 Clinical guardrails MCP server for NeuroDock. Detects three patterns that

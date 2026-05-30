@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.tlennon-ie/neurodock-mcp-translation",
+  "title": "NeuroDock Translation",
+  "description": "Decode subtext, tone, and ambiguity in messages; rewrite outgoing replies; brief meetings.",
+  "version": "0.2.0",
+  "websiteUrl": "https://neurodock.org/",
+  "repository": {
+    "url": "https://github.com/tlennon-ie/neurodock",
+    "source": "github",
+    "subfolder": "packages/mcp-translation"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "neurodock-mcp-translation",
+      "version": "0.2.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

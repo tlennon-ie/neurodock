@@ -1,0 +1,53 @@
+{
+  "manifest_version": "0.3",
+  "name": "neurodock-mcp-cognitive-graph",
+  "display_name": "NeuroDock Cognitive Graph",
+  "version": "0.0.4",
+  "description": "A local typed-edge graph of people, projects, and decisions that externalises memory.",
+  "long_description": "Persistent entity-memory MCP server for neurodivergent professionals. Stores a local typed-edge property graph of people, projects, decisions, and concepts so a hyperfocused or context-switched session does not start from zero. Records facts as subject-predicate-object triples, recalls entities and decisions, and produces a weekly rollup. Part of NeuroDock, a local-first cognitive substrate. The graph is stored in a local SQLite database under ~/.neurodock and never leaves the device.",
+  "author": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "homepage": "https://neurodock.org/",
+  "documentation": "https://github.com/tlennon-ie/neurodock/tree/main/packages/mcp-cognitive-graph",
+  "support": "https://github.com/tlennon-ie/neurodock/issues",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "keywords": [
+    "neurodivergent",
+    "memory",
+    "knowledge-graph",
+    "executive-function",
+    "mcp"
+  ],
+  "server": {
+    "type": "binary",
+    "entry_point": "uvx",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-cognitive-graph"]
+    }
+  },
+  "tools": [
+    {
+      "name": "recall_entity",
+      "description": "Recall a person, project, decision, or concept by name or alias."
+    },
+    {
+      "name": "record_fact",
+      "description": "Persist a subject-predicate-object fact in the local graph."
+    },
+    {
+      "name": "recall_decisions",
+      "description": "Recall recorded decisions, optionally filtered by entity."
+    },
+    {
+      "name": "weekly_rollup",
+      "description": "Summarise the week's recorded sessions and facts."
+    }
+  ]
+}

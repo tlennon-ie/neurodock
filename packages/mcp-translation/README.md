@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.tlennon-ie/neurodock-mcp-translation -->
+
 # neurodock-mcp-translation
 
 Communication and translation tools as an MCP server. Shares its schemas and
