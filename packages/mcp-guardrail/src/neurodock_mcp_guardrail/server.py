@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from typing import Any
 
@@ -23,6 +24,7 @@ from neurodock_mcp_guardrail.tools.check_sycophancy import (
     SycophancyInputMissingError,
     check_sycophancy,
 )
+from neurodock_mcp_guardrail.transport import select_transport
 from neurodock_mcp_guardrail.types import (
     HyperfocusInput,
     RuminationInput,
@@ -154,7 +156,16 @@ def main() -> None:
         level=logging.INFO,
         format='{"logger":"%(name)s","level":"%(levelname)s","msg":"%(message)s"}',
     )
-    app.run()
+    config = select_transport(os.environ, sys.argv[1:])
+    if config.transport == "stdio":
+        _LOG.info("transport_selected", extra={"transport": "stdio"})
+        app.run()
+        return
+    _LOG.info(
+        "transport_selected",
+        extra={"transport": "http", "host": config.host, "port": config.port},
+    )
+    app.run(transport="http", host=config.host, port=config.port)
 
 
 if __name__ == "__main__":

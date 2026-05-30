@@ -11,6 +11,7 @@ OpenAI, ...). The server is provider-agnostic.
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from typing import Any
 
@@ -24,6 +25,7 @@ from neurodock_mcp_translation.tools.brief_meeting import (
 from neurodock_mcp_translation.tools.check_tone import check_tone
 from neurodock_mcp_translation.tools.rewrite_outgoing import rewrite_outgoing
 from neurodock_mcp_translation.tools.translate_incoming import translate_incoming
+from neurodock_mcp_translation.transport import select_transport
 from neurodock_mcp_translation.types import (
     BriefMeetingInput,
     CheckToneInput,
@@ -206,14 +208,30 @@ app: FastMCP[Any] = build_server()
 
 
 def main() -> None:
-    """Console-script entrypoint: run the server over stdio."""
+    """Console-script entrypoint.
+
+    Runs over stdio by default (ADR 0009 — byte-for-byte unchanged install
+    path). HTTP (FastMCP Streamable HTTP) is opt-in via the ``NEURODOCK_HTTP``
+    env var or a ``--http`` flag; see ``transport.select_transport``.
+    """
 
     logging.basicConfig(
         stream=sys.stderr,
         level=logging.INFO,
         format='{"logger":"%(name)s","level":"%(levelname)s","msg":"%(message)s"}',
     )
-    app.run()
+
+    config = select_transport(os.environ, sys.argv[1:])
+    if config.transport == "stdio":
+        _LOG.info("transport_selected", extra={"transport": "stdio"})
+        app.run()
+        return
+
+    _LOG.info(
+        "transport_selected",
+        extra={"transport": "http", "host": config.host, "port": config.port},
+    )
+    app.run(transport="http", host=config.host, port=config.port)
 
 
 if __name__ == "__main__":  # pragma: no cover — exercised via console script

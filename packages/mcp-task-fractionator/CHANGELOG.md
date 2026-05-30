@@ -6,6 +6,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [unreleased]
 
+### Added — opt-in HTTP transport (ADR 0009 Phase 2)
+
+The entrypoint can now run over **Streamable HTTP** in addition to stdio. The
+default is unchanged: with no HTTP signal, `main()` runs **stdio** with BOTH
+tools, byte-for-byte identical to before. HTTP is opt-in and selected when
+either the `NEURODOCK_HTTP` env var is truthy (`1`/`true`/`yes`/`on`,
+case-insensitive) or a `--http` CLI arg is passed; it binds
+`NEURODOCK_HTTP_HOST` (default `127.0.0.1`) and `NEURODOCK_HTTP_PORT`
+(default `8000`).
+
+- **Remote scope boundary enforced in code (ADR 0008/0009 §2).** The HTTP build
+  registers ONLY `decompose` (stateless, remote-safe). `next_one` reads the
+  local cognitive graph and is registered in **stdio mode only** — it is absent
+  from the HTTP build's tool list entirely. `build_server` gained an
+  `http_mode` keyword that gates the `next_one` registration.
+- New pure helper `transport.select_transport(env, argv) -> TransportConfig`
+  factors transport selection out of `main()` so it is unit-testable without
+  binding a socket.
+- No auth/OAuth, no tool-logic changes, and no other packages touched — the bare
+  HTTP flag binds to localhost and is for local/integration testing until the
+  OAuth sub-phase lands (ADR 0009 §3).
+- Tests (`test_transport.py`): default→stdio (both tools), `NEURODOCK_HTTP=1`→
+  http 127.0.0.1:8000, host/port overrides, `--http`→http, and the scope
+  assertion that the HTTP toolset contains `decompose` and not `next_one` while
+  the stdio toolset contains both. `FastMCP.run` is monkeypatched so no socket
+  binds.
+
 ### Fixed — removed unreachable forward-reference block in sources/base.py
 
 The `if False:` guard around the type-checker-only imports in
