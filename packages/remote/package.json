@@ -1,0 +1,21 @@
+{
+  "name": "@neurodock/remote-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Containers Worker shim fronting the NeuroDock remote MCP container. Standalone deploy tooling — intentionally NOT a pnpm-workspace member; install and deploy from this directory.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "^0.0.40"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250505.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.0.0"
+  }
+}

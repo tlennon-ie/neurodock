@@ -346,6 +346,7 @@ export default defineConfig({
           ],
         },
         { label: "Ethics", link: "/ethics/", badge: userBadge },
+        { label: "Privacy", link: "/legal/privacy/", badge: userBadge },
         { label: "FAQ", link: "/faq/", badge: userBadge },
       ],
       // Honour prefers-reduced-motion at the platform level.
