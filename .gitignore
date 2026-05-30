@@ -69,6 +69,12 @@ web-ext-artifacts/
 extension-submission/
 
 # ─────────────────────────────────────────────────────────────
+# MCP Bundles (.mcpb desktop extensions, mcpb/)
+# ─────────────────────────────────────────────────────────────
+# Keep the manifest.json sources tracked; ignore the built bundles.
+*.mcpb
+
+# ─────────────────────────────────────────────────────────────
 # Astro / Starlight docs (docs/)
 # ─────────────────────────────────────────────────────────────
 .astro/

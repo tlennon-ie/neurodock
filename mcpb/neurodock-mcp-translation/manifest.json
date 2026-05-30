@@ -1,0 +1,47 @@
+{
+  "manifest_version": "0.3",
+  "name": "neurodock-mcp-translation",
+  "display_name": "NeuroDock Translation",
+  "version": "0.2.0",
+  "description": "Decode subtext, tone, and ambiguity in messages; rewrite outgoing replies; brief meetings.",
+  "long_description": "Communication-decoding MCP server for neurodivergent professionals. Decodes the implicit ask and ranked subtext in an incoming corporate message, anchors every ambiguous span verbatim to the source, checks the tone of a draft, rewrites outgoing replies, and briefs meetings. Part of NeuroDock, a local-first cognitive substrate. The server performs no LLM calls of its own — it orchestrates prompt templates against whatever model your MCP client is configured to use.",
+  "author": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "homepage": "https://neurodock.org/",
+  "documentation": "https://github.com/tlennon-ie/neurodock/tree/main/packages/mcp-translation",
+  "support": "https://github.com/tlennon-ie/neurodock/issues",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "keywords": ["neurodivergent", "communication", "autism", "audhd", "mcp"],
+  "server": {
+    "type": "binary",
+    "entry_point": "uvx",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-translation"]
+    }
+  },
+  "tools": [
+    {
+      "name": "translate_incoming",
+      "description": "Decode the explicit ask, ranked subtext, and verbatim-anchored ambiguity in an incoming message."
+    },
+    {
+      "name": "check_tone",
+      "description": "Assess the tone of a draft message against the intended register."
+    },
+    {
+      "name": "rewrite_outgoing",
+      "description": "Rewrite an outgoing message to a target tone while preserving meaning."
+    },
+    {
+      "name": "brief_meeting",
+      "description": "Produce a structured pre-meeting brief from agenda and context."
+    }
+  ]
+}

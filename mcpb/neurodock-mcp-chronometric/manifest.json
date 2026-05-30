@@ -1,0 +1,51 @@
+{
+  "manifest_version": "0.3",
+  "name": "neurodock-mcp-chronometric",
+  "display_name": "NeuroDock Chronometric",
+  "version": "0.0.2",
+  "description": "Externalises time-of-day, session boundaries, and break prompts for time-blind users.",
+  "long_description": "Time, idle, and break-management MCP server for neurodivergent professionals. Externalises time-of-day context, opens and closes work sessions around the user's verbatim stated intent, prompts for breaks, and reports OS idle status (with consent). Part of NeuroDock, a local-first cognitive substrate. All session state is held locally.",
+  "author": {
+    "name": "NeuroDock contributors",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "homepage": "https://neurodock.org/",
+  "documentation": "https://github.com/tlennon-ie/neurodock/tree/main/packages/mcp-chronometric",
+  "support": "https://github.com/tlennon-ie/neurodock/issues",
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tlennon-ie/neurodock"
+  },
+  "keywords": ["neurodivergent", "adhd", "time-blindness", "focus", "mcp"],
+  "server": {
+    "type": "binary",
+    "entry_point": "uvx",
+    "mcp_config": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-chronometric"]
+    }
+  },
+  "tools": [
+    {
+      "name": "get_time_context",
+      "description": "Return current time-of-day context and the active energy zone."
+    },
+    {
+      "name": "mark_session_start",
+      "description": "Open a session with the user's verbatim stated intent."
+    },
+    {
+      "name": "mark_session_end",
+      "description": "Close the most recent open session with an optional summary."
+    },
+    {
+      "name": "request_break_if_needed",
+      "description": "Advise whether a break is due based on session length and profile thresholds."
+    },
+    {
+      "name": "idle_status",
+      "description": "Report OS idle status, gated on user consent."
+    }
+  ]
+}

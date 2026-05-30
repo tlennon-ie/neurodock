@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "neurodock-chronometric": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-chronometric"]
+    },
+    "neurodock-cognitive-graph": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-cognitive-graph"]
+    },
+    "neurodock-task-fractionator": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-task-fractionator"]
+    },
+    "neurodock-translation": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-translation"]
+    },
+    "neurodock-guardrail": {
+      "command": "uvx",
+      "args": ["neurodock-mcp-guardrail"]
+    }
+  }
+}

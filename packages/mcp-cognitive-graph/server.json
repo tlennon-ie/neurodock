@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.tlennon-ie/neurodock-mcp-cognitive-graph",
+  "title": "NeuroDock Cognitive Graph",
+  "description": "A local typed-edge graph of people, projects, and decisions that externalises memory.",
+  "version": "0.0.4",
+  "websiteUrl": "https://neurodock.org/",
+  "repository": {
+    "url": "https://github.com/tlennon-ie/neurodock",
+    "source": "github",
+    "subfolder": "packages/mcp-cognitive-graph"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "neurodock-mcp-cognitive-graph",
+      "version": "0.0.4",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

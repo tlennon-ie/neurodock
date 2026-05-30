@@ -1,3 +1,5 @@
+<!-- mcp-name: io.github.tlennon-ie/neurodock-mcp-task-fractionator -->
+
 # neurodock-mcp-task-fractionator
 
 Local-first goal decomposition and single next-action selection, exposed as
