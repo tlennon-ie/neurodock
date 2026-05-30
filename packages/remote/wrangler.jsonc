@@ -1,0 +1,47 @@
+{
+  // Cloudflare Containers deploy config for the NeuroDock remote MCP server.
+  // Runs the Python FastMCP container (../Dockerfile) behind a thin Worker that
+  // proxies mcp.neurodock.org -> the container's port 8000 (ADR 0009).
+  //
+  // Requires a Workers PAID plan (Containers are not on the free tier).
+  // Deploy from THIS directory:  pnpm --dir worker install && npx wrangler deploy
+  // See README.md "Deploy to Cloudflare Containers" for the full runbook.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "neurodock-remote",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-05-05",
+  "observability": { "enabled": true },
+
+  "containers": [
+    {
+      "class_name": "NeurodockRemoteContainer",
+      // Build context is the repo root so the Dockerfile's `COPY packages/ ...`
+      // resolves (the Dockerfile lives here but expects root context).
+      "image": "./Dockerfile",
+      "image_build_context": "../../",
+      "instance_type": "basic",
+      "max_instances": 3
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      { "name": "NEURODOCK_REMOTE", "class_name": "NeurodockRemoteContainer" }
+    ]
+  },
+
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NeurodockRemoteContainer"] }],
+
+  // Auto-provisions DNS + TLS for the subdomain (no manual record needed).
+  "routes": [{ "pattern": "mcp.neurodock.org", "custom_domain": true }],
+
+  // Non-secret runtime config forwarded into the container (see worker/index.ts).
+  // The secret (NEURODOCK_CLERK_CLIENT_SECRET) is NOT here — set it with
+  //   npx wrangler secret put NEURODOCK_CLERK_CLIENT_SECRET
+  "vars": {
+    "NEURODOCK_AUTH_PROVIDER": "clerk",
+    "NEURODOCK_PUBLIC_URL": "https://mcp.neurodock.org",
+    "NEURODOCK_CLERK_DOMAIN": "REPLACE_WITH_YOUR_CLERK_DOMAIN",
+    "NEURODOCK_CLERK_CLIENT_ID": "REPLACE_WITH_YOUR_CLERK_CLIENT_ID"
+  }
+}
