@@ -10,6 +10,7 @@ import sys
 from typing import Any
 
 from fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 from pydantic import ValidationError
 
 from neurodock_mcp_guardrail.tools.check_hyperfocus import (
@@ -53,6 +54,12 @@ def build_server() -> FastMCP[Any]:
             "Detect whether the user's current prompt is a semantic repeat of recent prompts "
             "within a rolling window. Stateless; returns a structured advisory signal."
         ),
+        annotations=ToolAnnotations(
+            title="Check rumination",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
+        ),
     )
     def _check_rumination(
         current_prompt: str,
@@ -88,6 +95,12 @@ def build_server() -> FastMCP[Any]:
             "Classify hyperfocus escalation from a caller-supplied chronometric snapshot "
             "into one of (none, gentle, nudge, hard). Stateless; quotes prior_intent verbatim."
         ),
+        annotations=ToolAnnotations(
+            title="Check hyperfocus",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
+        ),
     )
     def _check_hyperfocus(
         chronometric_snapshot: dict[str, Any],
@@ -120,6 +133,12 @@ def build_server() -> FastMCP[Any]:
         description=(
             "Detect over-validation in a candidate response or repeated reassurance-seeking "
             "in recent user messages. Returns a counter_prompt the caller MAY surface."
+        ),
+        annotations=ToolAnnotations(
+            title="Check sycophancy",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
         ),
     )
     def _check_sycophancy(
