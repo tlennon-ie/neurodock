@@ -106,6 +106,18 @@ ignore_missing_imports = true
 module = "fastembed.*"
 ignore_missing_imports = true
 
+# Clerk Backend SDK (ADR 0010 Phase D) — persists the per-user BYOS connection
+# pointer. Imported lazily inside ClerkMetadataByosStore; ships without py.typed.
+[[tool.mypy.overrides]]
+module = "clerk_backend_api.*"
+ignore_missing_imports = true
+
+# The cognitive-graph package is now a runtime dep of neurodock-remote (the
+# un-gated BYOS tools) but does not yet emit py.typed.
+[[tool.mypy.overrides]]
+module = "neurodock_mcp_cognitive_graph.*"
+ignore_missing_imports = true
+
 [[tool.mypy.overrides]]
 module = "rapidfuzz.*"
 ignore_missing_imports = true

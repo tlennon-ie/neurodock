@@ -17,6 +17,14 @@ dependencies = [
     "neurodock-mcp-translation",
     "neurodock-mcp-guardrail",
     "neurodock-mcp-task-fractionator",
+    # ADR 0010 Phase D — opt-in BYOS storage. The per-user state foundation (with
+    # the `clerk` extra: Clerk Backend SDK + cryptography for the encrypted
+    # connection pointer) and the cognitive-graph tools (with the libSQL backing
+    # for the user's own DB). Embeddings are disabled on the hosted path
+    # (NEURODOCK_GRAPH_DISABLE_EMBEDDINGS), so the heavy fastembed model is never
+    # loaded despite being a transitive dep.
+    "neurodock-state[clerk]",
+    "neurodock-mcp-cognitive-graph[libsql]",
 ]
 
 [project.urls]
@@ -45,6 +53,8 @@ packages = ["src/neurodock_remote"]
 neurodock-mcp-translation = { workspace = true }
 neurodock-mcp-guardrail = { workspace = true }
 neurodock-mcp-task-fractionator = { workspace = true }
+neurodock-state = { workspace = true }
+neurodock-mcp-cognitive-graph = { workspace = true }
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

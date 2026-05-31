@@ -27,8 +27,14 @@ declare global {
       NEURODOCK_PUBLIC_URL: string;
       NEURODOCK_CLERK_DOMAIN: string;
       NEURODOCK_CLERK_CLIENT_ID: string;
-      // Secret (wrangler `secret put`); optional at the type level.
+      // Secrets (wrangler `secret put`); optional at the type level.
       NEURODOCK_CLERK_CLIENT_SECRET?: string;
+      // ADR 0010 Phase D — opt-in BYOS storage. The Clerk Backend API key
+      // (persists the per-user connection in Clerk private_metadata) and the
+      // master key that encrypts the BYOS auth token at rest. Without both, the
+      // opt-in tools are visible but return the sign-in/connect refusal.
+      NEURODOCK_CLERK_SECRET_KEY?: string;
+      NEURODOCK_STATE_MASTER_KEY?: string;
     }
   }
 }
@@ -48,6 +54,11 @@ export class NeurodockRemoteContainer extends Container {
     NEURODOCK_CLERK_DOMAIN: env.NEURODOCK_CLERK_DOMAIN,
     NEURODOCK_CLERK_CLIENT_ID: env.NEURODOCK_CLERK_CLIENT_ID,
     NEURODOCK_CLERK_CLIENT_SECRET: env.NEURODOCK_CLERK_CLIENT_SECRET ?? "",
+    // ADR 0010 Phase D — BYOS storage secrets. Empty string when unset; the
+    // server then leaves the opt-in tools un-backed (every call returns the
+    // sign-in/connect refusal) rather than failing to boot.
+    NEURODOCK_CLERK_SECRET_KEY: env.NEURODOCK_CLERK_SECRET_KEY ?? "",
+    NEURODOCK_STATE_MASTER_KEY: env.NEURODOCK_STATE_MASTER_KEY ?? "",
     // The container binds all interfaces; the Worker is the only ingress.
     NEURODOCK_HTTP_HOST: "0.0.0.0",
     NEURODOCK_HTTP_PORT: "8000",

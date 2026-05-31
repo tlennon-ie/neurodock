@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1
-# NeuroDock remote MCP server — the combined STATELESS tool surface (ADR 0008/0009).
+# NeuroDock remote MCP server — the stateless tool surface (ADR 0008/0009) plus the
+# opt-in BYOS memory surface (ADR 0010 Phase D). Anonymous/non-opted-in sessions stay
+# fully stateless; opted-in users' data lives in their OWN database, not on NeuroDock.
 #
 # Build from the REPO ROOT (the workspace graph must be visible):
 #   docker build -f packages/remote/Dockerfile -t neurodock-remote .
@@ -22,16 +24,24 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 COPY packages/ ./packages/
 
-# Install ONLY neurodock-remote and its (stateless) workspace dependencies. The
-# stateful servers (cognitive-graph, chronometric) and their heavy native deps are
-# not dependencies of neurodock-remote and are therefore never installed.
+# Install neurodock-remote and its workspace dependencies. As of ADR 0010 Phase D
+# this includes neurodock-state[clerk] and neurodock-mcp-cognitive-graph[libsql]
+# (the opt-in BYOS surface). The chronometric server and task-fractionator
+# `next_one` remain stdio-only and are NOT installed. The cognitive-graph's heavy
+# fastembed dependency is never *loaded* at runtime because embeddings are
+# disabled below — the import is short-circuited by NEURODOCK_GRAPH_DISABLE_EMBEDDINGS.
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --package neurodock-remote
 
 # Bind all interfaces (the container sits behind the edge/proxy). This is an
 # explicit deployment decision; the application code defaults to 127.0.0.1.
+#
+# NEURODOCK_GRAPH_DISABLE_EMBEDDINGS=1 keeps the hosted cognitive-graph lean: the
+# embedding rung is skipped and fastembed is never imported, so no model is
+# downloaded into the image or at runtime (ADR 0010 Phase D scope decision).
 ENV NEURODOCK_HTTP_HOST=0.0.0.0 \
-    NEURODOCK_HTTP_PORT=8000
+    NEURODOCK_HTTP_PORT=8000 \
+    NEURODOCK_GRAPH_DISABLE_EMBEDDINGS=1
 
 # Run as a non-root user.
 RUN useradd --create-home --uid 10001 neurodock \

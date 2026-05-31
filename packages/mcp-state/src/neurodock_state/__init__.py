@@ -14,6 +14,12 @@ in behind the same protocols later.
 
 from __future__ import annotations
 
+from neurodock_state.byos_connection_store import (
+    ByosConnectionStore,
+    Connection,
+    InMemoryByosConnectionStore,
+)
+from neurodock_state.byos_resolver import ByosResolver
 from neurodock_state.identity import UserKey, user_key_from_context
 from neurodock_state.profile_store import InMemoryProfileStore, ProfileStore
 from neurodock_state.registry import (
@@ -27,7 +33,11 @@ from neurodock_state.session_store import InMemorySessionStore, Session, Session
 __version__ = "0.0.1"
 
 __all__ = [
+    "ByosConnectionStore",
+    "ByosResolver",
+    "Connection",
     "GraphStore",
+    "InMemoryByosConnectionStore",
     "InMemoryProfileStore",
     "InMemorySessionStore",
     "MemoryBackingResolver",
