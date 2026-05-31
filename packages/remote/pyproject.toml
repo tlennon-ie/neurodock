@@ -1,0 +1,50 @@
+[project]
+name = "neurodock-remote"
+version = "0.1.0"
+description = "NeuroDock remote MCP server — composes the stateless tool surface (translation, guardrail, task-fractionator decompose) into one Streamable HTTP endpoint. Deploy artifact; not published to PyPI."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "NeuroDock contributors" }]
+# Internal deploy artifact — the trove classifier below hard-blocks any
+# accidental upload to PyPI. The CI publish glob also excludes it (it does not
+# match `packages/mcp-*`).
+classifiers = ["Private :: Do Not Upload"]
+dependencies = [
+    "fastmcp>=3.3.0",
+    "pydantic>=2.7",
+    "uvicorn>=0.30",
+    "neurodock-mcp-translation",
+    "neurodock-mcp-guardrail",
+    "neurodock-mcp-task-fractionator",
+]
+
+[project.urls]
+Homepage = "https://neurodock.org/"
+Documentation = "https://docs.neurodock.org/"
+Repository = "https://github.com/tlennon-ie/neurodock"
+Issues = "https://github.com/tlennon-ie/neurodock/issues"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=1.3.0",
+]
+
+[project.scripts]
+neurodock-remote = "neurodock_remote.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neurodock_remote"]
+
+[tool.uv.sources]
+neurodock-mcp-translation = { workspace = true }
+neurodock-mcp-guardrail = { workspace = true }
+neurodock-mcp-task-fractionator = { workspace = true }
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

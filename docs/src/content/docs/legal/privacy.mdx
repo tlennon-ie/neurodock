@@ -1,0 +1,103 @@
+---
+title: Privacy Policy
+description: What NeuroDock does and does not do with your data — local-first by default, and exactly what transits the optional hosted remote server.
+---
+
+> **Last updated:** 2026-05-30
+
+NeuroDock is a **local-first cognitive substrate**. The short version: by default,
+nothing about you leaves your machine. This page explains that precisely, and
+states exactly what happens in the one case where data does cross the network —
+the optional hosted remote server.
+
+:::tip[Commitment]
+**We never track silently.** There is no telemetry, no analytics, no remote
+aggregation — anonymised or otherwise. This is principle 1 of the project
+[Ethics](/ethics/) and it is enforced in auditable source code.
+:::
+
+## What runs on your machine
+
+When you install NeuroDock the normal way (`@neurodock/cli`, an `.mcpb` bundle, or
+the Claude Code plugin), every server runs **locally over stdio** and every byte
+of your data stays on your device. Specifically, these never leave your machine:
+
+- **Your profile** (`~/.neurodock/profile.yaml`) — including any self-identified
+  neurotype information. Self-identification is never transmitted, never verified
+  against any third party, and never required.
+- **Your cognitive graph** — the people, projects, decisions, and facts you record
+  live in a local SQLite database.
+- **Session and timing data** — the chronometric server holds session state in
+  memory on your machine only.
+- **Message and document text** you pass to any tool.
+
+We do not have a server that receives this data, because for the local install
+there is no remote endpoint involved at all.
+
+## Operational logging
+
+The local servers emit **operational logs to standard error only** (for example,
+"a tool was invoked"). By design they **do not log the content** you pass in — not
+message text, not goal descriptions, not project names (see
+[ADR 0003](/decisions/0003-task-fractionator/) and
+[ADR 0005](/decisions/0005-translation/)). These logs stay on your machine and are
+never transmitted to us.
+
+## The optional hosted remote server
+
+We may operate a **hosted remote server** (for example at
+`https://mcp.neurodock.org/mcp`) that you can connect to as an MCP connector. Using
+it is **entirely optional** — the default install does not use it. If and when you
+choose to connect to it, these commitments apply:
+
+- **Only the stateless tools are available remotely.** The hosted server exposes
+  only the communication and planning tools: message translation, tone and
+  rewriting help, the rumination / hyperfocus / over-validation guardrails, and
+  goal decomposition. Your **cognitive graph, profile, and session history are
+  never reachable over the network** — they have no remote endpoint by design.
+- **Processing is ephemeral.** Text you send to a remote tool is processed in
+  memory to produce the response and is **not stored**, **not written to a
+  database**, and **not retained** after the request completes.
+- **No content logging.** As with the local servers, request/response **content is
+  not logged**. Operational logs record that a tool ran, not what was in it.
+- **No training.** Your data is **never used to train any model**. The servers run
+  deterministic analysis and return structured prompts; no model is trained on, or
+  fine-tuned from, anything you send.
+- **No profiling or aggregation.** We do not build user profiles and do not
+  aggregate requests into population-level datasets.
+- **Authentication.** Access is gated by OAuth 2.1 via an identity provider. We
+  receive only the minimal token claims needed to authorise the request; we do not
+  store your credentials.
+- **Transport.** All remote traffic is encrypted in transit (HTTPS only).
+
+## What we never do
+
+- We never sell or rent your data.
+- We never serve advertising or embed third-party trackers.
+- We never share your data with third parties for their own purposes.
+- We never aggregate detection events (rumination, hyperfocus, sycophancy) into
+  population-level data — every such signal stays on your machine.
+
+## Your control and deletion
+
+Because the local install keeps everything on your device, **you are in control**:
+delete the files in `~/.neurodock/` and the data is gone. The hosted remote server
+stores no personal content, so there is nothing for us to retain or delete on your
+behalf.
+
+## Children
+
+NeuroDock is a professional productivity tool and is not directed at children.
+
+## Changes to this policy
+
+If this policy changes materially, we will update the date above and record the
+change in the public repository's history. Because the policy lives in
+[the open-source repository](https://github.com/tlennon-ie/neurodock), every
+revision is publicly auditable.
+
+## Contact
+
+Questions about privacy can be raised as an issue on the
+[NeuroDock repository](https://github.com/tlennon-ie/neurodock/issues) or by email
+to the maintainer listed there.

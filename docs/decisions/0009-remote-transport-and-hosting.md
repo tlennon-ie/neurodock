@@ -1,6 +1,6 @@
 # 0009 — Remote transport and hosting for the stateless servers (Phase 2)
 
-- **Status:** proposed
+- **Status:** accepted — Phase 2 foundation implemented 2026-05-30; OAuth IdP selection, hosting, and the Connectors Directory submission remain pending.
 - **Date:** 2026-05-30
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder`, `mcp-translation-expert`, `mcp-guardrail-expert`, `mcp-task-fractionator-expert`, `governance-author` (privacy policy / AGPL)
@@ -76,3 +76,35 @@ submission.
 
 **Open questions:** managed-IdP choice; container host; single-vs-multi endpoint;
 whether to ever rewrite the stateless tools as a TS Worker.
+
+## Implementation status (2026-05-30 — Phase 2 foundation)
+
+The decision-independent foundation now exists as the **`packages/remote`**
+workspace package (`neurodock-remote`, an internal deploy artifact — not published
+to PyPI):
+
+- **Combined server (decision 5 → single endpoint).** `app.py` composes the three
+  stateless servers with FastMCP `mount` (no namespace → flat tool names) into one
+  Streamable HTTP app at `/mcp`, plus a `/health` probe. The exposed surface is
+  exactly the eight remote-safe tools; tests pin it against `REMOTE_TOOL_NAMES` and
+  assert `next_one` / cognitive-graph / chronometric tools never leak (decision 2).
+- **Auth scaffold (decision 3), vendor-pluggable and default-off.** `auth.py` reads
+  `NEURODOCK_AUTH_PROVIDER` (`none` | `workos` | `jwt`) and builds the matching
+  FastMCP provider — WorkOS `AuthKitProvider` (purpose-built for MCP DCR + RFC 9728)
+  or a generic `RemoteAuthProvider`/`JWTVerifier` for any OIDC issuer. The IdP is
+  therefore a configuration choice, not a code change. Default `none` returns no
+  auth and logs a loud warning that the endpoint must not be exposed publicly.
+- **Container (decision 4).** `Dockerfile` builds only the stateless workspace
+  subset, runs non-root with a healthcheck, and binds `0.0.0.0` explicitly (the
+  app code still defaults to `127.0.0.1`).
+- **Privacy policy.** Published at `/legal/privacy/` on the docs site — the top
+  Connectors-Directory rejection cause, removed in advance.
+
+Verified locally: 10 tests green under the repo-root pytest config, `ruff` clean,
+`mypy --strict` clean, and a served-app smoke test (`/health` → 200, `/mcp` → 406
+for a bare GET, i.e. the route is live).
+
+**Still gated on a human decision / action:** (a) pick the managed IdP and stand up
+its tenant; (b) pick the container host and deploy the image; (c) add a proxied
+`mcp.neurodock.org` DNS record once the host exists; (d) submit to the Anthropic
+Connectors Directory. None of these change the foundation above.

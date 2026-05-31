@@ -16,6 +16,7 @@ members = [
     "packages/mcp-guardrail",
     "packages/clinical",
     "packages/evals",
+    "packages/remote",
 ]
 
 [dependency-groups]
@@ -79,6 +80,15 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "neurodock_mcp_translation.*"
+ignore_missing_imports = true
+
+# Sibling servers composed by `packages/remote` that do not yet emit `py.typed`.
+[[tool.mypy.overrides]]
+module = "neurodock_mcp_guardrail.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "neurodock_mcp_task_fractionator.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
