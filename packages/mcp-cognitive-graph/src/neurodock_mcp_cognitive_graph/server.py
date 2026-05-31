@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from collections.abc import Callable
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -43,13 +44,46 @@ def _serialise(model: Any) -> dict[str, Any]:
     return parsed
 
 
+# A store provider is resolved per tool call. This is the seam ADR 0010 Phase B
+# introduces: the local stdio path passes a provider that always returns the one
+# on-disk store, while a future per-user resolver returns the caller's store.
+StoreProvider = Callable[[], Storage]
+
+
+def _coerce_provider(store_or_provider: Storage | StoreProvider) -> StoreProvider:
+    """Return a :data:`StoreProvider` from either a provider or a bare ``Storage``.
+
+    Back-compat: existing callers (and the current test suite) pass a ``Storage``
+    *instance*. A ``Storage`` exposes ``initialise``; a provider is a zero-arg
+    callable that is *not* itself a ``Storage``. We detect the instance case by
+    duck-typing on a ``Storage`` method and wrap it in ``lambda: storage`` so the
+    one bound store is returned on every call — byte-for-byte the old behaviour.
+    """
+    if callable(store_or_provider) and not hasattr(store_or_provider, "initialise"):
+        # A zero-arg provider callable — mypy narrows to StoreProvider here.
+        return store_or_provider
+    # A bound Storage instance — wrap so each call returns the same store.
+    storage: Storage = store_or_provider  # type: ignore[assignment]
+    return lambda: storage
+
+
 def build_app(
-    storage: Storage,
+    store: Storage | StoreProvider,
     clock: Clock | None = None,
     name: str = "neurodock-mcp-cognitive-graph",
 ) -> FastMCP:
-    """Construct a FastMCP server bound to the given storage/clock."""
+    """Construct a FastMCP server bound to a storage provider/clock.
+
+    ``store`` may be either:
+
+    - a ``Callable[[], Storage]`` **store provider** resolved on every tool call
+      (the ADR 0010 Phase B seam — e.g. a per-user resolver on the hosted path);
+      or
+    - a bare ``Storage`` **instance** (back-compat) — it is wrapped so every tool
+      call resolves the same bound store, preserving the prior behaviour exactly.
+    """
     active_clock = clock or SystemClock()
+    store_provider = _coerce_provider(store)
     app = FastMCP(name)
 
     @app.tool(
@@ -60,6 +94,7 @@ def build_app(
         ),
     )
     def recall_entity(name_or_alias: str) -> dict[str, Any]:
+        storage = store_provider()
         try:
             result = recall_entity_tool(storage, name_or_alias)
         except ToolError as exc:
@@ -88,6 +123,7 @@ def build_app(
         # type schema from FastMCP itself for these args — but in exchange
         # they get one-shot, actionable error messages. See record_fact UX
         # friction note (MEMORY.md, 2026-05-22).
+        storage = store_provider()
         try:
             result = record_fact_tool(
                 storage,
@@ -114,6 +150,7 @@ def build_app(
         ),
     )
     def recall_decisions(project: str, since: str | None = None) -> dict[str, Any]:
+        storage = store_provider()
         try:
             result = recall_decisions_tool(storage, project, since)
         except ToolError as exc:
@@ -130,6 +167,7 @@ def build_app(
         ),
     )
     def weekly_rollup(project: str | None = None) -> dict[str, Any]:
+        storage = store_provider()
         try:
             result = weekly_rollup_tool(storage, active_clock, project)
         except ToolError as exc:
@@ -163,7 +201,10 @@ def main() -> None:
     logger.info("starting neurodock-mcp-cognitive-graph v%s", __version__)
     storage = _build_default_storage()
     try:
-        real_app = build_app(storage)
+        # Local stdio path: one on-disk store, returned by a fixed provider on
+        # every tool call. Behaviour is identical to passing the bound store —
+        # the per-user resolver seam (ADR 0010 Phase B) is reserved for hosted.
+        real_app = build_app(lambda: storage)
         real_app.run()
     finally:
         storage.close()

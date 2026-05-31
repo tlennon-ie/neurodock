@@ -14,6 +14,7 @@ members = [
     "packages/mcp-task-fractionator",
     "packages/mcp-translation",
     "packages/mcp-guardrail",
+    "packages/mcp-state",
     "packages/clinical",
     "packages/evals",
     "packages/remote",
