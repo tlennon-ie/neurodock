@@ -3,7 +3,7 @@
   "name": "io.github.tlennon-ie/neurodock-mcp-guardrail",
   "title": "NeuroDock Guardrail",
   "description": "Advisory detectors for rumination, hyperfocus, and sycophancy. Never silently blocks.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "websiteUrl": "https://neurodock.org/",
   "repository": {
     "url": "https://github.com/tlennon-ie/neurodock",
@@ -15,7 +15,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "neurodock-mcp-guardrail",
-      "version": "0.0.3",
+      "version": "0.0.4",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"
