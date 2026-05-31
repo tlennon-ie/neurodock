@@ -16,6 +16,7 @@ import sys
 from typing import Any
 
 from fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 from pydantic import ValidationError
 
 from neurodock_mcp_translation.tools.brief_meeting import (
@@ -87,6 +88,12 @@ def build_server() -> FastMCP[Any]:
             "structured prompt the caller's MCP client MAY execute to refine "
             "the baseline against its own LLM."
         ),
+        annotations=ToolAnnotations(
+            title="Translate incoming message",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
+        ),
     )
     def _translate_incoming(
         text: str,
@@ -116,6 +123,12 @@ def build_server() -> FastMCP[Any]:
             "baseline or from a target register. Returns deterministic axes plus "
             "an LLM-refinement prompt."
         ),
+        annotations=ToolAnnotations(
+            title="Check tone",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
+        ),
     )
     def _check_tone(
         text: str,
@@ -144,6 +157,12 @@ def build_server() -> FastMCP[Any]:
             "baseline applies register-specific surface transforms; the LLM "
             "refinement prompt produces a stronger rewrite while keeping the "
             "same preservation contract."
+        ),
+        annotations=ToolAnnotations(
+            title="Rewrite outgoing",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
         ),
     )
     def _rewrite_outgoing(
@@ -176,6 +195,12 @@ def build_server() -> FastMCP[Any]:
             "my_asks, others_asks, decisions, ambiguous_items. Every "
             "ambiguous_item is anchored to a verbatim transcript span; the "
             "server rejects responses where the anchor cannot be located."
+        ),
+        annotations=ToolAnnotations(
+            title="Brief meeting",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
         ),
     )
     def _brief_meeting(

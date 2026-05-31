@@ -22,6 +22,7 @@ import sys
 from typing import Any
 
 from fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from neurodock_mcp_task_fractionator.decomposer import (
     AcceptanceCriteriaRequiredError,
@@ -94,6 +95,12 @@ def build_server(
             "Break a vague goal into a small ordered list of atomic 5-90 minute "
             "tasks with explicit acceptance criteria and dependency edges. "
             "Stateless: returns tasks but does NOT persist them."
+        ),
+        annotations=ToolAnnotations(
+            title="Decompose goal into tasks",
+            readOnlyHint=True,
+            idempotentHint=True,
+            openWorldHint=False,
         ),
     )
     def _decompose(goal: str, time_budget: str | None = None) -> dict[str, Any]:
