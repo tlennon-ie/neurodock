@@ -1,0 +1,19 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.tlennon-ie/neurodock-remote",
+  "title": "NeuroDock (hosted)",
+  "description": "Hosted NeuroDock — stateless communication and planning tools over OAuth-secured Streamable HTTP.",
+  "version": "0.1.0",
+  "websiteUrl": "https://neurodock.org/",
+  "repository": {
+    "url": "https://github.com/tlennon-ie/neurodock",
+    "source": "github",
+    "subfolder": "packages/remote"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.neurodock.org/mcp"
+    }
+  ]
+}

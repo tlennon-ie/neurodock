@@ -95,6 +95,10 @@ def build_auth_provider(env: Mapping[str, str]) -> AuthProvider | None:
             client_secret=env.get("NEURODOCK_CLERK_CLIENT_SECRET", "").strip() or None,
             base_url=_require(env, "NEURODOCK_PUBLIC_URL"),
             required_scopes=_required_scopes(env),
+            # Skip FastMCP's own (unbranded) consent screen — Clerk's NeuroDock-branded
+            # sign-in already gates access. Set True to restore the extra consent step
+            # (it confirms the client's redirect URI as an anti-phishing measure).
+            require_authorization_consent=False,
         )
 
     if provider == "jwt":
