@@ -1,0 +1,45 @@
+# Build context for packages/remote/Dockerfile is the REPO ROOT — Cloudflare
+# Containers builds with image_build_context: "../../", and Docker/BuildKit reads
+# .dockerignore from the build-context root. So it lives here, not next to the
+# Dockerfile. The image only needs pyproject.toml, uv.lock, README.md, and the
+# packages/ source; everything below is excluded to keep the build small + fast.
+
+# Python virtualenvs (the container builds its own /app/.venv via `uv sync`)
+.venv
+**/.venv
+
+# Node dependencies + build output
+node_modules
+**/node_modules
+**/dist
+**/build
+**/.turbo
+
+# Python caches / build artefacts
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+
+# Docs site — never copied into the image
+docs
+
+# VCS, CI, editor
+.git
+.github
+.vscode
+.idea
+
+# Secrets, env, logs, bundles
+.env
+.env.*
+**/.dev.vars
+**/*.mcpb
+*.log
+
+# OS cruft
+**/.DS_Store
+Thumbs.db

@@ -25,3 +25,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`worker/index.ts`) that fronts `mcp.neurodock.org` and proxies to the container,
   `package.json` + `tsconfig.json`, and a deploy runbook in the README. Verified by
   docs; first `wrangler deploy` is the validation step.
+
+### Fixed
+
+- Corrected the Worker `package.json` dependency versions to ones that exist on npm
+  (`@cloudflare/containers ^0.3.5`, `wrangler ^4.95.0`,
+  `@cloudflare/workers-types ^4.20260531.1`); the initial pins were invalid and broke
+  `npm install`. Lockfile committed.
+- Rewrote `worker/index.ts` to Cloudflare's documented Container pattern — global
+  `Cloudflare.Env` bindings plus the `cloudflare:workers` `env` import, no custom
+  Durable Object constructor — so it type-checks against `@cloudflare/containers`
+  0.3.5 (`tsc --noEmit` clean) and deploys.
+- Moved the Docker ignore to the repo-root `.dockerignore` so it actually applies to
+  the Cloudflare build (the build context is the repo root, where Docker reads it),
+  shrinking the build context.
+
+### Validated
+
+- First real `wrangler deploy` succeeded: image built + pushed to the Cloudflare
+  registry, container application created, and the Worker bound to the
+  `mcp.neurodock.org` custom domain. Confirmed `ClerkProvider` requires the client
+  secret at boot (set via `wrangler secret put NEURODOCK_CLERK_CLIENT_SECRET`).

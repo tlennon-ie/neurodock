@@ -13,44 +13,50 @@
 // Scale later with getRandom()/per-session ids if traffic warrants it.
 
 import { Container, getContainer } from "@cloudflare/containers";
+import { env } from "cloudflare:workers";
 
-interface Env {
-  NEURODOCK_REMOTE: DurableObjectNamespace<NeurodockRemoteContainer>;
-  // Non-secret config (wrangler `vars`) + the secret (wrangler `secret put`),
-  // forwarded into the container's environment below.
-  NEURODOCK_AUTH_PROVIDER: string;
-  NEURODOCK_PUBLIC_URL: string;
-  NEURODOCK_CLERK_DOMAIN: string;
-  NEURODOCK_CLERK_CLIENT_ID: string;
-  NEURODOCK_CLERK_CLIENT_SECRET?: string;
+// The Worker's bindings + vars/secrets (mirrors wrangler.jsonc). Declared on the
+// global `Cloudflare.Env` so the container binding and the `cloudflare:workers`
+// `env` import are typed without a generated worker-configuration.d.ts.
+declare global {
+  namespace Cloudflare {
+    interface Env {
+      NEURODOCK_REMOTE: DurableObjectNamespace<NeurodockRemoteContainer>;
+      // Non-secret config (wrangler `vars`).
+      NEURODOCK_AUTH_PROVIDER: string;
+      NEURODOCK_PUBLIC_URL: string;
+      NEURODOCK_CLERK_DOMAIN: string;
+      NEURODOCK_CLERK_CLIENT_ID: string;
+      // Secret (wrangler `secret put`); optional at the type level.
+      NEURODOCK_CLERK_CLIENT_SECRET?: string;
+    }
+  }
 }
 
-export class NeurodockRemoteContainer extends Container<Env> {
+export class NeurodockRemoteContainer extends Container {
   // The FastMCP combined server listens on 8000 inside the container.
   defaultPort = 8000;
   // Sleep the instance after 15 minutes of inactivity, then cold-start on demand.
   sleepAfter = "15m";
 
-  constructor(ctx: DurableObjectState, env: Env) {
-    super(ctx, env);
-    // Forward Worker vars/secrets into the container's process environment so
-    // auth.py can pick up the Clerk OAuth configuration.
-    this.envVars = {
-      NEURODOCK_AUTH_PROVIDER: env.NEURODOCK_AUTH_PROVIDER,
-      NEURODOCK_PUBLIC_URL: env.NEURODOCK_PUBLIC_URL,
-      NEURODOCK_CLERK_DOMAIN: env.NEURODOCK_CLERK_DOMAIN,
-      NEURODOCK_CLERK_CLIENT_ID: env.NEURODOCK_CLERK_CLIENT_ID,
-      NEURODOCK_CLERK_CLIENT_SECRET: env.NEURODOCK_CLERK_CLIENT_SECRET ?? "",
-      // The container binds all interfaces; the Worker is the only ingress.
-      NEURODOCK_HTTP_HOST: "0.0.0.0",
-      NEURODOCK_HTTP_PORT: "8000",
-    };
-  }
+  // Forward Worker vars/secrets into the container's process environment so
+  // auth.py can pick up the Clerk OAuth configuration. Read from the
+  // `cloudflare:workers` global `env` (class fields cannot see the fetch env).
+  envVars = {
+    NEURODOCK_AUTH_PROVIDER: env.NEURODOCK_AUTH_PROVIDER,
+    NEURODOCK_PUBLIC_URL: env.NEURODOCK_PUBLIC_URL,
+    NEURODOCK_CLERK_DOMAIN: env.NEURODOCK_CLERK_DOMAIN,
+    NEURODOCK_CLERK_CLIENT_ID: env.NEURODOCK_CLERK_CLIENT_ID,
+    NEURODOCK_CLERK_CLIENT_SECRET: env.NEURODOCK_CLERK_CLIENT_SECRET ?? "",
+    // The container binds all interfaces; the Worker is the only ingress.
+    NEURODOCK_HTTP_HOST: "0.0.0.0",
+    NEURODOCK_HTTP_PORT: "8000",
+  };
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Cloudflare.Env): Promise<Response> {
     const container = getContainer(env.NEURODOCK_REMOTE, "neurodock-remote");
     return container.fetch(request);
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Cloudflare.Env>;
