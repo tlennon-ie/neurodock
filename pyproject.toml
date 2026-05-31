@@ -96,6 +96,12 @@ ignore_missing_imports = true
 module = "sqlite_vec.*"
 ignore_missing_imports = true
 
+# libsql is an optional backing for the cognitive graph (ADR 0010 Phases C/D)
+# and ships without a py.typed marker. Imported lazily inside LibSqlStorage.
+[[tool.mypy.overrides]]
+module = "libsql.*"
+ignore_missing_imports = true
+
 [[tool.mypy.overrides]]
 module = "fastembed.*"
 ignore_missing_imports = true

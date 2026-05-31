@@ -38,6 +38,14 @@ test = [
 vec = [
     "sqlite-vec>=0.1.6",
 ]
+# libsql is an optional backing for the hosted (ADR 0010 Phase C) and
+# bring-your-own-store (Phase D) deployments. The default local stdio install
+# uses SQLite and does NOT require this client; it is imported lazily inside
+# LibSqlStorage so the network DB client is only pulled when this extra is
+# installed.
+libsql = [
+    "libsql>=0.1.0",
+]
 
 [project.scripts]
 neurodock-mcp-cognitive-graph = "neurodock_mcp_cognitive_graph.server:main"
