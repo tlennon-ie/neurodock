@@ -327,7 +327,7 @@ neurodock/
 
 **Public preview shipped.** All three substrate pillars (cognitive,
 communication, guardrails) are built, on `main`, and installable from
-npm + PyPI. Latest substrate tag: `v0.2.4`.
+npm + PyPI. Latest substrate tag: `v0.7.3`.
 
 ### MCP servers (PyPI)
 
