@@ -40,7 +40,7 @@ async def _call(app: Any, tool: str, args: dict[str, Any]) -> dict[str, Any]:
 def _output_schema(schemas: dict[str, dict[str, Any]], tool: str) -> dict[str, Any]:
     """Extract the output sub-schema and inline ``$defs`` for validation."""
     full = schemas[tool]
-    output = full["properties"]["output"]
+    output: dict[str, Any] = full["properties"]["output"]
     if "$defs" in full:
         output = {**output, "$defs": full["$defs"]}
     return output
@@ -53,7 +53,9 @@ async def test_lists_all_four_tools() -> None:
     # Initialise the clock directly with a tz-aware instant for the test.
     from datetime import datetime
 
-    clock._now = datetime(2026, 5, 15, 9, 14, 22, tzinfo=UTC)  # type: ignore[attr-defined]
+    # The attr-defined ignore is only needed when mypy treats the package as
+    # untyped (CI's whole-tree run); unused-ignore keeps it valid otherwise.
+    clock._now = datetime(2026, 5, 15, 9, 14, 22, tzinfo=UTC)  # type: ignore[attr-defined, unused-ignore]
     app = build_app(storage, clock)
     tools = await app.list_tools()
     names = {t.name for t in tools}
