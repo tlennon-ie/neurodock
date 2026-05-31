@@ -3,12 +3,13 @@ title: Privacy Policy
 description: What NeuroDock does and does not do with your data — local-first by default, and exactly what transits the optional hosted remote server.
 ---
 
-> **Last updated:** 2026-05-30
+> **Last updated:** 2026-05-31
 
 NeuroDock is a **local-first cognitive substrate**. The short version: by default,
 nothing about you leaves your machine. This page explains that precisely, and
-states exactly what happens in the one case where data does cross the network —
-the optional hosted remote server.
+states exactly what happens in the two cases where data can cross the network: the
+optional hosted remote server, and — only if you choose it — optional hosted storage
+for your own data.
 
 :::tip[Commitment]
 **We never track silently.** There is no telemetry, no analytics, no remote
@@ -70,6 +71,51 @@ choose to connect to it, these commitments apply:
   store your credentials.
 - **Transport.** All remote traffic is encrypted in transit (HTTPS only).
 
+## Optional hosted storage for your own data
+
+By default, NeuroDock stores nothing about you anywhere but your own device, and
+anonymous or non-opted-in sessions store nothing at all. The stateful tools — your
+cognitive graph, your session and timing state, and your profile — are local-only
+unless you explicitly opt in.
+
+This hosted-storage option is being introduced. Until it is available to you,
+everything stays on the stateless, local-first path described above. When it is
+available, opting in is a deliberate, separate step that asks for your explicit
+consent and states what will be stored, where, and how to delete it. If you do
+nothing, nothing changes.
+
+When you opt in, you choose where your data lives:
+
+- **Hosted per-user storage.** Your cognitive graph, session state, and profile are
+  stored on our server, kept separate from every other user's, tied to your sign-in
+  identity, and encrypted at rest. No other user can read it, and we never combine it
+  with anyone else's.
+- **Bring-your-own-storage.** You connect your own database (a libSQL or
+  Turso-compatible URL and token). Your data lives in your database; we store none of
+  it and only read and write to the database you point us at.
+
+### Neurotype data and consent
+
+Self-identified neurotype information is sensitive personal data — under the GDPR it
+is special-category data. We do not store it on our server unless you opt in to hosted
+per-user storage and give explicit consent for that purpose. With bring-your-own-storage
+it never reaches us; with the default local install it never leaves your device. We do
+not require a diagnosis and never verify your neurotype against any third party.
+
+### Keeping or deleting your data
+
+- **Hosted per-user storage:** you can delete your stored data at any time, and on
+  account deletion; we then drop it from our server and keep no aggregate copy.
+- **Bring-your-own-storage:** disconnect at any time. We store nothing, so there is
+  nothing on our side to delete; your data stays in your database.
+- **Local install:** delete the files in `~/.neurodock/` and the data is gone.
+
+### Where hosted data is held
+
+If you use hosted per-user storage, your data is held in a defined region, stated
+alongside the consent step at opt-in time. Any change to data residency will be
+recorded in this policy and in the public repository history.
+
 ## What we never do
 
 - We never sell or rent your data.
@@ -81,9 +127,10 @@ choose to connect to it, these commitments apply:
 ## Your control and deletion
 
 Because the local install keeps everything on your device, **you are in control**:
-delete the files in `~/.neurodock/` and the data is gone. The hosted remote server
-stores no personal content, so there is nothing for us to retain or delete on your
-behalf.
+delete the files in `~/.neurodock/` and the data is gone. The stateless hosted remote
+server stores no personal content, so there is nothing for us to retain or delete on
+your behalf. If you opt in to hosted storage (a forthcoming option), see "Optional
+hosted storage for your own data" above for what is kept and how to remove it.
 
 ## Children
 

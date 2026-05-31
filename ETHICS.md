@@ -31,9 +31,16 @@ fired.
 
 ### 4. We do not aggregate detection events
 
-Guardrail firings stay on the user's machine. We do not phone home, we do
-not build population statistics from real users, and we do not publish
-dashboards of detector activity. Local-first by design.
+This commitment is absolute and is not affected by any hosted option. We do
+not phone home, we do not build population statistics from real users, and we
+do not publish dashboards of detector activity. Detection events are never
+pooled across users — not in the local install, and not in any hosted mode.
+
+Guardrail firings stay on the user's machine by default. A user may opt in to
+hosted state (see "On data" below), in which case that user's own data is
+stored for that user alone — isolated per identity, encrypted at rest, and
+deletable by them. Even then, nothing is aggregated: one user's events are
+never combined with another's. Local-first remains the default.
 
 ### 5. False positives are defects
 
@@ -44,10 +51,25 @@ the changelog and the relevant ADR.
 
 ## On data
 
-NeuroDock is local-first. No telemetry runs by default; no detection event
-leaves the user's machine without an explicit per-scope consent action.
-Heuristics, thresholds, and rule sets are part of the source tree — not
-hidden weights and not server-side configuration.
+NeuroDock is local-first by default. No telemetry runs; no detection event
+and no personal data leaves the user's machine without an explicit per-scope
+consent action. Heuristics, thresholds, and rule sets are part of the source
+tree — not hidden weights and not server-side configuration.
+
+Hosted state is strictly opt-in (a forthcoming option; the default is, and
+remains, local). A user who wants the full tool suite without a local install
+may opt in to hosted stateful tools (cognitive graph, session state, profile),
+and chooses where that state lives:
+
+- Hosted per-user storage — isolated per user identity, encrypted at rest,
+  and deletable by the user at any time.
+- Bring-your-own-storage — the user supplies their own database; NeuroDock
+  stores nothing.
+
+Neither mode changes principle 4: hosted state is per-user and is never
+aggregated across users. Opting in requires explicit, informed consent that
+states what is stored, where, and how to delete it. The default — and the
+recommended path — remains local-first, with data on the user's device.
 
 ## On self-identification
 

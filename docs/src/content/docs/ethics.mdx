@@ -8,7 +8,7 @@ description: How NeuroDock approaches clinical safety, consent, and the limits o
 NeuroDock's clinical guardrails layer prevents AI from amplifying rumination, hyperfocus, and sycophancy. Those interventions sit on top of five ethics principles that govern the whole project.
 
 :::tip[Commitment]
-**We never track silently.** Every signal stays on the user's machine. There is no remote aggregation, anonymised or otherwise.
+**We never track silently.** Every signal stays on your machine by default. Hosted state is strictly opt-in, isolated per user, and never aggregated — there is no remote aggregation of detection events, anonymised or otherwise.
 :::
 
 ## The five principles
@@ -16,7 +16,7 @@ NeuroDock's clinical guardrails layer prevents AI from amplifying rumination, hy
 1. **We never claim to treat any condition.** NeuroDock is infrastructure. It is not therapy, not medical advice, not a substitute for clinical care.
 2. **We never block a user's action without their pre-configured consent.** Guardrails surface signals and slow things down; they do not refuse. Every detector is overridable.
 3. **Detection heuristics are public and auditable.** Anyone can read the source, the thresholds, and the test fixtures. There is no "AI safety" black box that the user cannot inspect.
-4. **We do not aggregate detection events into population-level data.** Every signal stays on the user's machine.
+4. **We do not aggregate detection events into population-level data.** This is absolute. Every signal stays on your machine by default; hosted state, if you opt in, is stored per-user and is never pooled across users.
 5. **False positives are sometimes harmful; we log when surfaced and adjust with the clinical advisory board.** A nudge that fires when it should not be silent costs trust. The clinical advisory board reviews thresholds quarterly.
 
 :::tip[Commitment]
