@@ -1,6 +1,6 @@
 [project]
 name = "neurodock-mcp-guardrail"
-version = "0.0.3"
+version = "0.0.4"
 description = "NeuroDock guardrail MCP server — rumination, hyperfocus, and sycophancy detection."
 readme = "README.md"
 requires-python = ">=3.11"

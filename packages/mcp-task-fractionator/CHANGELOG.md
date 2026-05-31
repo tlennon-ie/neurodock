@@ -4,7 +4,9 @@ All notable changes to this package will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unreleased]
+## [0.0.4] - 2026-05-31
+
+- Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.
 
 ### Added — opt-in HTTP transport (ADR 0009 Phase 2)
 

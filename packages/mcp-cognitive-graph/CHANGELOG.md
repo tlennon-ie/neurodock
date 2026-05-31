@@ -6,6 +6,10 @@ to [semantic versioning](https://semver.org/spec/v2.0.0.html). Schemas under
 `schemas/` are versioned independently against `v0.1.0` of the contract; the
 package implements that contract.
 
+## [0.0.5] - 2026-05-31
+
+- Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.
+
 ## [0.0.4] — 2026-05-24
 
 ### Changed

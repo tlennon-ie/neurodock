@@ -3,7 +3,7 @@
   "name": "io.github.tlennon-ie/neurodock-mcp-chronometric",
   "title": "NeuroDock Chronometric",
   "description": "Externalises time-of-day, session boundaries, and break prompts for time-blind users.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "websiteUrl": "https://neurodock.org/",
   "repository": {
     "url": "https://github.com/tlennon-ie/neurodock",
@@ -15,7 +15,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "neurodock-mcp-chronometric",
-      "version": "0.0.2",
+      "version": "0.0.3",
       "runtimeHint": "uvx",
       "transport": {
         "type": "stdio"

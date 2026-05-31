@@ -5,6 +5,10 @@ All notable changes to `neurodock-mcp-chronometric` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning.
 
+## [0.0.3] - 2026-05-31
+
+- Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.
+
 ## [0.0.2] - 2026-05-22
 
 ### Changed
