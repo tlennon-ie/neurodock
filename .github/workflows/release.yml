@@ -193,10 +193,12 @@ jobs:
         run: |
           set -u
           published=0; skipped=0; failed=0
-          for sj in packages/mcp-*/server.json; do
+          # Matches the 5 stdio servers (packages/mcp-*) and the hosted remote
+          # server (packages/remote, a `remotes` entry — no PyPI package needed).
+          for sj in packages/*/server.json; do
             pkg_dir=$(dirname "$sj")
-            # Keep server.json in lockstep with the package's pyproject version
-            # (exactly what the pypi job built and published).
+            # Keep server.json in lockstep with the package's pyproject version.
+            # For the remote server this updates only .version (it has no .packages).
             ver=$(grep -m1 '^version = ' "$pkg_dir/pyproject.toml" | cut -d'"' -f2)
             tmp=$(mktemp)
             jq --arg v "$ver" '.version = $v | (.packages[]?.version) |= $v' "$sj" > "$tmp" && mv "$tmp" "$sj"
