@@ -46,6 +46,9 @@ Inspect it with the MCP Inspector pointed at `http://127.0.0.1:8000/mcp`.
 | `NEURODOCK_CLERK_DOMAIN`                             | —           | `clerk`: your Clerk instance domain (e.g. `your-app.clerk.accounts.dev`).               |
 | `NEURODOCK_CLERK_CLIENT_ID`                          | —           | `clerk`: OAuth application client ID.                                                   |
 | `NEURODOCK_CLERK_CLIENT_SECRET`                      | —           | `clerk`: OAuth client secret (set as a secret, not plaintext).                          |
+| `NEURODOCK_CLERK_SECRET_KEY`                         | —           | BYOS (ADR 0010 D): Clerk Backend API key; persists the per-user connection pointer.     |
+| `NEURODOCK_STATE_MASTER_KEY`                         | —           | BYOS (ADR 0010 D): master key that encrypts the BYOS auth token at rest.                |
+| `NEURODOCK_GRAPH_DISABLE_EMBEDDINGS`                 | `1` (image) | BYOS: keeps the hosted graph lean (no fastembed). Set in the Dockerfile.                |
 | `NEURODOCK_AUTHKIT_DOMAIN`                           | —           | `workos`: your AuthKit domain.                                                          |
 | `NEURODOCK_OAUTH_ISSUER` / `_JWKS_URI` / `_AUDIENCE` | —           | `jwt`: generic OIDC resource-server config.                                             |
 
@@ -87,6 +90,10 @@ fronted by a thin Worker ([worker/index.ts](worker/index.ts)) that owns the
    ```bash
    npm install
    npx wrangler secret put NEURODOCK_CLERK_CLIENT_SECRET   # paste the secret
+   # Optional — enable the opt-in BYOS memory tools (ADR 0010 Phase D). Without
+   # these two the tools stay visible but un-backed (sign-in/connect refusal):
+   npx wrangler secret put NEURODOCK_CLERK_SECRET_KEY      # Clerk Backend API key
+   npx wrangler secret put NEURODOCK_STATE_MASTER_KEY      # token-encryption master key
    npx wrangler deploy                                     # builds ../Dockerfile, pushes, deploys
    ```
 

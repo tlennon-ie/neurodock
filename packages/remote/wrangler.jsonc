@@ -36,8 +36,13 @@
   "routes": [{ "pattern": "mcp.neurodock.org", "custom_domain": true }],
 
   // Non-secret runtime config forwarded into the container (see worker/index.ts).
-  // The secret (NEURODOCK_CLERK_CLIENT_SECRET) is NOT here — set it with
-  //   npx wrangler secret put NEURODOCK_CLERK_CLIENT_SECRET
+  // Secrets are NOT here — set each with `npx wrangler secret put <NAME>`:
+  //   NEURODOCK_CLERK_CLIENT_SECRET   — OAuth client secret (auth).
+  //   NEURODOCK_CLERK_SECRET_KEY      — Clerk Backend API key (ADR 0010 Phase D:
+  //                                     persists the per-user BYOS connection).
+  //   NEURODOCK_STATE_MASTER_KEY      — encrypts the BYOS auth token at rest.
+  // Without the last two, the opt-in memory tools are visible but un-backed:
+  // every call returns the structured sign-in/connect refusal (ADR 0010 §4).
   "vars": {
     "NEURODOCK_AUTH_PROVIDER": "clerk",
     "NEURODOCK_PUBLIC_URL": "https://mcp.neurodock.org",
