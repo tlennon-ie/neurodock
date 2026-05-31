@@ -38,6 +38,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from neurodock_remote.auth import build_auth_provider
+from neurodock_remote.prompts import register_prompts
 from neurodock_remote.transport import resolve_bind
 
 SERVER_NAME = "neurodock-remote"
@@ -91,6 +92,10 @@ def build_combined_server() -> FastMCP[Any]:
     # http_mode=True registers ONLY `decompose`; `next_one` (reads the local
     # cognitive graph) is omitted entirely.
     combined.mount(build_task_fractionator_server(http_mode=True))
+
+    # Skill-style MCP prompts (ADR 0010, Phase A) — stateless entry points that
+    # guide the model to the matching hosted tool. No personal data.
+    register_prompts(combined)
 
     @combined.custom_route("/health", methods=["GET"])
     async def health_check(request: Request) -> JSONResponse:

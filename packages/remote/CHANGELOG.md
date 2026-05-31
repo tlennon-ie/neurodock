@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   (`worker/index.ts`) that fronts `mcp.neurodock.org` and proxies to the container,
   `package.json` + `tsconfig.json`, and a deploy runbook in the README. Verified by
   docs; first `wrangler deploy` is the validation step.
+- Skill-style MCP **prompts** (ADR 0010, Phase A): six stateless entry points
+  (`translate-incoming`, `check-tone`, `rewrite-outgoing`, `brief-meeting`,
+  `decompose-task`, `check-rumination`) that guide the model to the matching hosted
+  tool. No personal data; pinned by tests against `REMOTE_PROMPT_NAMES`.
 
 ### Fixed
 

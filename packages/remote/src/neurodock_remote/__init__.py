@@ -15,5 +15,12 @@ from neurodock_remote.app import (
     build_combined_server,
     create_app,
 )
+from neurodock_remote.prompts import REMOTE_PROMPT_NAMES, register_prompts
 
-__all__ = ["REMOTE_TOOL_NAMES", "build_combined_server", "create_app"]
+__all__ = [
+    "REMOTE_PROMPT_NAMES",
+    "REMOTE_TOOL_NAMES",
+    "build_combined_server",
+    "create_app",
+    "register_prompts",
+]
