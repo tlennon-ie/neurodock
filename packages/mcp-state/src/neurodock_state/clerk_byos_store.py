@@ -31,16 +31,12 @@ stdio install, or unit tests that only exercise the in-memory store).
 
 from __future__ import annotations
 
-import base64
-import hashlib
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from neurodock_state.byos_connection_store import Connection
+from neurodock_state.crypto import MasterKeyError, TokenCipher
 from neurodock_state.identity import UserKey
-
-if TYPE_CHECKING:  # pragma: no cover - typing only
-    from cryptography.fernet import Fernet
 
 # The single key under which the BYOS connection lives in a user's Clerk
 # private_metadata. Namespaced so it never collides with other app metadata.
@@ -56,19 +52,6 @@ class ByosStoreConfigError(RuntimeError):
 
 class ByosStoreBackendError(RuntimeError):
     """The Clerk Backend API call failed (network, auth, or unexpected shape)."""
-
-
-def _derive_fernet(master_key: str) -> Fernet:
-    """Build a :class:`Fernet` from an arbitrary-length master-key string.
-
-    Fernet requires a 32-byte url-safe-base64 key. We derive one deterministically
-    from the operator-supplied master key with SHA-256 so the operator can use any
-    sufficiently strong secret without having to pre-format it.
-    """
-    from cryptography.fernet import Fernet
-
-    digest = hashlib.sha256(master_key.encode("utf-8")).digest()
-    return Fernet(base64.urlsafe_b64encode(digest))
 
 
 class ClerkMetadataByosStore:
@@ -93,7 +76,9 @@ class ClerkMetadataByosStore:
         self._secret_key = secret
         # Build the cipher eagerly so a broken `cryptography` install fails at
         # construction, not mid-request. (Lazy import keeps module import safe.)
-        self._fernet = _derive_fernet(master)
+        # The cipher derivation is shared with the hosted Turso token store via
+        # `neurodock_state.crypto`, so on-disk Phase D tokens decrypt unchanged.
+        self._cipher = TokenCipher(master)
         self._client: Any | None = None
 
     # -- Clerk client (lazy) ---------------------------------------------
@@ -115,14 +100,12 @@ class ClerkMetadataByosStore:
     # -- token encryption ------------------------------------------------
 
     def _encrypt(self, token: str) -> str:
-        return self._fernet.encrypt(token.encode("utf-8")).decode("ascii")
+        return self._cipher.encrypt(token)
 
     def _decrypt(self, blob: str) -> str:
-        from cryptography.fernet import InvalidToken
-
         try:
-            return self._fernet.decrypt(blob.encode("ascii")).decode("utf-8")
-        except InvalidToken as exc:
+            return self._cipher.decrypt(blob)
+        except MasterKeyError as exc:
             raise ByosStoreBackendError(
                 f"stored BYOS auth token could not be decrypted (wrong {_MASTER_KEY_ENV}?)"
             ) from exc

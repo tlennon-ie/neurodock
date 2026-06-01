@@ -21,13 +21,16 @@ test = [
     "pytest>=8.3.0",
     "pytest-asyncio>=1.3.0",
 ]
-# ADR 0010 Phase D — the Clerk-metadata BYOS store. Both are imported lazily
-# inside `clerk_byos_store`, so the base package stays dependency-light and
-# importable without them; the hosted image installs this extra
-# (`neurodock-state[clerk]`). `cryptography` encrypts the BYOS auth token at rest.
+# ADR 0010 Phases C/D — the Clerk-metadata stores (BYOS connection + storage
+# preference) and the Turso Platform client. All are imported lazily, so the base
+# package stays dependency-light and importable without them; the hosted image
+# installs this extra (`neurodock-state[clerk]`). `cryptography` encrypts the
+# per-user DB/auth tokens at rest; `httpx` drives the Turso Platform API (create /
+# token / destroy the per-user hosted database).
 clerk = [
     "clerk-backend-api>=2.0",
     "cryptography>=42.0",
+    "httpx>=0.27",
 ]
 
 [build-system]
