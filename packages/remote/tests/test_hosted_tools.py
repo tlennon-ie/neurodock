@@ -262,6 +262,70 @@ def test_switch_byos_to_hosted(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) 
     assert platform.created == [_database_name(alice)]
 
 
+def test_switch_byos_to_hosted_clears_stale_byos_pointer(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Regression (security review, finding 3): enabling hosted while a BYOS
+    # connection exists must drop the stale BYOS pointer, so it cannot linger and
+    # route a later write to the old database after the mode switched to hosted.
+    server, preferences, connections, _platform = _server(tmp_path)
+    alice = UserKey(sub="user_alice")
+
+    with _as_user(monkeypatch, "user_alice"):
+        _call(server, "connect_byos_storage", {"libsql_url": f"file:{tmp_path / 'alice.db'}"})
+        assert connections.get(alice) is not None
+        _call(server, "enable_hosted_storage", {})
+
+    assert preferences.get(alice).mode == "hosted"  # type: ignore[union-attr]
+    # The BYOS connection pointer is gone — not left dangling.
+    assert connections.get(alice) is None
+
+
+def test_connect_byos_refused_when_hosted_active_so_db_is_not_orphaned(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Regression (security review, finding 1): a hosted user calling
+    # connect_byos_storage must be refused, so the hosted Turso database is never
+    # silently orphaned (it holds their data and is billable). They must run
+    # disable_and_erase_storage first.
+    server, preferences, connections, platform = _server(tmp_path)
+    alice = UserKey(sub="user_alice")
+
+    with _as_user(monkeypatch, "user_alice"):
+        _call(server, "enable_hosted_storage", {})
+        payload = _call(
+            server, "connect_byos_storage", {"libsql_url": f"file:{tmp_path / 'alice.db'}"}
+        )
+
+    assert payload["error"] == "HOSTED_STORAGE_ACTIVE"
+    # Still hosted; the hosted DB was neither destroyed nor orphaned, and no BYOS
+    # pointer was written behind it.
+    assert preferences.get(alice).mode == "hosted"  # type: ignore[union-attr]
+    assert platform.destroyed == []
+    assert connections.get(alice) is None
+
+
+def test_disconnect_storage_refused_when_hosted_active(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    # Regression (security review, finding 2): disconnect_storage only clears a
+    # BYOS pointer; a hosted user must be refused (and pointed at
+    # disable_and_erase_storage) so the hosted database is not orphaned.
+    server, preferences, _connections, platform = _server(tmp_path)
+    alice = UserKey(sub="user_alice")
+
+    with _as_user(monkeypatch, "user_alice"):
+        _call(server, "enable_hosted_storage", {})
+        payload = _call(server, "disconnect_storage", {})
+        status = _call(server, "storage_status", {})
+
+    assert payload["error"] == "HOSTED_STORAGE_ACTIVE"
+    # Preference untouched (still hosted) and the hosted DB intact.
+    assert preferences.get(alice).mode == "hosted"  # type: ignore[union-attr]
+    assert status == {"authenticated": True, "mode": "hosted", "connected": True}
+    assert platform.destroyed == []
+
+
 def test_anonymous_is_refused_and_nothing_is_provisioned(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

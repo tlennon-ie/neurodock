@@ -52,6 +52,10 @@ INVALID_URL = "INVALID_STORAGE_URL"
 CONNECT_FAILED = "STORAGE_CONNECT_FAILED"
 HOSTED_UNAVAILABLE = "HOSTED_STORAGE_UNAVAILABLE"
 PROVISION_FAILED = "HOSTED_PROVISION_FAILED"
+# Refused when a destructive mode switch would orphan a hosted Turso database
+# (which holds the user's data and is billable). The user must explicitly run
+# disable_and_erase_storage first — we never silently drop a hosted-DB pointer.
+HOSTED_ACTIVE = "HOSTED_STORAGE_ACTIVE"
 
 # The consent disclosure surfaced when a user enables hosted storage. Keep in
 # step with HostedTursoResolver.CONSENT_VERSION when the wording materially
@@ -150,6 +154,11 @@ def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
                     PROVISION_FAILED,
                     f"could not provision your hosted database: {exc}",
                 ) from exc
+            # Switching BYOS → hosted: drop any stale BYOS connection pointer so it
+            # cannot linger. Safe (and not a refusal like the reverse switch): the
+            # BYOS pointer references the user's OWN database, so nothing of theirs
+            # is destroyed and no NeuroDock-provisioned resource is orphaned.
+            state.connections.delete(user)
         except StorageUnavailableError as exc:
             return exc.to_payload()
         except _ToolInputError as exc:
@@ -178,6 +187,19 @@ def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
     def connect_byos_storage(libsql_url: str, auth_token: str | None = None) -> dict[str, Any]:
         try:
             user = state.require_user()
+            # Refuse if hosted storage is active: switching to BYOS here would
+            # overwrite the preference and ORPHAN the user's hosted Turso database
+            # (their data would persist, unreferenced and billable). Make the user
+            # destroy it explicitly first.
+            existing = state.preferences.get(user)
+            if existing is not None and existing.mode == "hosted":
+                raise _ToolInputError(
+                    HOSTED_ACTIVE,
+                    "You have NeuroDock-hosted storage enabled. Run "
+                    "disable_and_erase_storage first (it destroys your hosted "
+                    "database), then connect your own. This prevents silently "
+                    "orphaning your hosted data.",
+                )
             url = _validate_url(libsql_url)
             token = (
                 auth_token.strip() if isinstance(auth_token, str) and auth_token.strip() else None
@@ -251,9 +273,23 @@ def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
     def disconnect_storage() -> dict[str, Any]:
         try:
             user = state.require_user()
+            # Refuse for hosted users: clearing the preference here would leave the
+            # NeuroDock-provisioned Turso database orphaned (their data persists,
+            # billable). disconnect_storage only clears a BYOS connection pointer;
+            # hosted removal must go through disable_and_erase_storage (destroys it).
+            preference = state.preferences.get(user)
+            if preference is not None and preference.mode == "hosted":
+                raise _ToolInputError(
+                    HOSTED_ACTIVE,
+                    "You have NeuroDock-hosted storage. disconnect_storage only "
+                    "clears a bring-your-own connection; to remove hosted storage "
+                    "use disable_and_erase_storage (it destroys your hosted database).",
+                )
             state.connections.delete(user)
             state.preferences.clear(user)
         except StorageUnavailableError as exc:
+            return exc.to_payload()
+        except _ToolInputError as exc:
             return exc.to_payload()
         return {
             "status": "disconnected",
