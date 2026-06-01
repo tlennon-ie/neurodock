@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 # NeuroDock remote MCP server — the stateless tool surface (ADR 0008/0009) plus the
-# opt-in BYOS memory surface (ADR 0010 Phase D). Anonymous/non-opted-in sessions stay
-# fully stateless; opted-in users' data lives in their OWN database, not on NeuroDock.
+# opt-in memory surface (ADR 0010 Phases C/D). Anonymous/non-opted-in sessions stay
+# fully stateless; opted-in users' data lives either in a NeuroDock-provisioned
+# per-user Turso database (hosted) or in their OWN database (BYOS).
 #
 # Build from the REPO ROOT (the workspace graph must be visible):
 #   docker build -f packages/remote/Dockerfile -t neurodock-remote .
@@ -24,12 +25,13 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 COPY packages/ ./packages/
 
-# Install neurodock-remote and its workspace dependencies. As of ADR 0010 Phase D
-# this includes neurodock-state[clerk] and neurodock-mcp-cognitive-graph[libsql]
-# (the opt-in BYOS surface). The chronometric server and task-fractionator
-# `next_one` remain stdio-only and are NOT installed. The cognitive-graph's heavy
-# fastembed dependency is never *loaded* at runtime because embeddings are
-# disabled below — the import is short-circuited by NEURODOCK_GRAPH_DISABLE_EMBEDDINGS.
+# Install neurodock-remote and its workspace dependencies. As of ADR 0010 Phases
+# C/D this includes neurodock-state[clerk] (Clerk Backend SDK + cryptography +
+# httpx for the Turso Platform API) and neurodock-mcp-cognitive-graph[libsql] (the
+# opt-in memory surface). The chronometric server and task-fractionator `next_one`
+# remain stdio-only and are NOT installed. The cognitive-graph's heavy fastembed
+# dependency is never *loaded* at runtime because embeddings are disabled below —
+# the import is short-circuited by NEURODOCK_GRAPH_DISABLE_EMBEDDINGS.
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --package neurodock-remote
 

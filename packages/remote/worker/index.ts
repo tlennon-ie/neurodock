@@ -31,10 +31,17 @@ declare global {
       NEURODOCK_CLERK_CLIENT_SECRET?: string;
       // ADR 0010 Phase D — opt-in BYOS storage. The Clerk Backend API key
       // (persists the per-user connection in Clerk private_metadata) and the
-      // master key that encrypts the BYOS auth token at rest. Without both, the
-      // opt-in tools are visible but return the sign-in/connect refusal.
+      // master key that encrypts the BYOS/hosted auth token at rest. Without both,
+      // the opt-in tools are visible but return the sign-in/enable refusal.
       NEURODOCK_CLERK_SECRET_KEY?: string;
       NEURODOCK_STATE_MASTER_KEY?: string;
+      // ADR 0010 Phase C — opt-in NeuroDock-hosted storage. The Turso Platform
+      // API token + organization slug let NeuroDock provision a private Turso
+      // database per user; the group is where those databases are created.
+      // Without the token + org, enable_hosted_storage is refused (BYOS still works).
+      NEURODOCK_TURSO_PLATFORM_TOKEN?: string;
+      NEURODOCK_TURSO_ORG?: string;
+      NEURODOCK_TURSO_GROUP?: string;
     }
   }
 }
@@ -56,9 +63,15 @@ export class NeurodockRemoteContainer extends Container {
     NEURODOCK_CLERK_CLIENT_SECRET: env.NEURODOCK_CLERK_CLIENT_SECRET ?? "",
     // ADR 0010 Phase D — BYOS storage secrets. Empty string when unset; the
     // server then leaves the opt-in tools un-backed (every call returns the
-    // sign-in/connect refusal) rather than failing to boot.
+    // sign-in/enable refusal) rather than failing to boot.
     NEURODOCK_CLERK_SECRET_KEY: env.NEURODOCK_CLERK_SECRET_KEY ?? "",
     NEURODOCK_STATE_MASTER_KEY: env.NEURODOCK_STATE_MASTER_KEY ?? "",
+    // ADR 0010 Phase C — NeuroDock-hosted storage. Empty string when unset; the
+    // server then refuses enable_hosted_storage (BYOS is unaffected) rather than
+    // failing to boot. NEURODOCK_TURSO_GROUP defaults to "default" in the app.
+    NEURODOCK_TURSO_PLATFORM_TOKEN: env.NEURODOCK_TURSO_PLATFORM_TOKEN ?? "",
+    NEURODOCK_TURSO_ORG: env.NEURODOCK_TURSO_ORG ?? "",
+    NEURODOCK_TURSO_GROUP: env.NEURODOCK_TURSO_GROUP ?? "",
     // The container binds all interfaces; the Worker is the only ingress.
     NEURODOCK_HTTP_HOST: "0.0.0.0",
     NEURODOCK_HTTP_PORT: "8000",

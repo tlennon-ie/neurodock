@@ -77,7 +77,9 @@ def test_opt_in_tools_are_present_in_the_listing() -> None:
     # The BYOS surface is visible (clients can discover it); access is gated at
     # call time, not by hiding the tools.
     assert OPT_IN_TOOL_NAMES == {
+        "enable_hosted_storage",
         "connect_byos_storage",
+        "disable_and_erase_storage",
         "disconnect_storage",
         "storage_status",
         "recall_entity",

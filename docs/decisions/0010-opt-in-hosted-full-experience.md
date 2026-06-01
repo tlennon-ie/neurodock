@@ -94,8 +94,19 @@ independently and now**.
 - **B. `StateStore` protocol** — abstract the cognitive-graph/chronometric/profile
   persistence behind a per-user store interface, keyed by Clerk `sub`. No behaviour
   change locally (the local stdio path keeps its on-disk SQLite store).
-- **C. Hosted per-user storage** — `HostedDurableObjectStore` (DO-per-user,
-  SQLite-backed), encryption at rest, opt-in consent + erasure endpoint.
+- **C. Hosted per-user storage** — _shipped_ as a **NeuroDock-provisioned Turso
+  database per user** rather than the originally-sketched DO-per-user store: the
+  hosted server provisions one Turso database per Clerk identity via the Turso
+  Platform API (`HostedTursoResolver` + `turso_platform` client), records explicit
+  consent, and resolves the same `LibSqlStorage` the BYOS path uses — so the two
+  modes share one backing class and one combined resolver. The Turso choice keeps
+  hosted and BYOS byte-for-byte identical at the SQL level and avoids a second
+  storage engine. The DB auth token is encrypted at rest with the operator master
+  key. `enable_hosted_storage` provisions (idempotent) + consents;
+  `disable_and_erase_storage` destroys the database + clears the preference.
+  **Open limitation:** a single operator-wide `NEURODOCK_STATE_MASTER_KEY` means
+  NeuroDock can technically decrypt a stored Turso token — see "Open questions"
+  (encryption key custody); per-user / envelope keys are a tracked follow-up.
 - **D. BYOS adapter** — `ByosLibsqlStore`; per-user connection config (supplied via a
   connect step / Clerk private_metadata) handled as a secret.
 - **E. Governance + docs** — privacy-policy rewrite, ETHICS.md amendment, clinical

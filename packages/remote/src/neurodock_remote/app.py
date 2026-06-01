@@ -1,24 +1,27 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 NeuroDock contributors.
-"""Combined remote MCP server (ADR 0008/0009 + ADR 0010 Phase D).
+"""Combined remote MCP server (ADR 0008/0009 + ADR 0010 Phases C + D).
 
 Composes the three STATELESS NeuroDock servers into a single Streamable HTTP
-endpoint, and (ADR 0010 Phase D) adds the OPT-IN BYOS surface:
+endpoint, and (ADR 0010 Phases C/D) adds the OPT-IN storage surface:
 
     translation        : translate_incoming, check_tone, rewrite_outgoing, brief_meeting
     guardrail          : check_rumination, check_hyperfocus, check_sycophancy
     task-fractionator  : decompose            (next_one is stdio/local only)
-    storage-admin      : connect_byos_storage, disconnect_storage, storage_status
+    storage-admin      : enable_hosted_storage, connect_byos_storage,
+                         disable_and_erase_storage, disconnect_storage, storage_status
     cognitive-graph    : recall_entity, record_fact, recall_decisions, weekly_rollup
 
 The stateless surface (:data:`STATELESS_TOOL_NAMES`) is ALWAYS present and
 unchanged. The opt-in surface (:data:`OPT_IN_TOOL_NAMES`) is *visible* to every
-client, but every cognitive-graph call routes through the per-user BYOS seam:
+client, but every cognitive-graph call routes through the per-user combined seam
+(hosted OR byos, by the user's recorded preference):
 
 - an anonymous / no-token caller gets ``STORAGE_NOT_AVAILABLE`` and nothing is
-  stored or read;
-- a signed-in but not-connected caller gets ``STORAGE_NOT_CONNECTED``;
-- a connected caller's data lives in THEIR OWN libSQL/Turso database — NeuroDock
+  stored, read, or provisioned;
+- a signed-in but storage-not-enabled caller gets ``STORAGE_NOT_CONNECTED``;
+- a hosted caller's data lives in a NeuroDock-provisioned per-user Turso database;
+- a BYOS caller's data lives in THEIR OWN libSQL/Turso database — NeuroDock
   persists nothing beyond the connection pointer.
 
 This privacy boundary is the point of the phase: anonymous and non-opted-in
@@ -50,7 +53,13 @@ from starlette.responses import JSONResponse
 
 from neurodock_remote.auth import build_auth_provider
 from neurodock_remote.prompts import register_prompts
-from neurodock_remote.state import ByosState, build_connection_store
+from neurodock_remote.state import (
+    ByosState,
+    build_connection_store,
+    build_preference_store,
+    build_turso_platform,
+    turso_group,
+)
 from neurodock_remote.tools.graph import register_graph_tools
 from neurodock_remote.tools.storage_admin import register_storage_admin_tools
 from neurodock_remote.transport import resolve_bind
@@ -77,16 +86,19 @@ STATELESS_TOOL_NAMES = frozenset(
     }
 )
 
-# The opt-in BYOS surface (ADR 0010 Phase D). These tools are visible to every
-# client, but storing/reading anything requires a signed-in account + connected
-# storage; the privacy boundary is enforced in the store-provider seam.
+# The opt-in storage surface (ADR 0010 Phases C/D). These tools are visible to
+# every client, but storing/reading anything requires a signed-in account + an
+# enabled storage mode (hosted or byos); the privacy boundary is enforced in the
+# store-provider seam.
 OPT_IN_TOOL_NAMES = frozenset(
     {
-        # storage-admin (hosted-only)
+        # storage-admin (hosted-only management surface)
+        "enable_hosted_storage",
         "connect_byos_storage",
+        "disable_and_erase_storage",
         "disconnect_storage",
         "storage_status",
-        # cognitive-graph (routed to the caller's own BYOS database)
+        # cognitive-graph (routed to the caller's hosted OR own BYOS database)
         "recall_entity",
         "record_fact",
         "recall_decisions",
@@ -102,28 +114,38 @@ _INSTRUCTIONS = (
     "messages and shapes outgoing ones; guardrail flags rumination, hyperfocus, and "
     "over-validation; decompose breaks a vague goal into atomic tasks — needs no "
     "account. The opt-in memory surface (recall_entity, record_fact, "
-    "recall_decisions, weekly_rollup) requires a signed-in account that has "
-    "connected its OWN database via connect_byos_storage: your graph data lives in "
-    "your database, never on NeuroDock. Anonymous sessions are fully stateless. "
-    "Session timing and the user profile are NOT available here — they live on the "
-    "local install."
+    "recall_decisions, weekly_rollup) requires a signed-in account that has enabled "
+    "storage: either NeuroDock-hosted (enable_hosted_storage provisions a private "
+    "per-user database) or bring-your-own (connect_byos_storage points at your OWN "
+    "database). Erase everything with disable_and_erase_storage. Anonymous sessions "
+    "are fully stateless and store nothing. Session timing and the user profile are "
+    "NOT available here — they live on the local install."
 )
 
 _LOG = logging.getLogger("neurodock_remote.app")
 
 
-def build_combined_server(connections: Any | None = None) -> FastMCP[Any]:
-    """Compose the stateless servers + opt-in BYOS surface into one MCP server.
+def build_combined_server(
+    connections: Any | None = None,
+    *,
+    preferences: Any | None = None,
+    platform: Any | None = None,
+) -> FastMCP[Any]:
+    """Compose the stateless servers + opt-in storage surface into one MCP server.
 
     ``mount`` (no namespace) keeps the original flat tool names, so the combined
     endpoint presents the same tool names the local servers do.
 
     ``connections`` is the per-user BYOS connection store
-    (:class:`~neurodock_state.byos_connection_store.ByosConnectionStore`). Tests
-    inject an in-memory store; in production it is built from the environment
-    (Clerk-metadata-backed). When ``None`` and no secrets are configured, the
-    opt-in tools are still registered but every storage operation returns the
-    structured "sign in / connect storage" refusal — nothing is ever stored.
+    (:class:`~neurodock_state.byos_connection_store.ByosConnectionStore`).
+    ``preferences`` is the per-user storage-preference store (records which mode —
+    hosted/byos/none — each user chose). ``platform`` is the Turso Platform client
+    used to provision hosted databases. Tests inject in-memory stores and a fake
+    platform client; in production all three are built from the environment.
+
+    When the secrets are absent, the opt-in tools are still registered but every
+    storage operation returns the structured refusal — nothing is ever stored or
+    provisioned — and hosted enablement reports that hosting is not configured.
     """
     combined: FastMCP[Any] = FastMCP(
         name=SERVER_NAME,
@@ -142,8 +164,8 @@ def build_combined_server(connections: Any | None = None) -> FastMCP[Any]:
     # guide the model to the matching hosted tool. No personal data.
     register_prompts(combined)
 
-    # Opt-in BYOS surface (ADR 0010 Phase D). The connection store may be missing
-    # (no secrets configured); the ByosState still answers every call with the
+    # Opt-in storage surface (ADR 0010 Phases C/D). The stores may be missing (no
+    # secrets configured); the ByosState still answers every call with the
     # structured refusal, so the privacy boundary holds with or without a backing.
     resolved_connections = (
         connections if connections is not None else build_connection_store(os.environ)
@@ -156,11 +178,29 @@ def build_combined_server(connections: Any | None = None) -> FastMCP[Any]:
         # so this stays empty in practice; it exists only so the tools register.
         resolved_connections = InMemoryByosConnectionStore()
         _LOG.warning(
-            "byos_storage_unbacked: no NEURODOCK_CLERK_SECRET_KEY/"
+            "storage_unbacked: no NEURODOCK_CLERK_SECRET_KEY/"
             "NEURODOCK_STATE_MASTER_KEY — opt-in tools are visible but cannot "
-            "persist; every call returns the sign-in/connect refusal (ADR 0010 §4)"
+            "persist; every call returns the sign-in/enable refusal (ADR 0010 §4)"
         )
-    state = ByosState(resolved_connections)
+
+    resolved_preferences = (
+        preferences if preferences is not None else build_preference_store(os.environ)
+    )
+    # Hosted provisioning is available only when the Turso platform secrets are
+    # set. Without them, enable_hosted_storage refuses up front; BYOS still works.
+    resolved_platform = platform if platform is not None else build_turso_platform(os.environ)
+    if resolved_platform is None:
+        _LOG.warning(
+            "hosted_storage_unconfigured: no NEURODOCK_TURSO_PLATFORM_TOKEN/"
+            "NEURODOCK_TURSO_ORG — enable_hosted_storage is refused; BYOS unaffected"
+        )
+
+    state = ByosState(
+        resolved_connections,
+        preferences=resolved_preferences,
+        platform=resolved_platform,
+        turso_group=turso_group(os.environ),
+    )
     register_storage_admin_tools(combined, state)
     register_graph_tools(combined, state)
 

@@ -12,13 +12,46 @@ the remote-safe tools:
 | `mcp-guardrail`         | `check_rumination`, `check_hyperfocus`, `check_sycophancy`              |
 | `mcp-task-fractionator` | `decompose` only                                                        |
 
+### Opt-in storage surface (ADR 0010 Phases C/D)
+
+The four cognitive-graph tools (`recall_entity`, `record_fact`,
+`recall_decisions`, `weekly_rollup`) are also exposed, but **gated**: they require
+a signed-in account that has **explicitly enabled** storage. Two modes coexist; a
+user is in exactly one at a time:
+
+| Tool                        | Mode   | What it does                                                                                                                                    |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enable_hosted_storage`     | hosted | NeuroDock provisions a **private per-user Turso database** and stores facts there. Returns the consent disclosure.                              |
+| `connect_byos_storage`      | byos   | You point at your **own** libSQL/Turso database; NeuroDock stores only the connection pointer.                                                  |
+| `disable_and_erase_storage` | → none | Hosted: **destroys** your Turso database. BYOS: clears the stored connection (your DB untouched). Either way the preference/consent is cleared. |
+| `disconnect_storage`        | → none | BYOS-only alias: clears the connection + preference. (Use `disable_and_erase_storage` to erase hosted.)                                         |
+| `storage_status`            | —      | Reports your mode (`hosted` \| `byos` \| `none`).                                                                                               |
+
+The mode is selected per user from their recorded **storage preference**; a
+single combined resolver routes each cognitive-graph call to the hosted or BYOS
+backing. The privacy boundary is unchanged from Phase D: an anonymous / no-token
+caller gets `STORAGE_NOT_AVAILABLE` and **nothing is stored, read, or
+provisioned**; a signed-in but not-enabled caller gets `STORAGE_NOT_CONNECTED`.
+
+> **Hosted requires a provisioned Turso org/group/token.** Set
+> `NEURODOCK_TURSO_PLATFORM_TOKEN` + `NEURODOCK_TURSO_ORG` (+ optional
+> `NEURODOCK_TURSO_GROUP`, default `default`, which must already exist in the
+> org). Without them `enable_hosted_storage` is refused and only BYOS is offered.
+
+> **Encryption-key custody (honest limitation).** Both the BYOS auth token and the
+> hosted Turso DB token are encrypted at rest with a single operator-wide
+> `NEURODOCK_STATE_MASTER_KEY`. That means NeuroDock can _technically_ decrypt a
+> stored token. This is the documented ADR 0010 open question; per-user / envelope
+> keys (so the operator cannot unilaterally read a user's DB token) are a tracked
+> follow-up. The on-disk format is unchanged either way, so a future scheme can
+> re-wrap without a data migration.
+
 ### What is deliberately NOT here
 
-The cognitive graph (personal facts), chronometric session state, the user
-profile (neurotype data), and task-fractionator's `next_one` (reads the local
-graph) are **never** mounted. They read or hold local state and stay strictly on
-the local stdio install. The boundary is enforced in code and pinned by tests
-against `REMOTE_TOOL_NAMES`.
+Chronometric session state, the user profile (neurotype data), and
+task-fractionator's `next_one` (reads the local graph) are **never** mounted. They
+hold local state and stay strictly on the local stdio install. The boundary is
+enforced in code and pinned by tests against `REMOTE_TOOL_NAMES`.
 
 > This is a **deploy artifact**, not a published package — it is not uploaded to
 > PyPI (the local install path via `@neurodock/cli` is unchanged). Local-only
@@ -46,9 +79,12 @@ Inspect it with the MCP Inspector pointed at `http://127.0.0.1:8000/mcp`.
 | `NEURODOCK_CLERK_DOMAIN`                             | —           | `clerk`: your Clerk instance domain (e.g. `your-app.clerk.accounts.dev`).               |
 | `NEURODOCK_CLERK_CLIENT_ID`                          | —           | `clerk`: OAuth application client ID.                                                   |
 | `NEURODOCK_CLERK_CLIENT_SECRET`                      | —           | `clerk`: OAuth client secret (set as a secret, not plaintext).                          |
-| `NEURODOCK_CLERK_SECRET_KEY`                         | —           | BYOS (ADR 0010 D): Clerk Backend API key; persists the per-user connection pointer.     |
-| `NEURODOCK_STATE_MASTER_KEY`                         | —           | BYOS (ADR 0010 D): master key that encrypts the BYOS auth token at rest.                |
-| `NEURODOCK_GRAPH_DISABLE_EMBEDDINGS`                 | `1` (image) | BYOS: keeps the hosted graph lean (no fastembed). Set in the Dockerfile.                |
+| `NEURODOCK_CLERK_SECRET_KEY`                         | —           | Storage (ADR 0010 C/D): Clerk Backend API key; persists the per-user storage pointer.   |
+| `NEURODOCK_STATE_MASTER_KEY`                         | —           | Storage (ADR 0010 C/D): master key that encrypts the BYOS/hosted DB token at rest.      |
+| `NEURODOCK_TURSO_PLATFORM_TOKEN`                     | —           | Hosted (ADR 0010 C): Turso Platform API token; provisions/destroys per-user databases.  |
+| `NEURODOCK_TURSO_ORG`                                | —           | Hosted (ADR 0010 C): Turso organization slug the hosted databases are created in.       |
+| `NEURODOCK_TURSO_GROUP`                              | `default`   | Hosted (ADR 0010 C): Turso group the hosted databases are created in (must exist).      |
+| `NEURODOCK_GRAPH_DISABLE_EMBEDDINGS`                 | `1` (image) | Storage: keeps the hosted graph lean (no fastembed). Set in the Dockerfile.             |
 | `NEURODOCK_AUTHKIT_DOMAIN`                           | —           | `workos`: your AuthKit domain.                                                          |
 | `NEURODOCK_OAUTH_ISSUER` / `_JWKS_URI` / `_AUDIENCE` | —           | `jwt`: generic OIDC resource-server config.                                             |
 
@@ -90,10 +126,14 @@ fronted by a thin Worker ([worker/index.ts](worker/index.ts)) that owns the
    ```bash
    npm install
    npx wrangler secret put NEURODOCK_CLERK_CLIENT_SECRET   # paste the secret
-   # Optional — enable the opt-in BYOS memory tools (ADR 0010 Phase D). Without
-   # these two the tools stay visible but un-backed (sign-in/connect refusal):
+   # Optional — enable the opt-in memory tools (ADR 0010 C/D). Without the next
+   # two the tools stay visible but un-backed (sign-in/enable refusal):
    npx wrangler secret put NEURODOCK_CLERK_SECRET_KEY      # Clerk Backend API key
    npx wrangler secret put NEURODOCK_STATE_MASTER_KEY      # token-encryption master key
+   # Optional — enable NeuroDock-hosted storage (ADR 0010 C). Also set
+   # NEURODOCK_TURSO_ORG (and NEURODOCK_TURSO_GROUP) in wrangler.jsonc `vars`.
+   # Without the token + org, enable_hosted_storage is refused; BYOS still works:
+   npx wrangler secret put NEURODOCK_TURSO_PLATFORM_TOKEN  # Turso Platform API token
    npx wrangler deploy                                     # builds ../Dockerfile, pushes, deploys
    ```
 

@@ -1,31 +1,40 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (c) 2026 NeuroDock contributors.
-"""Storage-admin tools for the hosted server (ADR 0010 Phase D).
+"""Storage-admin tools for the hosted server (ADR 0010 Phases C + D).
 
-Three tools let an authenticated user manage their own BYOS connection:
+An authenticated user manages their own storage through these tools. Two modes
+coexist; a user is in exactly one at a time, recorded in their storage preference:
 
-- ``connect_byos_storage(libsql_url, auth_token=None)`` — validate the URL,
-  smoke-test a connect+migrate against it, then persist the connection. Only a
-  database that actually accepts the schema is ever stored, so a user can never
-  end up with a "connected" pointer to a broken endpoint.
-- ``disconnect_storage()`` — delete the stored connection. NeuroDock then
-  retains nothing about the user's storage.
-- ``storage_status()`` — report the caller's mode and whether they are connected.
+- ``enable_hosted_storage()`` (Phase C) — capture explicit consent, set
+  mode="hosted", and have NeuroDock provision a private Turso database for the
+  user. Returns the disclosure text. Idempotent: re-enabling reuses the database.
+- ``connect_byos_storage(libsql_url, auth_token=None)`` (Phase D) — validate the
+  URL, smoke-test a connect+migrate, persist the connection, and set mode="byos".
+  Only a database that actually accepts the schema is ever stored.
+- ``disable_and_erase_storage()`` — hosted → destroy the user's Turso database;
+  byos → clear the stored connection. Either way the storage preference/consent
+  is cleared, so NeuroDock retains nothing.
+- ``disconnect_storage()`` — alias kept for Phase D compatibility: clears the
+  BYOS connection and preference (does NOT destroy a hosted DB; that is
+  ``disable_and_erase_storage``).
+- ``storage_status()`` — report the caller's mode (hosted | byos | none) and
+  whether storage is enabled.
 
-All three require an authenticated user. An anonymous caller receives the
-structured ``STORAGE_NOT_AVAILABLE`` refusal and nothing is stored or read.
+All require an authenticated user. An anonymous caller receives the structured
+``STORAGE_NOT_AVAILABLE`` refusal and nothing is stored, read, or provisioned.
 
-URL validation
---------------
+URL validation (BYOS)
+---------------------
 Only ``libsql://``, ``https://``, and ``file:`` URLs are accepted. ``file:`` is
-allowed for self-hosted / embedded single-user deployments and for tests; the
-hosted multi-tenant deployment will in practice receive ``libsql://`` Turso URLs.
+allowed for self-hosted / embedded single-user deployments and for tests.
 """
 
 from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING, Any
+
+from neurodock_state.storage_preference_store import StoragePreference
 
 from neurodock_remote.state import ByosState, StorageUnavailableError
 
@@ -41,14 +50,25 @@ _ALLOWED_SCHEMES = ("libsql://", "https://", "file:")
 
 INVALID_URL = "INVALID_STORAGE_URL"
 CONNECT_FAILED = "STORAGE_CONNECT_FAILED"
+HOSTED_UNAVAILABLE = "HOSTED_STORAGE_UNAVAILABLE"
+PROVISION_FAILED = "HOSTED_PROVISION_FAILED"
+
+# The consent disclosure surfaced when a user enables hosted storage. Keep in
+# step with HostedTursoResolver.CONSENT_VERSION when the wording materially
+# changes.
+_HOSTED_DISCLOSURE = (
+    "You are enabling NeuroDock-hosted storage. NeuroDock will provision a "
+    "private database (isolated to your account) and store your cognitive-graph "
+    "facts there. The database auth token is encrypted at rest. Your data is "
+    "never aggregated with other users' and never used for analytics. You can "
+    "erase everything at any time with disable_and_erase_storage, which destroys "
+    "the database and clears your stored preference. For maximum privacy, prefer "
+    "connect_byos_storage (your own database) or the local install instead."
+)
 
 
 def _validate_url(libsql_url: Any) -> str:
-    """Return a trimmed, scheme-checked URL or raise a structured error payload.
-
-    Raises:
-        StorageUnavailableError: never (auth is checked by the caller).
-    """
+    """Return a trimmed, scheme-checked URL or raise a structured error payload."""
     if not isinstance(libsql_url, str) or not libsql_url.strip():
         raise _ToolInputError(
             INVALID_URL,
@@ -65,7 +85,7 @@ def _validate_url(libsql_url: Any) -> str:
 
 
 class _ToolInputError(Exception):
-    """Bad tool input. Converted to a structured payload by the tool wrapper."""
+    """Bad tool input / operation failure. Converted to a payload by the wrapper."""
 
     def __init__(self, code: str, message: str) -> None:
         super().__init__(f"{code}: {message}")
@@ -101,7 +121,50 @@ def _smoke_test_connection(url: str, auth_token: str | None) -> None:
 
 
 def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
-    """Register connect / disconnect / status on the combined server."""
+    """Register the storage-admin tools on the combined server."""
+
+    @mcp.tool(
+        name="enable_hosted_storage",
+        description=(
+            "Enable NeuroDock-hosted storage: NeuroDock provisions a private "
+            "database (isolated to your account) and the memory tools store data "
+            "there. Records your explicit consent and returns a disclosure of what "
+            "is stored and how to erase it. Requires a signed-in NeuroDock account. "
+            "For maximum privacy use connect_byos_storage (your own database) instead."
+        ),
+    )
+    def enable_hosted_storage() -> dict[str, Any]:
+        try:
+            user = state.require_user()
+            if not state.hosted_available:
+                raise _ToolInputError(
+                    HOSTED_UNAVAILABLE,
+                    "Hosted storage is not configured on this server. Use "
+                    "connect_byos_storage with your own database instead.",
+                )
+            try:
+                database = state.hosted.provision(user)
+            except Exception as exc:  # provisioning failure → structured payload
+                _LOG.exception("enable_hosted_storage provisioning failed")
+                raise _ToolInputError(
+                    PROVISION_FAILED,
+                    f"could not provision your hosted database: {exc}",
+                ) from exc
+        except StorageUnavailableError as exc:
+            return exc.to_payload()
+        except _ToolInputError as exc:
+            return exc.to_payload()
+        return {
+            "status": "enabled",
+            "mode": "hosted",
+            "database": database.name,
+            "disclosure": _HOSTED_DISCLOSURE,
+            "message": (
+                "Hosted storage enabled. Your memory tools now read and write a "
+                "private NeuroDock-managed database isolated to your account. "
+                "Run disable_and_erase_storage at any time to destroy it."
+            ),
+        }
 
     @mcp.tool(
         name="connect_byos_storage",
@@ -121,6 +184,8 @@ def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
             )
             _smoke_test_connection(url, token)
             state.connections.put(user, url, token)
+            # Record the active mode so the combined resolver routes to BYOS.
+            state.preferences.put(user, StoragePreference(mode="byos"))
         except StorageUnavailableError as exc:
             return exc.to_payload()
         except _ToolInputError as exc:
@@ -135,17 +200,59 @@ def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
         }
 
     @mcp.tool(
+        name="disable_and_erase_storage",
+        description=(
+            "Disable storage and erase it. Hosted: destroys the NeuroDock-managed "
+            "database NeuroDock provisioned for you. BYOS: clears the stored "
+            "connection (your own database is left untouched). Either way your "
+            "stored preference and consent are cleared. Requires a signed-in account."
+        ),
+    )
+    def disable_and_erase_storage() -> dict[str, Any]:
+        try:
+            user = state.require_user()
+            preference = state.preferences.get(user)
+            mode = preference.mode if preference is not None else "none"
+            if mode == "hosted":
+                try:
+                    state.hosted.erase(user)  # destroys the DB + clears preference
+                except Exception as exc:
+                    _LOG.exception("disable_and_erase_storage hosted erase failed")
+                    raise _ToolInputError(
+                        PROVISION_FAILED,
+                        f"could not destroy your hosted database: {exc}",
+                    ) from exc
+            else:
+                # BYOS or none: clear the connection (no-op if absent) and the
+                # preference. The user's own database is never touched.
+                state.connections.delete(user)
+                state.preferences.clear(user)
+        except StorageUnavailableError as exc:
+            return exc.to_payload()
+        except _ToolInputError as exc:
+            return exc.to_payload()
+        return {
+            "status": "erased",
+            "mode": "none",
+            "message": (
+                "Storage disabled and erased. NeuroDock now retains nothing about your storage."
+            ),
+        }
+
+    @mcp.tool(
         name="disconnect_storage",
         description=(
-            "Disconnect your storage database. NeuroDock deletes the connection and "
-            "retains nothing about your storage. Your data stays in your own database, "
-            "untouched. Requires a signed-in NeuroDock account."
+            "Disconnect your BYOS storage database. NeuroDock deletes the connection "
+            "and retains nothing about your storage. Your data stays in your own "
+            "database, untouched. (To erase NeuroDock-hosted storage instead, use "
+            "disable_and_erase_storage.) Requires a signed-in NeuroDock account."
         ),
     )
     def disconnect_storage() -> dict[str, Any]:
         try:
             user = state.require_user()
             state.connections.delete(user)
+            state.preferences.clear(user)
         except StorageUnavailableError as exc:
             return exc.to_payload()
         return {
@@ -160,8 +267,8 @@ def register_storage_admin_tools(mcp: FastMCP[Any], state: ByosState) -> None:
     @mcp.tool(
         name="storage_status",
         description=(
-            "Report whether you are signed in and whether a storage database is "
-            "connected (mode: byos or none)."
+            "Report whether you are signed in and which storage mode is active "
+            "(mode: hosted, byos, or none)."
         ),
     )
     def storage_status() -> dict[str, Any]:
