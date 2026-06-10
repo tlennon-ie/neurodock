@@ -135,6 +135,13 @@ function makeCapturable(): CapturableEventTarget {
   };
 }
 
+// Build a Chrome Tab fixture from a partial. Casting through a helper keeps the
+// test tabs valid as @types/chrome adds newly-required fields (e.g. `frozen`)
+// without every fixture having to enumerate them.
+function makeTab(tab: Partial<chrome.tabs.Tab>): chrome.tabs.Tab {
+  return tab as chrome.tabs.Tab;
+}
+
 // ── tests ──────────────────────────────────────────────────────────────────
 
 describe("runTranslate — history side-effects", () => {
@@ -326,7 +333,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       editable: false,
       pageUrl: "https://mail.google.com/mail/u/0/#inbox",
     };
-    const tab: chrome.tabs.Tab = {
+    const tab = makeTab({
       id: 42,
       url: "https://mail.google.com/mail/u/0/#inbox",
       index: 0,
@@ -339,7 +346,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       discarded: false,
       autoDiscardable: true,
       groupId: -1,
-    };
+    });
 
     // Invoke and wait — the listener is async so we await its promise
     const promises = contextMenusOnClicked._invoke(
@@ -368,7 +375,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       editable: false,
       pageUrl: "https://app.slack.com/client/T123",
     };
-    const tab: chrome.tabs.Tab = {
+    const tab = makeTab({
       id: 7,
       url: "https://app.slack.com/client/T123",
       index: 0,
@@ -381,7 +388,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       discarded: false,
       autoDiscardable: true,
       groupId: -1,
-    };
+    });
 
     const promises = contextMenusOnClicked._invoke(
       info,
@@ -417,7 +424,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       editable: false,
       pageUrl: "https://mail.google.com/",
     };
-    const tab: chrome.tabs.Tab = {
+    const tab = makeTab({
       id: 1,
       url: "https://mail.google.com/",
       index: 0,
@@ -430,7 +437,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       discarded: false,
       autoDiscardable: true,
       groupId: -1,
-    };
+    });
 
     const promises = contextMenusOnClicked._invoke(
       info,
@@ -449,7 +456,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       editable: false,
       pageUrl: "https://mail.google.com/",
     };
-    const tab: chrome.tabs.Tab = {
+    const tab = makeTab({
       id: 1,
       url: "https://mail.google.com/",
       index: 0,
@@ -462,7 +469,7 @@ describe("contextMenus.onClicked dispatcher", () => {
       discarded: false,
       autoDiscardable: true,
       groupId: -1,
-    };
+    });
 
     const promises = contextMenusOnClicked._invoke(
       info,
