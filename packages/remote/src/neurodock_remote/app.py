@@ -247,5 +247,30 @@ def main() -> None:
     uvicorn.run(create_app(), host=host, port=port)
 
 
+def main_stdio() -> None:
+    """Console-script entrypoint that serves the combined surface over **stdio**
+    (``neurodock-remote-stdio``).
+
+    This exists for registry introspection (e.g. Glama builds the
+    ``Dockerfile.glama`` image and speaks MCP over stdio to enumerate the tool
+    surface). It is NOT a user-facing transport — the hosted deployment serves
+    Streamable HTTP via :func:`create_app`/:func:`main`, and local users run the
+    individual stdio servers through ``@neurodock/cli``.
+
+    No auth and no storage secrets are required: a ``tools/list`` introspection
+    only *enumerates* the registered tools, it never calls them, and the opt-in
+    storage tools stay gated behind ``require_user`` exactly as elsewhere. So the
+    same combined server that the HTTP deploy builds is run here unchanged, just
+    over stdio.
+    """
+    logging.basicConfig(
+        stream=sys.stderr,
+        level=logging.INFO,
+        format='{"logger":"%(name)s","level":"%(levelname)s","msg":"%(message)s"}',
+    )
+    _LOG.info("serving_combined_remote_mcp_stdio")
+    build_combined_server().run()
+
+
 if __name__ == "__main__":  # pragma: no cover — exercised via console script
     main()
