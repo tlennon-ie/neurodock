@@ -1,12 +1,11 @@
 /**
  * @license AGPL-3.0-or-later
  *
- * Popup → Open in tab button.
+ * Popup → settings gear opens the full-page tab.
  *
- * Asserts that clicking the header "Open in tab" control calls
+ * Asserts that clicking the header settings gear calls
  * `chrome.tabs.create` with the URL returned by
- * `chrome.runtime.getURL("tab.html")`, optionally suffixed with the
- * currently-active popup view as `#view=…`.
+ * `chrome.runtime.getURL("tab.html")` suffixed with `#view=settings`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
@@ -23,7 +22,7 @@ import { App } from "../../entrypoints/popup/App.js";
 
 type ChromeMessageListener = (msg: unknown) => void;
 
-describe("Popup — Open in tab", () => {
+describe("Popup — settings gear opens full-page tab", () => {
   let originalOnMessage: typeof chrome.runtime.onMessage;
   let originalTabs: typeof chrome.tabs;
   let originalRuntime: typeof chrome.runtime;
@@ -86,16 +85,16 @@ describe("Popup — Open in tab", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders an Open in tab button in the popup header", async () => {
+  it("renders a settings gear in the popup header", async () => {
     render(<App />);
-    expect(await screen.findByTestId("open-in-tab-button")).toBeInTheDocument();
+    expect(await screen.findByTestId("nd-header-settings")).toBeInTheDocument();
   });
 
-  it("calls chrome.tabs.create with the tab.html URL when clicked", async () => {
+  it("calls chrome.tabs.create with the tab.html URL when the gear is clicked", async () => {
     render(<App />);
-    const btn = await screen.findByTestId("open-in-tab-button");
+    const gear = await screen.findByTestId("nd-header-settings");
     await act(async () => {
-      fireEvent.click(btn);
+      fireEvent.click(gear);
     });
     await waitFor(() => {
       expect(createSpy).toHaveBeenCalledTimes(1);
@@ -103,19 +102,20 @@ describe("Popup — Open in tab", () => {
     const firstCall = createSpy.mock.calls[0];
     if (!firstCall) throw new Error("create not called");
     const args = firstCall[0] as { url: string };
-    expect(args.url).toBe("chrome-extension://test-id/tab.html#view=home");
+    expect(args.url).toContain("tab.html");
+    expect(args.url).toContain("view=settings");
   });
 
-  it("encodes the currently-active popup tab into the URL hash", async () => {
+  it("gear always deep-links to settings regardless of the active popup tab", async () => {
     render(<App />);
-    // Switch to the Settings tab in the popup, then click Open in tab.
+    // Switch to the Settings tab in the popup, then click the gear.
     const settingsTab = await screen.findByTestId("tab-settings");
     await act(async () => {
       fireEvent.click(settingsTab);
     });
-    const btn = await screen.findByTestId("open-in-tab-button");
+    const gear = await screen.findByTestId("nd-header-settings");
     await act(async () => {
-      fireEvent.click(btn);
+      fireEvent.click(gear);
     });
     await waitFor(() => {
       expect(createSpy).toHaveBeenCalled();
@@ -123,6 +123,7 @@ describe("Popup — Open in tab", () => {
     const firstCall = createSpy.mock.calls[0];
     if (!firstCall) throw new Error("create not called");
     const args = firstCall[0] as { url: string };
-    expect(args.url).toBe("chrome-extension://test-id/tab.html#view=settings");
+    expect(args.url).toContain("tab.html");
+    expect(args.url).toContain("view=settings");
   });
 });

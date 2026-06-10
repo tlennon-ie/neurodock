@@ -35,8 +35,7 @@ import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
 import { OnboardingWizard } from "./OnboardingWizard.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
-import { OpenInTabButton } from "../../src/components/OpenInTabButton.js";
-import { ThemeModeToggle } from "../../src/components/ThemeModeToggle.js";
+import { NeuroDockHeader } from "../../src/components/NeuroDockHeader.js";
 import {
   applyA11yToDocument,
   loadA11yPreferences,
@@ -70,6 +69,14 @@ function isProfileUpdatedMessage(msg: unknown): msg is ProfileUpdatedMessage {
 }
 
 type TabId = "home" | "notifications" | "settings";
+
+function openFullPage(
+  view: "home" | "settings" | "history" | "notifications" = "home",
+): void {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL(`tab.html#view=${view}`),
+  });
+}
 
 export function App(): React.ReactElement {
   const [profile, setProfile] = useState<ExtensionProfile>(defaultProfile());
@@ -221,20 +228,7 @@ export function App(): React.ReactElement {
 
   return (
     <main className="text-fg flex flex-col gap-4 p-4">
-      <header className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="font-heading text-fg-accent m-0 text-base font-semibold tracking-tight">
-            NeuroDock
-          </h1>
-          <p className="text-fg-muted m-0 text-sm">
-            Decode subtext. Check tone. Local-first by default.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeModeToggle iconSize={16} />
-          <OpenInTabButton view={tab} />
-        </div>
-      </header>
+      <NeuroDockHeader onOpenSettings={() => openFullPage("settings")} />
 
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />
 
