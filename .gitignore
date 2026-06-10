@@ -201,3 +201,17 @@ icon-high*
 assets/*.mp4
 changes.md
 media.md
+
+# Maintainer-internal docs — kept locally, never published to this public repo.
+# See CLAUDE.md "Repository hygiene". These were untracked on 2026-06-10; they
+# stay on the maintainer's disk but must not be re-added to the tree.
+MCP-DISTRIBUTION.md
+docs/ACCURACY_AUDIT.md
+docs/branding.md
+# Strategy ADRs (distribution / remote transport / hosted experience) — internal;
+# the per-tool design ADRs 0001–0007 remain published.
+docs/decisions/0008-distribution-and-remote-strategy.md
+docs/decisions/0009-remote-transport-and-hosting.md
+docs/decisions/0010-opt-in-hosted-full-experience.md
+# Extension store submission kit (listing copy, per-store forms, promo assets).
+packages/extension-browser/store-listings/
