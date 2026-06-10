@@ -22,6 +22,15 @@ DEFAULT_RELATED_CAP = 20
 DEFAULT_DECISIONS_CAP = 200
 """Hard cap on decisions returned per ``recall_decisions`` call."""
 
+PROJECT_DECISION_PREDICATES: tuple[Predicate, ...] = ("decided_in", "belongs_to")
+"""Predicates that link a ``decision`` entity to its project (either orientation).
+
+A decision counts as belonging to a project when a ``decision``-type entity is
+joined to the project by EITHER ``decided_in`` (``project decided_in decision``)
+OR ``belongs_to`` (``decision belongs_to project``). The latter is the shape an
+LLM client naturally records, so both decision read-paths must honour it.
+"""
+
 
 @dataclass(frozen=True)
 class EntityRow:
@@ -141,11 +150,13 @@ class Storage(Protocol):
         self,
         project_id: str,
     ) -> list[FactRow]:
-        """Return facts whose predicate is ``decided_in`` and where the
-        project entity is either subject or object."""
+        """Return facts whose predicate is in :data:`PROJECT_DECISION_PREDICATES`
+        (``decided_in`` or ``belongs_to``) and where the project entity is either
+        subject or object."""
 
     def decisions_for_project(self, project_id: str) -> list[EntityRow]:
-        """Return entities of type ``decision`` linked to the project."""
+        """Return entities of type ``decision`` linked to the project by a
+        ``decided_in`` or ``belongs_to`` fact (either orientation)."""
 
     def all_decision_entities(self) -> list[EntityRow]: ...
 

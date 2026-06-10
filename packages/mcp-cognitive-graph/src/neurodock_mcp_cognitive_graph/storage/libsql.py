@@ -45,6 +45,7 @@ from typing import TYPE_CHECKING, Any, cast
 from neurodock_mcp_cognitive_graph.storage.base import (
     DEFAULT_FACTS_CAP,
     DEFAULT_RELATED_CAP,
+    PROJECT_DECISION_PREDICATES,
     EmbeddingRow,
     EntityRow,
     FactRow,
@@ -348,22 +349,24 @@ class LibSqlStorage:
         return [(r["neighbour_id"], int(r["c"])) for r in rows]
 
     def facts_for_project_decisions(self, project_id: str) -> list[FactRow]:
+        placeholders = ", ".join("?" * len(PROJECT_DECISION_PREDICATES))
         rows = self._query_all(
-            "SELECT * FROM facts WHERE predicate = 'decided_in' "
+            f"SELECT * FROM facts WHERE predicate IN ({placeholders}) "
             "AND (subject_id = ? OR object_id = ?)",
-            (project_id, project_id),
+            (*PROJECT_DECISION_PREDICATES, project_id, project_id),
         )
         return [_row_to_fact(r) for r in rows]
 
     def decisions_for_project(self, project_id: str) -> list[EntityRow]:
+        placeholders = ", ".join("?" * len(PROJECT_DECISION_PREDICATES))
         rows = self._query_all(
             "SELECT DISTINCT e.* FROM entities e "
             "JOIN facts f ON ("
             "   (f.subject_id = e.id AND f.object_id = ?) OR "
             "   (f.object_id = e.id AND f.subject_id = ?)"
             ") "
-            "WHERE e.type = 'decision' AND f.predicate = 'decided_in'",
-            (project_id, project_id),
+            f"WHERE e.type = 'decision' AND f.predicate IN ({placeholders})",
+            (project_id, project_id, *PROJECT_DECISION_PREDICATES),
         )
         return [_row_to_entity(r) for r in rows]
 
