@@ -61,7 +61,9 @@ describe("Popup onboarding wizard — skipped for existing users", () => {
       expect(screen.getByTestId("tab-home")).toBeInTheDocument();
     });
     expect(screen.queryByTestId("onboarding-wizard")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("wizard-step-welcome")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("wizard-step-identity"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the main tab bar immediately on mount", async () => {
