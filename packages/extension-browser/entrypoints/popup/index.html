@@ -2,6 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Apply the reader-font class before first paint (no flash of unhinted
+         text). Mirrors docs/src/overrides/SiteTitle.astro. Keep in sync with
+         src/lib/reader-font.ts. -->
+    <script>
+      (function () {
+        var KEY = "neurodockFont";
+        var ALLOWED = { atkinson: 1, lexend: 1, opendyslexic: 1, comic: 1, system: 1 };
+        var stored;
+        try {
+          stored = localStorage.getItem(KEY);
+        } catch (e) {
+          stored = null;
+        }
+        var choice = stored && ALLOWED[stored] ? stored : "atkinson";
+        var root = document.documentElement;
+        root.classList.remove(
+          "font-atkinson",
+          "font-lexend",
+          "font-opendyslexic",
+          "font-comic",
+          "font-system"
+        );
+        root.classList.add("font-" + choice);
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NeuroDock</title>
   </head>
