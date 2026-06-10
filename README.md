@@ -218,9 +218,7 @@ does nothing until you explicitly enable storage for your signed-in account. The
 personal cognitive graph and neurotype profile are **never** hosted — they stay
 on the local install. Full walkthrough: [Hosted server](./docs/src/content/docs/getting-started/remote.mdx).
 
-See [ADR 0008 — distribution & remote strategy](./docs/decisions/0008-distribution-and-remote-strategy.md)
-and [ADR 0009 — remote transport & hosting](./docs/decisions/0009-remote-transport-and-hosting.md)
-for how these fit together. The hosted remote server is live at `mcp.neurodock.org`.
+The hosted remote server is live at `mcp.neurodock.org`.
 
 </details>
 
@@ -273,9 +271,8 @@ Studio (local), OpenRouter (including its auto-router), Anthropic, OpenAI.
 The API key, if you need one, stays in `chrome.storage.local` and never
 leaves the device.
 
-Store submission is still pending (the `packages/extension-browser/store-listings/`
-prep is done, the developer accounts aren't). Until then, load it
-manually:
+Store submission is still pending (the listing prep is done; the developer
+accounts and screenshots aren't). Until then, load it manually:
 
 1. Build it: `pnpm --filter @neurodock/extension-browser run build`
 2. Chrome / Edge: go to `chrome://extensions`, turn Developer mode on,
