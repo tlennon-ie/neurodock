@@ -40,7 +40,10 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          queries: security-and-quality
+          # Query suite + false-positive filters live in the config file, so the
+          # standing maintainability-query noise (Protocol `...` stubs) is
+          # excluded without weakening security coverage.
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4

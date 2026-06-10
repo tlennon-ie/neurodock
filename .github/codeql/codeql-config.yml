@@ -1,0 +1,28 @@
+# CodeQL configuration for NeuroDock.
+#
+# We run the full `security-and-quality` suite (security + maintainability).
+# Two of its *maintainability* (non-security) queries fire repeatedly on
+# idiomatic Python in this codebase and are false positives here, so they are
+# filtered out. No security query is excluded.
+#
+#   py/ineffectual-statement
+#     Fires on the `...` (ellipsis) bodies of typing.Protocol method stubs —
+#     e.g. the store/platform Protocols in packages/mcp-state. The ellipsis is
+#     the idiomatic, required stub body; it is not dead code.
+#
+#   py/import-and-import-from
+#     Fires on a test that deliberately imports a module two ways to exercise
+#     both entry points. Stylistic, not a security or correctness issue.
+#
+# Removing these clears the standing "note"-severity alerts and stops them
+# recurring as new Protocols are added, without weakening security coverage.
+name: "NeuroDock CodeQL config"
+
+queries:
+  - uses: security-and-quality
+
+query-filters:
+  - exclude:
+      id: py/ineffectual-statement
+  - exclude:
+      id: py/import-and-import-from
