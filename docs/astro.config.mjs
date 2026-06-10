@@ -105,6 +105,11 @@ export default defineConfig({
               badge: userBadge,
             },
             {
+              label: "Hosted server (remote MCP)",
+              link: "/getting-started/remote/",
+              badge: userBadge,
+            },
+            {
               label: "Your first skill",
               link: "/getting-started/first-skill/",
               badge: userBadge,

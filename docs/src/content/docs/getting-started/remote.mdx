@@ -1,0 +1,58 @@
+---
+title: Hosted server (remote MCP)
+description: Add NeuroDock's hosted endpoint as a custom connector in Claude — no install, no uv. The stateless tools over OAuth, plus opt-in cloud memory.
+---
+
+NeuroDock runs fully on your machine by default (see [Installation](/getting-started/installation/)). But the **stateless** tools — communication translation, the guardrail checks, and task decomposition — are also served from a hosted endpoint you can add to Claude with no local install and no `uv`.
+
+```
+https://mcp.neurodock.org/mcp
+```
+
+Transport is [Streamable HTTP](https://modelcontextprotocol.io/); auth is OAuth 2.1 (PKCE). The personal cognitive graph and the neurotype profile are **never** hosted — they stay on the local install. The hosted endpoint exposes only the stateless surface, plus an **opt-in** memory surface that does nothing until you turn it on.
+
+## What is and isn't on the hosted server
+
+| Surface | Hosted? | Tools |
+| --- | --- | --- |
+| Translation | yes (stateless) | `translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting` |
+| Guardrail | yes (stateless) | `check_rumination`, `check_hyperfocus`, `check_sycophancy` |
+| Task fractionator | partial | `decompose` only (`next_one` reads the local graph, so it stays local) |
+| Memory (opt-in) | only if you enable it | `enable_hosted_storage`, `connect_byos_storage`, `disable_and_erase_storage`, `disconnect_storage`, `storage_status`, `recall_entity`, `record_fact`, `recall_decisions`, `weekly_rollup` |
+| Chronometric, profile | **no** | never hosted — local install only |
+
+## Add the connector
+
+1. In Claude (claude.ai or Claude Desktop), open **Settings → Connectors**.
+2. Choose **Add custom connector**.
+3. Paste the endpoint: `https://mcp.neurodock.org/mcp`.
+4. Complete the sign-in prompt in the OAuth window. After that, the eight stateless tools are available in any chat.
+
+That's it for the stateless tools — they need no further setup and store nothing.
+
+## Invoke the tools
+
+You don't call the tools by name; you ask Claude in plain language and it routes to the matching tool. For example:
+
+- _"Translate this Slack message — what are they actually asking me to do? '<paste message>'"_ → `translate_incoming`
+- _"Check the tone of this draft before I send it: '<paste draft>'"_ → `check_tone`
+- _"Rewrite this so it lands as neutral and direct: '<paste draft>'"_ → `rewrite_outgoing`
+- _"Break this goal into startable steps: 'ship the onboarding revamp'"_ → `decompose`
+- _"Is this prompt a guardrail concern?"_ → `check_rumination` / `check_hyperfocus` / `check_sycophancy`
+
+Each returns a deterministic baseline plus a structured prompt your client's model refines — no model SDK runs on the server (vendor-neutral by ADR 0005).
+
+## Opt-in memory (storage)
+
+The memory tools are visible but **inert** until you choose a storage mode for your signed-in account. You are always in exactly one mode:
+
+- **`enable_hosted_storage`** — NeuroDock provisions a private, per-account database and stores your cognitive-graph facts there. Returns a consent disclosure. Quickest path.
+- **`connect_byos_storage`** — point it at your **own** libSQL/Turso database; NeuroDock keeps only the connection pointer. Maximum privacy — the data lives in your infrastructure.
+- **`storage_status`** — reports whether you're signed in and which mode is active (`hosted` | `byos` | `none`).
+- **`disable_and_erase_storage`** — hosted: destroys the database; BYOS: clears the stored connection. Either way your stored preference is cleared.
+
+Until you run one of the enable tools, `storage_status` reports `mode: none` and the memory tools refuse with a structured "not connected" message — **anonymous and not-opted-in sessions stay completely stateless**. A signed-out caller is refused before anything is stored, read, or provisioned.
+
+## Privacy
+
+The hosted server processes tool inputs in memory to produce the analysis and persists nothing server-side for the stateless tools. The opt-in memory surface stores only what you explicitly enable, isolated to your account, never aggregated, and erasable at any time. See the [privacy policy](/legal/privacy/) and [ethics](/ethics/) for the full position; ADR 0009 records the transport, auth, and hosting decisions.
