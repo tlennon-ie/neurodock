@@ -34,10 +34,10 @@ That's it for the stateless tools — they need no further setup and store nothi
 
 You don't call the tools by name; you ask Claude in plain language and it routes to the matching tool. For example:
 
-- _"Translate this Slack message — what are they actually asking me to do? '<paste message>'"_ → `translate_incoming`
-- _"Check the tone of this draft before I send it: '<paste draft>'"_ → `check_tone`
-- _"Rewrite this so it lands as neutral and direct: '<paste draft>'"_ → `rewrite_outgoing`
-- _"Break this goal into startable steps: 'ship the onboarding revamp'"_ → `decompose`
+- _"Translate this Slack message — what are they actually asking me to do?"_ (then paste the message) → `translate_incoming`
+- _"Check the tone of this draft before I send it"_ (then paste the draft) → `check_tone`
+- _"Rewrite this so it lands as neutral and direct"_ (then paste the draft) → `rewrite_outgoing`
+- _"Break this goal into startable steps: ship the onboarding revamp"_ → `decompose`
 - _"Is this prompt a guardrail concern?"_ → `check_rumination` / `check_hyperfocus` / `check_sycophancy`
 
 Each returns a deterministic baseline plus a structured prompt your client's model refines — no model SDK runs on the server (vendor-neutral by ADR 0005).
