@@ -38,6 +38,10 @@ import {
   applyThemeModeToDocument,
   loadThemeMode,
 } from "../../src/lib/theme-mode.js";
+import {
+  applyReaderFontToDocument,
+  loadReaderFont,
+} from "../../src/lib/reader-font.js";
 import type {
   Channel,
   ExtensionProfile,
@@ -126,6 +130,10 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
   void loadThemeMode().then((mode) => {
     applyThemeModeToDocument(mode, island.shadow);
   });
+
+  // A6 — apply the reader-font preference to the shadow host so
+  // `:host(.font-*)` tokens resolve inside the island's stylesheet.
+  applyReaderFontToDocument(loadReaderFont(), island.shadow);
 
   // Subscribe to profile updates from the popup. `chrome.storage.local.set`
   // automatically fires `chrome.storage.onChanged` to every context that
