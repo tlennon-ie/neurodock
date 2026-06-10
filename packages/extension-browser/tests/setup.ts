@@ -1,6 +1,36 @@
 import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
 
+// Provide a real localStorage shim when the jsdom environment does not expose
+// one (seen when `--localstorage-file` is passed without a valid path, leaving
+// the globalThis.localStorage as a stub with no Storage-prototype methods).
+if (
+  typeof localStorage === "undefined" ||
+  typeof localStorage.clear !== "function"
+) {
+  const store: Record<string, string> = {};
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: {
+      getItem: (key: string): string | null =>
+        key in store ? store[key]! : null,
+      setItem: (key: string, value: string) => {
+        store[key] = String(value);
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        for (const k of Object.keys(store)) delete store[k];
+      },
+      get length() {
+        return Object.keys(store).length;
+      },
+      key: (index: number) => Object.keys(store)[index] ?? null,
+    } satisfies Storage,
+  });
+}
+
 // Minimal chrome.* shim for tests that hit the profile module via the
 // chrome.storage.local path. Tests can override per-suite.
 type StorageRecord = Record<string, unknown>;
