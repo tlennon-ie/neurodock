@@ -16,6 +16,7 @@ from datetime import datetime
 from neurodock_mcp_cognitive_graph.storage.base import (
     DEFAULT_FACTS_CAP,
     DEFAULT_RELATED_CAP,
+    PROJECT_DECISION_PREDICATES,
     EmbeddingRow,
     EntityRow,
     FactRow,
@@ -174,14 +175,14 @@ class InMemoryStorage:
         return [
             row
             for row in self._facts.values()
-            if row.predicate == "decided_in"
+            if row.predicate in PROJECT_DECISION_PREDICATES
             and (row.subject_id == project_id or row.object_id == project_id)
         ]
 
     def decisions_for_project(self, project_id: str) -> list[EntityRow]:
         decision_ids: set[str] = set()
         for row in self._facts.values():
-            if row.predicate != "decided_in":
+            if row.predicate not in PROJECT_DECISION_PREDICATES:
                 continue
             if row.subject_id == project_id and row.object_id is not None:
                 decision_ids.add(row.object_id)

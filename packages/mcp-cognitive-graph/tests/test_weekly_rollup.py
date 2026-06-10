@@ -96,6 +96,36 @@ def test_respects_project_filter(
     assert result.decisions[0].name == "Ship rumination detector first"
 
 
+def test_decision_via_belongs_to_surfaces_in_rollup(
+    memory_storage: InMemoryStorage,
+    fixed_clock: FixedClock,
+) -> None:
+    # Same shape as the 2026-06-10 retest: decision BELONGS_TO project, person
+    # decided_in decision. weekly_rollup must aggregate it under the project.
+    in_window_clock = FixedClock(datetime(2026, 5, 12, 10, 0, tzinfo=UTC))
+    record_fact(
+        memory_storage,
+        in_window_clock,
+        subject={"type": "decision", "name": "Adopt hosted Turso storage"},
+        predicate="belongs_to",
+        object={"type": "project", "name": "neurodock"},
+    )
+    record_fact(
+        memory_storage,
+        in_window_clock,
+        subject={"type": "person", "name": "Thomas"},
+        predicate="decided_in",
+        object={"type": "decision", "name": "Adopt hosted Turso storage"},
+    )
+
+    result = weekly_rollup(memory_storage, fixed_clock, project="neurodock")
+    assert result.project == "neurodock"
+    assert len(result.decisions) == 1
+    assert result.decisions[0].name == "Adopt hosted Turso storage"
+    assert [a.name for a in result.decisions[0].decided_by] == ["Thomas"]
+    assert "1 decisions recorded" in result.summary
+
+
 def test_unknown_project_raises_project_not_found(
     memory_storage: InMemoryStorage,
     fixed_clock: FixedClock,

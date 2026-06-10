@@ -17,11 +17,14 @@ blocker on <subject>: '<literal>'", "Follow up on decision '<name>' …").
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from datetime import date as _date
 
-from neurodock_mcp_cognitive_graph.storage.base import EntityRow, FactRow, Storage
+from neurodock_mcp_cognitive_graph.storage.base import (
+    PROJECT_DECISION_PREDICATES,
+    FactRow,
+    Storage,
+)
 from neurodock_mcp_cognitive_graph.tools._shared import fact_row_to_fact
 from neurodock_mcp_cognitive_graph.types import (
     DecisionAttributor,
@@ -30,18 +33,6 @@ from neurodock_mcp_cognitive_graph.types import (
     Period,
     RollupDecision,
 )
-
-
-@dataclass
-class _DecisionSlot:
-    """Mutable accumulator used while assembling rollup decisions."""
-
-    row: EntityRow
-    recorded_at: datetime
-    attributors: list[DecisionAttributor] = field(default_factory=list)
-    source: str | None = None
-    confidence: float = 1.0
-
 
 NEXT_ACTIONS_CAP = 10
 DECISIONS_CAP = 50
@@ -70,62 +61,62 @@ def collect_decisions_in_window(
     period: Period,
     project_id: str | None,
 ) -> list[RollupDecision]:
-    """Return decisions whose ``decided_in`` fact landed inside ``period``.
+    """Return decisions for the project whose most recent linking fact is in
+    ``period``.
 
-    If ``project_id`` is None, decisions for any project are returned.
+    A decision is associated with the project by a ``decided_in`` OR
+    ``belongs_to`` fact (either orientation) between the decision entity and the
+    project — see :data:`PROJECT_DECISION_PREDICATES`. This matches
+    ``recall_decisions`` so the ``decision belongs_to project`` shape an LLM
+    naturally records surfaces here too. When ``project_id`` is None, every
+    decision entity is considered. Attribution comes from ``decided_in`` facts
+    crediting a non-project, non-decision entity.
     """
-    decided_in_facts = [
-        f for f in storage.facts_by_predicate("decided_in") if _within_period(f.recorded_at, period)
-    ]
     if project_id is not None:
-        decided_in_facts = [
-            f for f in decided_in_facts if f.subject_id == project_id or f.object_id == project_id
-        ]
-
-    # Map decision_id -> slot.
-    accum: dict[str, _DecisionSlot] = {}
-    for fact in decided_in_facts:
-        # Determine which side is the decision (type=decision); attributor is the other.
-        subj_row = storage.find_entity_by_id(fact.subject_id)
-        obj_row = storage.find_entity_by_id(fact.object_id) if fact.object_id is not None else None
-        decision_row: EntityRow | None = None
-        attributor_row: EntityRow | None = None
-        if obj_row is not None and obj_row.type == "decision":
-            decision_row = obj_row
-            attributor_row = subj_row
-        elif subj_row is not None and subj_row.type == "decision":
-            decision_row = subj_row
-            attributor_row = obj_row
-        if decision_row is None:
-            continue
-        slot = accum.setdefault(
-            decision_row.id,
-            _DecisionSlot(row=decision_row, recorded_at=fact.recorded_at),
-        )
-        if fact.recorded_at > slot.recorded_at:
-            slot.recorded_at = fact.recorded_at
-        if attributor_row is not None and attributor_row.type != "project":
-            attr = DecisionAttributor(
-                type=attributor_row.type, id=attributor_row.id, name=attributor_row.name
-            )
-            if attr not in slot.attributors:
-                slot.attributors.append(attr)
-        if fact.source and slot.source is None:
-            slot.source = fact.source
-        slot.confidence = fact.confidence
+        decision_rows = storage.decisions_for_project(project_id)
+    else:
+        decision_rows = storage.all_decision_entities()
 
     out: list[RollupDecision] = []
-    for slot in accum.values():
+    for decision in decision_rows:
+        facts, _ = storage.facts_touching_entity(decision.id)
+        linking = [f for f in facts if f.predicate in PROJECT_DECISION_PREDICATES]
+        if not linking:
+            continue
+        recorded_at = max(f.recorded_at for f in linking)
+        if not _within_period(recorded_at, period):
+            continue
+
+        ordered = sorted(linking, key=lambda f: f.recorded_at, reverse=True)
+        confidence = ordered[0].confidence
+        source: str | None = None
+        attributors: list[DecisionAttributor] = []
+        for fact in ordered:
+            if fact.source and source is None:
+                source = fact.source
+            if fact.predicate != "decided_in":
+                continue
+            other_id = fact.object_id if fact.subject_id == decision.id else fact.subject_id
+            if other_id is None or other_id == decision.id:
+                continue
+            other = storage.find_entity_by_id(other_id)
+            if other is None or other.type in ("project", "decision"):
+                continue
+            attr = DecisionAttributor(type=other.type, id=other.id, name=other.name)
+            if attr not in attributors:
+                attributors.append(attr)
+
         out.append(
             RollupDecision(
-                id=slot.row.id,
-                name=slot.row.name,
-                decided_on=_date_of(slot.recorded_at),
-                decided_by=slot.attributors,
-                source=slot.source,
-                confidence=slot.confidence,
+                id=decision.id,
+                name=decision.name,
+                decided_on=_date_of(recorded_at),
+                decided_by=attributors,
+                source=source,
+                confidence=confidence,
             )
         )
+
     out.sort(key=lambda d: d.decided_on, reverse=True)
     return out[:DECISIONS_CAP]
 

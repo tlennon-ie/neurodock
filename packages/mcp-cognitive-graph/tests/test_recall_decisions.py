@@ -76,6 +76,58 @@ def test_since_filter_respected(memory_storage: InMemoryStorage) -> None:
     assert result.since.isoformat() == "2026-05-01"
 
 
+def test_decision_via_belongs_to_with_person_attribution_surfaces(
+    memory_storage: InMemoryStorage,
+) -> None:
+    # The shape Claude naturally records: the decision BELONGS_TO the project
+    # (not project decided_in decision), and a person is credited via decided_in
+    # on the decision. Both read-paths must surface it (regression for the
+    # 2026-06-10 retest "decisions don't surface" bug).
+    clock = FixedClock(datetime(2026, 5, 14, 10, 0, tzinfo=UTC))
+    record_fact(
+        memory_storage,
+        clock,
+        subject={"type": "decision", "name": "Adopt hosted Turso storage"},
+        predicate="belongs_to",
+        object={"type": "project", "name": "neurodock"},
+    )
+    record_fact(
+        memory_storage,
+        clock,
+        subject={"type": "person", "name": "Thomas"},
+        predicate="decided_in",
+        object={"type": "decision", "name": "Adopt hosted Turso storage"},
+    )
+
+    result = recall_decisions(memory_storage, "neurodock")
+    assert result.project is not None
+    assert result.project.name == "neurodock"
+    assert len(result.decisions) == 1
+    decision = result.decisions[0]
+    assert decision.name == "Adopt hosted Turso storage"
+    assert [a.name for a in decision.decided_by] == ["Thomas"]
+
+
+def test_decision_via_belongs_to_only_surfaces_without_attributor(
+    memory_storage: InMemoryStorage,
+) -> None:
+    # A decision linked to the project ONLY via belongs_to (no person credited)
+    # still surfaces, with an empty decided_by.
+    clock = FixedClock(datetime(2026, 5, 14, 10, 0, tzinfo=UTC))
+    record_fact(
+        memory_storage,
+        clock,
+        subject={"type": "decision", "name": "License under AGPL-3.0"},
+        predicate="belongs_to",
+        object={"type": "project", "name": "neurodock"},
+    )
+
+    result = recall_decisions(memory_storage, "neurodock")
+    assert len(result.decisions) == 1
+    assert result.decisions[0].name == "License under AGPL-3.0"
+    assert result.decisions[0].decided_by == []
+
+
 def test_invalid_since_raises(memory_storage: InMemoryStorage) -> None:
     with pytest.raises(ToolError) as exc_info:
         recall_decisions(memory_storage, "neurodock", since="not-a-date")
