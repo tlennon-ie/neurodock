@@ -25,3 +25,7 @@ overrides:
   # tmp <0.2.6 has a path-traversal advisory (GHSA-52f5-9888-hmc6).
   # wxt → web-ext-run still pulls tmp@0.2.5. Force the patched version.
   "tmp": "^0.2.6"
+  # shell-quote <=1.8.3 fails to escape newlines in object .op values
+  # (critical). fx-runner@1.4.0 (web-ext tooling) + wrangler still pull
+  # shell-quote@1.7.3. Force the patched version.
+  "shell-quote": ">=1.8.4"
