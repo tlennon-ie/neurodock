@@ -10,7 +10,10 @@ sign-off. Auditable specification:
 * repeated_reassurance_request: >=3 recent user messages contain a
   reassurance marker (case-insensitive substring).
 * praise_without_evidence: candidate BEGINS with absolute praise AND
-  contains no citation marker.
+  contains no citation marker; OR it is SATURATED with absolute praise —
+  >= PRAISE_DENSITY_THRESHOLD distinct markers anywhere — AND contains no
+  citation marker and no qualifier (but/however/unless). The density branch
+  catches blatant over-validation that is not positioned as an opener.
 * escalating_validation: candidate is <100 words AND ends with an
   unsolicited compliment.
 * other: catch-all soft signal (low confidence, NOT detected==true).
@@ -25,11 +28,13 @@ from dataclasses import dataclass
 from typing import Literal
 
 from neurodock_mcp_guardrail.heuristics._phrases import (
+    ABSOLUTE_PRAISE_MARKERS,
     ABSOLUTE_PRAISE_OPENERS,
     AGREEMENT_QUALIFIER_PREFIX_CHARS,
     AGREEMENT_QUALIFIERS,
     CITATION_MARKERS,
     ESCALATING_VALIDATION_MAX_WORDS,
+    PRAISE_DENSITY_THRESHOLD,
     REASSURANCE_THRESHOLD_COUNT,
     REASSURANCE_TRIGGERS,
     UNCONDITIONAL_AGREEMENT_OPENERS,
@@ -67,7 +72,9 @@ HEURISTIC_DESCRIPTIONS: dict[SycophancyHeuristicName, str] = {
         "Counts recent user messages containing a reassurance marker; >=3 fires."
     ),
     "opening_affirmation_without_citation": (
-        "Flags responses opening with absolute praise that contain no citation marker."
+        "Flags responses opening with absolute praise, or saturated with multiple "
+        "absolute-praise markers, that contain no citation marker (the density case "
+        "also requires no qualifier)."
     ),
     "agreement_intensity_delta": (
         "Flags short (<100 words) responses ending with an unsolicited compliment."
@@ -103,6 +110,33 @@ def _has_qualifier_in_prefix(text: str) -> bool:
         if re.search(rf"\b{re.escape(qualifier)}\b", prefix):
             return True
     return False
+
+
+def _has_any_qualifier(text: str) -> bool:
+    """True if a balancing qualifier (but/however/unless) appears anywhere."""
+    lowered = text.lower()
+    for qualifier in AGREEMENT_QUALIFIERS:
+        if re.search(rf"\b{re.escape(qualifier)}\b", lowered):
+            return True
+    return False
+
+
+def _praise_markers_present(text: str) -> list[str]:
+    """Return the DISTINCT absolute-praise markers found anywhere in ``text``.
+
+    Single-word markers match on word boundaries (so "perfect" does not match
+    "perfectly"); multi-word markers match as substrings. Order follows the
+    closed list so output is deterministic.
+    """
+    lowered = text.lower()
+    found: list[str] = []
+    for marker in ABSOLUTE_PRAISE_MARKERS:
+        if " " in marker:
+            if marker in lowered:
+                found.append(marker)
+        elif re.search(rf"\b{re.escape(marker)}\b", lowered):
+            found.append(marker)
+    return found
 
 
 def _starts_with_any(text: str, phrases: tuple[str, ...]) -> str | None:
@@ -161,18 +195,35 @@ def _check_unconditional_agreement(candidate: str) -> SycophancyMatch | None:
 
 def _check_praise_without_evidence(candidate: str) -> SycophancyMatch | None:
     opener = _starts_with_any(candidate, ABSOLUTE_PRAISE_OPENERS)
-    if opener is None:
+    if opener is not None:
+        if _contains_any_citation(candidate):
+            return None
+        return SycophancyMatch(
+            detected=True,
+            pattern="praise_without_evidence",
+            heuristic_name="opening_affirmation_without_citation",
+            confidence=0.74,
+            matched_spans=(opener,),
+            matched_sources=("candidate_response",),
+            matched_ats=(None,),
+        )
+
+    # Density branch: blatant over-validation saturated with absolute-praise
+    # markers anywhere, voided by any citation or qualifier so grounded or
+    # balanced responses do not trip it.
+    markers = _praise_markers_present(candidate)
+    if len(markers) < PRAISE_DENSITY_THRESHOLD:
         return None
-    if _contains_any_citation(candidate):
+    if _contains_any_citation(candidate) or _has_any_qualifier(candidate):
         return None
     return SycophancyMatch(
         detected=True,
         pattern="praise_without_evidence",
         heuristic_name="opening_affirmation_without_citation",
-        confidence=0.74,
-        matched_spans=(opener,),
-        matched_sources=("candidate_response",),
-        matched_ats=(None,),
+        confidence=0.7,
+        matched_spans=tuple(markers),
+        matched_sources=tuple("candidate_response" for _ in markers),
+        matched_ats=tuple(None for _ in markers),
     )
 
 
