@@ -19,10 +19,11 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
+from typing import Annotated, Any
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from neurodock_mcp_task_fractionator.decomposer import (
     AcceptanceCriteriaRequiredError,
@@ -103,7 +104,19 @@ def build_server(
             openWorldHint=False,
         ),
     )
-    def _decompose(goal: str, time_budget: str | None = None) -> dict[str, Any]:
+    def _decompose(
+        goal: str,
+        time_budget: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Optional total time budget as an ISO-8601 duration, e.g. "
+                    "'PT2H' (2 hours) or 'PT90M' (90 minutes) — not prose like "
+                    "'a couple of hours'."
+                ),
+            ),
+        ] = None,
+    ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "decompose"})
         try:
             result = decompose(goal=goal, time_budget=time_budget)

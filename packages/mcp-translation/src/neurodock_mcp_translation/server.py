@@ -31,6 +31,7 @@ from neurodock_mcp_translation.types import (
     BriefMeetingInput,
     CheckToneInput,
     RewriteOutgoingInput,
+    TargetRegister,
     TranslateIncomingInput,
 )
 
@@ -133,7 +134,7 @@ def build_server() -> FastMCP[Any]:
     def _check_tone(
         text: str,
         baseline_messages: list[str] | None = None,
-        target_register: str | None = None,
+        target_register: TargetRegister | None = None,
         channel: str | None = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "check_tone"})
@@ -141,7 +142,7 @@ def build_server() -> FastMCP[Any]:
             payload = CheckToneInput(
                 text=text,
                 baseline_messages=baseline_messages,
-                target_register=target_register,  # type: ignore[arg-type]
+                target_register=target_register,
                 channel=channel,  # type: ignore[arg-type]
             )
         except ValidationError as exc:
@@ -167,7 +168,7 @@ def build_server() -> FastMCP[Any]:
     )
     def _rewrite_outgoing(
         text: str,
-        target_register: str,
+        target_register: TargetRegister,
         preserve_terms: list[str] | None = None,
         channel: str | None = None,
         preserve_intent: bool = True,
@@ -176,7 +177,7 @@ def build_server() -> FastMCP[Any]:
         try:
             payload = RewriteOutgoingInput(
                 text=text,
-                target_register=target_register,  # type: ignore[arg-type]
+                target_register=target_register,
                 preserve_terms=preserve_terms,
                 channel=channel,  # type: ignore[arg-type]
                 preserve_intent=preserve_intent,
