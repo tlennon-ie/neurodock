@@ -7,11 +7,11 @@ from __future__ import annotations
 import logging
 import os
 import sys
-from typing import Any
+from typing import Annotated, Any
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 
 from neurodock_mcp_guardrail.tools.check_hyperfocus import (
     SessionIdMismatchError,
@@ -120,10 +120,23 @@ def build_server() -> FastMCP[Any]:
         ),
     )
     def _check_hyperfocus(
-        chronometric_snapshot: dict[str, Any],
+        chronometric_snapshot: Annotated[
+            dict[str, Any],
+            Field(
+                description=(
+                    "Current timing snapshot. Required: 'now' (ISO-8601 timestamp). "
+                    "Optional: 'open_session' as {'session_id', 'started_at' (ISO-8601), "
+                    "'intent', 'elapsed_seconds'} or null when no session is open, and "
+                    "'idle_signal' in {active, switched_away, unknown}."
+                ),
+            ),
+        ],
         session_id: str | None = None,
         hyperfocus_break_minutes: int = 90,
-        end_of_day_local: str | None = None,
+        end_of_day_local: Annotated[
+            str | None,
+            Field(description="Local end-of-day time as HH:MM, 24-hour, e.g. '18:00'."),
+        ] = None,
         escalation_thresholds: dict[str, int] | None = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "check_hyperfocus"})
