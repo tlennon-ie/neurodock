@@ -194,9 +194,9 @@ def _check_escalating_validation(candidate: str) -> SycophancyMatch | None:
 
 
 def _check_repeated_reassurance(
-    messages: list[tuple[str, str]],
+    messages: list[tuple[str, str | None]],
 ) -> SycophancyMatch | None:
-    hits: list[tuple[str, str]] = []
+    hits: list[tuple[str, str | None]] = []
     for text, at in messages:
         lowered = text.lower()
         if any(trigger in lowered for trigger in REASSURANCE_TRIGGERS):
@@ -220,7 +220,7 @@ def _check_repeated_reassurance(
 def evaluate(
     *,
     candidate_response: str | None,
-    recent_user_messages: list[tuple[str, str]] | None,
+    recent_user_messages: list[tuple[str, str | None]] | None,
 ) -> SycophancyMatch:
     soft_other: SycophancyMatch | None = None
     if recent_user_messages:

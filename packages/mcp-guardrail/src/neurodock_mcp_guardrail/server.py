@@ -45,6 +45,23 @@ class _ToolError(RuntimeError):
         self.metadata = metadata or {}
 
 
+def _validation_message(exc: ValidationError) -> str:
+    """Turn a pydantic ValidationError into an actionable, field-named message.
+
+    The bare "input failed schema validation" left callers blind to which nested
+    field was wrong (the advertised MCP schema is an open object, so the caller
+    cannot see the required keys). Name the offending field paths and the reason
+    so the model can self-correct — matching the field-level errors the other
+    NeuroDock tools (check_tone, decompose, record_fact) already emit.
+    """
+    parts: list[str] = []
+    for err in exc.errors()[:6]:
+        loc = ".".join(str(p) for p in err.get("loc", ())) or "(root)"
+        parts.append(f"{loc}: {err.get('msg', 'invalid')}")
+    detail = "; ".join(parts) if parts else "input did not match the expected shape"
+    return f"input failed schema validation — {detail}"
+
+
 def build_server() -> FastMCP[Any]:
     mcp: FastMCP[Any] = FastMCP(name=SERVER_NAME, version=SERVER_VERSION)
 
@@ -80,7 +97,7 @@ def build_server() -> FastMCP[Any]:
                 }
             )
         except ValidationError as exc:
-            raise _ToolError("INPUT_INVALID", "input failed schema validation") from exc
+            raise _ToolError("INPUT_INVALID", _validation_message(exc)) from exc
         try:
             result = check_rumination(payload)
         except HistoryOutOfOrderError as exc:
@@ -121,7 +138,7 @@ def build_server() -> FastMCP[Any]:
                 }
             )
         except ValidationError as exc:
-            raise _ToolError("INPUT_INVALID", "input failed schema validation") from exc
+            raise _ToolError("INPUT_INVALID", _validation_message(exc)) from exc
         try:
             result = check_hyperfocus(payload)
         except SessionIdMismatchError as exc:
@@ -156,7 +173,7 @@ def build_server() -> FastMCP[Any]:
                 }
             )
         except ValidationError as exc:
-            raise _ToolError("INPUT_INVALID", "input failed schema validation") from exc
+            raise _ToolError("INPUT_INVALID", _validation_message(exc)) from exc
         try:
             result = check_sycophancy(payload)
         except SycophancyInputMissingError as exc:

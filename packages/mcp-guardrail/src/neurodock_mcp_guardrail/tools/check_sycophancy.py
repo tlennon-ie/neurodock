@@ -86,7 +86,7 @@ def check_sycophancy(payload: SycophancyInput) -> SycophancyOutput:
             "at least one of candidate_response or recent_user_messages is required"
         )
 
-    messages: list[tuple[str, str]] | None = None
+    messages: list[tuple[str, str | None]] | None = None
     if payload.recent_user_messages is not None:
         messages = [(msg.text, msg.at) for msg in payload.recent_user_messages]
 
