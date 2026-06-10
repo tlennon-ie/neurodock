@@ -6,11 +6,32 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 
 class _Base(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class _InputItem(BaseModel):
+    """Base for the caller-supplied nested objects (history items, the
+    chronometric snapshot, recent messages).
+
+    These receive raw dicts the calling model assembles, so they are lenient
+    where the strict output contract is not: extra keys are ignored rather than
+    rejected (the advertised MCP schema is an open object, so a caller cannot
+    know which keys are forbidden), and fields accept their canonical name or a
+    natural alias. The heuristics still read the canonical fields, unchanged.
+    """
+
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
+
+
+# Aliases for the two recurring caller fields, so the natural shapes an LLM
+# produces ({"prompt"/"message"/"content": ...}, {"timestamp"/"time": ...}) map
+# onto the canonical `text`/`at` the heuristics consume.
+_TEXT_ALIASES = AliasChoices("text", "message", "prompt", "content")
+_AT_ALIASES = AliasChoices("at", "timestamp", "time", "ts")
 
 
 HeuristicName = Literal["word_overlap_jaccard", "embedding_cosine", "topic_model"]
@@ -78,9 +99,9 @@ DEFAULT_FP_FEEDBACK_PATH: str = (
 )
 
 
-class RuminationHistoryItem(_Base):
-    text: str = Field(min_length=1, max_length=8000)
-    at: str
+class RuminationHistoryItem(_InputItem):
+    text: str = Field(min_length=1, max_length=8000, validation_alias=_TEXT_ALIASES)
+    at: str = Field(validation_alias=_AT_ALIASES)
 
 
 class RuminationInput(_Base):
@@ -121,20 +142,22 @@ class RuminationOutput(_Base):
     false_positive_feedback_path: str = DEFAULT_FP_FEEDBACK_PATH
 
 
-class OpenSessionSnapshot(_Base):
+class OpenSessionSnapshot(_InputItem):
     session_id: str
-    started_at: str
+    started_at: str = Field(validation_alias=AliasChoices("started_at", "startedAt", "start"))
     intent: str = Field(min_length=1, max_length=500)
-    elapsed_seconds: int = Field(ge=0)
+    elapsed_seconds: int = Field(
+        ge=0, validation_alias=AliasChoices("elapsed_seconds", "elapsedSeconds")
+    )
 
 
-class ChronometricSnapshot(_Base):
-    open_session: OpenSessionSnapshot | None
-    now: str
+class ChronometricSnapshot(_InputItem):
+    open_session: OpenSessionSnapshot | None = None
+    now: str = Field(validation_alias=_AT_ALIASES)
     idle_signal: HyperfocusIdleSignal | None = None
 
 
-class EscalationThresholds(_Base):
+class EscalationThresholds(_InputItem):
     gentle: int = Field(ge=5, le=480)
     nudge: int = Field(ge=5, le=480)
     hard: int = Field(ge=5, le=480)
@@ -175,9 +198,11 @@ class HyperfocusOutput(_Base):
     false_positive_feedback_path: str = DEFAULT_FP_FEEDBACK_PATH
 
 
-class SycophancyRecentMessage(_Base):
-    text: str = Field(min_length=1, max_length=8000)
-    at: str
+class SycophancyRecentMessage(_InputItem):
+    text: str = Field(min_length=1, max_length=8000, validation_alias=_TEXT_ALIASES)
+    # Sycophancy is not time-windowed (unlike rumination), so a timestamp is
+    # optional here — a bare {"text": "..."} message is valid.
+    at: str | None = Field(default=None, validation_alias=_AT_ALIASES)
 
 
 class SycophancyInput(_Base):

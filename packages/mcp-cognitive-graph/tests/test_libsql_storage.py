@@ -32,6 +32,8 @@ libsql = pytest.importorskip("libsql", reason="optional 'libsql' client not inst
 
 from neurodock_mcp_cognitive_graph.storage.libsql import (  # noqa: E402  (after importorskip)
     LibSqlStorage,
+    _iter_migration_resources,
+    _split_sql_statements,
 )
 
 NOW = datetime(2026, 5, 15, 9, 14, 22, tzinfo=UTC)
@@ -545,3 +547,57 @@ def test_libsql_matches_sqlite_on_same_operations(tmp_path: Path) -> None:
     finally:
         sqlite_store.close()
         libsql_store.close()
+
+
+# -- migration robustness over a remote-style connection ------------------
+
+
+def test_split_sql_statements_keeps_inline_comment_semicolons_intact() -> None:
+    """The facts CREATE TABLE has an inline comment containing a semicolon
+    (``-- nullable; populated``). The splitter must not break the statement
+    there, or the migration would apply a truncated, invalid CREATE."""
+    statements = [s for sql in _iter_migration_resources() for s in _split_sql_statements(sql)]
+    facts_create = [s for s in statements if s.startswith("CREATE TABLE IF NOT EXISTS facts (")]
+    assert len(facts_create) == 1
+    # The whole facts definition survived in one statement — the inline-comment
+    # semicolon did not truncate it.
+    assert "object_kind" in facts_create[0]
+    assert "recorded_at" in facts_create[0]
+    assert facts_create[0].rstrip().endswith(")")
+
+
+class _PragmaRejectingConn:
+    """A connection that rejects PRAGMA statements, like remote libSQL/Turso.
+
+    Backed by stdlib sqlite3 so the DDL actually runs; any ``PRAGMA`` raises,
+    reproducing the hosted-only failure where ``executescript`` halted on the
+    schema's leading PRAGMAs and created no tables (Bug B, the missing
+    ``entities``/``facts`` tables on hosted storage).
+    """
+
+    def __init__(self) -> None:
+        import sqlite3
+
+        self._c = sqlite3.connect(":memory:")
+
+    def execute(self, sql: str, params: tuple = ()):  # type: ignore[no-untyped-def]
+        if sql.lstrip().upper().startswith("PRAGMA"):
+            raise RuntimeError("PRAGMA not supported on this remote backend")
+        return self._c.execute(sql, params)
+
+    def commit(self) -> None:
+        self._c.commit()
+
+    def table_names(self) -> set[str]:
+        rows = self._c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        return {r[0] for r in rows}
+
+
+def test_migrations_apply_when_pragmas_are_rejected() -> None:
+    """Regression for hosted storage (Bug B): the full schema must be created
+    even when the backend rejects the leading PRAGMAs, as remote Turso does."""
+    storage = LibSqlStorage("ignored://remote")
+    storage._conn = _PragmaRejectingConn()  # inject the remote-style connection
+    storage._apply_migrations()
+    tables = storage._conn.table_names()  # type: ignore[attr-defined]
+    assert {"entities", "facts", "fact_provenance", "entity_embeddings"} <= tables

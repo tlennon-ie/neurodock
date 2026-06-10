@@ -136,9 +136,27 @@ class LibSqlStorage:
             self._conn = None
 
     def _apply_migrations(self) -> None:
+        # Apply each migration statement individually rather than via
+        # ``executescript``. Over a REMOTE libSQL/Turso connection,
+        # ``executescript`` silently halts on the local-only PRAGMAs at the top of
+        # the schema (``journal_mode = WAL``, ``foreign_keys = ON``) — which Turso
+        # manages itself and does not accept — leaving every CREATE TABLE
+        # unexecuted, so the database has no tables. (Local ``file:`` connections
+        # accept the PRAGMAs, which is why the unit tests, all on ``file:`` URLs,
+        # never caught this.) Executing statements one at a time and skipping an
+        # unsupported PRAGMA lets the DDL run on both local files and Turso.
         conn = self._c
         for sql in _iter_migration_resources():
-            conn.executescript(sql)
+            for statement in _split_sql_statements(sql):
+                try:
+                    conn.execute(statement)
+                except Exception:
+                    # PRAGMAs are advisory here; a remote backend rejecting one
+                    # must not abort the schema migration. DDL failures must still
+                    # surface, so only swallow PRAGMA statements.
+                    if statement.lstrip().upper().startswith("PRAGMA"):
+                        continue
+                    raise
         conn.commit()
 
     @property
@@ -462,6 +480,27 @@ class LibSqlStorage:
             (input_text, entity_id, method, score, now.isoformat()),
         )
         self._c.commit()
+
+
+def _split_sql_statements(script: str) -> list[str]:
+    """Split a migration script into individual statements.
+
+    Strips ``-- ...`` comments to end-of-line first (the migrations contain
+    inline comments whose text includes a semicolon, e.g. ``-- nullable;
+    populated``, which would otherwise break the split), then splits on ``;``.
+    The cognitive-graph migrations are plain DDL — no triggers and no semicolons
+    inside string literals — so this simple split is safe. Per-statement
+    execution is what lets the schema apply over remote libSQL, where
+    ``executescript`` halts on the local-only PRAGMAs.
+    """
+    stripped_lines: list[str] = []
+    for line in script.splitlines():
+        marker = line.find("--")
+        if marker != -1:
+            line = line[:marker]
+        stripped_lines.append(line)
+    cleaned = "\n".join(stripped_lines)
+    return [statement.strip() for statement in cleaned.split(";") if statement.strip()]
 
 
 def _iter_migration_resources() -> Iterable[str]:
