@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SettingsTab } from "../../entrypoints/popup/SettingsTab.js";
 import type { ExtensionProfile } from "../../src/lib/types.js";
+import * as nativeHost from "../../src/lib/native-host-client.js";
+
+afterEach(() => vi.restoreAllMocks());
 
 function baseProfile(
   overrides: Partial<ExtensionProfile> = {},
@@ -575,5 +578,22 @@ describe("SettingsTab", () => {
     expect(screen.getByTestId("settings-debug")).not.toBeVisible();
     fireEvent.click(screen.getByTestId("settings-advanced-toggle"));
     expect(screen.getByTestId("settings-debug")).toBeVisible();
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // D2 — PowerUpCard mounted in Essentials.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("renders the power-up command in Essentials when the native host is absent", async () => {
+    vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
+      status: "absent",
+    });
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("power-up-command")).toBeInTheDocument();
+    });
+    const essentials = screen.getByTestId("settings-essentials");
+    expect(essentials).toContainElement(screen.getByTestId("power-up-command"));
   });
 });

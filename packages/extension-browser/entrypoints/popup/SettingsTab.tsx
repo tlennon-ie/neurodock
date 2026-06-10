@@ -54,6 +54,7 @@ import {
 import { ProviderTest } from "./ProviderTest.js";
 import { AccessibilitySection } from "./AccessibilitySection.js";
 import { ReaderPreferences } from "../../src/components/ReaderPreferences.js";
+import { PowerUpCard } from "../../src/components/PowerUpCard.js";
 
 function isLocalhostBaseUrl(baseUrl: string): boolean {
   try {
@@ -218,6 +219,8 @@ export function SettingsTab({
           }}
           onChange={(patch) => void onChange(patch)}
         />
+
+        <PowerUpCard />
 
         <ModeSelector selected={selected} onChange={setSelected} />
 
