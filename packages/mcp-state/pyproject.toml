@@ -6,6 +6,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "AGPL-3.0-or-later" }
 authors = [{ name = "NeuroDock contributors" }]
+# Internal workspace package: the remote server installs it from the local
+# workspace (see packages/remote/Dockerfile), never from PyPI. The classifier
+# makes PyPI reject any upload, matching neurodock-remote, so a release tag
+# cannot accidentally first-publish it.
+classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     "fastmcp>=3.3.0",
 ]

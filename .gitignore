@@ -215,3 +215,5 @@ docs/decisions/0009-remote-transport-and-hosting.md
 docs/decisions/0010-opt-in-hosted-full-experience.md
 # Extension store submission kit (listing copy, per-store forms, promo assets).
 packages/extension-browser/store-listings/
+packages/extension-browser/store/
+packages/extension-browser/STORE-SUBMISSION.md
