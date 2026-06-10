@@ -311,3 +311,60 @@
 :host(.nd-focus-mode) {
   --nd-line-height: 1.45;
 }
+
+/*
+ * Reader-font hinting (neurodivergent font switcher).
+ *
+ * A single `font-<value>` class on <html> (popup/tab) or the shadow host
+ * (in-page island) re-binds the body + heading stacks. Mirrors
+ * docs/src/styles/tokens.css. The default (no class, or `font-atkinson`)
+ * is the same stack already declared in :root above, so an un-hinted page
+ * is unchanged. Each stack keeps the same fallbacks so the swap is minimal.
+ */
+:root.font-atkinson,
+:host(.font-atkinson) {
+  --nd-font-body:
+    "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --nd-font-heading:
+    "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui,
+    -apple-system, sans-serif;
+}
+
+:root.font-lexend,
+:host(.font-lexend) {
+  --nd-font-body:
+    "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui,
+    -apple-system, sans-serif;
+  --nd-font-heading:
+    "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui,
+    -apple-system, sans-serif;
+}
+
+:root.font-opendyslexic,
+:host(.font-opendyslexic) {
+  --nd-font-body:
+    "OpenDyslexic", "Atkinson Hyperlegible", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --nd-font-heading:
+    "OpenDyslexic", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+}
+
+:root.font-comic,
+:host(.font-comic) {
+  --nd-font-body:
+    "Comic Neue", "Atkinson Hyperlegible", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --nd-font-heading:
+    "Comic Neue", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+}
+
+:root.font-system,
+:host(.font-system) {
+  --nd-font-body:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --nd-font-heading:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
