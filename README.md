@@ -202,8 +202,25 @@ One bundle per server under [`mcpb/`](./mcpb/); build with
 under the `io.github.tlennon-ie/*` namespace, so MCP-aware clients can discover
 them directly.
 
+**Hosted remote server (no install)** — the stateless tools (translation,
+guardrail, and `decompose`) are also served over OAuth at a hosted HTTPS
+endpoint, so you can use them with no local install and no `uv`:
+
+```
+https://mcp.neurodock.org/mcp
+```
+
+In Claude (claude.ai or Desktop) → **Settings → Connectors → Add custom
+connector** → paste that URL → complete the sign-in prompt. The eight stateless
+tools appear immediately. An opt-in memory surface (`enable_hosted_storage`,
+`connect_byos_storage`, `record_fact`, `recall_entity`, …) is also exposed but
+does nothing until you explicitly enable storage for your signed-in account. The
+personal cognitive graph and neurotype profile are **never** hosted — they stay
+on the local install. Full walkthrough: [Hosted server](./docs/src/content/docs/getting-started/remote.mdx).
+
 See [ADR 0008 — distribution & remote strategy](./docs/decisions/0008-distribution-and-remote-strategy.md)
-for how these fit together and the (separate) plan for a hosted remote server.
+and [ADR 0009 — remote transport & hosting](./docs/decisions/0009-remote-transport-and-hosting.md)
+for how these fit together. The hosted remote server is live at `mcp.neurodock.org`.
 
 </details>
 
