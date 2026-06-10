@@ -555,4 +555,25 @@ describe("SettingsTab", () => {
       ).toBeInTheDocument();
     });
   });
+
+  // ──────────────────────────────────────────────────────────────────
+  // C2 — reader prefs first; essentials / advanced split.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("renders Reader preferences first, inside Essentials", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    const essentials = screen.getByTestId("settings-essentials");
+    expect(essentials).toContainElement(
+      screen.getByTestId("reader-prefs-neurotypes"),
+    );
+  });
+
+  it("keeps Advanced collapsed by default and reveals it on toggle", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    expect(screen.getByTestId("settings-debug")).not.toBeVisible();
+    fireEvent.click(screen.getByTestId("settings-advanced-toggle"));
+    expect(screen.getByTestId("settings-debug")).toBeVisible();
+  });
 });
