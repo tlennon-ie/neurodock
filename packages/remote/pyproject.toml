@@ -41,6 +41,9 @@ test = [
 
 [project.scripts]
 neurodock-remote = "neurodock_remote.app:main"
+# stdio transport for registry introspection (Glama Dockerfile.glama); not a
+# user-facing transport — the hosted deploy serves Streamable HTTP.
+neurodock-remote-stdio = "neurodock_remote.app:main_stdio"
 
 [build-system]
 requires = ["hatchling"]

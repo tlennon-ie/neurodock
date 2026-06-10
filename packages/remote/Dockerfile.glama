@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1
+# NeuroDock — Glama introspection image.
+#
+# This image exists ONLY so the Glama registry (glama.ai) can build the server,
+# start it, and enumerate its tools (tools/list) to produce a quality/coherence
+# score and a release. It runs the SAME combined server the hosted deploy uses
+# (translation + guardrail + decompose + the opt-in storage/graph surface), but
+# over STDIO and WITHOUT auth — introspection only lists tools, it never calls
+# them, so no IdP, no secrets, and no Turso/Clerk configuration are needed.
+#
+# This is NOT the production transport. The hosted server is HTTP + OAuth via
+# packages/remote/Dockerfile; local users run the individual stdio servers
+# through @neurodock/cli. Point the Glama build spec at this file.
+#
+# Build from the REPO ROOT (the workspace graph must be visible):
+#   docker build -f packages/remote/Dockerfile.glama -t neurodock-glama .
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    PYTHONUNBUFFERED=1 \
+    PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+# Workspace metadata + lockfile first for layer caching, then the whole workspace
+# (neurodock-remote resolves three sibling packages from the frozen lock).
+COPY pyproject.toml uv.lock README.md ./
+COPY packages/ ./packages/
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --package neurodock-remote
+
+# Keep the image lean: skip the embedding rung so fastembed is never imported and
+# no model is downloaded (introspection does not exercise the graph anyway).
+ENV NEURODOCK_GRAPH_DISABLE_EMBEDDINGS=1
+
+# Run as a non-root user.
+RUN useradd --create-home --uid 10001 neurodock \
+    && chown -R neurodock:neurodock /app
+USER neurodock
+
+# stdio MCP server: Glama (via mcp-proxy) speaks JSON-RPC over stdio to list tools.
+ENTRYPOINT ["neurodock-remote-stdio"]
