@@ -250,3 +250,41 @@ def test_payload_omits_hint_and_example_when_absent() -> None:
 
     payload = TE("GRAPH_WRITE_FAILED", "disk full").to_payload()
     assert payload == {"error": "GRAPH_WRITE_FAILED", "message": "disk full"}
+
+
+def test_accepts_json_stringified_subject_and_object(
+    memory_storage: InMemoryStorage,
+    fixed_clock: FixedClock,
+) -> None:
+    """A standards-compliant MCP client serialises an object argument for an
+    untyped parameter into a JSON string in transit. record_fact must decode
+    that rather than reject it — the bug that left hosted graphs empty because
+    every write failed with "subject must be an object; got a bare string"."""
+    import json
+
+    result = record_fact(
+        memory_storage,
+        fixed_clock,
+        subject=json.dumps({"type": "project", "name": "NeuroDock"}),
+        predicate="tagged",
+        object=json.dumps({"literal": "external-memory"}),
+    )
+    assert result.fact_id.startswith("fact_")
+    assert "NeuroDock" in {e.name for e in result.auto_created_entities}
+
+
+def test_bare_non_json_string_subject_still_raises_friendly_error(
+    memory_storage: InMemoryStorage,
+    fixed_clock: FixedClock,
+) -> None:
+    """A genuinely wrong bare string (not a JSON object) still gets the friendly
+    SUBJECT_REQUIRED shape error — the coercion only rescues stringified JSON."""
+    with pytest.raises(ToolError) as exc_info:
+        record_fact(
+            memory_storage,
+            fixed_clock,
+            subject="just some prose",
+            predicate="tagged",
+            object={"literal": "x"},
+        )
+    assert exc_info.value.code == "SUBJECT_REQUIRED"

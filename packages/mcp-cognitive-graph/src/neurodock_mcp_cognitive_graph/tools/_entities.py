@@ -9,6 +9,7 @@ resolve the subject, resolve the object, then write the fact.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any, cast
 
@@ -36,6 +37,27 @@ _VALID_CALL_EXAMPLE: dict[str, Any] = {
 }
 
 
+def _coerce_object(raw: Any) -> Any:
+    """Tolerate a JSON-stringified object on the wire.
+
+    ``subject``/``object`` are declared untyped in the published MCP inputSchema
+    (so the friendly shape errors below can fire instead of a raw Pydantic 422).
+    A standards-compliant MCP client serialises an object argument for an untyped
+    parameter into a JSON *string* in transit — e.g. ``'{"type":"project",
+    "name":"NeuroDock"}'`` arrives as a bare string and is rejected. If ``raw`` is
+    a string that decodes to a JSON object, decode it; otherwise leave it
+    untouched so the existing shape errors still apply to genuinely-wrong input.
+    """
+    if isinstance(raw, str):
+        try:
+            decoded = json.loads(raw)
+        except (ValueError, TypeError):
+            return raw
+        if isinstance(decoded, dict):
+            return decoded
+    return raw
+
+
 def _describe_received(raw: Any) -> str:
     """Render the actual input shape for the friendly error message."""
     if raw is None:
@@ -57,6 +79,7 @@ def resolve_subject(
 ) -> tuple[FactSubject, list[AutoCreatedEntity]]:
     """Return the resolved subject reference and any auto-created entity."""
     valid_types = sorted(VALID_ENTITY_TYPES)
+    raw = _coerce_object(raw)
     if not isinstance(raw, dict):
         raise ToolError(
             "SUBJECT_REQUIRED",
@@ -129,6 +152,7 @@ def resolve_object(
 ) -> tuple[str | None, str | None, FactObjectEntity | LiteralValue, list[AutoCreatedEntity]]:
     """Return ``(object_id, object_literal, object_payload, auto_created)``."""
     valid_types = sorted(VALID_ENTITY_TYPES)
+    raw = _coerce_object(raw)
     if not isinstance(raw, dict):
         raise ToolError(
             "OBJECT_REQUIRED",

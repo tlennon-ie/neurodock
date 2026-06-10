@@ -268,6 +268,11 @@ def main_stdio() -> None:
         level=logging.INFO,
         format='{"logger":"%(name)s","level":"%(levelname)s","msg":"%(message)s"}',
     )
+    # Introspection never exercises the embedding rung, so default it off: this
+    # keeps fastembed from being imported (no model download) and means a Glama
+    # build needs no environment configuration at all. An explicit env value, if
+    # set, still wins.
+    os.environ.setdefault("NEURODOCK_GRAPH_DISABLE_EMBEDDINGS", "1")
     _LOG.info("serving_combined_remote_mcp_stdio")
     build_combined_server().run()
 
