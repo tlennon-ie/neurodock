@@ -10,7 +10,7 @@ without something landing, that's fine — this is volunteer work, not a
 ship list. If you want to drive any of these, open an issue or comment
 on the existing one.
 
-> Updated: 2026-05-25.
+> Updated: 2026-06-10.
 
 ## Shipped (Q2 2026)
 
@@ -63,14 +63,30 @@ Landed since the v0.2.1 developer preview:
       instead of raw Pydantic errors. Closes the six-retry validation
       loop documented on 2026-05-22. Landed in mcp-cognitive-graph
       v0.0.4 (2026-05-24).
+- [x] **Distribution channels** — the five servers are published to the
+      official MCP Registry (`registry.modelcontextprotocol.io`, namespace
+      `io.github.tlennon-ie/*`), plus a Claude Code plugin, per-server
+      `.mcpb` Desktop Extensions, and an `awesome-mcp-servers` listing.
+      Recorded in ADR 0008.
+- [x] **Hosted remote MCP server** — the stateless tools (translation,
+      guardrail, `decompose`) are served over OAuth at
+      `https://mcp.neurodock.org/mcp` (Cloudflare Containers + Clerk).
+      Addable as a custom connector with no local install. The cognitive
+      graph and profile are never hosted. ADR 0009.
+- [x] **Opt-in hosted state** — signed-in users can enable per-account
+      NeuroDock-hosted storage (a private Turso database) or bring their
+      own libSQL/Turso DB, with explicit consent and one-call erasure.
+      Default stays stateless/local; anonymous sessions store nothing.
+      ADR 0010.
 
 ## Now — Q2 2026
 
 **Theme:** make the developer preview comfortable to actually use.
 
 - [ ] **Browser-store submissions** — Chrome Web Store, Firefox Add-ons,
-      Edge Add-ons. Build artefacts are clean; developer accounts +
-      screenshots + privacy disclosures remain manual.
+      Edge Add-ons. Build artefacts and promo/icon assets are ready;
+      developer accounts + the five listing screenshots + privacy
+      disclosures remain the manual steps.
 - [ ] **Demo GIF / video** (issue #27) — a short video remains the
       lowest-friction "see it work" surface.
 - [x] **Docs site DNS** — `neurodock.org` and `docs.neurodock.org` now
