@@ -40,6 +40,45 @@ describe("handler", () => {
     expect(r.id).toBe("1");
   });
 
+  it("ping reports setup capabilities from the injected detector", () => {
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
+    const r = handleRequest({ op: "ping" }, makeIo(store), () => ({
+      profile: true,
+      hooks: true,
+      daemon: false,
+    }));
+    expect(r.ok).toBe(true);
+    const data = r.data as {
+      pong: boolean;
+      version: string;
+      capabilities: { profile: boolean; hooks: boolean; daemon: boolean };
+    };
+    // Additive shape: pong + version stay for clients that predate
+    // capabilities.
+    expect(data.pong).toBe(true);
+    expect(typeof data.version).toBe("string");
+    expect(data.capabilities).toEqual({
+      profile: true,
+      hooks: true,
+      daemon: false,
+    });
+  });
+
+  it("ping includes capabilities even with the default detector", () => {
+    const store: FakeStore = {
+      path: "/tmp/profile.yaml",
+      raw: null,
+      exists: false,
+    };
+    const r = handleRequest({ op: "ping" }, makeIo(store));
+    const data = r.data as { capabilities?: { profile: boolean } };
+    expect(data.capabilities?.profile).toBe(true);
+  });
+
   it("rejects a payload that does not match the request shape", () => {
     const store: FakeStore = {
       path: "/tmp/profile.yaml",

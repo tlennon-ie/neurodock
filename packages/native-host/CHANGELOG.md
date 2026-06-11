@@ -2,6 +2,27 @@
 
 ## [unreleased]
 
+### Added — `ping` reports setup capabilities
+
+The `ping` response `data` now carries a `capabilities` object — the
+"fully set up" contract the browser extension's power-up card consumes:
+
+- `profile: true` — the host can read/write profile.yaml (always true
+  when the host responds at all).
+- `hooks` — NeuroDock guardrail hook entries are present in
+  `~/.claude/settings.json` (the merge target of
+  `neurodock install-hooks`).
+- `daemon` — the standalone daemon's user-login autostart marker exists
+  (HKCU Run value `NeuroDockGuardrail` on Windows, LaunchAgent plist on
+  macOS, systemd --user unit on Linux). The daemon _script_ on disk is
+  deliberately not a marker — `install-hooks` copies it even when the
+  daemon was never enabled.
+
+Additive and backwards compatible: `{ pong, version }` are unchanged,
+so clients that ignore `capabilities` keep working. Detection lives in
+`src/capabilities.ts` with injectable fs/os/registry probes for tests,
+and mirrors the markers `neurodock guardrail status` checks.
+
 ### Security — registration scaffolds use atomic writes
 
 `registerLinux`, `registerDarwin`, and `writeProfile` (profile-io) previously called

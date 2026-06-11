@@ -34,6 +34,41 @@ export interface HostResponse<T = unknown> {
 
 export const HOST_VERSION = "0.1.0";
 
+/**
+ * Capability flags reported by the `ping` op — the "fully set up"
+ * contract the browser extension's power-up card consumes. Additive to
+ * the original `{ pong, version }` ping data: clients that ignore
+ * `capabilities` keep working unchanged.
+ */
+export interface SetupCapabilities {
+  /**
+   * The host can read/write profile.yaml. Always true when the host is
+   * responding at all — a ping reply is itself the proof.
+   */
+  readonly profile: true;
+  /**
+   * The proactive-guardrail hooks appear installed: NeuroDock hook
+   * entries are present in `~/.claude/settings.json` (written by
+   * `neurodock install-hooks` / `neurodock setup`).
+   */
+  readonly hooks: boolean;
+  /**
+   * The standalone guardrail daemon appears installed: its user-login
+   * autostart marker exists (HKCU Run value on Windows, LaunchAgent
+   * plist on macOS, systemd --user unit on Linux — written by
+   * `neurodock install-hooks --install-daemon` / `neurodock setup
+   * --daemon`).
+   */
+  readonly daemon: boolean;
+}
+
+/** Shape of `HostResponse.data` for a successful `ping`. */
+export interface PingData {
+  readonly pong: true;
+  readonly version: string;
+  readonly capabilities: SetupCapabilities;
+}
+
 export class ProtocolError extends Error {
   readonly code: string;
 

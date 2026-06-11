@@ -8,8 +8,14 @@
  * Filesystem access goes through the injected `io` adapter so the tests
  * can drive the protocol round-trip in memory.
  */
-import type { HostRequest, HostResponse } from "./protocol.js";
+import type {
+  HostRequest,
+  HostResponse,
+  PingData,
+  SetupCapabilities,
+} from "./protocol.js";
 import { HOST_VERSION, isHostRequest } from "./protocol.js";
+import { detectCapabilities } from "./capabilities.js";
 import { validateProfile } from "./validator.js";
 
 export interface ProfileIoAdapter {
@@ -69,6 +75,11 @@ export interface SetResult {
 export function handleRequest(
   raw: unknown,
   io: ProfileIoAdapter,
+  /**
+   * Setup-capability detector used by `ping`. Defaults to the real
+   * on-disk probe; tests inject a stub so they stay hermetic.
+   */
+  detect: () => SetupCapabilities = detectCapabilities,
 ): HostResponse {
   if (!isHostRequest(raw)) {
     const id =
@@ -81,7 +92,12 @@ export function handleRequest(
   const req: HostRequest = raw;
 
   if (req.op === "ping") {
-    return ok(req, { pong: true, version: HOST_VERSION });
+    const data: PingData = {
+      pong: true,
+      version: HOST_VERSION,
+      capabilities: detect(),
+    };
+    return ok(req, data);
   }
 
   if (req.op === "get") {
