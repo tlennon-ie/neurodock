@@ -1,5 +1,14 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Changed — power-up card now advertises `npx @neurodock/cli setup`
+
+`FULL_SETUP_COMMAND` pointed at `install-all` while the unified setup
+command was still a later workstream. The CLI now ships `neurodock
+setup` (install-all + install-hooks in one go), so the card's
+copy-paste command is repointed to it. No UI change otherwise.
+
 ## 0.0.35
 
 ### Added — notifications inbox in the full-tab view

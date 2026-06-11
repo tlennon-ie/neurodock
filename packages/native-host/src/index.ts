@@ -100,6 +100,13 @@ if (invokedFromCli) {
 }
 
 export { handleRequest } from "./handler.js";
+export { detectCapabilities } from "./capabilities.js";
+export type { CapabilityProbeDeps } from "./capabilities.js";
 export { encodeMessage, tryDecodeMessage, HOST_VERSION } from "./protocol.js";
 export { resolveProfilePath, readProfile, writeProfile } from "./profile-io.js";
-export type { HostRequest, HostResponse } from "./protocol.js";
+export type {
+  HostRequest,
+  HostResponse,
+  PingData,
+  SetupCapabilities,
+} from "./protocol.js";

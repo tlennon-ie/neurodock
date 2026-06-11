@@ -4,15 +4,17 @@
  *
  * "Turn on full NeuroDock" — one copy-paste command + live connection state.
  * Replaces the three scattered CLI commands the settings used to list.
- * The exact command string is owned by a later workstream; FULL_SETUP_COMMAND
- * is the single place it is referenced so it can be updated in one edit.
+ * FULL_SETUP_COMMAND is the single place the command string is referenced
+ * so it can be updated in one edit.
  */
 import React, { useEffect, useRef, useState } from "react";
 import { useFullSetupStatus } from "../lib/full-setup.js";
 
-// One command installs the 6 MCP servers, wires MCP clients, and sets up
-// the native-host + hooks together. A future `setup` alias may replace it.
-export const FULL_SETUP_COMMAND = "npx @neurodock/cli install-all";
+// `neurodock setup` installs the 6 MCP servers, wires MCP clients,
+// registers the native-messaging host, and installs the Claude Code
+// guardrail hooks in one go (the standalone daemon stays opt-in via
+// --daemon).
+export const FULL_SETUP_COMMAND = "npx @neurodock/cli setup";
 
 export function PowerUpCard(): React.ReactElement {
   const { status, recheck } = useFullSetupStatus();
