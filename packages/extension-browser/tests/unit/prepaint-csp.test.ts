@@ -28,14 +28,13 @@ describe("prepaint csp contract", () => {
   it.each([
     ["popup", popupHtml],
     ["tab", tabHtml],
-  ])("%s html has no inline script bodies", (_name, html) => {
-    // Any <script> tag with content between the tags is an inline script.
-    const inline =
-      html.match(/<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/g) ?? [];
-    const nonEmpty = inline.filter(
-      (s) => s.replace(/<\/?script[^>]*>/g, "").trim() !== "",
-    );
-    expect(nonEmpty).toEqual([]);
+  ])("%s html has no inline scripts", (_name, html) => {
+    // An opening <script> tag without a src attribute is an inline script.
+    // Checking opening tags only (case-insensitively) is stricter than
+    // inspecting bodies and avoids HTML-rewriting heuristics entirely.
+    const openingTags = html.match(/<script\b[^>]*>/gi) ?? [];
+    const inlineTags = openingTags.filter((tag) => !/\bsrc\s*=/i.test(tag));
+    expect(inlineTags).toEqual([]);
   });
 
   it.each([
