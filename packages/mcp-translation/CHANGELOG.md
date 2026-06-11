@@ -5,6 +5,15 @@ All notable changes to `neurodock-mcp-translation` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning per .
 
+## [0.2.2] - 2026-06-11
+
+### Changed
+
+- `check_tone` and `rewrite_outgoing` publish `target_register` as a
+  typed enum (`direct`/`warm`/`formal`/`concise`/`clarifying`) in their
+  input schemas, so clients see the allowed values instead of a bare
+  string (PR #73).
+
 ## [0.2.1] - 2026-05-31
 
 - Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.

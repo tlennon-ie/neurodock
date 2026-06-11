@@ -1,6 +1,6 @@
 # @neurodock/native-host
 
-## [unreleased]
+## 0.2.0 - 2026-06-11
 
 ### Added — `ping` reports setup capabilities
 

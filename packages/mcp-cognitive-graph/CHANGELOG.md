@@ -6,6 +6,26 @@ to [semantic versioning](https://semver.org/spec/v2.0.0.html). Schemas under
 `schemas/` are versioned independently against `v0.1.0` of the contract; the
 package implements that contract.
 
+## [0.0.6] - 2026-06-11
+
+### Fixed
+
+- Decisions recorded as `decision belongs_to project` (with the person
+  credited via `decided_in` on the decision) now surface in
+  `recall_decisions` and `weekly_rollup`. Both read paths previously
+  only joined project and decision through a `decided_in` fact touching
+  the project, so the natural shape an LLM records came back empty.
+  Membership is now `decided_in` OR `belongs_to`, either orientation,
+  across all storage backends (PR #74).
+- `record_fact` accepts a JSON-stringified `subject`/`object` — some MCP
+  clients serialise object arguments for untyped parameters into a JSON
+  string, which the server used to reject as a bare string, failing
+  every write (PR #72).
+- The libSQL/Turso backing applies migrations statement-by-statement,
+  skipping PRAGMAs unsupported over remote connections. `executescript`
+  silently halted on the schema's leading PRAGMAs, leaving hosted
+  databases with no tables (PR #70).
+
 ## [0.0.5] - 2026-05-31
 
 - Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.

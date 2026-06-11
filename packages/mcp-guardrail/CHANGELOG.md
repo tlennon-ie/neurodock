@@ -5,6 +5,25 @@ All notable changes to `neurodock-mcp-guardrail` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning.
 
+## [0.0.5] - 2026-06-11
+
+### Changed
+
+- `check_sycophancy` gains a praise-density branch on
+  `praise_without_evidence`: two or more distinct absolute-praise
+  markers anywhere in the response — with no citation and no qualifier —
+  now flag, so blatant over-validation that is not positioned as an
+  opener no longer slips through. The published `pattern` and
+  `heuristic.name` enums are unchanged. Clinical-layer change accepted
+  by the maintainer per ETHICS.md commitment 3 / ADR 0006 (PR #75).
+- Nested input models tolerate extra keys and accept common aliases
+  (`prompt`/`message`/`content` for `text`; `timestamp`/`time` for
+  `at`), and `INPUT_INVALID` errors now name the offending field
+  (PR #70).
+- Published input schemas document runtime constraints:
+  `check_hyperfocus.end_of_day_local` as HH:MM and the
+  `chronometric_snapshot` shape (PR #73).
+
 ## [0.0.4] - 2026-05-31
 
 - Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.
