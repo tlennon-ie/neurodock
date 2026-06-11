@@ -24,7 +24,7 @@ function markUrl(): string {
 }
 
 interface NeuroDockHeaderProps {
-  /** When provided, render a gear button that opens the full settings page. */
+  /** When provided, render an expand button that opens the full-page view. */
   readonly onOpenSettings?: () => void;
 }
 
@@ -51,10 +51,28 @@ export function NeuroDockHeader({ onOpenSettings }: NeuroDockHeaderProps) {
             type="button"
             className="nd-header-settings"
             data-testid="nd-header-settings"
-            aria-label="Open settings"
+            aria-label="Open full view"
+            title="Open full view"
             onClick={onOpenSettings}
           >
-            ⚙
+            {/* Expand icon (YouTube-fullscreen style): four corner
+                brackets pointing outward. currentColor so it themes. */}
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M15 3h6v6" />
+              <path d="M9 21H3v-6" />
+              <path d="M21 3l-7 7" />
+              <path d="M3 21l7-7" />
+            </svg>
           </button>
         )}
       </div>
