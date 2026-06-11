@@ -1,5 +1,24 @@
 # @neurodock/cli changelog
 
+## [unreleased]
+
+### Added — `neurodock setup`: install-all + install-hooks in one command
+
+The "turn on full NeuroDock" path the browser extension advertises is
+now a single command. `neurodock setup` runs the existing `install-all`
+runner (6 Python MCP servers, MCP client wiring, native-messaging host)
+followed by the existing `install-hooks` runner (proactive-guardrail
+hooks in `~/.claude/settings.json`) — a thin orchestrator, no duplicated
+install logic. Mirrors `install-all`'s flags (`--client`, `--profile`,
+`--installer`, `--skip-install`, `--yes`, `--dry-run`,
+`--no-native-host`). The standalone Phase 3 daemon stays opt-in via
+`--daemon`, matching `install-hooks --install-daemon`, because the
+daemon is the optional piece — the Claude Code hook covers the common
+cases and `setup` should not register login autostart by default. The
+hooks step runs even when install-all reports a PATH problem (the
+guardrails only need Python); the exit code preserves install-all's
+failure first, else reports the hooks failure.
+
 ## 0.7.2
 
 ### Fixed — `npx @neurodock/cli install-all` failed on `init` with "Could not locate template: profile.example.yaml"

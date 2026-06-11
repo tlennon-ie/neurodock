@@ -19,6 +19,7 @@ import { runHostInstall, runHostUninstall } from "./commands/host.js";
 import { runInstallHooks } from "./commands/install-hooks.js";
 import { runGuardrailStatus } from "./commands/guardrail.js";
 import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
+import { runSetup } from "./commands/setup.js";
 import { runExamples } from "./commands/examples.js";
 import {
   runPluginAdd,
@@ -150,6 +151,75 @@ export function buildProgram(): Command {
           yes: opts.yes === true,
           dryRun: opts.dryRun === true,
           noNativeHost: opts.nativeHost === false,
+        });
+        for (const m of r.messages) print(m);
+        process.exit(r.exitCode);
+      },
+    );
+
+  program
+    .command("setup")
+    .description(
+      "full setup in one command: runs install-all (6 MCP servers + client " +
+        "wiring + native-messaging host) then install-hooks (Claude Code " +
+        "guardrail hooks); the standalone daemon is opt-in via --daemon",
+    )
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
+    .option("--profile <id>", "minimal | example", "example")
+    .option("--installer <id>", "uv | pip | auto", "auto")
+    .option(
+      "--skip-install",
+      "skip the Python install step (only wire clients + hooks)",
+      false,
+    )
+    .option(
+      "--yes",
+      "answer yes to all prompts (idempotent re-runs, collisions)",
+      false,
+    )
+    .option(
+      "--dry-run",
+      "print what would happen without writing anything",
+      false,
+    )
+    .option(
+      "--no-native-host",
+      "skip registering the optional native-messaging host (browser extension <-> profile.yaml)",
+    )
+    .option(
+      "--daemon",
+      "also register the optional standalone guardrail daemon at user-login " +
+        "autostart (off by default — the Claude Code hook covers the common cases)",
+      false,
+    )
+    .action(
+      async (opts: {
+        client: string;
+        profile: string;
+        installer: string;
+        skipInstall: boolean;
+        yes: boolean;
+        dryRun: boolean;
+        // Commander inverts `--no-native-host`: presence of the flag sets this to false.
+        nativeHost: boolean;
+        daemon: boolean;
+      }) => {
+        const client = validateClient(opts.client);
+        const profile = validateProfile(opts.profile);
+        const installer = validateInstaller(opts.installer);
+        const r = await runSetup({
+          client,
+          profile,
+          installer,
+          skipInstall: opts.skipInstall === true,
+          yes: opts.yes === true,
+          dryRun: opts.dryRun === true,
+          noNativeHost: opts.nativeHost === false,
+          daemon: opts.daemon === true,
         });
         for (const m of r.messages) print(m);
         process.exit(r.exitCode);
