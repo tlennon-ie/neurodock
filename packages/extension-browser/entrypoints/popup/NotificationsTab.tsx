@@ -58,7 +58,7 @@ const MUTE_CATEGORIES: ReadonlyArray<{
   {
     key: "watchdog",
     label: "All proactive nudges",
-    help: "Mute every watchdog signal.",
+    help: "Mute all proactive nudges.",
     options: [
       { label: "1h", until: "1h" },
       { label: "4h", until: "4h" },

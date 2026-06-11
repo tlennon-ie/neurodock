@@ -375,12 +375,12 @@ function ProactiveGuardrails(): React.ReactElement {
         />
         <span className="flex flex-col gap-0.5">
           <span className="font-medium">
-            Extension watchdog (auto-detects hyperfocus / late-night /
-            rumination)
+            Always-on check-ins (this browser)
           </span>
           <span className="text-fg-muted text-sm">
-            Runs every 5 min. Surfaces a notification + amber toolbar badge when
-            a pattern trips. Local-only; nothing leaves your device.
+            Checks every 5 min for hyperfocus, late-night use, or going in
+            circles. Surfaces a notification + amber badge. Local-only; nothing
+            leaves your device.
           </span>
         </span>
       </label>
@@ -389,34 +389,17 @@ function ProactiveGuardrails(): React.ReactElement {
         className="border-hairline flex flex-col gap-1 border p-2"
         data-testid="guardrail-phase1-info"
       >
-        <span className="text-sm font-medium text-fg">
-          Claude Code hook (Phase 1)
+        <span className="text-sm font-medium text-fg">Always-on check-ins</span>
+        <span className="text-fg-muted text-sm">
+          NeuroDock can gently check in when you&apos;ve been at it a long time
+          or going in circles. Turn everything on with the one-time setup in
+          Essentials above.
         </span>
         <span className="text-fg-muted text-sm">
-          Auto-fires chronometric / rumination / sycophancy checks on every Nth
-          Claude Code tool use. Banners on stderr.
+          To pause these check-ins in your terminal sessions, set:
         </span>
-        <code className="font-mono border-hairline bg-bg-code text-fg mt-1 block border px-2 py-1 text-sm">
-          neurodock install-hooks --self-test
-        </code>
-        <span className="text-fg-muted text-sm">Disable with:</span>
         <code className="font-mono border-hairline bg-bg-code text-fg block border px-2 py-1 text-sm">
           export NEURODOCK_GUARDRAILS=off
-        </code>
-      </div>
-
-      <div
-        className="border-hairline flex flex-col gap-1 border p-2"
-        data-testid="guardrail-phase3-info"
-      >
-        <span className="text-sm font-medium text-fg">
-          Standalone daemon (Phase 3)
-        </span>
-        <span className="text-fg-muted text-sm">
-          Host-agnostic. Catches you working in the terminal at 02:00 too.
-        </span>
-        <code className="font-mono border-hairline bg-bg-code text-fg mt-1 block border px-2 py-1 text-sm">
-          neurodock install-hooks --install-daemon
         </code>
       </div>
     </fieldset>

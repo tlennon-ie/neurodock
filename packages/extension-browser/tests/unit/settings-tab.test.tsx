@@ -514,18 +514,19 @@ describe("SettingsTab", () => {
     });
   });
 
-  it("renders Phase 1 and Phase 3 info blocks with documented opt-out commands", () => {
+  it("renders the always-on check-ins plain-language block with the opt-out env var", () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
     render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
 
-    const phase1 = screen.getByTestId("guardrail-phase1-info");
-    expect(phase1).toHaveTextContent("neurodock install-hooks --self-test");
-    expect(phase1).toHaveTextContent("export NEURODOCK_GUARDRAILS=off");
+    const block = screen.getByTestId("guardrail-phase1-info");
+    expect(block).toHaveTextContent(/always-on check-ins/i);
+    expect(block).toHaveTextContent("export NEURODOCK_GUARDRAILS=off");
 
-    const phase3 = screen.getByTestId("guardrail-phase3-info");
-    expect(phase3).toHaveTextContent(
-      "neurodock install-hooks --install-daemon",
-    );
+    // The old separate Phase 3 daemon block is no longer rendered;
+    // install instructions live in the PowerUpCard (Essentials).
+    expect(
+      screen.queryByTestId("guardrail-phase3-info"),
+    ).not.toBeInTheDocument();
   });
 
   it("Host permissions panel lists granted non-default origins", async () => {
