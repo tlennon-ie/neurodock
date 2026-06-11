@@ -155,9 +155,9 @@ samp {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  /* Survive width pressure from large reader fonts: flex children that
-     contain text must be allowed to shrink below their content size. */
-  min-width: 0;
+  /* The brand never shrinks or wraps; the font select absorbs all the
+     width pressure instead (see .nd-font-switcher below). */
+  flex-shrink: 0;
   text-decoration: none;
   color: var(--nd-color-fg-accent);
   font-family: var(--nd-font-heading);
@@ -169,16 +169,32 @@ samp {
 .nd-header-controls {
   display: inline-flex;
   align-items: center;
-  /* Wrap rather than overflow when a wide reader font inflates the
-     font select + toggles past the popup width. */
-  flex-wrap: wrap;
+  /* SINGLE row, always. Wrapping orphaned the last control onto its own
+     line (long font names made the select wide enough to wrap even in the
+     default font). Instead the select is the one shrinkable element: this
+     container may shrink (min-width: 0) and the switcher flexes down with
+     ellipsis while the icon buttons keep their size. */
+  flex-wrap: nowrap;
   min-width: 0;
   gap: 0.5rem;
+}
+.nd-header-controls > button {
+  /* Icon buttons (theme toggle, expand) keep their size; only the
+     select shrinks. */
+  flex-shrink: 0;
+}
+.nd-font-switcher {
+  /* The designated shrink absorber for the whole header row. */
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 .nd-font-switcher select {
   appearance: auto;
   font-family: inherit;
   font-size: 0.8125rem;
+  width: 100%;
+  min-width: 4.5rem;
   max-width: 11rem;
   text-overflow: ellipsis;
   padding: 0.2rem 0.4rem;
