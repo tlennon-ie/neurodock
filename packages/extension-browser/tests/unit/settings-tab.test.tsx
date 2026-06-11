@@ -1,7 +1,10 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { SettingsTab } from "../../entrypoints/popup/SettingsTab.js";
 import type { ExtensionProfile } from "../../src/lib/types.js";
+import * as nativeHost from "../../src/lib/native-host-client.js";
+
+afterEach(() => vi.restoreAllMocks());
 
 function baseProfile(
   overrides: Partial<ExtensionProfile> = {},
@@ -511,18 +514,19 @@ describe("SettingsTab", () => {
     });
   });
 
-  it("renders Phase 1 and Phase 3 info blocks with documented opt-out commands", () => {
+  it("renders the check-ins terminal sessions block with the opt-out env var", () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
     render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
 
-    const phase1 = screen.getByTestId("guardrail-phase1-info");
-    expect(phase1).toHaveTextContent("neurodock install-hooks --self-test");
-    expect(phase1).toHaveTextContent("export NEURODOCK_GUARDRAILS=off");
+    const block = screen.getByTestId("guardrail-phase1-info");
+    expect(block).toHaveTextContent(/check-ins in terminal sessions/i);
+    expect(block).toHaveTextContent("export NEURODOCK_GUARDRAILS=off");
 
-    const phase3 = screen.getByTestId("guardrail-phase3-info");
-    expect(phase3).toHaveTextContent(
-      "neurodock install-hooks --install-daemon",
-    );
+    // The old separate Phase 3 daemon block is no longer rendered;
+    // install instructions live in the PowerUpCard (Essentials).
+    expect(
+      screen.queryByTestId("guardrail-phase3-info"),
+    ).not.toBeInTheDocument();
   });
 
   it("Host permissions panel lists granted non-default origins", async () => {
@@ -554,5 +558,43 @@ describe("SettingsTab", () => {
         screen.getByTestId("host-permission-row-http://169.254.83.107:1234"),
       ).toBeInTheDocument();
     });
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // C2 — reader prefs first; essentials / advanced split.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("renders Reader preferences first, inside Essentials", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    const essentials = screen.getByTestId("settings-essentials");
+    expect(essentials).toContainElement(
+      screen.getByTestId("reader-prefs-neurotypes"),
+    );
+  });
+
+  it("keeps Advanced collapsed by default and reveals it on toggle", () => {
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    expect(screen.getByTestId("settings-debug")).not.toBeVisible();
+    fireEvent.click(screen.getByTestId("settings-advanced-toggle"));
+    expect(screen.getByTestId("settings-debug")).toBeVisible();
+  });
+
+  // ──────────────────────────────────────────────────────────────────
+  // D2 — PowerUpCard mounted in Essentials.
+  // ──────────────────────────────────────────────────────────────────
+
+  it("renders the power-up command in Essentials when the native host is absent", async () => {
+    vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
+      status: "absent",
+    });
+    const onChange = vi.fn().mockResolvedValue(undefined);
+    render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
+    await waitFor(() => {
+      expect(screen.getByTestId("power-up-command")).toBeInTheDocument();
+    });
+    const essentials = screen.getByTestId("settings-essentials");
+    expect(essentials).toContainElement(screen.getByTestId("power-up-command"));
   });
 });

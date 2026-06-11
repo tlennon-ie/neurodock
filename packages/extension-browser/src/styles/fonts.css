@@ -63,3 +63,35 @@
   font-display: swap;
   src: url("/fonts/jetbrains-mono-variable.woff2") format("woff2-variations");
 }
+
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/opendyslexic-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "OpenDyslexic";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/opendyslexic-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/comic-neue-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/comic-neue-700.woff2") format("woff2");
+}

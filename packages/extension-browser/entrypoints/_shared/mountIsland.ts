@@ -104,8 +104,38 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
         "lexend-variable.woff2",
       )}") format("woff2-variations");
     }
+    @font-face {
+      font-family: "OpenDyslexic";
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url("${fontUrl("opendyslexic-400.woff2")}") format("woff2");
+    }
+    @font-face {
+      font-family: "OpenDyslexic";
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url("${fontUrl("opendyslexic-700.woff2")}") format("woff2");
+    }
+    @font-face {
+      font-family: "Comic Neue";
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url("${fontUrl("comic-neue-400.woff2")}") format("woff2");
+    }
+    @font-face {
+      font-family: "Comic Neue";
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url("${fontUrl("comic-neue-700.woff2")}") format("woff2");
+    }
     :host { all: initial; }
     :host {
+      --nd-font-body: "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --nd-font-heading: "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
       --nd-color-bg: oklch(98% 0.005 95);
       --nd-color-bg-nav: oklch(97% 0.005 95);
       --nd-color-fg: oklch(22% 0.01 250);
@@ -188,9 +218,31 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
     :host(.nd-focus-mode) .neurodock-banner {
       display: none;
     }
+    /* A6 — reader-font switcher. Re-bind font stacks per selected font.
+       Mirrors src/styles/tokens.css :host(.font-*) blocks exactly. */
+    :host(.font-atkinson) {
+      --nd-font-body: "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --nd-font-heading: "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+    }
+    :host(.font-lexend) {
+      --nd-font-body: "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+      --nd-font-heading: "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+    }
+    :host(.font-opendyslexic) {
+      --nd-font-body: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --nd-font-heading: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+    }
+    :host(.font-comic) {
+      --nd-font-body: "Comic Neue", "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --nd-font-heading: "Comic Neue", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+    }
+    :host(.font-system) {
+      --nd-font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --nd-font-heading: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
     .neurodock-button {
       pointer-events: auto;
-      font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+      font-family: var(--nd-font-body);
       font-size: 14px;
       line-height: 1.65;
       padding: 6px 10px;
@@ -205,7 +257,7 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
     }
     .neurodock-panel {
       pointer-events: auto;
-      font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+      font-family: var(--nd-font-body);
       font-size: 14px;
       line-height: 1.5;
       width: 420px;
@@ -218,7 +270,7 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       color: var(--nd-color-fg);
     }
     .neurodock-panel h3 {
-      font-family: "Lexend Variable", "Lexend", inherit;
+      font-family: var(--nd-font-heading);
     }
     .neurodock-banner {
       margin-bottom: 8px;
@@ -241,12 +293,12 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       border: 1px solid var(--nd-color-hairline);
       background: var(--nd-color-bg);
       color: var(--nd-color-fg);
-      font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+      font-family: var(--nd-font-body);
       font-size: 14px;
       line-height: 1.5;
     }
     .neurodock-toast-body { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-    .neurodock-toast-title { font-weight: 600; font-family: "Lexend Variable", "Lexend", inherit; }
+    .neurodock-toast-title { font-weight: 600; font-family: var(--nd-font-heading); }
     .neurodock-toast-text { color: var(--nd-color-fg-muted); }
     .neurodock-toast-dismiss { align-self: flex-start; padding: 4px 8px; font-size: 13px; }
     @media (prefers-reduced-motion: no-preference) {

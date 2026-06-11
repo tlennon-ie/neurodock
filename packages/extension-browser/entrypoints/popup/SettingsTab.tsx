@@ -31,12 +31,7 @@
  *    "Refresh models" button that populates a dropdown.
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import type {
-  ExtensionMode,
-  ExtensionProfile,
-  Neurotype,
-  OutputFormat,
-} from "../../src/lib/types.js";
+import type { ExtensionMode, ExtensionProfile } from "../../src/lib/types.js";
 import { type ModelFetchableProvider } from "../../src/lib/providers/models.js";
 import { fetchModelsViaWorker } from "../../src/lib/fetch-models-via-worker.js";
 import {
@@ -58,6 +53,8 @@ import {
 } from "../../src/lib/permissions.js";
 import { ProviderTest } from "./ProviderTest.js";
 import { AccessibilitySection } from "./AccessibilitySection.js";
+import { ReaderPreferences } from "../../src/components/ReaderPreferences.js";
+import { PowerUpCard } from "../../src/components/PowerUpCard.js";
 
 function isLocalhostBaseUrl(baseUrl: string): boolean {
   try {
@@ -137,6 +134,7 @@ export function SettingsTab({
   onChange,
 }: SettingsTabProps): React.ReactElement {
   const selected = useMemo(() => selectedModeFromProfile(profile), [profile]);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const setSelected = useCallback(
     async (next: SelectedMode) => {
@@ -209,46 +207,76 @@ export function SettingsTab({
         Settings
       </h2>
 
-      <ModeSelector selected={selected} onChange={setSelected} />
-
-      {selected === "local-ollama" ? (
-        <LocalOllamaSettings profile={profile} onChange={onChange} />
-      ) : null}
-
-      {selected === "local-lmstudio" ? (
-        <LocalLMStudioSettings profile={profile} onChange={onChange} />
-      ) : null}
-
-      {cloudProviderFromSelected(selected) !== null ? (
-        <CloudSettings
-          profile={profile}
-          providerId={cloudProviderFromSelected(selected) as CloudProviderId}
-          onChange={onChange}
+      {/* ── Essentials ── */}
+      <div data-testid="settings-essentials" className="flex flex-col gap-4">
+        <ReaderPreferences
+          variant="full"
+          value={{
+            neurotypes: profile.neurotypes,
+            outputFormat: profile.outputFormat,
+            maxChunkSize: profile.maxChunkSize,
+            additionalNotes: profile.additionalNotes,
+          }}
+          onChange={(patch) => void onChange(patch)}
         />
-      ) : null}
 
-      {selected === "mock" ? (
-        <p className="text-fg-muted text-sm">
-          Mock mode is a developer-only deterministic provider. Use it to verify
-          the UI without a model. Output is always labelled [MOCK].
-        </p>
-      ) : null}
+        <PowerUpCard />
 
-      <ProviderTest profile={profile} />
+        <ModeSelector selected={selected} onChange={setSelected} />
 
-      <AccessibilitySection />
+        {selected === "local-ollama" ? (
+          <LocalOllamaSettings profile={profile} onChange={onChange} />
+        ) : null}
 
-      <ProactiveGuardrails />
+        {selected === "local-lmstudio" ? (
+          <LocalLMStudioSettings profile={profile} onChange={onChange} />
+        ) : null}
 
-      <PacingCopilotSection profile={profile} />
+        {cloudProviderFromSelected(selected) !== null ? (
+          <CloudSettings
+            profile={profile}
+            providerId={cloudProviderFromSelected(selected) as CloudProviderId}
+            onChange={onChange}
+          />
+        ) : null}
 
-      <DebugTools />
+        {selected === "mock" ? (
+          <p className="text-fg-muted text-sm">
+            Mock mode is a developer-only deterministic provider. Use it to
+            verify the UI without a model. Output is always labelled [MOCK].
+          </p>
+        ) : null}
 
-      <ReaderPreferences profile={profile} onChange={onChange} />
+        <AccessibilitySection />
+      </div>
 
-      <ImageTranslationPermission />
+      {/* ── Advanced (collapsed by default) ── */}
+      <div data-testid="settings-advanced">
+        <button
+          type="button"
+          data-testid="settings-advanced-toggle"
+          className="text-fg-muted flex w-full items-center gap-1 text-sm font-medium"
+          aria-expanded={isAdvancedOpen}
+          onClick={() => setIsAdvancedOpen((prev) => !prev)}
+        >
+          Advanced {isAdvancedOpen ? "▲" : "▼"}
+        </button>
+        <div hidden={!isAdvancedOpen} className="flex flex-col gap-4 pt-2">
+          <ProviderTest profile={profile} />
 
-      <HostPermissionsPanel />
+          <ProactiveGuardrails />
+
+          <PacingCopilotSection profile={profile} />
+
+          <div data-testid="settings-debug">
+            <DebugTools />
+          </div>
+
+          <ImageTranslationPermission />
+
+          <HostPermissionsPanel />
+        </div>
+      </div>
     </section>
   );
 }
@@ -347,12 +375,12 @@ function ProactiveGuardrails(): React.ReactElement {
         />
         <span className="flex flex-col gap-0.5">
           <span className="font-medium">
-            Extension watchdog (auto-detects hyperfocus / late-night /
-            rumination)
+            Always-on check-ins (this browser)
           </span>
           <span className="text-fg-muted text-sm">
-            Runs every 5 min. Surfaces a notification + amber toolbar badge when
-            a pattern trips. Local-only; nothing leaves your device.
+            Checks every 5 min for hyperfocus, late-night use, or going in
+            circles. Surfaces a notification + amber badge. Local-only; nothing
+            leaves your device.
           </span>
         </span>
       </label>
@@ -362,33 +390,18 @@ function ProactiveGuardrails(): React.ReactElement {
         data-testid="guardrail-phase1-info"
       >
         <span className="text-sm font-medium text-fg">
-          Claude Code hook (Phase 1)
+          Check-ins in terminal sessions
         </span>
         <span className="text-fg-muted text-sm">
-          Auto-fires chronometric / rumination / sycophancy checks on every Nth
-          Claude Code tool use. Banners on stderr.
+          NeuroDock can gently check in when you&apos;ve been at it a long time
+          or going in circles. Turn everything on with the one-time setup in
+          Essentials above.
         </span>
-        <code className="font-mono border-hairline bg-bg-code text-fg mt-1 block border px-2 py-1 text-sm">
-          neurodock install-hooks --self-test
-        </code>
-        <span className="text-fg-muted text-sm">Disable with:</span>
+        <span className="text-fg-muted text-sm">
+          To pause these check-ins in your terminal sessions, set:
+        </span>
         <code className="font-mono border-hairline bg-bg-code text-fg block border px-2 py-1 text-sm">
           export NEURODOCK_GUARDRAILS=off
-        </code>
-      </div>
-
-      <div
-        className="border-hairline flex flex-col gap-1 border p-2"
-        data-testid="guardrail-phase3-info"
-      >
-        <span className="text-sm font-medium text-fg">
-          Standalone daemon (Phase 3)
-        </span>
-        <span className="text-fg-muted text-sm">
-          Host-agnostic. Catches you working in the terminal at 02:00 too.
-        </span>
-        <code className="font-mono border-hairline bg-bg-code text-fg mt-1 block border px-2 py-1 text-sm">
-          neurodock install-hooks --install-daemon
         </code>
       </div>
     </fieldset>
@@ -629,231 +642,6 @@ function PacingCopilotSection({
           </span>
         </span>
       </label>
-    </fieldset>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────
-// Reader preferences (0.0.22): per-neurotype prompt tailoring.
-//
-// Surfaces the four ExtensionProfile fields that drive
-// buildNeurotypeAddendum:
-//   - neurotypes (multi-select checkboxes; 8 enum values)
-//   - outputFormat (3-radio)
-//   - maxChunkSize (number input, 1..20)
-//   - additionalNotes (textarea)
-//
-// Saves immediately on each change. Native-host users see the same
-// values mirrored from ~/.neurodock/profile.yaml; extension-local
-// users get this panel as their only configuration surface.
-// ──────────────────────────────────────────────────────────────────────
-
-interface ReaderPreferencesProps {
-  readonly profile: ExtensionProfile;
-  readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void> | void;
-}
-
-const NEUROTYPE_OPTIONS: ReadonlyArray<{
-  readonly value: Neurotype;
-  readonly label: string;
-  readonly hint: string;
-}> = [
-  { value: "adhd", label: "ADHD", hint: "answer-first, short lists" },
-  { value: "asd", label: "Autism / ASD", hint: "literal subtext, no idioms" },
-  {
-    value: "audhd",
-    label: "AuDHD",
-    hint: "fused — picks both ADHD and ASD rules without doubling up",
-  },
-  { value: "ocd", label: "OCD", hint: "low-pressure phrasing" },
-  {
-    value: "dyslexia",
-    label: "Dyslexia",
-    hint: "short sentences, plain words",
-  },
-  {
-    value: "dyspraxia",
-    label: "Dyspraxia",
-    hint: "absolute dates, low sequencing burden",
-  },
-  {
-    value: "tourette",
-    label: "Tourette's",
-    hint: "no prompt change (motion already handled in UI)",
-  },
-  {
-    value: "other",
-    label: "Other / self-described",
-    hint: "use the notes box",
-  },
-];
-
-function ReaderPreferences({
-  profile,
-  onChange,
-}: ReaderPreferencesProps): React.ReactElement {
-  const toggleNeurotype = (value: Neurotype, checked: boolean): void => {
-    const next = new Set<Neurotype>(profile.neurotypes);
-    if (checked) {
-      next.add(value);
-    } else {
-      next.delete(value);
-    }
-    void onChange({ neurotypes: Array.from(next) });
-  };
-  const showAudhdHint =
-    profile.neurotypes.includes("adhd") &&
-    profile.neurotypes.includes("asd") &&
-    !profile.neurotypes.includes("audhd");
-  return (
-    <fieldset
-      data-testid="reader-preferences"
-      className="border-hairline m-0 flex flex-col gap-3 border p-3"
-    >
-      <legend className="text-fg-muted px-1 text-sm font-medium">
-        Reader preferences (shapes every translation)
-      </legend>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-fg">
-          Which describe you?
-        </label>
-        <p className="text-fg-muted text-sm">
-          Self-ID only — no diagnosis required. Tick all that apply. Used to
-          tailor prompts; never sent off-device unless cloud mode is on.
-        </p>
-        <div className="mt-1 grid grid-cols-2 gap-1">
-          {NEUROTYPE_OPTIONS.map((opt) => {
-            const checked = profile.neurotypes.includes(opt.value);
-            return (
-              <label
-                key={opt.value}
-                className="flex items-start gap-2 text-sm"
-                title={opt.hint}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => toggleNeurotype(opt.value, e.target.checked)}
-                  data-testid={`neurotype-${opt.value}`}
-                  className="mt-0.5"
-                />
-                <span>
-                  <span className="font-medium">{opt.label}</span>
-                  <span className="text-fg-muted block text-sm">
-                    {opt.hint}
-                  </span>
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        {showAudhdHint ? (
-          <p
-            data-testid="audhd-hint"
-            className="border-warn-border bg-warn-bg text-warn-fg mt-1 border p-1.5 text-sm"
-          >
-            Looks like you might want <strong>AuDHD</strong> — it's a fused
-            block instead of stacking ADHD + ASD. Tick AuDHD and untick the
-            other two if that's right.
-          </p>
-        ) : null}
-        <p
-          data-testid="reader-prefs-model-size-note"
-          className="text-fg-muted mt-2 text-sm italic"
-        >
-          Reader preferences shape the prompt sent to the model. Larger models
-          honor them better than smaller ones. With a 4B local model (e.g.
-          gemma-4-e4b) you may see only subtle differences between neurotypes;
-          with cloud mode or a 7B+ local model the differentiation is stronger.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-fg">Output shape</label>
-        <div className="flex flex-col gap-0.5 text-sm">
-          {(
-            [
-              {
-                value: "answer_first",
-                label: "Answer-first — verdict in the first phrase",
-              },
-              {
-                value: "conventional",
-                label: "Conventional — brief context, then verdict",
-              },
-              {
-                value: "bullet_first",
-                label: "Bullet-first — bullet list before any prose",
-              },
-            ] as ReadonlyArray<{ value: OutputFormat; label: string }>
-          ).map((opt) => (
-            <label key={opt.value} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="output-format"
-                value={opt.value}
-                checked={profile.outputFormat === opt.value}
-                onChange={() => void onChange({ outputFormat: opt.value })}
-                data-testid={`outputFormat-${opt.value}`}
-              />
-              <span>{opt.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label htmlFor="max-chunk-size" className="text-sm font-medium text-fg">
-          Max items in lists
-        </label>
-        <input
-          id="max-chunk-size"
-          type="number"
-          min={1}
-          max={20}
-          value={profile.maxChunkSize}
-          onChange={(e) => {
-            const parsed = Number.parseInt(e.target.value, 10);
-            if (Number.isInteger(parsed) && parsed >= 1 && parsed <= 20) {
-              void onChange({ maxChunkSize: parsed });
-            }
-          }}
-          data-testid="max-chunk-size"
-          className="border-hairline bg-bg text-fg w-20 border px-2 py-0.5 text-sm"
-        />
-        <p className="text-fg-muted text-sm">
-          How many items the AI shows before stopping. Manifesto default is 5
-          (ADHD-tuned). Schema lets you go up to 20.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1">
-        <label
-          htmlFor="additional-notes"
-          className="text-sm font-medium text-fg"
-        >
-          Anything else the AI should know about you?
-        </label>
-        <textarea
-          id="additional-notes"
-          value={profile.additionalNotes ?? ""}
-          onChange={(e) =>
-            void onChange({
-              additionalNotes:
-                e.target.value.length > 0 ? e.target.value : null,
-            })
-          }
-          rows={3}
-          maxLength={500}
-          placeholder='Example: "I get overwhelmed by long paragraphs" or "please always quote the source verbatim"'
-          data-testid="additional-notes"
-          className="border-hairline bg-bg text-fg w-full border p-2 text-sm"
-        />
-        <p className="text-fg-muted text-sm">
-          Treated as a literal instruction set to the AI. 500-character max.
-        </p>
-      </div>
     </fieldset>
   );
 }

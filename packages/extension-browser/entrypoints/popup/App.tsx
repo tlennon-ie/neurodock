@@ -10,6 +10,8 @@
  *   2. Settings — provider selection (Local Ollama / Cloud Anthropic /
  *      Cloud OpenAI / Cloud OpenRouter / Mock), endpoint URL, model
  *      name, API key entry, and a Test button. See SettingsTab.tsx.
+ *      Settings tab was removed from the popup in Task F1; it is now
+ *      reachable only via the header gear (opens the full-page tab).
  *
  * Voice (plan.md §2): direct, plain, non-clinical. No "superpower" copy.
  * No diagnosis-gated language.
@@ -31,12 +33,10 @@ import {
   type PacingPreferences,
 } from "../../src/lib/pacing.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
-import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
 import { OnboardingWizard } from "./OnboardingWizard.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
-import { OpenInTabButton } from "../../src/components/OpenInTabButton.js";
-import { ThemeModeToggle } from "../../src/components/ThemeModeToggle.js";
+import { NeuroDockHeader } from "../../src/components/NeuroDockHeader.js";
 import {
   applyA11yToDocument,
   loadA11yPreferences,
@@ -69,7 +69,15 @@ function isProfileUpdatedMessage(msg: unknown): msg is ProfileUpdatedMessage {
   );
 }
 
-type TabId = "home" | "notifications" | "settings";
+type TabId = "home" | "notifications";
+
+function openFullPage(
+  view: "home" | "settings" | "history" | "notifications" = "home",
+): void {
+  chrome.tabs.create({
+    url: chrome.runtime.getURL(`tab.html#view=${view}`),
+  });
+}
 
 export function App(): React.ReactElement {
   const [profile, setProfile] = useState<ExtensionProfile>(defaultProfile());
@@ -221,20 +229,7 @@ export function App(): React.ReactElement {
 
   return (
     <main className="text-fg flex flex-col gap-4 p-4">
-      <header className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="font-heading text-fg-accent m-0 text-base font-semibold tracking-tight">
-            NeuroDock
-          </h1>
-          <p className="text-fg-muted m-0 text-sm">
-            Decode subtext. Check tone. Local-first by default.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeModeToggle iconSize={16} />
-          <OpenInTabButton view={tab} />
-        </div>
-      </header>
+      <NeuroDockHeader onOpenSettings={() => openFullPage("settings")} />
 
       <CloudModeBanner profile={profile} onSwitchToLocal={handleSwitchLocal} />
 
@@ -263,7 +258,6 @@ export function App(): React.ReactElement {
           profile={profile}
           onChange={update}
           onComplete={() => setTab("home")}
-          onOpenSettings={() => setTab("settings")}
         />
       ) : (
         <>
@@ -280,9 +274,6 @@ export function App(): React.ReactElement {
             />
           ) : null}
           {tab === "notifications" ? <NotificationsTab /> : null}
-          {tab === "settings" ? (
-            <SettingsTab profile={profile} onChange={update} />
-          ) : null}
         </>
       )}
 
@@ -311,14 +302,15 @@ interface ProfileSyncLineProps {
 
 function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   if (status === null) {
-    return <p className="text-fg-muted text-sm">Checking native host…</p>;
+    return <p className="text-fg-muted text-sm">Checking sync status…</p>;
   }
   if (status.source === "native-host") {
     return (
       <div className="text-fg-muted flex flex-col gap-0.5 text-sm">
         <span>
-          <strong>Native host active.</strong> Reading and writing{" "}
-          <code className="font-mono">~/.neurodock/profile.yaml</code>.
+          <strong>Synced</strong> — your settings are shared across browsers
+          (saved to <code className="font-mono">~/.neurodock/profile.yaml</code>
+          ).
         </span>
         {status.detail ? <span>{status.detail}</span> : null}
       </div>
@@ -327,16 +319,13 @@ function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   return (
     <div className="border-hairline bg-bg-nav text-fg flex flex-col gap-1 border p-2 text-sm">
       <span>
-        <strong>Extension-local.</strong> Profile lives only inside this
-        browser.
+        <strong>This browser only.</strong> Your settings live inside this
+        browser for now.
       </span>
       <span className="text-fg-muted">
-        Install the native host to keep this extension in sync with{" "}
-        <code className="font-mono">~/.neurodock/profile.yaml</code>:
+        Turn on full NeuroDock in Settings to sync them across browsers (saved
+        to <code className="font-mono">~/.neurodock/profile.yaml</code>).
       </span>
-      <code className="bg-bg-code border-hairline select-all border px-2 py-1 font-mono">
-        pnpx @neurodock/native-host install
-      </code>
     </div>
   );
 }
@@ -352,7 +341,6 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
   const tabs: { id: TabId; label: string }[] = [
     { id: "home", label: "Home" },
     { id: "notifications", label: "Notifications" },
-    { id: "settings", label: "Settings" },
   ];
   // RFC A3 — arrow-key navigation across the tab bar. Pattern follows
   // WAI-ARIA Authoring Practices for tabs: Left/Right (and Up/Down)
@@ -361,7 +349,6 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
   const refs = useRef<Record<TabId, HTMLButtonElement | null>>({
     home: null,
     notifications: null,
-    settings: null,
   });
 
   const focusTab = useCallback((id: TabId) => {
@@ -371,7 +358,7 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const order: TabId[] = ["home", "notifications", "settings"];
+      const order: TabId[] = ["home", "notifications"];
       const idx = order.indexOf(current);
       if (idx === -1) return;
       let nextId: TabId | null = null;

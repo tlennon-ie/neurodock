@@ -45,7 +45,7 @@ import {
   applyThemeModeToDocument,
   loadThemeMode,
 } from "../../src/lib/theme-mode.js";
-import { ThemeModeToggle } from "../../src/components/ThemeModeToggle.js";
+import { NeuroDockHeader } from "../../src/components/NeuroDockHeader.js";
 
 type TabView = "home" | "history" | "settings" | "notifications";
 
@@ -122,20 +122,7 @@ export function TabApp(): React.ReactElement {
     }
   }, []);
 
-  const header = (
-    <header className="flex items-start justify-between gap-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="font-heading text-fg-accent m-0 text-[1.375rem] font-semibold tracking-tight">
-          NeuroDock
-        </h1>
-        <p className="text-fg-muted m-0 max-w-[60ch]">
-          Decode subtext. Check tone. Local-first by default. This is the
-          full-tab view — same data as the toolbar popup, more room to read.
-        </p>
-      </div>
-      <ThemeModeToggle iconSize={18} />
-    </header>
-  );
+  const header = <NeuroDockHeader />;
 
   const banner = (
     <>
@@ -515,14 +502,15 @@ interface ProfileSyncLineProps {
 
 function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   if (status === null) {
-    return <p className="text-fg-muted text-sm">Checking native host…</p>;
+    return <p className="text-fg-muted text-sm">Checking sync status…</p>;
   }
   if (status.source === "native-host") {
     return (
       <div className="text-fg-muted flex flex-col gap-0.5 text-sm">
         <span>
-          <strong>Native host active.</strong> Reading and writing{" "}
-          <code className="font-mono">~/.neurodock/profile.yaml</code>.
+          <strong>Synced</strong> — your settings are shared across browsers
+          (saved to <code className="font-mono">~/.neurodock/profile.yaml</code>
+          ).
         </span>
         {status.detail ? <span>{status.detail}</span> : null}
       </div>
@@ -531,16 +519,13 @@ function ProfileSyncLine({ status }: ProfileSyncLineProps): React.ReactElement {
   return (
     <div className="border-hairline bg-bg-nav flex flex-col gap-1 border p-3 text-sm">
       <span className="text-fg">
-        <strong>Extension-local.</strong> Profile lives only inside this
-        browser.
+        <strong>This browser only.</strong> Your settings live inside this
+        browser for now.
       </span>
       <span className="text-fg-muted">
-        Install the native host to keep this extension in sync with{" "}
-        <code className="font-mono">~/.neurodock/profile.yaml</code>:
+        Turn on full NeuroDock in Settings to sync them across browsers (saved
+        to <code className="font-mono">~/.neurodock/profile.yaml</code>).
       </span>
-      <code className="bg-bg-code border-hairline select-all border px-2 py-1 font-mono">
-        pnpx @neurodock/native-host install
-      </code>
     </div>
   );
 }

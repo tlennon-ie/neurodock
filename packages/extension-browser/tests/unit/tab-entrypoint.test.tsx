@@ -124,9 +124,15 @@ describe("Tab entrypoint", () => {
     vi.spyOn(storage, "listHistory").mockResolvedValue([]);
     render(<TabApp />);
     expect(screen.getByTestId("app-shell-tab")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "NeuroDock", level: 1 }),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("nd-header-wordmark")).toBeInTheDocument();
+  });
+
+  it("renders the shared header", async () => {
+    vi.spyOn(storage, "listHistory").mockResolvedValue([]);
+    render(<TabApp />);
+    await waitFor(() => {
+      expect(screen.getByTestId("nd-header-wordmark")).toBeInTheDocument();
+    });
   });
 
   it("loads the profile via the shared loadProfile helper", async () => {

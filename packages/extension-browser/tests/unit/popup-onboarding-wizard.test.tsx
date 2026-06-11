@@ -2,20 +2,23 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright (c) 2026 NeuroDock contributors.
  *
- * Popup onboarding wizard (Roadmap A1).
+ * Popup onboarding wizard — identity-first flow (Tasks E1+E2+E3).
  *
  * Asserts:
  *   - A fresh profile (onboardingComplete absent / false) renders the
  *     wizard in place of the regular tab bar + content.
- *   - The five-step flow is reachable and the Skip affordance on every
- *     non-config step eventually persists `onboardingComplete: true`.
- *   - Once the wizard finishes the regular Home tab appears.
+ *   - The identity → model → done step machine works end-to-end.
+ *   - Skip from identity persists onboardingComplete and returns home.
+ *   - Local-model detection offers a one-tap connect button.
+ *   - Done step shows PowerUpCard and finishes to home.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { MockInstance } from "vitest";
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import * as profileModule from "../../src/lib/profile.js";
+import * as detect from "../../src/lib/detect-local-model.js";
+import * as nativeHost from "../../src/lib/native-host-client.js";
 import { App } from "../../entrypoints/popup/App.js";
 import type { ExtensionProfile } from "../../src/lib/types.js";
 
@@ -43,7 +46,7 @@ function freshProfile(
   };
 }
 
-describe("Popup onboarding wizard — first-run rendering", () => {
+describe("Popup onboarding wizard — identity-first flow", () => {
   let saveSpy: MockInstance<typeof profileModule.saveProfileWithOutcome>;
 
   beforeEach(() => {
@@ -57,11 +60,20 @@ describe("Popup onboarding wizard — first-run rendering", () => {
     saveSpy = vi
       .spyOn(profileModule, "saveProfileWithOutcome")
       .mockImplementation(async (patch) => ({
-        profile: freshProfile({ ...patch, onboardingComplete: true }),
+        // Only propagate onboardingComplete: true when the patch explicitly sets it.
+        // Otherwise App would immediately flip onboardingComplete and close the wizard
+        // whenever the identity step persists reader prefs.
+        profile: freshProfile({ ...patch }),
         source: "extension-local",
         confirmRequired: false,
         error: null,
       }));
+    // Default: no local model detected (so model step shows cloud path)
+    vi.spyOn(detect, "detectLocalModel").mockResolvedValue(null);
+    // PowerUpCard polls probeNativeHost — mock it to stay quiet
+    vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
+      status: "absent",
+    });
   });
 
   afterEach(() => {
@@ -75,80 +87,119 @@ describe("Popup onboarding wizard — first-run rendering", () => {
     });
     expect(screen.queryByTestId("tab-home")).not.toBeInTheDocument();
     expect(screen.queryByTestId("tab-settings")).not.toBeInTheDocument();
-    expect(screen.getByTestId("wizard-step-welcome")).toBeInTheDocument();
   });
 
-  it("steps forward through Welcome → Provider select", async () => {
+  it("opens on the identity step (how you read)", async () => {
     render(<App />);
-    await waitFor(() => {
-      expect(screen.getByTestId("wizard-step-welcome")).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByTestId("wizard-welcome-continue"));
-    await waitFor(() => {
-      expect(
-        screen.getByTestId("wizard-step-provider-select"),
-      ).toBeInTheDocument();
-    });
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-step-identity")).toBeInTheDocument(),
+    );
+    expect(screen.getByTestId("reader-prefs-neurotypes")).toBeInTheDocument();
+    // reader-font-select also appears in the header — getAllByTestId tolerates duplicates
+    expect(screen.getAllByTestId("reader-font-select").length).toBeGreaterThan(
+      0,
+    );
   });
 
-  it("persists onboardingComplete: true when the user skips from Welcome", async () => {
+  it("advances identity → model", async () => {
     render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-continue"));
+    fireEvent.click(screen.getByTestId("wizard-identity-continue"));
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-step-model")).toBeInTheDocument(),
+    );
+  });
+
+  it("persists onboardingComplete on skip from identity", async () => {
+    render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-skip"));
+    fireEvent.click(screen.getByTestId("wizard-identity-skip"));
     await waitFor(() => {
-      expect(screen.getByTestId("wizard-welcome-skip")).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByTestId("wizard-welcome-skip"));
-    await waitFor(() => {
-      const call = saveSpy.mock.calls.find((c) => {
-        const patch = c[0] as Partial<ExtensionProfile>;
-        return patch.onboardingComplete === true;
-      });
+      const call = saveSpy.mock.calls.find(
+        (c) => (c[0] as Partial<ExtensionProfile>).onboardingComplete === true,
+      );
       expect(call).toBeDefined();
     });
   });
 
-  it("renders the main tab bar after the wizard completes", async () => {
-    // After the user finishes the wizard the profile reloaded into App
-    // state must have onboardingComplete: true. We simulate that here
-    // by returning a completed profile from saveProfileWithOutcome and
-    // confirming the gate flips.
+  it("renders the main tab bar after skipping from identity", async () => {
     render(<App />);
-    await waitFor(() => {
-      expect(screen.getByTestId("wizard-welcome-skip")).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByTestId("wizard-welcome-skip"));
+    await waitFor(() => screen.getByTestId("wizard-identity-skip"));
+    fireEvent.click(screen.getByTestId("wizard-identity-skip"));
     await waitFor(() => {
       expect(screen.queryByTestId("onboarding-wizard")).not.toBeInTheDocument();
     });
     expect(screen.getByTestId("tab-home")).toBeInTheDocument();
   });
 
-  it("Provider selection step exposes three primary cards", async () => {
-    render(<App />);
-    await waitFor(() => {
-      expect(screen.getByTestId("wizard-welcome-continue")).toBeInTheDocument();
+  it("offers one-tap local connect when a local model is detected", async () => {
+    vi.spyOn(detect, "detectLocalModel").mockResolvedValue({
+      provider: "lmstudio",
+      endpoint: "http://localhost:1234/v1",
     });
-    fireEvent.click(screen.getByTestId("wizard-welcome-continue"));
-    await waitFor(() => {
+    render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-continue"));
+    fireEvent.click(screen.getByTestId("wizard-identity-continue"));
+    await waitFor(() =>
       expect(
-        screen.getByTestId("wizard-provider-lmstudio"),
-      ).toBeInTheDocument();
-      expect(screen.getByTestId("wizard-provider-ollama")).toBeInTheDocument();
-      expect(screen.getByTestId("wizard-provider-cloud")).toBeInTheDocument();
+        screen.getByTestId("wizard-model-connect-local"),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("does not show wizard-model-connect-local when no local model is detected", async () => {
+    render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-continue"));
+    fireEvent.click(screen.getByTestId("wizard-identity-continue"));
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-step-model")).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByTestId("wizard-model-connect-local"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("done step shows the power-up card and finishes to home", async () => {
+    render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-continue"));
+    fireEvent.click(screen.getByTestId("wizard-identity-continue"));
+    await waitFor(() => screen.getByTestId("wizard-step-model"));
+    fireEvent.click(screen.getByTestId("wizard-model-skip"));
+    await waitFor(() => {
+      expect(screen.getByTestId("wizard-step-done")).toBeInTheDocument();
+      expect(screen.getByTestId("power-up-command")).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("wizard-finish"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("onboarding-wizard")).not.toBeInTheDocument();
+      expect(screen.getByTestId("tab-home")).toBeInTheDocument();
     });
   });
 
-  it("Continue is disabled on the provider step until a card is selected", async () => {
+  it("back from model returns to identity", async () => {
     render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-continue"));
+    fireEvent.click(screen.getByTestId("wizard-identity-continue"));
+    await waitFor(() => screen.getByTestId("wizard-step-model"));
+    fireEvent.click(screen.getByTestId("wizard-model-back"));
+    await waitFor(() =>
+      expect(screen.getByTestId("wizard-step-identity")).toBeInTheDocument(),
+    );
+  });
+
+  it("persists onboardingComplete when wizard-finish is clicked", async () => {
+    render(<App />);
+    await waitFor(() => screen.getByTestId("wizard-identity-continue"));
+    fireEvent.click(screen.getByTestId("wizard-identity-continue"));
+    await waitFor(() => screen.getByTestId("wizard-step-model"));
+    fireEvent.click(screen.getByTestId("wizard-model-skip"));
+    await waitFor(() => screen.getByTestId("wizard-finish"));
+    fireEvent.click(screen.getByTestId("wizard-finish"));
     await waitFor(() => {
-      expect(screen.getByTestId("wizard-welcome-continue")).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByTestId("wizard-welcome-continue"));
-    await waitFor(() => {
-      expect(screen.getByTestId("wizard-provider-continue")).toBeDisabled();
-    });
-    fireEvent.click(screen.getByTestId("wizard-provider-ollama-radio"));
-    await waitFor(() => {
-      expect(screen.getByTestId("wizard-provider-continue")).not.toBeDisabled();
+      const call = saveSpy.mock.calls.find(
+        (c) => (c[0] as Partial<ExtensionProfile>).onboardingComplete === true,
+      );
+      expect(call).toBeDefined();
     });
   });
 });
