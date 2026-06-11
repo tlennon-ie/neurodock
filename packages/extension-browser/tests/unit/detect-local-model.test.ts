@@ -4,21 +4,22 @@
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { detectLocalModel } from "../../src/lib/detect-local-model.js";
+import * as workerRelay from "../../src/lib/fetch-models-via-worker.js";
 
 afterEach(() => vi.restoreAllMocks());
 
 describe("detectLocalModel", () => {
-  it("returns lmstudio when :1234/v1/models responds ok", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) =>
-        url.includes(":1234")
-          ? ({
-              ok: true,
-              json: async () => ({ data: [{ id: "m" }] }),
-            } as Response)
-          : ({ ok: false } as Response),
-      ),
+  it("returns lmstudio when the worker relay succeeds for :1234", async () => {
+    vi.spyOn(workerRelay, "fetchModelsViaWorker").mockImplementation(
+      async (args) => {
+        if (
+          args.provider === "lmstudio" &&
+          args.baseUrl === "http://localhost:1234/v1"
+        ) {
+          return ["some-model"];
+        }
+        throw new Error("not reachable");
+      },
     );
     expect(await detectLocalModel()).toEqual({
       provider: "lmstudio",
@@ -26,14 +27,14 @@ describe("detectLocalModel", () => {
     });
   });
 
-  it("returns ollama when :11434/api/tags responds ok and lmstudio does not", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) =>
-        url.includes(":11434")
-          ? ({ ok: true, json: async () => ({ models: [] }) } as Response)
-          : ({ ok: false } as Response),
-      ),
+  it("returns ollama when lmstudio probe fails but ollama succeeds", async () => {
+    vi.spyOn(workerRelay, "fetchModelsViaWorker").mockImplementation(
+      async (args) => {
+        if (args.provider === "ollama") {
+          return [];
+        }
+        throw new Error("ECONNREFUSED");
+      },
     );
     expect(await detectLocalModel()).toEqual({
       provider: "ollama",
@@ -41,13 +42,20 @@ describe("detectLocalModel", () => {
     });
   });
 
-  it("returns null when nothing is reachable", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        throw new Error("ECONNREFUSED");
-      }),
+  it("returns null when neither probe succeeds", async () => {
+    vi.spyOn(workerRelay, "fetchModelsViaWorker").mockRejectedValue(
+      new Error("ECONNREFUSED"),
     );
     expect(await detectLocalModel()).toBeNull();
+  });
+
+  it("returns null (not a hang) when the relay never resolves within the timeout", async () => {
+    vi.spyOn(workerRelay, "fetchModelsViaWorker").mockReturnValue(
+      new Promise(() => {
+        // intentionally never resolves
+      }),
+    );
+    // Use a very short timeout so the test doesn't actually wait long
+    expect(await detectLocalModel(10)).toBeNull();
   });
 });
