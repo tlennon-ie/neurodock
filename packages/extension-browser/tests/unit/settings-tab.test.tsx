@@ -514,12 +514,12 @@ describe("SettingsTab", () => {
     });
   });
 
-  it("renders the always-on check-ins plain-language block with the opt-out env var", () => {
+  it("renders the check-ins terminal sessions block with the opt-out env var", () => {
     const onChange = vi.fn().mockResolvedValue(undefined);
     render(<SettingsTab profile={baseProfile()} onChange={onChange} />);
 
     const block = screen.getByTestId("guardrail-phase1-info");
-    expect(block).toHaveTextContent(/always-on check-ins/i);
+    expect(block).toHaveTextContent(/check-ins in terminal sessions/i);
     expect(block).toHaveTextContent("export NEURODOCK_GUARDRAILS=off");
 
     // The old separate Phase 3 daemon block is no longer rendered;

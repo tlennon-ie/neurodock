@@ -258,7 +258,6 @@ export function App(): React.ReactElement {
           profile={profile}
           onChange={update}
           onComplete={() => setTab("home")}
-          onOpenSettings={() => openFullPage("settings")}
         />
       ) : (
         <>

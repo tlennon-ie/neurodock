@@ -20,7 +20,7 @@
  * Hard contract (preserved from old wizard):
  *   - outer wrapper: data-testid="onboarding-wizard"
  *   - completion: calls onChange({ onboardingComplete: true }) then onComplete()
- *   - App passes: profile, onChange, onComplete, onOpenSettings
+ *   - App passes: profile, onChange, onComplete
  *   - App gate: profile.onboardingComplete !== true shows the wizard
  */
 import React, { useCallback, useEffect, useState } from "react";
@@ -44,14 +44,12 @@ export interface OnboardingWizardProps {
   readonly profile: ExtensionProfile;
   readonly onChange: (patch: Partial<ExtensionProfile>) => Promise<void>;
   readonly onComplete: () => void;
-  readonly onOpenSettings: () => void;
 }
 
 export function OnboardingWizard({
   profile,
   onChange,
   onComplete,
-  onOpenSettings: _onOpenSettings,
 }: OnboardingWizardProps): React.ReactElement {
   const [step, setStep] = useState<WizardStep>("identity");
 
@@ -135,6 +133,7 @@ export function OnboardingWizard({
         <ModelStep
           cloudApiKey={cloudApiKey}
           cloudProvider={cloudProvider}
+          existingCloudApiKeys={profile.cloudApiKeys}
           onCloudApiKeyChange={setCloudApiKey}
           onCloudProviderChange={setCloudProvider}
           onChange={onChange}
@@ -244,6 +243,7 @@ const CLOUD_DEFAULT_MODELS: Record<string, string> = {
 interface ModelStepProps {
   readonly cloudApiKey: string;
   readonly cloudProvider: "anthropic" | "openai" | "openrouter" | "google";
+  readonly existingCloudApiKeys: Record<string, string>;
   readonly onCloudApiKeyChange: (key: string) => void;
   readonly onCloudProviderChange: (
     provider: "anthropic" | "openai" | "openrouter" | "google",
@@ -257,6 +257,7 @@ interface ModelStepProps {
 function ModelStep({
   cloudApiKey,
   cloudProvider,
+  existingCloudApiKeys,
   onCloudApiKeyChange,
   onCloudProviderChange,
   onChange,
@@ -290,7 +291,13 @@ function ModelStep({
 
   const handleConnectCloud = useCallback(async (): Promise<void> => {
     if (cloudApiKey.length > 0) {
-      const nextKeys: Record<string, string> = { [cloudProvider]: cloudApiKey };
+      // Spread existing keys so switching providers during onboarding does not
+      // wipe keys entered for other providers (matches the 0.0.27 contract in
+      // SettingsTab.tsx CloudSettings.saveKey).
+      const nextKeys: Record<string, string> = {
+        ...existingCloudApiKeys,
+        [cloudProvider]: cloudApiKey,
+      };
       await onChange({
         mode: "cloud",
         cloudProvider,
@@ -300,7 +307,13 @@ function ModelStep({
       });
     }
     onAdvanceToDone();
-  }, [cloudApiKey, cloudProvider, onChange, onAdvanceToDone]);
+  }, [
+    cloudApiKey,
+    cloudProvider,
+    existingCloudApiKeys,
+    onChange,
+    onAdvanceToDone,
+  ]);
 
   return (
     <div data-testid="wizard-step-model" className="flex flex-col gap-3">

@@ -389,7 +389,9 @@ function ProactiveGuardrails(): React.ReactElement {
         className="border-hairline flex flex-col gap-1 border p-2"
         data-testid="guardrail-phase1-info"
       >
-        <span className="text-sm font-medium text-fg">Always-on check-ins</span>
+        <span className="text-sm font-medium text-fg">
+          Check-ins in terminal sessions
+        </span>
         <span className="text-fg-muted text-sm">
           NeuroDock can gently check in when you&apos;ve been at it a long time
           or going in circles. Turn everything on with the one-time setup in

@@ -7,21 +7,37 @@
  * The exact command string is owned by a later workstream; FULL_SETUP_COMMAND
  * is the single place it is referenced so it can be updated in one edit.
  */
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useFullSetupStatus } from "../lib/full-setup.js";
 
-// One command installs native-host + guardrail daemon + hooks together.
-export const FULL_SETUP_COMMAND = "npx @neurodock/cli setup";
+// One command installs the 6 MCP servers, wires MCP clients, and sets up
+// the native-host + hooks together. A future `setup` alias may replace it.
+export const FULL_SETUP_COMMAND = "npx @neurodock/cli install-all";
 
 export function PowerUpCard(): React.ReactElement {
   const { status, recheck } = useFullSetupStatus();
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current !== null) {
+        clearTimeout(copyTimerRef.current);
+      }
+    };
+  }, []);
 
   async function copy(): Promise<void> {
     try {
       await navigator.clipboard.writeText(FULL_SETUP_COMMAND);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copyTimerRef.current !== null) {
+        clearTimeout(copyTimerRef.current);
+      }
+      copyTimerRef.current = setTimeout(() => {
+        setCopied(false);
+        copyTimerRef.current = null;
+      }, 2000);
     } catch {
       /* clipboard blocked — the command is still visible to select manually */
     }

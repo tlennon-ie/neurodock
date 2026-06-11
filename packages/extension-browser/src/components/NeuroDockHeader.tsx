@@ -31,7 +31,7 @@ interface NeuroDockHeaderProps {
 export function NeuroDockHeader({ onOpenSettings }: NeuroDockHeaderProps) {
   return (
     <header className="nd-header">
-      <a className="nd-header-brand" href="#" aria-label="NeuroDock home">
+      <span className="nd-header-brand">
         <img
           className="nd-header-mark"
           src={markUrl()}
@@ -42,7 +42,7 @@ export function NeuroDockHeader({ onOpenSettings }: NeuroDockHeaderProps) {
         <span className="nd-header-wordmark" data-testid="nd-header-wordmark">
           NeuroDock
         </span>
-      </a>
+      </span>
       <div className="nd-header-controls">
         <ReaderFontSwitcher />
         <ThemeModeToggle />
