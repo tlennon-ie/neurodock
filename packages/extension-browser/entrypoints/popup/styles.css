@@ -128,20 +128,32 @@ samp {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  /* Survive width pressure from large reader fonts: flex children that
+     contain text must be allowed to shrink below their content size. */
+  min-width: 0;
   text-decoration: none;
   color: var(--nd-color-fg-accent);
   font-family: var(--nd-font-heading);
   font-weight: 600;
 }
+.nd-header-wordmark {
+  white-space: nowrap;
+}
 .nd-header-controls {
   display: inline-flex;
   align-items: center;
+  /* Wrap rather than overflow when a wide reader font inflates the
+     font select + toggles past the popup width. */
+  flex-wrap: wrap;
+  min-width: 0;
   gap: 0.5rem;
 }
 .nd-font-switcher select {
   appearance: auto;
   font-family: inherit;
   font-size: 0.8125rem;
+  max-width: 11rem;
+  text-overflow: ellipsis;
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
   border: 1px solid var(--nd-color-hairline);
@@ -155,12 +167,29 @@ samp {
   outline-offset: 2px;
 }
 .nd-header-settings {
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: 1px solid var(--nd-color-hairline);
   border-radius: 0.25rem;
   cursor: pointer;
   color: var(--nd-color-fg);
   padding: 0.2rem 0.4rem;
+}
+
+/* Defensive overflow guards — large reader fonts (OpenDyslexic) must
+   wrap inside cards instead of escaping the fixed-width surface. */
+.nd-powerup,
+.nd-reader-prefs,
+.nd-field {
+  min-width: 0;
+}
+.nd-powerup,
+.nd-reader-prefs {
+  overflow-wrap: anywhere;
+}
+.nd-powerup-cmd code {
+  max-width: 100%;
 }
 
 /* ── PowerUpCard + ReaderPreferences ────────────────────────────────────

@@ -134,6 +134,11 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
     }
     :host { all: initial; }
     :host {
+      /* Per-font metric compensation. This sheet declares text sizes in
+         px (not rem), so the root-rem trick in tokens.css cannot reach
+         it. Every font-size below multiplies by this scale instead.
+         Keep the factors in sync with src/styles/tokens.css. */
+      --nd-island-font-scale: 1;
       --nd-font-body: "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --nd-font-heading: "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
       --nd-color-bg: oklch(98% 0.005 95);
@@ -229,10 +234,12 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       --nd-font-heading: "Lexend Variable", "Lexend", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
     }
     :host(.font-opendyslexic) {
+      --nd-island-font-scale: 0.85;
       --nd-font-body: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --nd-font-heading: "OpenDyslexic", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
     }
     :host(.font-comic) {
+      --nd-island-font-scale: 0.95;
       --nd-font-body: "Comic Neue", "Atkinson Hyperlegible", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --nd-font-heading: "Comic Neue", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
     }
@@ -243,7 +250,7 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
     .neurodock-button {
       pointer-events: auto;
       font-family: var(--nd-font-body);
-      font-size: 14px;
+      font-size: calc(14px * var(--nd-island-font-scale, 1));
       line-height: 1.65;
       padding: 6px 10px;
       border: 1px solid var(--nd-color-hairline);
@@ -258,12 +265,13 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
     .neurodock-panel {
       pointer-events: auto;
       font-family: var(--nd-font-body);
-      font-size: 14px;
+      font-size: calc(14px * var(--nd-island-font-scale, 1));
       line-height: 1.5;
       width: 420px;
       max-width: 92vw;
       max-height: 80vh;
       overflow-y: auto;
+      overflow-wrap: anywhere;
       padding: 12px 14px 14px 14px;
       border: 1px solid var(--nd-color-hairline);
       background: var(--nd-color-bg);
@@ -278,7 +286,7 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       border: 1px solid var(--nd-color-warn-border);
       background: var(--nd-color-warn-bg);
       color: var(--nd-color-warn-fg);
-      font-size: 14px;
+      font-size: calc(14px * var(--nd-island-font-scale, 1));
     }
     /* RFC B3: pacing-copilot toast. Same hairline + warn tokens as the
        cloud banner so it sits inside the existing visual language. No
@@ -294,13 +302,13 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       background: var(--nd-color-bg);
       color: var(--nd-color-fg);
       font-family: var(--nd-font-body);
-      font-size: 14px;
+      font-size: calc(14px * var(--nd-island-font-scale, 1));
       line-height: 1.5;
     }
     .neurodock-toast-body { display: flex; flex-direction: column; gap: 4px; flex: 1; }
     .neurodock-toast-title { font-weight: 600; font-family: var(--nd-font-heading); }
     .neurodock-toast-text { color: var(--nd-color-fg-muted); }
-    .neurodock-toast-dismiss { align-self: flex-start; padding: 4px 8px; font-size: 13px; }
+    .neurodock-toast-dismiss { align-self: flex-start; padding: 4px 8px; font-size: calc(13px * var(--nd-island-font-scale, 1)); }
     @media (prefers-reduced-motion: no-preference) {
       .neurodock-toast {
         opacity: 0;

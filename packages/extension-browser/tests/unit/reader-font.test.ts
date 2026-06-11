@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright (c) 2026 NeuroDock contributors.
  */
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   DEFAULT_READER_FONT,
@@ -66,5 +68,28 @@ describe("reader-font — applyReaderFontToDocument", () => {
     applyReaderFontToDocument("lexend", shadow);
     expect(host.classList.contains("font-lexend")).toBe(true);
     host.remove();
+  });
+});
+
+describe("reader-font — metric compensation contract (tokens.css)", () => {
+  // jsdom cannot measure layout overflow, but the scale contract is
+  // assertable: OpenDyslexic renders ~15% larger than Atkinson at the
+  // same declared size, so tokens.css MUST scale the root rem under the
+  // font class or the fixed-width popup overflows.
+  // Vitest runs with cwd at the package root; import.meta.url is not a
+  // file: URL under the jsdom environment, so resolve from cwd instead.
+  const tokensCss = readFileSync(
+    resolve(process.cwd(), "src/styles/tokens.css"),
+    "utf8",
+  );
+
+  it("scales the root to 85% under .font-opendyslexic", () => {
+    expect(tokensCss).toMatch(
+      /:root\.font-opendyslexic\s*{[^}]*font-size:\s*85%/,
+    );
+  });
+
+  it("scales the root to 95% under .font-comic", () => {
+    expect(tokensCss).toMatch(/:root\.font-comic\s*{[^}]*font-size:\s*95%/);
   });
 });
