@@ -8,6 +8,11 @@ on:
     paths:
       - "packages/extension-browser/**"
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "Submit the current commit to the web stores (normally driven by extension-browser@* tags)"
+        type: boolean
+        default: false
 
 concurrency:
   group: extension-${{ github.ref }}
@@ -64,3 +69,155 @@ jobs:
         with:
           name: extension-bundles
           path: packages/extension-browser/.output/**
+
+  # Store submission. Runs only on `extension-browser@X.Y.Z` tag pushes (or a
+  # manual dispatch with the `publish` confirmation input). Each store step is
+  # skipped gracefully when its secrets are not configured, so the job never
+  # fails just because a store has no credentials yet. Credentials setup and
+  # the first-submission caveat are documented in
+  # packages/extension-browser/PUBLISHING.md.
+  publish:
+    name: Publish to web stores
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/extension-browser@') || (github.event_name == 'workflow_dispatch' && inputs.publish == true)
+    runs-on: ubuntu-latest
+    permissions:
+      # Required to create the GitHub release that carries the zips.
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.1.2
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package version
+        if: startsWith(github.ref, 'refs/tags/extension-browser@')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#extension-browser@}"
+          PKG_VERSION="$(node -p "require('./packages/extension-browser/package.json').version")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::tag version ($TAG_VERSION) does not match packages/extension-browser/package.json version ($PKG_VERSION). Bump the package version or re-tag as extension-browser@$PKG_VERSION."
+            exit 1
+          fi
+          echo "Tag and package agree: publishing $PKG_VERSION"
+
+      # `wxt zip` rebuilds per browser, so the publish job does not depend on
+      # the build job's unzipped artefacts — only on its green status.
+      - name: Build store zips
+        run: pnpm --filter @neurodock/extension-browser zip
+
+      - name: Locate zip artefacts
+        id: zips
+        working-directory: packages/extension-browser
+        run: |
+          set -eu
+          shopt -s nullglob
+          chrome=(.output/*-chrome.zip)
+          firefox=(.output/*-firefox.zip)
+          edge=(.output/*-edge.zip)
+          sources=(.output/*-sources.zip)
+          for pair in "chrome_zip ${chrome[0]:-}" "firefox_zip ${firefox[0]:-}" "edge_zip ${edge[0]:-}" "sources_zip ${sources[0]:-}"; do
+            key="${pair%% *}"
+            val="${pair#* }"
+            if [ -z "$val" ] || [ "$val" = "$key" ]; then
+              echo "::error::expected $key not found under packages/extension-browser/.output/"
+              exit 1
+            fi
+            echo "$key=$val" >> "$GITHUB_OUTPUT"
+          done
+          ls -la .output/*.zip
+
+      # One output per store: has_chrome / has_firefox / has_edge. A store is
+      # "configured" only when every secret it needs is non-empty. Stores
+      # without credentials are skipped with a notice rather than failing the
+      # release — see packages/extension-browser/PUBLISHING.md.
+      - name: Detect configured stores
+        id: stores
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+        run: |
+          configured=0
+          check_store() {
+            local store="$1"
+            shift
+            local ok=true
+            local var
+            for var in "$@"; do
+              if [ -z "${!var:-}" ]; then
+                ok=false
+              fi
+            done
+            if [ "$ok" = true ]; then
+              configured=$((configured + 1))
+              echo "$store: secrets configured — will submit"
+            else
+              echo "::notice::$store publish skipped: secrets not configured — see packages/extension-browser/PUBLISHING.md"
+            fi
+            echo "has_$store=$ok" >> "$GITHUB_OUTPUT"
+          }
+          check_store chrome CHROME_EXTENSION_ID CHROME_CLIENT_ID CHROME_CLIENT_SECRET CHROME_REFRESH_TOKEN
+          check_store firefox FIREFOX_EXTENSION_ID FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET
+          check_store edge EDGE_PRODUCT_ID EDGE_CLIENT_ID EDGE_API_KEY
+          if [ "$configured" -eq 0 ]; then
+            echo "::warning::no web-store credentials configured — nothing was submitted to any store. The zips are still attached to the GitHub release. See packages/extension-browser/PUBLISHING.md to set up store secrets."
+          fi
+
+      - name: Publish to Chrome Web Store
+        if: steps.stores.outputs.has_chrome == 'true'
+        working-directory: packages/extension-browser
+        run: pnpm exec wxt submit --chrome-zip "${{ steps.zips.outputs.chrome_zip }}"
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      - name: Publish to Firefox Add-ons (AMO)
+        if: steps.stores.outputs.has_firefox == 'true'
+        working-directory: packages/extension-browser
+        run: pnpm exec wxt submit --firefox-zip "${{ steps.zips.outputs.firefox_zip }}" --firefox-sources-zip "${{ steps.zips.outputs.sources_zip }}"
+        env:
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+
+      - name: Publish to Edge Add-ons
+        if: steps.stores.outputs.has_edge == 'true'
+        working-directory: packages/extension-browser
+        run: pnpm exec wxt submit --edge-zip "${{ steps.zips.outputs.edge_zip }}"
+        env:
+          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+          EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+
+      # release.yml does not create GitHub releases (npm / PyPI only), so this
+      # is the repo's first release-creating step. softprops/action-gh-release
+      # is pinned by major tag, matching how the other third-party actions in
+      # .github/workflows are pinned.
+      - name: Attach zips to GitHub release
+        if: startsWith(github.ref, 'refs/tags/extension-browser@')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: packages/extension-browser/.output/*.zip
+          generate_release_notes: true
