@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/extension-browser",
-  "version": "0.0.35",
+  "version": "0.0.36",
   "private": true,
   "description": "NeuroDock browser extension (Chrome, Firefox, Edge). MV3, WXT-built. Area 2 communication translation surface.",
   "license": "AGPL-3.0-or-later",

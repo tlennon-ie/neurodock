@@ -1,6 +1,40 @@
 # @neurodock/extension-browser
 
-## [unreleased]
+## 0.0.36 - 2026-06-11
+
+### Added — experience redesign (WS1)
+
+- Reader-font switcher in the header: Atkinson Hyperlegible, Lexend,
+  OpenDyslexic, Comic Neue, or the system font. Same `neurodockFont`
+  contract as docs.neurodock.org; OpenDyslexic and Comic Neue woff2 now
+  ship in the bundle. The choice applies pre-paint (no flash) across the
+  popup, the full-page view, and the in-page panel.
+- Shared branded header (mark + wordmark + font switcher + theme toggle
+  - an expand button that opens the full-page view).
+- Reader preferences are now the first thing in Settings, with settings
+  split into Essentials (open) and Advanced (collapsed). Nothing removed.
+- "Turn on full NeuroDock" power-up card: one copy-paste command with a
+  live "Connected" check against the native host.
+- Identity-first onboarding (~2 steps): how you read best, then connect
+  a model — with a running LM Studio/Ollama auto-detected for a one-tap
+  local connect. Both steps skippable; no CLI command required.
+- Popup slimmed to Home + Notifications; full settings live on the
+  full-page view.
+
+### Changed
+
+- Plain-language copy throughout: "settings sync across browsers"
+  instead of "native host"; "always-on check-ins" instead of
+  daemon/hook jargon; raw commands appear only inside the power-up card.
+- OpenDyslexic/Comic Neue get metric compensation (85%/95% root scale)
+  so large glyphs never overflow the popup; header controls always stay
+  on one row (the font select shrinks with an ellipsis instead).
+
+### Fixed
+
+- The pre-paint font script now loads as an external file —
+  MV3 extension pages block inline scripts at runtime, so the inline
+  version silently never ran.
 
 ### Changed — power-up card now advertises `npx @neurodock/cli setup`
 

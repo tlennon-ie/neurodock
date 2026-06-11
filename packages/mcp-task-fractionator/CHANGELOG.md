@@ -4,6 +4,14 @@ All notable changes to this package will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5] - 2026-06-11
+
+### Changed
+
+- `decompose.time_budget` documents its ISO-8601 duration format (for
+  example `PT2H`, `PT90M`) in the published input schema, so clients
+  stop guessing prose formats (PR #73).
+
 ## [0.0.4] - 2026-05-31
 
 - Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.

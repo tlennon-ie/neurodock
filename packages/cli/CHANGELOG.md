@@ -1,6 +1,6 @@
 # @neurodock/cli changelog
 
-## [unreleased]
+## 0.8.0 - 2026-06-11
 
 ### Added — `neurodock setup`: install-all + install-hooks in one command
 
