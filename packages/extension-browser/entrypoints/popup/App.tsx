@@ -10,6 +10,8 @@
  *   2. Settings — provider selection (Local Ollama / Cloud Anthropic /
  *      Cloud OpenAI / Cloud OpenRouter / Mock), endpoint URL, model
  *      name, API key entry, and a Test button. See SettingsTab.tsx.
+ *      Settings tab was removed from the popup in Task F1; it is now
+ *      reachable only via the header gear (opens the full-page tab).
  *
  * Voice (plan.md §2): direct, plain, non-clinical. No "superpower" copy.
  * No diagnosis-gated language.
@@ -31,7 +33,6 @@ import {
   type PacingPreferences,
 } from "../../src/lib/pacing.js";
 import type { ExtensionProfile, HistoryEntry } from "../../src/lib/types.js";
-import { SettingsTab } from "./SettingsTab.js";
 import { NotificationsTab } from "./NotificationsTab.js";
 import { OnboardingWizard } from "./OnboardingWizard.js";
 import { ToolView, SourcePreview } from "../_shared/panel.js";
@@ -68,7 +69,7 @@ function isProfileUpdatedMessage(msg: unknown): msg is ProfileUpdatedMessage {
   );
 }
 
-type TabId = "home" | "notifications" | "settings";
+type TabId = "home" | "notifications";
 
 function openFullPage(
   view: "home" | "settings" | "history" | "notifications" = "home",
@@ -257,7 +258,7 @@ export function App(): React.ReactElement {
           profile={profile}
           onChange={update}
           onComplete={() => setTab("home")}
-          onOpenSettings={() => setTab("settings")}
+          onOpenSettings={() => openFullPage("settings")}
         />
       ) : (
         <>
@@ -274,9 +275,6 @@ export function App(): React.ReactElement {
             />
           ) : null}
           {tab === "notifications" ? <NotificationsTab /> : null}
-          {tab === "settings" ? (
-            <SettingsTab profile={profile} onChange={update} />
-          ) : null}
         </>
       )}
 
@@ -346,7 +344,6 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
   const tabs: { id: TabId; label: string }[] = [
     { id: "home", label: "Home" },
     { id: "notifications", label: "Notifications" },
-    { id: "settings", label: "Settings" },
   ];
   // RFC A3 — arrow-key navigation across the tab bar. Pattern follows
   // WAI-ARIA Authoring Practices for tabs: Left/Right (and Up/Down)
@@ -355,7 +352,6 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
   const refs = useRef<Record<TabId, HTMLButtonElement | null>>({
     home: null,
     notifications: null,
-    settings: null,
   });
 
   const focusTab = useCallback((id: TabId) => {
@@ -365,7 +361,7 @@ function TabBar({ current, onChange }: TabBarProps): React.ReactElement {
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      const order: TabId[] = ["home", "notifications", "settings"];
+      const order: TabId[] = ["home", "notifications"];
       const idx = order.indexOf(current);
       if (idx === -1) return;
       let nextId: TabId | null = null;

@@ -106,12 +106,13 @@ describe("Popup — settings gear opens full-page tab", () => {
     expect(args.url).toContain("view=settings");
   });
 
-  it("gear always deep-links to settings regardless of the active popup tab", async () => {
+  it("gear deep-links to settings from the Notifications tab as well", async () => {
+    // Task F1: Settings tab removed from popup. Verify gear works from any
+    // remaining popup tab (switch to Notifications, then click gear).
     render(<App />);
-    // Switch to the Settings tab in the popup, then click the gear.
-    const settingsTab = await screen.findByTestId("tab-settings");
+    const notificationsTab = await screen.findByTestId("tab-notifications");
     await act(async () => {
-      fireEvent.click(settingsTab);
+      fireEvent.click(notificationsTab);
     });
     const gear = await screen.findByTestId("nd-header-settings");
     await act(async () => {

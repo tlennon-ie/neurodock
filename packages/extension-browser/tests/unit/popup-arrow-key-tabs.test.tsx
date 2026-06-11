@@ -54,13 +54,7 @@ describe("Popup tab bar — arrow-key navigation (RFC A3)", () => {
         screen.getByTestId("tab-notifications").getAttribute("aria-selected"),
       ).toBe("true"),
     );
-    fireEvent.keyDown(tabList, { key: "ArrowRight" });
-    await waitFor(() =>
-      expect(
-        screen.getByTestId("tab-settings").getAttribute("aria-selected"),
-      ).toBe("true"),
-    );
-    // Wraparound — settings → home.
+    // Wraparound — notifications → home (two-tab popup; settings is on full page).
     fireEvent.keyDown(tabList, { key: "ArrowRight" });
     await waitFor(() =>
       expect(screen.getByTestId("tab-home").getAttribute("aria-selected")).toBe(
@@ -73,10 +67,11 @@ describe("Popup tab bar — arrow-key navigation (RFC A3)", () => {
     render(<App />);
     await screen.findByTestId("tab-home");
     const tabList = screen.getByTestId("popup-tab-list");
+    // Wraparound: home → notifications (last tab).
     fireEvent.keyDown(tabList, { key: "ArrowLeft" });
     await waitFor(() =>
       expect(
-        screen.getByTestId("tab-settings").getAttribute("aria-selected"),
+        screen.getByTestId("tab-notifications").getAttribute("aria-selected"),
       ).toBe("true"),
     );
   });
@@ -85,10 +80,11 @@ describe("Popup tab bar — arrow-key navigation (RFC A3)", () => {
     render(<App />);
     await screen.findByTestId("tab-home");
     const tabList = screen.getByTestId("popup-tab-list");
+    // End jumps to notifications (last tab; settings is on full page).
     fireEvent.keyDown(tabList, { key: "End" });
     await waitFor(() =>
       expect(
-        screen.getByTestId("tab-settings").getAttribute("aria-selected"),
+        screen.getByTestId("tab-notifications").getAttribute("aria-selected"),
       ).toBe("true"),
     );
     fireEvent.keyDown(tabList, { key: "Home" });
@@ -118,8 +114,7 @@ describe("Popup tab bar — arrow-key navigation (RFC A3)", () => {
     expect(
       screen.getByTestId("tab-notifications").getAttribute("tabindex"),
     ).toBe("-1");
-    expect(screen.getByTestId("tab-settings").getAttribute("tabindex")).toBe(
-      "-1",
-    );
+    // Settings tab no longer in popup — verified absent.
+    expect(screen.queryByTestId("tab-settings")).not.toBeInTheDocument();
   });
 });
