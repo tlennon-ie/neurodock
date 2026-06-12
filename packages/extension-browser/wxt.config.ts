@@ -185,6 +185,17 @@ export default defineConfig({
       gecko: {
         id: "neurodock-extension@neurodock.org",
         strict_min_version: "115.0",
+        // AMO validation requirement (hard error since late 2025): every
+        // extension must declare what data it collects. NeuroDock's honest
+        // answer is "none" — the developer collects and receives nothing.
+        // Selected text is only ever sent to endpoints the USER configures:
+        // localhost (LM Studio / Ollama) by default, or a cloud provider the
+        // user explicitly opts into with their own API key. That opt-in flow
+        // and its trade-offs are documented in PRIVACY.md and the AMO
+        // listing's privacy section; no data ever flows to NeuroDock.
+        data_collection_permissions: {
+          required: ["none"],
+        },
       },
     },
     // Tab view (entrypoints/tab/ → tab.html). Marked web-accessible so

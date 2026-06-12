@@ -1,5 +1,15 @@
 # @neurodock/extension-browser
 
+## 0.0.37 - 2026-06-12
+
+### Fixed
+
+- Declare `data_collection_permissions: { required: ["none"] }` in the
+  gecko manifest block — AMO now rejects submissions without it. "None"
+  is the truthful value: the developer collects nothing; selected text
+  only goes to endpoints the user configures (localhost by default,
+  cloud only with explicit opt-in and the user's own key).
+
 ## 0.0.36 - 2026-06-11
 
 ### Added — experience redesign (WS1)
