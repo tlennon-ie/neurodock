@@ -1,5 +1,14 @@
 # @neurodock/extension-browser
 
+## [unreleased]
+
+### Changed
+
+- Build targets raised to the extension's real minimums (Chrome 110,
+  Firefox 115, es2022) — required by esbuild >=0.28.1, which the
+  workspace now forces to clear two security advisories. No runtime
+  change: every supported browser already met these floors.
+
 ## 0.0.37 - 2026-06-12
 
 ### Fixed
