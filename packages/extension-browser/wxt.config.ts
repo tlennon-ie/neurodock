@@ -227,6 +227,11 @@ export default defineConfig({
       // Use "hidden" locally if you need DevTools debugging (generates
       // separate .map files that are NOT included in the extension bundle).
       sourcemap: false,
+      // Vite's default browser targets (chrome87/firefox78/es2020) are far
+      // below this extension's real floor (Chrome MV3, Firefox 115 per
+      // strict_min_version) and make esbuild >=0.28 refuse the build with
+      // "transform not supported" errors. Target the actual minimums.
+      target: ["chrome110", "firefox115", "es2022"],
     },
   }),
 });
