@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "neurodock-mcp-translation",
   "display_name": "NeuroDock Translation",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Decode subtext, tone, and ambiguity in messages; rewrite outgoing replies; brief meetings.",
   "long_description": "Communication-decoding MCP server for neurodivergent professionals. Decodes the implicit ask and ranked subtext in an incoming corporate message, anchors every ambiguous span verbatim to the source, checks the tone of a draft, rewrites outgoing replies, and briefs meetings. Part of NeuroDock, a local-first cognitive substrate. The server performs no LLM calls of its own — it orchestrates prompt templates against whatever model your MCP client is configured to use.",
   "author": {

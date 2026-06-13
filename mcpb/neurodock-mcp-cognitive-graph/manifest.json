@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "neurodock-mcp-cognitive-graph",
   "display_name": "NeuroDock Cognitive Graph",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "description": "A local typed-edge graph of people, projects, and decisions that externalises memory.",
   "long_description": "Persistent entity-memory MCP server for neurodivergent professionals. Stores a local typed-edge property graph of people, projects, decisions, and concepts so a hyperfocused or context-switched session does not start from zero. Records facts as subject-predicate-object triples, recalls entities and decisions, and produces a weekly rollup. Part of NeuroDock, a local-first cognitive substrate. The graph is stored in a local SQLite database under ~/.neurodock and never leaves the device.",
   "author": {

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "neurodock-mcp-guardrail",
   "display_name": "NeuroDock Guardrail",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Advisory detectors for rumination, hyperfocus, and sycophancy. Never silently blocks.",
   "long_description": "Clinical-guardrail MCP server for neurodivergent professionals. Provides advisory detectors for three patterns that unmodified LLM interaction tends to amplify: rumination loops (OCD), unregulated hyperfocus (ADHD), and sycophancy / over-validation. Every detector is advisory only — it never silently blocks an action and always returns override options. Part of NeuroDock, a local-first cognitive substrate. The detectors are stateless and make no network calls.",
   "author": {
