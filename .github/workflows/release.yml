@@ -219,3 +219,43 @@ jobs:
             echo "::error::every registry publish failed"
             exit 1
           fi
+
+  mcpb-bundles:
+    name: Attach Claude Desktop bundles (.mcpb)
+    # Runs after PyPI so the bundles are only attached to a release whose
+    # underlying servers actually published. The bundles themselves are thin
+    # `uvx neurodock-mcp-<server>` launchers (no embedded code), so packing
+    # them needs only Node — but we gate on a successful publish.
+    needs: [pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub Release for the v* tag + upload assets
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Validate and pack .mcpb bundles
+        run: |
+          set -e
+          mkdir -p dist
+          for s in chronometric cognitive-graph guardrail task-fractionator translation; do
+            dir="mcpb/neurodock-mcp-$s"
+            npx --yes @anthropic-ai/mcpb validate "$dir/manifest.json"
+            npx --yes @anthropic-ai/mcpb pack "$dir" "dist/neurodock-mcp-$s.mcpb"
+          done
+          echo "Packed bundles:"
+          ls -la dist/*.mcpb
+
+      # Creates (or updates) the GitHub Release for the triggering v* tag and
+      # attaches the five Claude Desktop bundles. v* tags previously produced
+      # no GitHub Release at all — only npm/PyPI/registry publishes.
+      - name: Attach bundles to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.mcpb
+          fail_on_unmatched_files: true
+          generate_release_notes: true
