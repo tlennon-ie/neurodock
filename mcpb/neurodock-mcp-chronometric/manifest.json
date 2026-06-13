@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "neurodock-mcp-chronometric",
   "display_name": "NeuroDock Chronometric",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Externalises time-of-day, session boundaries, and break prompts for time-blind users.",
   "long_description": "Time, idle, and break-management MCP server for neurodivergent professionals. Externalises time-of-day context, opens and closes work sessions around the user's verbatim stated intent, prompts for breaks, and reports OS idle status (with consent). Part of NeuroDock, a local-first cognitive substrate. All session state is held locally.",
   "author": {

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "neurodock-mcp-task-fractionator",
   "display_name": "NeuroDock Task Fractionator",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "Decompose a vague goal into atomic 5-90 minute tasks and surface the next safe action.",
   "long_description": "Local-first goal-decomposition MCP server for neurodivergent professionals. Turns a vague goal into a small ordered list of atomic 5-90 minute tasks, each with acceptance criteria and dependencies, against an 'I can start now' bar. Also surfaces the single safe next action from pending work. Part of NeuroDock, a local-first cognitive substrate.",
   "author": {
