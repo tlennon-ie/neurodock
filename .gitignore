@@ -217,3 +217,7 @@ docs/decisions/0010-opt-in-hosted-full-experience.md
 packages/extension-browser/store-listings/
 packages/extension-browser/store/
 packages/extension-browser/STORE-SUBMISSION.md
+# Connectors Directory submission kit (one-time form copy; internal).
+packages/remote/CONNECTORS-SUBMISSION.md
+# Brainstorming / design working docs (internal; not published).
+docs/superpowers/
