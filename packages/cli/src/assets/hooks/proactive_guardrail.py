@@ -518,7 +518,7 @@ def _is_past_end_of_day(now: datetime, end_of_day_local: str | None) -> bool:
     hour, minute = int(match.group(1)), int(match.group(2))
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
         return _clock_band(now) in ("late_night", "deep_night")
-    # Deep night (00:00–05:59) is always "past end of day" regardless of the
+    # Deep night (00:00-05:59) is always "past end of day" regardless of the
     # configured clock-out — nobody sets end_of_day to 03:00 and means it.
     if now.hour < 6:
         return True
