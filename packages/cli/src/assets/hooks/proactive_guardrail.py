@@ -174,9 +174,7 @@ def _on_session_start(_payload: dict[str, Any], settings: dict[str, Any]) -> Non
     state["tool_count"] = 0
     _save_session(state)
     band = _clock_band(now)
-    break_minutes = settings.get(
-        "hyperfocus_break_minutes", HYPERFOCUS_BREAK_MINUTES_DEFAULT
-    )
+    break_minutes = settings.get("hyperfocus_break_minutes", HYPERFOCUS_BREAK_MINUTES_DEFAULT)
     if band in ("deep_night", "late_night"):
         _emit_banner(
             f"NeuroDock: it's {band.replace('_', ' ')} local time. "
@@ -208,17 +206,13 @@ def _on_pre_tool(payload: dict[str, Any], settings: dict[str, Any]) -> None:
     if state["tool_count"] % PRETOOL_CHECK_EVERY_N != 0:
         return
 
-    break_minutes = settings.get(
-        "hyperfocus_break_minutes", HYPERFOCUS_BREAK_MINUTES_DEFAULT
-    )
+    break_minutes = settings.get("hyperfocus_break_minutes", HYPERFOCUS_BREAK_MINUTES_DEFAULT)
     end_of_day = settings.get("end_of_day_local")
     hyperfocus_banner = _evaluate_hyperfocus(state, break_minutes, end_of_day)
     if hyperfocus_banner:
         _emit_banner(hyperfocus_banner)
     threshold = settings.get("rumination_threshold", RUMINATION_THRESHOLD_DEFAULT)
-    window = settings.get(
-        "rumination_window_minutes", RUMINATION_WINDOW_MINUTES_DEFAULT
-    )
+    window = settings.get("rumination_window_minutes", RUMINATION_WINDOW_MINUTES_DEFAULT)
     rumination_banner = _evaluate_rumination(threshold, window)
     if rumination_banner:
         _emit_banner(rumination_banner)
@@ -518,7 +512,7 @@ def _is_past_end_of_day(now: datetime, end_of_day_local: str | None) -> bool:
     hour, minute = int(match.group(1)), int(match.group(2))
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
         return _clock_band(now) in ("late_night", "deep_night")
-    # Deep night (00:00–05:59) is always "past end of day" regardless of the
+    # Deep night (00:00-05:59) is always "past end of day" regardless of the
     # configured clock-out — nobody sets end_of_day to 03:00 and means it.
     if now.hour < 6:
         return True
@@ -576,21 +570,15 @@ def _parse_profile_text(text: str) -> dict[str, Any]:
 
     hyperfocus = _extract_int(text, "hyperfocus_break_minutes")
     if hyperfocus is not None:
-        settings["hyperfocus_break_minutes"] = _clamp(
-            hyperfocus, *HYPERFOCUS_BREAK_MIN_RANGE
-        )
+        settings["hyperfocus_break_minutes"] = _clamp(hyperfocus, *HYPERFOCUS_BREAK_MIN_RANGE)
 
     threshold = _extract_int(text, "rumination_threshold")
     if threshold is not None:
-        settings["rumination_threshold"] = _clamp(
-            threshold, *RUMINATION_THRESHOLD_RANGE
-        )
+        settings["rumination_threshold"] = _clamp(threshold, *RUMINATION_THRESHOLD_RANGE)
 
     window = _extract_int(text, "rumination_window_minutes")
     if window is not None:
-        settings["rumination_window_minutes"] = _clamp(
-            window, *RUMINATION_WINDOW_RANGE
-        )
+        settings["rumination_window_minutes"] = _clamp(window, *RUMINATION_WINDOW_RANGE)
 
     eod = _extract_str(text, "end_of_day_local")
     if eod is not None and re.match(r"^\d{1,2}:\d{2}$", eod):
@@ -805,15 +793,15 @@ def _self_test() -> int:
 
     # Profile parsing: extract scalars from a representative profile snippet.
     sample_profile = (
-        "schema_version: \"0.1.0\"\n"
+        'schema_version: "0.1.0"\n'
         "chronometric:\n"
         "  # how long before a nudge\n"
         "  hyperfocus_break_minutes: 60\n"
-        "  end_of_day_local: \"18:30\"\n"
+        '  end_of_day_local: "18:30"\n'
         "guardrails:\n"
         "  rumination_threshold: 4\n"
         "  rumination_window_minutes: 120\n"
-        "  sycophancy_check: \"off\"\n"
+        '  sycophancy_check: "off"\n'
     )
     parsed = _parse_profile_text(sample_profile)
     expected = {
@@ -834,7 +822,7 @@ def _self_test() -> int:
         ok = False
 
     # Profile parsing: an empty / commented profile yields no overrides.
-    if _parse_profile_text("# just a comment\nschema_version: \"0.1.0\"\n") != {}:
+    if _parse_profile_text('# just a comment\nschema_version: "0.1.0"\n') != {}:
         sys.stderr.write("FAIL: bare profile should yield no overrides\n")
         ok = False
 
