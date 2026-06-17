@@ -46,3 +46,19 @@ overrides:
   # Note: #57 (IN_PLACE attacker-controlled nodeName) has no upstream fix
   # yet and is low-risk for our usage; this raises everything else to 3.4.9.
   "dompurify": ">=3.4.9"
+  # @babel/core <=7.29.0 -> 7.29.6: arbitrary file read via sourceMappingURL
+  # comment (low, dependabot #49). Transitive, build-time only. Caret-pinned
+  # to the 7.x line (a bare >=7.29.6 resolves to the 8.0.0 major).
+  "@babel/core": "^7.29.6"
+  # js-yaml 4.x <4.2.0 -> 4.2.0: quadratic-complexity DoS in merge-key
+  # handling (medium, dependabot #50). Scoped to the 4.x line so the
+  # transitive js-yaml@3.14.2 (different major, 3.x API surface) is left
+  # untouched -- forcing it to 4.x would break its 3.x-only consumers.
+  "js-yaml@4": "4.2.0"
+  # vite 6.x <6.4.3: server.fs.deny bypass (high #51) + launch-editor NTLMv2
+  # disclosure (medium #52) on Windows. A transitive vite@6.4.2 lingers
+  # beside 6.4.3/7.x/8.x; caret-pin the 6.x line to the patched release
+  # (^6.4.3 stays on 6.x; the 7.x/8.x instances other tools need are left
+  # alone) rather than taking the vite 7 major (dev-only, no runtime
+  # benefit). Supersedes Dependabot PR #90.
+  "vite@6": "^6.4.3"
