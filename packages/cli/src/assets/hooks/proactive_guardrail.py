@@ -17,6 +17,28 @@ Hook events handled (Claude Code subcommand args):
   post-tool      Detect sycophancy patterns in assistant responses.
   stop           Mark session end; clear in-flight state.
 
+How banners reach the user (0.0.2):
+
+  Banners are surfaced through Claude Code's structured hook output —
+  a single JSON object printed to STDOUT carrying a `systemMessage`
+  field, with the process exiting 0. That is the documented
+  non-blocking, user-visible channel. The pre-0.0.2 hook wrote the
+  banner to stderr and exited 0, which only shows in transcript/verbose
+  mode — so every fired banner was effectively invisible during normal
+  use. We never use exit 2 (that BLOCKS the tool call) — the guardrail
+  must never block the user's work.
+
+Profile-driven thresholds (0.0.2):
+
+  The hook reads `~/.neurodock/profile.yaml` (honouring
+  $NEURODOCK_PROFILE_PATH and $XDG_CONFIG_HOME like the CLI) and uses
+  the user's own `chronometric.hyperfocus_break_minutes`,
+  `chronometric.end_of_day_local`, `guardrails.rumination_threshold`,
+  `guardrails.rumination_window_minutes`, and
+  `guardrails.sycophancy_check`. Pure-stdlib scalar extraction — no
+  YAML dependency. Missing/invalid values fall back to the defaults
+  below.
+
 Wire-up in `~/.claude/settings.json`:
 
   {
@@ -64,11 +86,24 @@ from typing import Any
 
 # ── Configuration ────────────────────────────────────────────────────────
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 STATE_DIR = Path.home() / ".neurodock" / "state"
 LOG_FILE = STATE_DIR / "guardrail-log.jsonl"
 SESSION_FILE = STATE_DIR / "guardrail-session.json"
 PROMPTS_FILE = STATE_DIR / "guardrail-prompts.json"
+
+# Banners accumulated during a single hook invocation. A hook fires once
+# per event and may produce more than one banner (e.g. pre-tool can trip
+# both hyperfocus and rumination), but Claude Code accepts exactly one
+# JSON object on stdout — so we collect here and flush once in main().
+_PENDING_BANNERS: list[str] = []
+
+# Valid profile ranges (mirrors packages/core/schemas/profile.example.yaml).
+# Out-of-range values are clamped, not rejected — the hook stays charitable
+# and predictable; `neurodock profile validate` is where ranges are enforced.
+HYPERFOCUS_BREAK_MIN_RANGE = (15, 240)
+RUMINATION_THRESHOLD_RANGE = (1, 20)
+RUMINATION_WINDOW_RANGE = (5, 1440)
 
 # Hyperfocus heuristic — mirrors packages/mcp-guardrail/heuristics/hyperfocus.py
 HYPERFOCUS_BREAK_MINUTES_DEFAULT = 90
@@ -103,47 +138,55 @@ def main() -> int:
     if len(sys.argv) < 2:
         return 0
     kind = sys.argv[1]
+    # Self-test is a standalone diagnostic — no stdin payload, no state
+    # directory, no banner flush. Handle it before anything else.
+    if kind == "self-test":
+        return _self_test()
     payload = _read_stdin_payload()
     try:
         STATE_DIR.mkdir(parents=True, exist_ok=True)
     except OSError:
         return 0  # filesystem unavailable — fail silent
+    settings = _load_profile_settings()
     try:
         if kind == "session-start":
-            _on_session_start(payload)
+            _on_session_start(payload, settings)
         elif kind == "pre-tool":
-            _on_pre_tool(payload)
+            _on_pre_tool(payload, settings)
         elif kind == "post-tool":
-            _on_post_tool(payload)
+            _on_post_tool(payload, settings)
         elif kind == "stop":
             _on_stop(payload)
-        elif kind == "self-test":
-            return _self_test()
     except Exception as exc:
         _log("error", {"kind": kind, "error": str(exc)})
+    # Flush any banners the handlers queued, as one JSON object on stdout.
+    _flush_banners()
     return 0
 
 
 # ── Hook handlers ────────────────────────────────────────────────────────
 
 
-def _on_session_start(_payload: dict[str, Any]) -> None:
+def _on_session_start(_payload: dict[str, Any], settings: dict[str, Any]) -> None:
     now = _now()
     state = _load_session()
     state["started_at"] = now.isoformat()
     state["tool_count"] = 0
     _save_session(state)
     band = _clock_band(now)
+    break_minutes = settings.get(
+        "hyperfocus_break_minutes", HYPERFOCUS_BREAK_MINUTES_DEFAULT
+    )
     if band in ("deep_night", "late_night"):
         _emit_banner(
             f"NeuroDock: it's {band.replace('_', ' ')} local time. "
             f"I'll nudge you toward stopping every "
-            f"{HYPERFOCUS_BREAK_MINUTES_DEFAULT} minutes."
+            f"{break_minutes} minutes."
         )
     _log("session-start", {"band": band})
 
 
-def _on_pre_tool(payload: dict[str, Any]) -> None:
+def _on_pre_tool(payload: dict[str, Any], settings: dict[str, Any]) -> None:
     state = _load_session()
     # Defensive bootstrap: if SessionStart never fired (e.g. hook installed
     # mid-session, or the Claude Code event is suppressed in a given client),
@@ -165,15 +208,28 @@ def _on_pre_tool(payload: dict[str, Any]) -> None:
     if state["tool_count"] % PRETOOL_CHECK_EVERY_N != 0:
         return
 
-    hyperfocus_banner = _evaluate_hyperfocus(state)
+    break_minutes = settings.get(
+        "hyperfocus_break_minutes", HYPERFOCUS_BREAK_MINUTES_DEFAULT
+    )
+    end_of_day = settings.get("end_of_day_local")
+    hyperfocus_banner = _evaluate_hyperfocus(state, break_minutes, end_of_day)
     if hyperfocus_banner:
         _emit_banner(hyperfocus_banner)
-    rumination_banner = _evaluate_rumination()
+    threshold = settings.get("rumination_threshold", RUMINATION_THRESHOLD_DEFAULT)
+    window = settings.get(
+        "rumination_window_minutes", RUMINATION_WINDOW_MINUTES_DEFAULT
+    )
+    rumination_banner = _evaluate_rumination(threshold, window)
     if rumination_banner:
         _emit_banner(rumination_banner)
 
 
-def _on_post_tool(payload: dict[str, Any]) -> None:
+def _on_post_tool(payload: dict[str, Any], settings: dict[str, Any]) -> None:
+    # Honour the user's sycophancy preference: "off" means never flag.
+    # "warn"/"refuse" both surface the advisory banner (the hook never
+    # refuses a send — that's a client-side decision).
+    if settings.get("sycophancy_check") == "off":
+        return
     response = _extract_assistant_response(payload)
     if not response:
         return
@@ -199,8 +255,18 @@ def _on_stop(_payload: dict[str, Any]) -> None:
 # ── Heuristics (vendored from packages/mcp-guardrail) ────────────────────
 
 
-def _evaluate_hyperfocus(state: dict[str, Any]) -> str | None:
-    """Elapsed-threshold heuristic; mirrors mcp-guardrail's structure."""
+def _evaluate_hyperfocus(
+    state: dict[str, Any],
+    break_minutes: int = HYPERFOCUS_BREAK_MINUTES_DEFAULT,
+    end_of_day_local: str | None = None,
+) -> str | None:
+    """Elapsed-threshold heuristic; mirrors mcp-guardrail's structure.
+
+    `break_minutes` re-anchors the escalation ladder (from
+    `chronometric.hyperfocus_break_minutes`). `end_of_day_local`
+    ("HH:MM") makes the nudge stricter after the user's clock-out time;
+    when absent we fall back to the deep/late-night clock band.
+    """
     started_iso = state.get("started_at")
     if not isinstance(started_iso, str):
         return None
@@ -212,12 +278,11 @@ def _evaluate_hyperfocus(state: dict[str, Any]) -> str | None:
     elapsed = now - started
     elapsed_min = elapsed.total_seconds() / 60.0
 
-    gentle = HYPERFOCUS_BREAK_MINUTES_DEFAULT * HYPERFOCUS_GENTLE_RATIO
-    nudge = HYPERFOCUS_BREAK_MINUTES_DEFAULT * HYPERFOCUS_NUDGE_RATIO
-    hard = HYPERFOCUS_BREAK_MINUTES_DEFAULT * HYPERFOCUS_HARD_RATIO
+    gentle = break_minutes * HYPERFOCUS_GENTLE_RATIO
+    nudge = break_minutes * HYPERFOCUS_NUDGE_RATIO
+    hard = break_minutes * HYPERFOCUS_HARD_RATIO
 
-    band = _clock_band(now)
-    past_eod = band in ("late_night", "deep_night")
+    past_eod = _is_past_end_of_day(now, end_of_day_local)
 
     level: str
     if elapsed_min < gentle:
@@ -254,14 +319,21 @@ def _evaluate_hyperfocus(state: dict[str, Any]) -> str | None:
     )
 
 
-def _evaluate_rumination() -> str | None:
-    """Jaccard-similarity rumination detector across recent prompts."""
+def _evaluate_rumination(
+    threshold: int = RUMINATION_THRESHOLD_DEFAULT,
+    window_minutes: int = RUMINATION_WINDOW_MINUTES_DEFAULT,
+) -> str | None:
+    """Jaccard-similarity rumination detector across recent prompts.
+
+    `threshold` and `window_minutes` come from `guardrails.*` in the
+    profile; both fall back to the module defaults.
+    """
     prompts = _load_prompts()
-    if len(prompts) < RUMINATION_THRESHOLD_DEFAULT:
+    if len(prompts) < threshold:
         return None
-    window_start = _now() - timedelta(minutes=RUMINATION_WINDOW_MINUTES_DEFAULT)
+    window_start = _now() - timedelta(minutes=window_minutes)
     recent = [p for p in prompts if _parse_iso(p.get("at", "")) >= window_start]
-    if len(recent) < RUMINATION_THRESHOLD_DEFAULT:
+    if len(recent) < threshold:
         return None
     # Compare the latest prompt to the others.
     latest = recent[-1]["text"]
@@ -270,11 +342,11 @@ def _evaluate_rumination() -> str | None:
         sim = _jaccard_similarity(latest, prior["text"])
         if sim >= RUMINATION_SIMILARITY_DEFAULT:
             matches += 1
-    if matches < RUMINATION_THRESHOLD_DEFAULT - 1:
+    if matches < threshold - 1:
         return None
     return (
         f"NeuroDock rumination check: you've asked a variant of this question "
-        f"{matches + 1} times in the last {RUMINATION_WINDOW_MINUTES_DEFAULT} "
+        f"{matches + 1} times in the last {window_minutes} "
         "minutes. Want to step back, or are you finding what you need?"
     )
 
@@ -430,6 +502,129 @@ def _now() -> datetime:
     return datetime.now(UTC).astimezone()
 
 
+def _is_past_end_of_day(now: datetime, end_of_day_local: str | None) -> bool:
+    """True if `now` is at/after the user's clock-out time, or in deep night.
+
+    When `end_of_day_local` ("HH:MM") is set, the hyperfocus nudge gets
+    stricter after that time (documented behaviour). When it is absent or
+    malformed, fall back to the deep/late-night clock band so behaviour is
+    unchanged for users who never set it.
+    """
+    if not isinstance(end_of_day_local, str):
+        return _clock_band(now) in ("late_night", "deep_night")
+    match = re.match(r"^\s*(\d{1,2}):(\d{2})\s*$", end_of_day_local)
+    if match is None:
+        return _clock_band(now) in ("late_night", "deep_night")
+    hour, minute = int(match.group(1)), int(match.group(2))
+    if not (0 <= hour <= 23 and 0 <= minute <= 59):
+        return _clock_band(now) in ("late_night", "deep_night")
+    # Deep night (00:00–05:59) is always "past end of day" regardless of the
+    # configured clock-out — nobody sets end_of_day to 03:00 and means it.
+    if now.hour < 6:
+        return True
+    eod_minutes = hour * 60 + minute
+    now_minutes = now.hour * 60 + now.minute
+    return now_minutes >= eod_minutes
+
+
+# ── Profile (stdlib-only scalar extraction from profile.yaml) ────────────
+
+
+def _profile_path() -> Path:
+    """Resolve profile.yaml with the same precedence as the CLI
+    (packages/cli/src/lib/paths.ts):
+      1. $NEURODOCK_PROFILE_PATH
+      2. $XDG_CONFIG_HOME/neurodock/profile.yaml
+      3. ~/.neurodock/profile.yaml
+    """
+    override = os.environ.get("NEURODOCK_PROFILE_PATH", "").strip()
+    if override:
+        return Path(override)
+    xdg = os.environ.get("XDG_CONFIG_HOME", "").strip()
+    if xdg:
+        return Path(xdg) / "neurodock" / "profile.yaml"
+    return Path.home() / ".neurodock" / "profile.yaml"
+
+
+def _load_profile_settings() -> dict[str, Any]:
+    """Read the user's profile and return the guardrail-relevant scalars.
+
+    Never raises: a missing/unreadable/invalid profile yields {} and the
+    callers fall back to the module defaults.
+    """
+    try:
+        path = _profile_path()
+        text = path.read_text(encoding="utf-8")
+    except (OSError, ValueError):
+        return {}
+    try:
+        return _parse_profile_text(text)
+    except Exception as exc:  # never let a parse bug break a tool call
+        _log("profile-parse-error", {"error": str(exc)})
+        return {}
+
+
+def _parse_profile_text(text: str) -> dict[str, Any]:
+    """Pure scalar extraction from profile YAML — no YAML dependency.
+
+    The hook is stdlib-only (no pip install), and we only need a handful
+    of leaf scalars whose keys are unique across the schema, so a targeted
+    line-anchored regex is sufficient and robust against comment lines
+    (which begin with `#` and never match `^\\s*<key>:`).
+    """
+    settings: dict[str, Any] = {}
+
+    hyperfocus = _extract_int(text, "hyperfocus_break_minutes")
+    if hyperfocus is not None:
+        settings["hyperfocus_break_minutes"] = _clamp(
+            hyperfocus, *HYPERFOCUS_BREAK_MIN_RANGE
+        )
+
+    threshold = _extract_int(text, "rumination_threshold")
+    if threshold is not None:
+        settings["rumination_threshold"] = _clamp(
+            threshold, *RUMINATION_THRESHOLD_RANGE
+        )
+
+    window = _extract_int(text, "rumination_window_minutes")
+    if window is not None:
+        settings["rumination_window_minutes"] = _clamp(
+            window, *RUMINATION_WINDOW_RANGE
+        )
+
+    eod = _extract_str(text, "end_of_day_local")
+    if eod is not None and re.match(r"^\d{1,2}:\d{2}$", eod):
+        settings["end_of_day_local"] = eod
+
+    syco = _extract_str(text, "sycophancy_check")
+    if syco in ("off", "warn", "refuse"):
+        settings["sycophancy_check"] = syco
+
+    return settings
+
+
+def _extract_int(text: str, key: str) -> int | None:
+    match = re.search(
+        rf"^[ \t]*{re.escape(key)}[ \t]*:[ \t]*(\d+)\b",
+        text,
+        re.MULTILINE,
+    )
+    return int(match.group(1)) if match else None
+
+
+def _extract_str(text: str, key: str) -> str | None:
+    match = re.search(
+        rf"^[ \t]*{re.escape(key)}[ \t]*:[ \t]*[\"']?([^\"'#\r\n]+?)[\"']?[ \t]*(?:#.*)?$",
+        text,
+        re.MULTILINE,
+    )
+    return match.group(1).strip() if match else None
+
+
+def _clamp(value: int, low: int, high: int) -> int:
+    return max(low, min(high, value))
+
+
 # ── Payload extraction (best-effort against Claude Code shape) ───────────
 
 
@@ -515,10 +710,34 @@ def _parse_iso(value: str) -> datetime:
 
 
 def _emit_banner(message: str) -> None:
-    line = f"\n┌─ NeuroDock ──\n│ {message}\n└──\n"
-    sys.stderr.write(line)
-    sys.stderr.flush()
+    """Queue a banner for the end-of-invocation flush and record it in the
+    audit log. Surfacing happens in `_flush_banners` via Claude Code's
+    structured `systemMessage` output — NOT stderr, which only shows in
+    transcript/verbose mode (the pre-0.0.2 invisibility bug)."""
+    _PENDING_BANNERS.append(message)
     _log("banner", {"message": message[:200]})
+
+
+def _flush_banners() -> None:
+    """Emit all queued banners as a single JSON object on stdout, exit 0.
+
+    `systemMessage` is Claude Code's documented non-blocking, user-visible
+    hook channel. We deliberately do NOT set any permission decision, so
+    the tool call proceeds untouched — the guardrail never blocks work.
+    Failures here are swallowed: a guardrail must never break a tool call.
+    """
+    if not _PENDING_BANNERS:
+        return
+    try:
+        sys.stdout.write(_render_banner_payload(_PENDING_BANNERS))
+        sys.stdout.flush()
+    except Exception as exc:
+        _log("banner-flush-error", {"error": str(exc)})
+
+
+def _render_banner_payload(banners: list[str]) -> str:
+    """Build the JSON string Claude Code reads from stdout. Pure + testable."""
+    return json.dumps({"systemMessage": "\n".join(banners)})
 
 
 def _log(event: str, data: dict[str, Any]) -> None:
@@ -556,7 +775,7 @@ def _self_test() -> int:
     """Smoke-test each heuristic against a known-trip and known-skip input."""
     ok = True
 
-    # Hyperfocus: 200 min elapsed → hard level
+    # Hyperfocus: 200 min elapsed → hard level (default 90-min ladder)
     fake_state = {
         "started_at": (_now() - timedelta(minutes=200)).isoformat(),
         "tool_count": 5,
@@ -570,6 +789,70 @@ def _self_test() -> int:
     fake_state["started_at"] = (_now() - timedelta(minutes=10)).isoformat()
     if _evaluate_hyperfocus(fake_state) is not None:
         sys.stderr.write("FAIL: hyperfocus should not fire at 10 min\n")
+        ok = False
+
+    # Profile-driven threshold: a 60-min break setting must fire at 70 min
+    # elapsed (which is below the default 90-min gentle threshold of 54…
+    # wait: 54<70 so it would fire by default too — use 45 min vs a 30-min
+    # setting to prove the profile value, not the default, drives it).
+    short_state = {"started_at": (_now() - timedelta(minutes=45)).isoformat()}
+    if _evaluate_hyperfocus(short_state, break_minutes=90) is not None:
+        sys.stderr.write("FAIL: 45 min should NOT fire on a 90-min break\n")
+        ok = False
+    if _evaluate_hyperfocus(short_state, break_minutes=30) is None:
+        sys.stderr.write("FAIL: 45 min SHOULD fire on a 30-min break\n")
+        ok = False
+
+    # Profile parsing: extract scalars from a representative profile snippet.
+    sample_profile = (
+        "schema_version: \"0.1.0\"\n"
+        "chronometric:\n"
+        "  # how long before a nudge\n"
+        "  hyperfocus_break_minutes: 60\n"
+        "  end_of_day_local: \"18:30\"\n"
+        "guardrails:\n"
+        "  rumination_threshold: 4\n"
+        "  rumination_window_minutes: 120\n"
+        "  sycophancy_check: \"off\"\n"
+    )
+    parsed = _parse_profile_text(sample_profile)
+    expected = {
+        "hyperfocus_break_minutes": 60,
+        "end_of_day_local": "18:30",
+        "rumination_threshold": 4,
+        "rumination_window_minutes": 120,
+        "sycophancy_check": "off",
+    }
+    if parsed != expected:
+        sys.stderr.write(f"FAIL: profile parse: got {parsed!r}\n")
+        ok = False
+
+    # Profile parsing: out-of-range values are clamped to the valid range.
+    clamped = _parse_profile_text("hyperfocus_break_minutes: 9999\n")
+    if clamped.get("hyperfocus_break_minutes") != HYPERFOCUS_BREAK_MIN_RANGE[1]:
+        sys.stderr.write(f"FAIL: clamp out-of-range: {clamped!r}\n")
+        ok = False
+
+    # Profile parsing: an empty / commented profile yields no overrides.
+    if _parse_profile_text("# just a comment\nschema_version: \"0.1.0\"\n") != {}:
+        sys.stderr.write("FAIL: bare profile should yield no overrides\n")
+        ok = False
+
+    # End-of-day: 19:00 with an 18:30 clock-out is "past end of day".
+    evening = _now().replace(hour=19, minute=0, second=0, microsecond=0)
+    if not _is_past_end_of_day(evening, "18:30"):
+        sys.stderr.write("FAIL: 19:00 should be past an 18:30 end-of-day\n")
+        ok = False
+    midday = _now().replace(hour=12, minute=0, second=0, microsecond=0)
+    if _is_past_end_of_day(midday, "18:30"):
+        sys.stderr.write("FAIL: 12:00 should NOT be past an 18:30 end-of-day\n")
+        ok = False
+
+    # Banner payload: combined banners render as valid JSON with systemMessage.
+    payload = _render_banner_payload(["first banner", "second banner"])
+    decoded = json.loads(payload)
+    if decoded.get("systemMessage") != "first banner\nsecond banner":
+        sys.stderr.write(f"FAIL: banner payload shape: {payload!r}\n")
         ok = False
 
     # Sycophancy: positive case
