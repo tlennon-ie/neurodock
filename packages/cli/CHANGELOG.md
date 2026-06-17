@@ -1,5 +1,31 @@
 # @neurodock/cli changelog
 
+## 0.8.1
+
+### Patch Changes
+
+- proactive-guardrail hook: surface banners inline and honour profile.yaml
+
+  The bundled Claude Code hook (`proactive_guardrail.py`) now surfaces its
+  hyperfocus / rumination / late-night / sycophancy banners through Claude
+  Code's structured `systemMessage` output (a single JSON object on stdout,
+  exit 0) instead of writing to stderr. The pre-0.0.2 hook exited 0 with the
+  banner on stderr, which only appears in transcript/verbose mode — so every
+  fired banner was effectively invisible during normal use. The hook still
+  never exits 2, so it never blocks a tool call.
+
+  The hook is also now profile-driven: it reads
+  `chronometric.hyperfocus_break_minutes`, `chronometric.end_of_day_local`,
+  `guardrails.rumination_threshold`, `guardrails.rumination_window_minutes`,
+  and `guardrails.sycophancy_check` from `~/.neurodock/profile.yaml`
+  (stdlib-only scalar extraction, honouring `$NEURODOCK_PROFILE_PATH` and
+  `$XDG_CONFIG_HOME`). Missing or out-of-range values fall back to the schema
+  defaults. Previously every threshold was hardcoded, contradicting the
+  documented opt-out matrix.
+
+  After upgrading, re-run `neurodock install-hooks` to copy the updated
+  script into `~/.neurodock/hooks/`.
+
 ## 0.8.0 - 2026-06-11
 
 ### Added — `neurodock setup`: install-all + install-hooks in one command

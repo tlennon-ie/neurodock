@@ -59,25 +59,41 @@ bug and silently locked the user out of every tool call. The 0.0.23
 
 ### What fires when
 
+The thresholds below are **read from your `profile.yaml`** on every
+invocation (stdlib-only scalar extraction — no YAML dependency), so the
+hook respects the same numbers the rest of the substrate uses. Missing
+or out-of-range values fall back to the schema defaults.
+
 - **SessionStart** — opens a chronometric session, prints a "late
   night" banner if local time is in 00:00–05:59 or 22:00–23:59.
 - **PreToolUse** — every 5th tool call, evaluates hyperfocus (elapsed
-  time vs `hyperfocus_break_minutes`) and rumination (Jaccard
-  similarity over the last 90 min of prompts ≥ 3 matches).
+  time vs `chronometric.hyperfocus_break_minutes`, escalating after
+  `chronometric.end_of_day_local`) and rumination (Jaccard similarity
+  over `guardrails.rumination_window_minutes` of prompts ≥
+  `guardrails.rumination_threshold` matches).
 - **PostToolUse** — checks the assistant's response text for opening
-  unconditional agreement / praise without a trade-off named.
+  unconditional agreement / praise without a trade-off named. Skipped
+  entirely when `guardrails.sycophancy_check: off`.
 - **Stop** — closes the chronometric session.
 
 ### Banner shape
 
+Since 0.0.2 the hook surfaces banners through Claude Code's structured
+hook output — a single JSON object on stdout carrying a `systemMessage`,
+with the process exiting 0. That is the documented **non-blocking,
+user-visible** channel, so the nudge appears inline in your session:
+
 ```
-┌─ NeuroDock ──
-│ NeuroDock hyperfocus check (95 min): worth taking a real break —
-│ walk outside, switch context for 10 minutes.
-└──
+NeuroDock hyperfocus check (95 min): worth taking a real break —
+walk outside, switch context for 10 minutes.
 ```
 
-Always one line. Always dismissible. The hook never blocks the tool.
+The hook never exits 2 (which would *block* the tool call). Before
+0.0.2 the banner was written to stderr with exit 0, which only appears
+in transcript/verbose mode — so every fired banner was effectively
+invisible during normal use. If you are on an older hook, re-run
+`neurodock install-hooks` after upgrading the CLI to copy the new
+script into `~/.neurodock/hooks/`.
 
 ## Phase 2 — Browser-extension watchdog
 
@@ -138,7 +154,7 @@ stale `started_at`.
 | Remove the hook + daemon entirely      | `neurodock install-hooks --uninstall`                                |
 | Disable extension watchdog only        | `chrome.storage.local.set({ "neurodock.watchdog.enabled": false })` |
 | Disable Phase 1 hook but keep daemon   | Manually delete the 4 entries from `~/.claude/settings.json`         |
-| Change hyperfocus threshold            | Edit `~/.neurodock/profile.yaml` — `chronometric.hyperfocus_break_minutes` (Phase 1 hook respects it; Phase 3 daemon reads on next tick) |
+| Change hyperfocus threshold            | Edit `~/.neurodock/profile.yaml` — `chronometric.hyperfocus_break_minutes` (Phase 1 hook respects it since 0.0.2, along with `end_of_day_local`, `rumination_threshold`, `rumination_window_minutes`, and `sycophancy_check`; Phase 3 daemon reads on next tick) |
 
 ## State files
 
