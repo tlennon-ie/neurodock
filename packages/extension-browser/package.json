@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
+    "@neurodock/core": "workspace:^0.1.0",
     "@wxt-dev/module-react": "^1.2.2",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",

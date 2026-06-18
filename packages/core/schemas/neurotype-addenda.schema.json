@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.neurodock.org/neurotype-addenda/v1/neurotype-addenda.schema.json",
+  "title": "NeuroDock Neurotype Addenda Artifact",
+  "description": "Validates the language-neutral, enum-keyed prompt-shaping content artifact (data/neurotype-addenda/v1.json). This artifact is CONTENT, not schema shape (ADR 0011): it carries the per-(tool x neurotype) prose blocks that NeuroDock surfaces append to a model prompt, plus the fusion rule, priority ordering, framing, output-format guidance, and the cross-cutting voice-input / tourette / other / generic-fallback blocks. Additive-only versioning: new tools, new neurotypes, and new optional top-level keys are non-breaking. Unknown keys are permitted for forward-compatibility where appropriate.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "artifact_version",
+    "fusion",
+    "priority",
+    "framing",
+    "output_format",
+    "voice_input",
+    "tourette",
+    "other",
+    "generic",
+    "tools"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional pointer back to this schema's $id."
+    },
+    "artifact_version": {
+      "type": "string",
+      "description": "Semantic version of the artifact content. Additive changes bump minor; a breaking re-shape forks to a new vN.json + a new schema $id.",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "examples": ["1.0.0"]
+    },
+    "description": {
+      "type": "string"
+    },
+    "tokens": {
+      "type": "array",
+      "description": "The complete set of interpolation tokens any block may contain. Documentation only; the assembler is the authority.",
+      "items": { "type": "string" }
+    },
+    "fusion": {
+      "type": "object",
+      "description": "The AuDHD substitution rule. When the input set lists the `result` neurotype directly, OR lists every neurotype in `all_of`, the `result` block is substituted and every neurotype in `remove` is dropped.",
+      "additionalProperties": true,
+      "required": ["result", "all_of", "remove"],
+      "properties": {
+        "description": { "type": "string" },
+        "result": { "type": "string" },
+        "any_of": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "all_of": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "remove": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "priority": {
+      "type": "array",
+      "description": "Neurotype ordering. Higher-priority addenda are placed LATER in the assembled prompt (recency bias). Neurotypes are sorted by their index in this list.",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "framing": {
+      "type": "object",
+      "description": "The wrapper, header, footer, separators, and conflict footer that surround the per-neurotype blocks.",
+      "additionalProperties": true,
+      "required": [
+        "wrapper_prefix",
+        "wrapper_suffix",
+        "section_separator",
+        "block_line_separator",
+        "header",
+        "footer",
+        "conflict_footer_min_neurotypes",
+        "conflict_footer"
+      ],
+      "properties": {
+        "wrapper_prefix": { "type": "string" },
+        "wrapper_suffix": { "type": "string" },
+        "section_separator": { "type": "string" },
+        "block_line_separator": { "type": "string" },
+        "header": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "footer": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "conflict_footer_min_neurotypes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "conflict_footer": { "type": "string" }
+      }
+    },
+    "output_format": {
+      "type": "object",
+      "description": "Per-output-format guidance. The assembler renders `prefix + format + separator + descriptions[format]`.",
+      "additionalProperties": true,
+      "required": ["prefix", "separator", "descriptions", "default"],
+      "properties": {
+        "prefix": { "type": "string" },
+        "separator": { "type": "string" },
+        "descriptions": {
+          "type": "object",
+          "description": "Map of output-format enum value to its one-line description.",
+          "additionalProperties": { "type": "string" },
+          "minProperties": 1
+        },
+        "default": { "type": "string" }
+      }
+    },
+    "voice_input": {
+      "type": "object",
+      "description": "Cross-cutting voice-input block. Emitted when voice input is preferred, before the per-neurotype blocks.",
+      "additionalProperties": true,
+      "required": ["block"],
+      "properties": {
+        "block": { "$ref": "#/$defs/block" }
+      }
+    },
+    "tourette": {
+      "type": "object",
+      "description": "Tourette special block. Tool-independent; rendered whenever `tourette` is in the effective set.",
+      "additionalProperties": true,
+      "required": ["block"],
+      "properties": {
+        "block": { "$ref": "#/$defs/block" }
+      }
+    },
+    "other": {
+      "type": "object",
+      "description": "Self-described block. Carries the {notes} interpolation token; rendered when `other` is selected with notes, or appended as a footer when notes are present without `other`.",
+      "additionalProperties": true,
+      "required": ["block"],
+      "properties": {
+        "block": { "$ref": "#/$defs/block" }
+      }
+    },
+    "generic": {
+      "type": "object",
+      "description": "Generic per-neurotype fallback blocks (no tool context, or no concrete per-tool block for the pair). Keyed by neurotype enum value.",
+      "additionalProperties": { "$ref": "#/$defs/block" }
+    },
+    "tools": {
+      "type": "object",
+      "description": "Per-tool matrices of concrete per-neurotype blocks. Keyed by tool name, then by neurotype enum value. Additive: a new tool or a new neurotype within a tool is non-breaking.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/$defs/block" }
+      }
+    }
+  },
+  "$defs": {
+    "block": {
+      "type": "array",
+      "description": "A prose block: an ordered list of lines joined with the framing block_line_separator. Lines may contain {max_chunk_size} and/or {notes} interpolation tokens.",
+      "items": { "type": "string" },
+      "minItems": 1
+    }
+  }
+}
