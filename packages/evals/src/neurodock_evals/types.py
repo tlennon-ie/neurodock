@@ -15,10 +15,25 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 ExampleStatus = Literal["synthesised", "contributed", "published"]
+# Rater self-ID uses the original v0.0.1 annotation enum (kept stable for
+# back-compat with already-rated examples).
 RaterNeurotype = Literal["adhd", "asd", "audhd", "ocd", "dyslexic", "dyspraxic", "other"]
+# The cross-cutting example-level neurotype tag uses the CANONICAL profile enum
+# (packages/core/schemas/profile.schema.json) so eval slices line up 1:1 with
+# the profile.identity.neurotypes a user actually declares.
+ProfileNeurotype = Literal[
+    "adhd",
+    "asd",
+    "audhd",
+    "ocd",
+    "dyslexia",
+    "dyspraxia",
+    "tourette",
+    "other",
+]
 
 
 class _Base(BaseModel):
@@ -48,10 +63,30 @@ class CorpusExample(_Base):
     consent: ConsentBlock
     status: ExampleStatus
     license: Literal["AGPL-3.0-or-later"]
+    # Optional cross-cutting neurotype tag (ADR 0011, additive). Defaults to an
+    # empty list so pre-R6 examples load unchanged and stay out of every
+    # per-neurotype aggregation.
+    neurotypes: list[ProfileNeurotype] = Field(default_factory=list, max_length=8)
     input: dict[str, Any]
     expected: dict[str, Any]
     ratings: list[RaterAnnotation] = Field(default_factory=list, max_length=10)
     notes: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("neurotypes")
+    @classmethod
+    def _neurotypes_unique(cls, value: list[ProfileNeurotype]) -> list[ProfileNeurotype]:
+        """Enforce the schema's `uniqueItems: true` at the Pydantic layer.
+
+        The JSON Schema rejects duplicates on the load path, but a model built
+        programmatically bypasses the schema. A duplicate would double-count the
+        example in `neurotype_scores`, so reject it here too. We keep the list
+        type (preserving declaration order + the schema contract) rather than
+        coercing to a set.
+        """
+
+        if len(value) != len(set(value)):
+            raise ValueError("neurotypes must be unique")
+        return value
 
 
 class FieldDelta(_Base):
@@ -82,9 +117,35 @@ class RunResult(_Base):
 class SliceScore(_Base):
     slice: str
     tool: str
-    total: int
-    passed: int
+    total: int = Field(ge=0)
+    passed: int = Field(ge=0)
     mean_score: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _passed_within_total(self) -> SliceScore:
+        if self.passed > self.total:
+            raise ValueError(f"passed ({self.passed}) cannot exceed total ({self.total})")
+        return self
+
+
+class NeurotypeScore(_Base):
+    """Aggregation of every result whose example targets one neurotype.
+
+    Cross-cuts the per-tool `SliceScore` rows: an example tagged with two
+    neurotypes contributes to both. Carries labels + counts + scores only —
+    no example body — to preserve the report privacy invariant.
+    """
+
+    neurotype: ProfileNeurotype
+    total: int = Field(ge=0)
+    passed: int = Field(ge=0)
+    mean_score: float = Field(ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _passed_within_total(self) -> NeurotypeScore:
+        if self.passed > self.total:
+            raise ValueError(f"passed ({self.passed}) cannot exceed total ({self.total})")
+        return self
 
 
 class ScoreReport(_Base):
@@ -94,4 +155,5 @@ class ScoreReport(_Base):
     threshold: float
     overall_passed: bool
     slices: list[SliceScore]
+    neurotype_scores: list[NeurotypeScore] = Field(default_factory=list)
     results: list[RunResult]

@@ -48,6 +48,10 @@ wheels/
 .coverage
 .coverage.*
 coverage.xml
+
+# Eval harness output (neurodock-evals) — reports carry ids + scores only,
+# but never commit them: they are generated, per-run artefacts.
+.eval-reports/
 htmlcov/
 .tox/
 .hypothesis/

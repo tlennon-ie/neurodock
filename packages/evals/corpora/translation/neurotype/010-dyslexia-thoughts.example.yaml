@@ -1,0 +1,28 @@
+id: "translation.neurotype.dyslexia.002"
+slice: "translation/neurotype"
+created_at: "2026-06-18"
+neurotypes: ["dyslexia"]
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-neurotype-2026-06-18-dyslexia-002"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Sent over the migration doc — let me know your thoughts whenever suits."
+  channel: "slack"
+expected:
+  ambiguity:
+    detected: true
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["dyslexic"]
+    agreement_with_expected: 0.85
+    notes: |
+      'let me know your thoughts' is an open-ended ask with no concrete
+      response shape — costly for a dyslexic reader who must infer the expected
+      format. The baseline flags the soft request so the reader can ask for a
+      specific shape (e.g. 'three bullet points').
+notes: |
+  Dyslexia slice seed: open-ended 'let me know your thoughts' ask without a
+  response shape. Distinct wording from 009.

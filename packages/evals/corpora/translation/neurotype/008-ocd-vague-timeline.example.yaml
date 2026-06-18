@@ -1,0 +1,27 @@
+id: "translation.neurotype.ocd.002"
+slice: "translation/neurotype"
+created_at: "2026-06-18"
+neurotypes: ["ocd"]
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-neurotype-2026-06-18-ocd-002"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "We'll finalise the audit checklist next sprint, give or take."
+  channel: "slack"
+expected:
+  ambiguity:
+    detected: true
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["ocd"]
+    agreement_with_expected: 0.85
+    notes: |
+      'next sprint, give or take' is a soft timeline. For an OCD reader the
+      open end can drive repeated 'is it done yet' checks; the baseline flags
+      the vague timeline so a single committed date can replace the loop.
+notes: |
+  OCD slice seed: open-ended timeline that invites repeated checking. Distinct
+  wording from 007.

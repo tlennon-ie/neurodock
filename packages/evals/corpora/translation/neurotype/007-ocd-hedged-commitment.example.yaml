@@ -1,0 +1,28 @@
+id: "translation.neurotype.ocd.001"
+slice: "translation/neurotype"
+created_at: "2026-06-18"
+neurotypes: ["ocd"]
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-neurotype-2026-06-18-ocd-001"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "I'm not sure the rollback steps are complete, but it's probably fine for now."
+  channel: "email"
+expected:
+  ambiguity:
+    detected: true
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["ocd"]
+    agreement_with_expected: 0.9
+    notes: |
+      The 'I'm not sure ... but probably fine' hedge is the kind of unresolved
+      ambiguity an OCD reader can loop on. Naming it as a hedged commitment
+      lets them convert the worry into one concrete verification step rather
+      than open-ended rumination.
+notes: |
+  OCD slice seed: unresolved hedge that invites checking loops. The point is
+  to surface the ambiguity once and bound it.

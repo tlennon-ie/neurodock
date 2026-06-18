@@ -31,16 +31,20 @@ from typing import Final
 
 from neurodock_evals.corpus import iter_slices, load_slice
 from neurodock_evals.runner import DEFAULT_PASS_THRESHOLD, run_example
-from neurodock_evals.types import RunResult, ScoreReport, SliceScore
+from neurodock_evals.scoring import neurotype_scores
+from neurodock_evals.types import CorpusExample, RunResult, ScoreReport, SliceScore
 
 logger = logging.getLogger(__name__)
 
-# Per-slice tool binding for the four translation tools.
+# Per-slice tool binding. The four tool-family slices, plus the cross-cutting
+# per-neurotype slice (R6) bound to translate_incoming — its examples carry the
+# `neurotypes` tag the harness aggregates on, in addition to the per-tool view.
 SLICE_TO_TOOL: Final[dict[str, str]] = {
     "translation/incoming": "translate_incoming",
     "translation/tone": "check_tone",
     "translation/outgoing": "rewrite_outgoing",
     "translation/meetings": "brief_meeting",
+    "translation/neurotype": "translate_incoming",
 }
 
 
@@ -63,6 +67,8 @@ def _slice_scores(results: list[RunResult]) -> list[SliceScore]:
     for (slice_id, tool), group in sorted(by_slice.items()):
         total = len(group)
         passed = sum(1 for r in group if r.passed)
+        # A grouped entry always has >=1 member, so `total` is never 0 here; the
+        # guard is defensive and mirrors scoring.neurotype_scores for consistency.
         mean = sum(r.score for r in group) / total if total else 0.0
         out.append(
             SliceScore(slice=slice_id, tool=tool, total=total, passed=passed, mean_score=mean)
@@ -94,6 +100,14 @@ def _summarise(report: ScoreReport, report_path: Path) -> str:
             f"{slice_score.passed}/{slice_score.total} passed "
             f"(mean score {slice_score.mean_score:.3f})"
         )
+    if report.neurotype_scores:
+        lines.append("Per-neurotype summary:")
+        for nt_score in report.neurotype_scores:
+            lines.append(
+                f"  {nt_score.neurotype}: "
+                f"{nt_score.passed}/{nt_score.total} passed "
+                f"(mean score {nt_score.mean_score:.3f})"
+            )
     lines.append(f"Overall: {'PASS' if report.overall_passed else 'FAIL'}")
     return "\n".join(lines)
 
@@ -105,9 +119,11 @@ def run(
     reports_dir: Path,
 ) -> tuple[ScoreReport, Path]:
     results: list[RunResult] = []
+    all_examples: list[CorpusExample] = []
     for slice_id in corpora:
         tool_name = _resolve_tool_for_slice(slice_id, tool_override)
         examples = load_slice(slice_id)
+        all_examples.extend(examples)
         for example in examples:
             result = run_example(example, tool_name=tool_name, pass_threshold=threshold)
             results.append(result)
@@ -117,6 +133,7 @@ def run(
         threshold=threshold,
         overall_passed=overall_passed,
         slices=_slice_scores(results),
+        neurotype_scores=neurotype_scores(results, all_examples),
         results=results,
     )
     slug = "ci" if not tool_override else tool_override

@@ -1,0 +1,31 @@
+id: "translation.neurotype.tourette.001"
+slice: "translation/neurotype"
+created_at: "2026-06-18"
+neurotypes: ["tourette"]
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-neurotype-2026-06-18-tourette-001"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Can we revisit whether the standup time still works for everyone?"
+  channel: "slack"
+expected:
+  ambiguity:
+    detected: true
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["other"]
+    agreement_with_expected: 0.9
+    notes: |
+      The v0.0.1 annotation enum has no 'tourette' value, so the rater self-IDs
+      as 'other'; the example-level 'neurotypes' carries the canonical
+      'tourette'. 'can we revisit' plus an unspecified 'everyone' bundles a soft
+      request with a vague referent — surfacing both keeps the schedule
+      conversation concrete.
+notes: |
+  Tourette slice seed: soft request + vague referent. The new canonical
+  'tourette' tag has no annotation-enum equivalent yet, so rater_neurotypes
+  uses 'other' (the closest valid v0.0.1 value); flagged in CHANGELOG as a
+  follow-up to align the annotation enum.
