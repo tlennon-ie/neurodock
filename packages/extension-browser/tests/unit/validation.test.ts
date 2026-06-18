@@ -4,6 +4,7 @@ import {
   validateOutput,
   extractJson,
   normaliseLLMOutput,
+  modelFacingSchema,
   _resetValidatorsForTests,
 } from "../../src/lib/validation.js";
 import type { ModelProvenance } from "../../src/lib/types.js";
@@ -55,6 +56,74 @@ describe("validation", () => {
     const res = parseAndValidate("translate_incoming", "{not-json");
     expect(res.ok).toBe(false);
     expect(res.errors[0]).toMatch(/JSON parse error|Could not locate/);
+  });
+
+  it("strips stray NESTED properties instead of rejecting (gemma-4-e4b facets bug)", () => {
+    // A grammar-constrained local model returns valid describe_image JSON,
+    // but llama.cpp's GBNF grammar does not enforce additionalProperties:false
+    // on nested objects, so a chatty model adds a stray key to a facet. The
+    // strict validator used to reject this with
+    // `/content_translation/0/facets/1: must NOT have additional properties`.
+    // It must now DROP the stray key and accept the otherwise-valid payload.
+    const payload = {
+      description: "A four-quadrant framework diagram.",
+      contains_text: true,
+      transcribed_text: null,
+      key_elements: ["quadrant diagram"],
+      inferred_purpose: "Explain a decision framework.",
+      accessibility_notes: null,
+      content_translation: [
+        {
+          label: "1. Emotional Control",
+          facets: [
+            { kind: "rule", text: "Stay calm under pressure." },
+            {
+              kind: "action",
+              text: "Pause before reacting.",
+              note: "stray key a chatty local model added",
+            },
+          ],
+        },
+      ],
+      eval_corpus_slice: "describe_image-v0.1.0",
+      model_provenance: {
+        mode: "local",
+        provider: "lmstudio",
+        model: "gemma-4-e4b",
+      },
+    };
+    const res = validateOutput<{
+      content_translation: { facets: Record<string, unknown>[] }[];
+    }>("describe_image", payload);
+    expect(res.ok).toBe(true);
+    const strayFacet = res.data?.content_translation[0]?.facets[1];
+    expect(strayFacet).toEqual({
+      kind: "action",
+      text: "Pause before reacting.",
+    });
+  });
+});
+
+describe("modelFacingSchema", () => {
+  it("keeps the content fields the model must produce", () => {
+    const schema = modelFacingSchema("translate_incoming") as {
+      type: string;
+      properties: Record<string, unknown>;
+    };
+    expect(schema.type).toBe("object");
+    expect(Object.keys(schema.properties)).toContain("explicit_ask");
+    expect(Object.keys(schema.properties)).toContain("likely_subtext");
+  });
+
+  it("drops server-owned fields so strict structured output can't force hallucinated provenance (ADR 0005)", () => {
+    const schema = modelFacingSchema("translate_incoming") as {
+      properties: Record<string, unknown>;
+      required?: string[];
+    };
+    expect(Object.keys(schema.properties)).not.toContain("model_provenance");
+    expect(Object.keys(schema.properties)).not.toContain("eval_corpus_slice");
+    expect(schema.required ?? []).not.toContain("model_provenance");
+    expect(schema.required ?? []).not.toContain("eval_corpus_slice");
   });
 });
 

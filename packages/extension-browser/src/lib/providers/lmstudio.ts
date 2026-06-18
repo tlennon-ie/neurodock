@@ -30,6 +30,7 @@
  */
 import type { Provider, ProviderRequest, ProviderResult } from "./provider.js";
 import { logPromptIfEnabled } from "./debug-log.js";
+import { modelFacingSchema } from "../validation.js";
 
 export interface LMStudioOptions {
   readonly baseUrl: string;
@@ -117,6 +118,7 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
   async function postOnce(
     request: ProviderRequest,
     stream: boolean,
+    useJsonSchema: boolean,
   ): Promise<Response> {
     await ensurePermitted();
     await logPromptIfEnabled({
@@ -126,11 +128,17 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
       prompt: request.prompt,
     });
     const url = `${baseUrl}/chat/completions`;
-    // LM Studio's OpenAI-compat API rejects response_format.type === 'json_object'
-    // (returns HTTP 400 "must be 'json_schema' or 'text'"). The translation
-    // prompts already instruct the model to return JSON, and validation.ts'
-    // extractJson handles raw-text responses, so 'text' is correct here.
-    // OpenAI/OpenRouter keep 'json_object' in their own provider files.
+    // 0.0.38: request grammar-constrained structured output via
+    // `response_format.type === 'json_schema'` — LM Studio's native mode
+    // (backed by llama.cpp GBNF). Plain 'text' left weak local models
+    // (gemma-4-e4b) free to emit prose, so extractJson found no object and
+    // every call failed LLM_OUTPUT_VALIDATION_FAILED. `json_object` is NOT
+    // an option — LM Studio 400s on it ("must be 'json_schema' or 'text'");
+    // json_schema is exactly what that error points to. We send a
+    // model-facing schema (server-owned fields stripped) so a `strict`
+    // grammar can't force the model to invent provenance. `useJsonSchema`
+    // is flipped to false on the one-shot retry below when an older server
+    // or a model without grammar support rejects it.
     //
     // 0.0.16: when `images` is non-empty, build the OpenAI-compatible
     // multimodal content array AND convert every image URL to a base64
@@ -160,11 +168,21 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     // 4096 leaves comfortable headroom for the largest schema we ship
     // (describe_image with 7 key_elements + transcribed_text) without
     // blowing model context windows.
+    const responseFormat = useJsonSchema
+      ? {
+          type: "json_schema" as const,
+          json_schema: {
+            name: request.tool,
+            strict: true,
+            schema: modelFacingSchema(request.tool),
+          },
+        }
+      : { type: "text" as const };
     const body = JSON.stringify({
       model: request.model,
       messages: [{ role: "user", content }],
       stream,
-      response_format: { type: "text" },
+      response_format: responseFormat,
       max_tokens: 4096,
     });
     let res: Response;
@@ -183,6 +201,16 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
     }
     if (!res.ok) {
       const detail = await readErrorBody(res);
+      // Some servers/models don't support structured output. Detect a 400
+      // that names response_format / json_schema and let the caller retry
+      // once in plain-text mode. Mirrors the OpenRouter + Google providers.
+      if (
+        res.status === 400 &&
+        useJsonSchema &&
+        isStructuredOutputRejection(detail)
+      ) {
+        throw new ResponseFormatRejected(detail);
+      }
       throw normaliseLMStudioError(res.status, detail);
     }
     return res;
@@ -193,7 +221,7 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
       return completeNonStreaming(request);
     }
     try {
-      const res = await postOnce(request, true);
+      const res = await postOnce(request, true, true);
       const ct = res.headers.get("content-type") ?? "";
       if (!ct.toLowerCase().includes("text/event-stream")) {
         const text = await consumeNonStreamBody(res, request.onToken);
@@ -202,6 +230,17 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
       const text = await consumeSse(res, request.onToken);
       return resultFor(request, text);
     } catch (cause: unknown) {
+      if (cause instanceof ResponseFormatRejected) {
+        // Retry once on the streaming path in plain-text mode.
+        const res = await postOnce(request, true, false);
+        const ct = res.headers.get("content-type") ?? "";
+        if (!ct.toLowerCase().includes("text/event-stream")) {
+          const text = await consumeNonStreamBody(res, request.onToken);
+          return resultFor(request, text);
+        }
+        const text = await consumeSse(res, request.onToken);
+        return resultFor(request, text);
+      }
       if (cause instanceof Error && /LMSTUDIO_/.test(cause.message)) {
         throw cause;
       }
@@ -224,9 +263,18 @@ export function createLMStudioProvider(options: LMStudioOptions): Provider {
   async function completeNonStreaming(
     request: ProviderRequest,
   ): Promise<ProviderResult> {
-    const res = await postOnce(request, false);
-    const text = await consumeNonStreamBody(res, request.onToken);
-    return resultFor(request, text);
+    try {
+      const res = await postOnce(request, false, true);
+      const text = await consumeNonStreamBody(res, request.onToken);
+      return resultFor(request, text);
+    } catch (cause: unknown) {
+      if (cause instanceof ResponseFormatRejected) {
+        const res = await postOnce(request, false, false);
+        const text = await consumeNonStreamBody(res, request.onToken);
+        return resultFor(request, text);
+      }
+      throw cause;
+    }
   }
 
   return { id: "lmstudio", complete };
@@ -422,6 +470,29 @@ async function readErrorBody(response: Response): Promise<string> {
 function isStreamUnsupported(cause: unknown): boolean {
   if (!(cause instanceof Error)) return false;
   return /event-stream|stream not supported/i.test(cause.message);
+}
+
+/**
+ * Sentinel raised by `postOnce` when LM Studio rejects our structured-
+ * output request with a 400 that names `response_format` / `json_schema`.
+ * The caller retries once in plain-text mode. Same pattern as the
+ * OpenRouter and Google providers.
+ */
+class ResponseFormatRejected extends Error {
+  constructor(detail: string) {
+    super(`LMSTUDIO_STRUCTURED_OUTPUT_REJECTED: ${detail}`);
+    this.name = "ResponseFormatRejected";
+  }
+}
+
+function isStructuredOutputRejection(detail: string): boolean {
+  // Matches messages like "must be 'json_schema' or 'text'", "this model
+  // does not support json_schema response_format", "structured output not
+  // supported", "grammar ...", etc. Deliberately narrow so unrelated 400s
+  // (context length, bad request) still surface as real errors.
+  return /response_format|json[_ ]?schema|structured\s*output|grammar|json[_ ]?object/i.test(
+    detail,
+  );
 }
 
 function normaliseLMStudioError(status: number, detail: string): Error {

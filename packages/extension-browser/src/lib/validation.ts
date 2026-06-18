@@ -74,6 +74,35 @@ function buildOutputSchema(tool: TranslationTool): JsonSchema {
   };
 }
 
+/**
+ * Fields the SERVER owns, not the model (ADR 0005). They are part of the
+ * public output schema but `normaliseLLMOutput` injects them after the
+ * model responds — the model must never produce them itself.
+ */
+const SERVER_OWNED_OUTPUT_FIELDS = ["model_provenance", "eval_corpus_slice"];
+
+/**
+ * The output schema reshaped for use as a constrained-decoding grammar
+ * (`response_format: json_schema`) against a local model. Identical to
+ * `buildOutputSchema` but with the server-owned fields removed from both
+ * `properties` and `required`, so a `strict` structured-output request
+ * cannot force a small model (e.g. gemma-4-e4b) to hallucinate provenance.
+ * Those fields are re-injected by `normaliseLLMOutput` after parsing.
+ */
+export function modelFacingSchema(tool: TranslationTool): JsonSchema {
+  const full = buildOutputSchema(tool);
+  const properties = {
+    ...((full.properties ?? {}) as Record<string, unknown>),
+  };
+  for (const field of SERVER_OWNED_OUTPUT_FIELDS) delete properties[field];
+  const required = Array.isArray(full.required)
+    ? (full.required as string[]).filter(
+        (key) => !SERVER_OWNED_OUTPUT_FIELDS.includes(key),
+      )
+    : full.required;
+  return { ...full, properties, required };
+}
+
 export function _resetValidatorsForTests(): void {
   // Validators are precompiled and stateless; nothing to reset. Kept for
   // backwards compatibility with existing tests.
