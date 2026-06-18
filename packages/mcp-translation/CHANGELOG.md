@@ -5,6 +5,59 @@ All notable changes to `neurodock-mcp-translation` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning per .
 
+## [0.3.0] - 2026-06-19 — server-side per-neurotype prompt shaping (ADR 0012, R1 part B)
+
+Closes the R1 gap: per-neurotype prompt tailoring now reaches **every** MCP
+client (Claude Desktop, Cursor, Claude Code, any MCP host), not just the browser
+extension. The tailoring content stays the single source of truth in
+`@neurodock/core` (`data/neurotype-addenda/v1.json`); the server reads it through a
+Python assembler and injects the per-(tool × neurotype) addendum into the prompt it
+already returns. **No LLM SDK, no model call — ADR 0005 vendor-neutrality intact.**
+
+### Added
+
+- **Python assembler** (`addenda.py`): a direct port of core's
+  `assembleNeurotypeAddendum` (fusion → priority → per-tool block with generic
+  fallback → tourette/other specials → voice-input block → 3+ conflict footer →
+  `{max_chunk_size}`/`{notes}` interpolation → wrapper), proven byte-identical to
+  the TypeScript assembler by a cross-language parity test.
+- **Bundled artifact**: a byte-identical copy of `v1.json` ships inside the wheel
+  as package-data and is read via `importlib.resources` (no monorepo filesystem
+  dependency; the hosted-remote Worker bundles cleanly). An import-time existence
+  check degrades to a logged safe default if the artifact is ever missing — never
+  a crash.
+- **Profile reader** (`profile.py`): a trimmed port of mcp-chronometric's reader,
+  reading `identity.neurotypes`, `identity.additional_notes`,
+  `preferences.output_format`, `preferences.max_chunk_size`,
+  `preferences.voice_input_preferred`, with the same `NEURODOCK_PROFILE_PATH`
+  override, safe-default-on-absence, `profile_unreadable` log, and defensive
+  field parsing.
+- **`reader_context`** — one optional, additive input on all four tools
+  (`neurotypes?`, `output_format?`, `max_chunk_size?`, `voice_input_preferred?`,
+  `additional_notes?`), tolerant of unknown keys. Added to the Pydantic input
+  models and the four JSON schemas additively (a new `ReaderContext` `$def`).
+
+### Changed
+
+- Each tool appends the assembled addendum to `prompt_for_llm_refinement.content`
+  **after** the schema block (the extension's recency ordering). Resolution
+  precedence is field-by-field: `reader_context` per field, else the `profile.yaml`
+  read, else nothing. **Absent both, the content is byte-identical to 0.2.2's** —
+  a regression test asserts this. The output shape is unchanged (no new required
+  output field; ADR 0011 holds).
+- Adds a `pyyaml` runtime dependency (for the profile read).
+
+### Anti-drift control
+
+A committed parity fixture (`packages/core/data/neurotype-addenda/parity-fixtures.json`,
+59 cases across the four server tools × representative neurotype combos × voice
+on/off × chunk-size variants × notes present/absent) is generated from the
+TypeScript assembler (source of truth). A TS test guards the TS side; the Python
+test `tests/test_addenda_parity.py` asserts the Python assembler produces the same
+strings — so TS ≠ Python is a red CI build. A second guard
+(`tests/test_artifact_parity.py`) asserts the wheel's artifact copy stays
+byte-identical to core's source.
+
 ## [0.2.2] - 2026-06-11
 
 ### Changed

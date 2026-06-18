@@ -13,6 +13,7 @@ from neurodock_mcp_translation.heuristics.ambiguity import (
     find_ambiguities,
 )
 from neurodock_mcp_translation.prompts import render_prompt
+from neurodock_mcp_translation.shaping import apply_shaping
 from neurodock_mcp_translation.types import (
     AmbiguityReport,
     AmbiguitySpan,
@@ -214,6 +215,10 @@ def translate_incoming(payload: TranslateIncomingInput) -> TranslateIncomingEnve
         thread_context=thread_context_lines,
         deterministic_summary=_deterministic_summary(explicit_ask, subtext, ambiguities, action),
     )
+
+    # ADR 0012: append the per-neurotype addendum AFTER the schema block. Absent
+    # both reader_context and a profile, this is a no-op (byte-identical content).
+    prompt_content = apply_shaping(prompt_content, "translate_incoming", payload.reader_context)
 
     return TranslateIncomingEnvelope(
         deterministic_analysis=analysis,

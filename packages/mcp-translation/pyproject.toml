@@ -1,6 +1,6 @@
 [project]
 name = "neurodock-mcp-translation"
-version = "0.2.2"
+version = "0.3.0"
 description = "NeuroDock translation MCP server — deterministic baseline analysis plus structured LLM-refinement prompts for incoming/outgoing message decoding and meeting briefing."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -9,6 +9,7 @@ authors = [{ name = "NeuroDock contributors" }]
 dependencies = [
     "fastmcp>=3.3.0",
     "pydantic>=2.7",
+    "pyyaml>=6.0",
 ]
 
 [project.urls]
@@ -33,9 +34,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-# `prompts/` is a subpackage (it has __init__.py), so `packages` already bundles
-# it AND its .prompt.md data files. A force-include of the same dir would add
-# every file twice and fail the wheel build on newer hatchling
+# `prompts/` and `data/` are subpackages (each has __init__.py), so `packages`
+# already bundles them AND their data files: the `.prompt.md` prompt sources and
+# the load-bearing `data/neurotype-addenda/v1.json` shaping artifact (ADR 0012),
+# which the addenda assembler loads at runtime. A force-include of the same dir
+# would add every file twice and fail the wheel build on newer hatchling
 # ("a second file is being added to the wheel archive at the same path").
 packages = ["src/neurodock_mcp_translation"]
 
