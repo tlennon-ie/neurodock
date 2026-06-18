@@ -35,6 +35,9 @@
     "clean": "rm -rf dist .turbo"
   },
   "devDependencies": {
-    "vitest": "^3.2.6"
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "vitest": "^3.2.6",
+    "yaml": "^2.8.3"
   }
 }

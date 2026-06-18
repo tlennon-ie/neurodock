@@ -51,49 +51,44 @@
 #       arguments — students benefit from challenge as well as
 #       affirmation.
 #
-# Semester cadence — fields the schema does NOT yet model:
-#   This preset shares the semester-awareness problem with
-#   educator-semester.yaml. The same candidate schema fields apply
-#   (tracked in profiles/README.md):
+# Semester cadence — schema fields this preset sets (since v0.1.x, ADR 0011):
 #     - chronometric.calendar_phase
-#         "teaching" | "deadlines" | "exam" | "break"
-#         lets skills shift defaults across the term. Week 1 of
-#         semester (light load, social calibration) has a very
-#         different demand profile from week 12 (deadline cluster,
-#         everything due at once) and from exam week (single-task
-#         focus, revision blocks).
-#     - chronometric.deadline_cluster_awareness
-#         hint to surface deadline proximity in planning skills;
-#         when three assignments are due in a single week, the
-#         break-cadence math should shift.
+#         "teaching" | "marking" | "exam" | "deadlines" | "break".
+#         Lets skills shift defaults across the term. Week 1 (light
+#         load, social calibration) has a very different demand profile
+#         from week 12 (deadline cluster) and from exam week (single-
+#         task focus, revision blocks). Ships "teaching" as the neutral
+#         starting point — move it as the term progresses. (Consumer
+#         pending: mcp-chronometric.)
+#     - chronometric.deadline_cluster_awareness = true
+#         surface deadline proximity in planning skills; when three
+#         assignments are due in a single week, the break-cadence math
+#         should shift. (Consumer pending: task-fractionator.)
 #     - chronometric.weekday_overrides
 #         per-weekday overrides for end_of_day_local and
-#         hyperfocus_break_minutes — a Tuesday with a 09:00 lecture
-#         and a Saturday with a 14:00 study session are different
-#         shapes of day.
+#         hyperfocus_break_minutes — a Saturday study day genuinely
+#         supports a longer block than a lecture-heavy weekday. This
+#         preset bumps Saturday's break cadence to 120.
 #     - chronometric.protected_windows
-#         list of local-time ranges where the hyperfocus monitor
-#         should hard-surface (lecture blocks, lab times, scheduled
-#         study group meetings).
-#   Until those land in a schema bump, encode the intent in this
-#   comment block and in the user-tunable notes below.
+#         local-time ranges where the hyperfocus monitor hard-surfaces
+#         rather than nudges: a lunch window and the post-22:00 night.
 #
 # Exam-week override hint:
-#   During exam revision, drop hyperfocus_break_minutes to 60 (the
-#   schema-floor "gentle" rung) and consider swapping to the
-#   low-stimulation preset for the worst week. Sleep matters more
-#   than one extra revision hour; the firm break cadence is part of
-#   that.
+#   During exam revision, set calendar_phase to "exam", drop
+#   hyperfocus_break_minutes to 60 (the schema-floor "gentle" rung),
+#   and consider swapping to the low-stimulation preset for the worst
+#   week. Sleep matters more than one extra revision hour; the firm
+#   break cadence is part of that.
 #
 # Library-block vs lecture-day pattern:
 #   A "library day" (single 90-minute block per nudge cadence, EOD at
 #   22:00, motion reduced) and a "lecture day" (multiple short
-#   teaching blocks interleaved with travel/transitions, lower
-#   typing volume but higher cognitive switching cost) are different
-#   shapes of day. v0.1.0 cannot model this; until weekday_overrides
-#   exists, accept that the lecture-day will fire the structured
-#   nudge between lectures and treat that as a "have you eaten /
-#   drunk water" reminder rather than a working-session interruption.
+#   teaching blocks interleaved with travel/transitions, lower typing
+#   volume but higher cognitive switching cost) are different shapes of
+#   day. Use weekday_overrides to model the days that genuinely differ;
+#   on a lecture-day the structured nudge between lectures is best read
+#   as a "have you eaten / drunk water" reminder rather than a working-
+#   session interruption.
 #
 #   USER-TUNABLE (edit freely after copying):
 #     - identity.display_name       set to your preferred handle.
@@ -158,6 +153,26 @@ chronometric:
   # be winding down to protect tomorrow's 09:00.
   end_of_day_local: "22:00"
   session_overlap_policy: "auto_close"
+  # Neutral starting point for the term. Move to "deadlines" in week 12
+  # and "exam" during revision for tighter cadence; "break" loosens it.
+  calendar_phase: "teaching"
+  # When assignments cluster, planning skills should surface deadline
+  # proximity and shift the break-cadence math.
+  deadline_cluster_awareness: true
+  # A Saturday study day supports a longer focused block than a lecture-
+  # heavy weekday — bump that day's break cadence only.
+  weekday_overrides:
+    saturday:
+      hyperfocus_break_minutes: 120
+  # Hard-surface (not just nudge) in these windows: defend lunch and the
+  # post-22:00 night that protects tomorrow's 09:00.
+  protected_windows:
+    - start: "12:00"
+      end: "12:30"
+      label: "lunch"
+    - start: "22:00"
+      end: "23:59"
+      label: "wind-down"
 
 guardrails:
   rumination_threshold: 3

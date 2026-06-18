@@ -62,6 +62,15 @@ preferences:
   #   system_default          — your OS choice
   reading_font_hint: "atkinson_hyperlegible"
 
+  # How much space do you want between lines of text?
+  # This is a hint for apps that show NeuroDock's output as styled text.
+  # Options:
+  #   compact  — lines sit closer together (more text fits on screen)
+  #   default  — the app's own everyday spacing
+  #   relaxed  — extra space between lines; pairs with atkinson_hyperlegible
+  # Leave it out and the app just uses its own spacing.
+  line_height_hint: "relaxed"
+
   # Do you want visual animations turned on?
   # Options:
   #   reduced  — no animations (default; safest for vestibular sensitivity)
