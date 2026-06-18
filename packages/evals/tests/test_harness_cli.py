@@ -41,6 +41,8 @@ def test_harness_ci_mode_runs_all_known_slices(tmp_path: Path) -> None:
         "translation/tone",
         "translation/outgoing",
         "translation/meetings",
+        # R6: the cross-cutting per-neurotype slice joins the CI sweep.
+        "translation/neurotype",
     }
 
 

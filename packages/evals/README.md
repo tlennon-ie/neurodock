@@ -73,8 +73,23 @@ under a different policy.
 
 ## Status
 
-- v0.0.2 (current): scaffold + harness + 10 synthesised seed examples
-- v0.0.3 (planned): first contributed corpus
-- v0.1.0 (planned): HuggingFace publication pipeline under the `neurodock` org
+- v0.0.2: scaffold + harness + synthesised seed examples across four tool slices
+- v0.0.3 (current): R6 per-neurotype eval slices — an optional `neurotypes` tag
+  on examples (canonical profile enum), per-neurotype scoring + reporting, and
+  a `translation/neurotype` seed slice (14 synthesised examples across seven
+  neurotypes). Cross-cutting, additive, back-compatible.
+- v0.1.0 (planned): first contributed corpus + HuggingFace publication pipeline
+  under the `neurodock` org
 
 See `CHANGELOG.md` for detail.
+
+## Per-neurotype slices (R6)
+
+Examples MAY carry an optional `neurotypes` array (the canonical profile enum:
+`adhd`, `asd`, `audhd`, `ocd`, `dyslexia`, `dyspraxia`, `tourette`, `other`).
+The harness aggregates a score per neurotype — alongside the per-tool slices —
+so a prompt change can be measured against, e.g., the `dyslexia` slice. The tag
+is additive and optional: an untagged example scores exactly as before and is
+absent from every per-neurotype aggregation. Thresholds stay permissive; R6
+ships the per-type measurement, not a hard per-type gate. See
+`corpora/translation/neurotype/README.md`.

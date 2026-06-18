@@ -1,0 +1,27 @@
+id: "translation.neurotype.audhd.002"
+slice: "translation/neurotype"
+created_at: "2026-06-18"
+neurotypes: ["audhd"]
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-neurotype-2026-06-18-audhd-002"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Quick question — could you also wire up the retry logic while you're in there?"
+  channel: "github"
+expected:
+  ambiguity:
+    detected: true
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["audhd"]
+    agreement_with_expected: 0.85
+    notes: |
+      'quick question' understates the actual scope (a whole retry subsystem).
+      An AuDHD reader prone to scope-absorption benefits from the baseline
+      naming the soft-request framing so they can size the work honestly.
+notes: |
+  AuDHD slice seed: 'quick' framing that under-states real scope. Distinct
+  wording from 005.

@@ -1310,7 +1310,7 @@ source = { editable = "packages/clinical" }
 
 [[package]]
 name = "neurodock-evals"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "packages/evals" }
 dependencies = [
     { name = "jsonschema" },

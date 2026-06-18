@@ -18,9 +18,16 @@ only; the actual envelope is allowed to carry extra fields.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
-from neurodock_evals.types import FieldDelta
+from neurodock_evals.types import (
+    CorpusExample,
+    FieldDelta,
+    NeurotypeScore,
+    ProfileNeurotype,
+    RunResult,
+)
 
 
 def _flatten(prefix: str, value: Any) -> list[tuple[str, Any]]:
@@ -122,6 +129,47 @@ def compare_expected(
                 )
             )
     return matches / len(leaves), deltas
+
+
+def neurotype_scores(
+    results: Iterable[RunResult],
+    examples: Iterable[CorpusExample],
+) -> list[NeurotypeScore]:
+    """Aggregate run results by the neurotype(s) each example targets.
+
+    The per-neurotype view cross-cuts the per-tool `SliceScore` rows: an
+    example tagged with N neurotypes contributes to all N aggregations.
+    Untagged examples (no `neurotypes`) are absent from every aggregation —
+    this is what keeps the feature additive and back-compatible.
+
+    Returns one `NeurotypeScore` per neurotype that has at least one tagged
+    example, sorted by neurotype name for deterministic reports.
+    """
+
+    tags_by_id: dict[str, list[ProfileNeurotype]] = {
+        example.id: list(example.neurotypes) for example in examples
+    }
+    grouped: dict[ProfileNeurotype, list[RunResult]] = {}
+    for result in results:
+        for neurotype in tags_by_id.get(result.example_id, []):
+            grouped.setdefault(neurotype, []).append(result)
+
+    out: list[NeurotypeScore] = []
+    for neurotype, group in sorted(grouped.items()):
+        total = len(group)
+        passed = sum(1 for r in group if r.passed)
+        # A grouped entry always has >=1 member, so `total` is never 0 here; the
+        # guard is defensive and mirrors harness._slice_scores for consistency.
+        mean = sum(r.score for r in group) / total if total else 0.0
+        out.append(
+            NeurotypeScore(
+                neurotype=neurotype,
+                total=total,
+                passed=passed,
+                mean_score=mean,
+            )
+        )
+    return out
 
 
 def cohens_kappa(rater_a: list[int], rater_b: list[int]) -> float:

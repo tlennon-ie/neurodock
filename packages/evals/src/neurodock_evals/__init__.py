@@ -26,18 +26,19 @@ from neurodock_evals.dedupe import (
     hamming_distance,
 )
 from neurodock_evals.runner import DEFAULT_PASS_THRESHOLD, run_example
-from neurodock_evals.scoring import cohens_kappa, compare_expected
+from neurodock_evals.scoring import cohens_kappa, compare_expected, neurotype_scores
 from neurodock_evals.types import (
     ConsentBlock,
     CorpusExample,
     FieldDelta,
+    NeurotypeScore,
     RaterAnnotation,
     RunResult,
     ScoreReport,
     SliceScore,
 )
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 __all__ = [
     "ANONYMISATION_PASS_VERSION",
@@ -46,6 +47,7 @@ __all__ = [
     "ConsentBlock",
     "CorpusExample",
     "FieldDelta",
+    "NeurotypeScore",
     "RaterAnnotation",
     "RunResult",
     "ScoreReport",
@@ -60,5 +62,6 @@ __all__ = [
     "hamming_distance",
     "load_example_file",
     "load_slice",
+    "neurotype_scores",
     "run_example",
 ]

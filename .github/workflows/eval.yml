@@ -46,4 +46,10 @@ jobs:
 
       - name: Run eval suite
         if: steps.harness.outputs.ready == 'true'
-        run: uv run python -m neurodock_evals.harness
+        # --ci runs every slice with a known tool binding, including the
+        # cross-cutting per-neurotype slice (R6). The harness prints a
+        # per-neurotype summary and writes neurotype_scores into the report.
+        # The pass threshold stays permissive (default 0.6) on purpose: R6
+        # ships per-type MEASUREMENT, not a hard per-type gate — tuning follows
+        # the first real contributed corpora.
+        run: uv run python -m neurodock_evals.harness --ci

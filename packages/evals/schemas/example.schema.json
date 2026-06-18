@@ -27,6 +27,26 @@
       "pattern": "^[a-z0-9_-]+(?:/[a-z0-9_-]+)+$",
       "description": "Slash-delimited slice identifier, e.g. 'translation/incoming'."
     },
+    "neurotypes": {
+      "type": "array",
+      "description": "Optional (added v0.0.3 per ADR 0011). Cross-cutting tag declaring the neurotype slice(s) this example targets, using the canonical profile enum (packages/core/schemas/profile.schema.json). Additive and optional: an example with no tag still loads and scores exactly as before, and is simply absent from every per-neurotype aggregation. Never a diagnosis claim and never used to gate loading.",
+      "minItems": 0,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "adhd",
+          "asd",
+          "audhd",
+          "ocd",
+          "dyslexia",
+          "dyspraxia",
+          "tourette",
+          "other"
+        ]
+      }
+    },
     "created_at": {
       "type": "string",
       "format": "date"

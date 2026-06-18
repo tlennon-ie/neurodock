@@ -1,0 +1,27 @@
+id: "translation.neurotype.tourette.002"
+slice: "translation/neurotype"
+created_at: "2026-06-18"
+neurotypes: ["tourette"]
+consent:
+  contributor: "synth-curator-001"
+  consent_token: "sha256:synthesised-neurotype-2026-06-18-tourette-002"
+  anonymisation_pass: 1
+status: "synthesised"
+license: "AGPL-3.0-or-later"
+input:
+  text: "Let's circle back on the recording policy after the next all-hands."
+  channel: "email"
+expected:
+  ambiguity:
+    detected: true
+ratings:
+  - rater_id: "rater-curator-A"
+    rater_neurotypes: ["other"]
+    agreement_with_expected: 0.85
+    notes: |
+      Rater self-IDs as 'other' (no 'tourette' in the v0.0.1 annotation enum).
+      A 'circle back after the next all-hands' deferral has no committed day;
+      flagging the hedged commitment keeps the follow-up from evaporating.
+notes: |
+  Tourette slice seed: event-anchored deferral with no committed date.
+  Distinct wording from 013.
