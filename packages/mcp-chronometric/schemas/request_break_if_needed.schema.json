@@ -56,6 +56,15 @@
               "type": "integer",
               "minimum": 1,
               "description": "Echo of the threshold that triggered this response, for debugging."
+            },
+            "escalation": {
+              "type": "string",
+              "enum": ["nudge", "hard_surface"],
+              "description": "Optional (added v0.1.x per ADR 0011). Coarse escalation rung. 'nudge' (default, today's behaviour) when the session crossed the threshold outside any protected window. 'hard_surface' when the current local time falls inside a profile.chronometric.protected_windows entry — the firm rung, applied because the window itself is protected, so it can fire even below the threshold. Surfaced so skills can quote the user back to themselves (e.g. the protected window they set) rather than scolding them. Absent when the profile declares no protected windows and the legacy threshold path produced the suggestion without an escalation rung."
+            },
+            "protected_window_label": {
+              "type": "string",
+              "description": "Optional (added v0.1.x per ADR 0011). The optional human label of the matched protected window, surfaced when 'escalation' is 'hard_surface' and the window carried a label. Absent otherwise."
             }
           }
         }

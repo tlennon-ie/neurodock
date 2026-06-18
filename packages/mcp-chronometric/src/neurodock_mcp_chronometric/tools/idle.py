@@ -28,12 +28,21 @@ def idle_status(
 
     effective_profile = profile if profile is not None else load_profile()
 
+    # ``motor_fatigue_aware`` is a declared user preference, not OS data, so it
+    # is surfaced regardless of the consent gate. It is set only when True so an
+    # untouched profile keeps the field absent under exclude_none. The server has
+    # no keystroke/click stream of its own, so this only TELLS an activity-aware
+    # client to weight motor fatigue; reading actual motor activity stays gated
+    # by ``os_idle_consent``.
+    motor_fatigue_aware: bool | None = True if effective_profile.motor_fatigue_aware else None
+
     if not effective_profile.os_idle_consent:
         log_consent_missing()
         return IdleStatusOutput(
             os_idle_seconds=None,
             hyperfocus_signal="unknown",
             consent_granted=False,
+            motor_fatigue_aware=motor_fatigue_aware,
         )
 
     sampled_at = clock.now()
@@ -47,6 +56,7 @@ def idle_status(
             hyperfocus_signal="unknown",
             consent_granted=True,
             sampled_at=sampled_at.isoformat(),
+            motor_fatigue_aware=motor_fatigue_aware,
         )
 
     signal: HyperfocusSignal = "active" if probe.os_idle_seconds < 30 else "switched_away"
@@ -55,4 +65,5 @@ def idle_status(
         hyperfocus_signal=signal,
         consent_granted=True,
         sampled_at=sampled_at.isoformat(),
+        motor_fatigue_aware=motor_fatigue_aware,
     )

@@ -5,6 +5,44 @@ All notable changes to `neurodock-mcp-chronometric` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This package follows semantic versioning.
 
+## [0.1.0] - 2026-06-18
+
+### Added
+
+- Consume the optional `chronometric` profile fields added in R5 (ADR 0011).
+  All output changes are additive and optional: a profile that declares none of
+  these fields produces the exact pre-R5 wire shape on every tool.
+  - `get_time_context` now surfaces `effective_end_of_day_local` (today's
+    weekday-resolved end-of-day), `past_end_of_day`, and echoes
+    `calendar_phase`, `deadline_cluster_awareness`, and `motor_fatigue_aware`.
+  - `request_break_if_needed` now surfaces `escalation` (`nudge` |
+    `hard_surface`) and `protected_window_label`. When the current local time
+    falls inside a `protected_windows` entry it HARD-SURFACES — even below the
+    threshold — because the window itself is protected. Midnight-wrapping
+    windows (`end` < `start`) are handled.
+  - `idle_status` now surfaces `motor_fatigue_aware`. It is a declared
+    preference (not OS data) so it is surfaced regardless of the consent gate;
+    the server has no keystroke/click stream, so reading actual motor activity
+    remains gated by `privacy.os_idle_consent` and must be done by an
+    activity-aware client.
+  - `weekday_overrides` re-anchor the effective `end_of_day_local` and
+    `hyperfocus_break_minutes` for the current weekday; unknown weekday keys and
+    malformed protected windows are dropped silently rather than failing.
+- `chronometric.time_buffer_multiplier` is intentionally NOT read here — it is
+  consumed by the task-fractionator in a later release.
+
+### Notes
+
+- JSON Schemas under `packages/mcp-chronometric/schemas/` and the Pydantic
+  models in `schemas.py` are updated together and validated by the protocol
+  conformance test.
+- The protected-window matcher and the end-of-day cutoff normalise `now` to the
+  system-local wall clock (`.astimezone()`) before comparing against the user's
+  declared local `HH:MM`, so the result is independent of which timezone offset
+  the caller's `datetime` carries (e.g. a `TZ=UTC` container).
+- `CalendarPhase` is defined once in `schemas.py`; the loader derives its
+  membership set from the type via `typing.get_args` so the two cannot drift.
+
 ## [0.0.3] - 2026-05-31
 
 - Republish the PyPI README carrying the `mcp-name:` marker so the MCP Registry can verify io.github.tlennon-ie ownership.

@@ -1340,7 +1340,7 @@ provides-extras = ["test", "translation"]
 
 [[package]]
 name = "neurodock-mcp-chronometric"
-version = "0.0.3"
+version = "0.1.0"
 source = { editable = "packages/mcp-chronometric" }
 dependencies = [
     { name = "fastmcp" },
@@ -1350,6 +1350,11 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "ruff" },
+    { name = "types-pyyaml" },
+]
 test = [
     { name = "jsonschema" },
     { name = "pytest" },
@@ -1360,13 +1365,16 @@ test = [
 requires-dist = [
     { name = "fastmcp", specifier = ">=3.3.0" },
     { name = "jsonschema", marker = "extra == 'test'", specifier = ">=4.21.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13.0" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.0" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.24.0" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8.0" },
+    { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "tzdata", marker = "sys_platform == 'win32'", specifier = ">=2024.1" },
 ]
-provides-extras = ["test"]
+provides-extras = ["test", "dev"]
 
 [[package]]
 name = "neurodock-mcp-cognitive-graph"

@@ -16,7 +16,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 from neurodock_mcp_chronometric.clock import Clock, SystemClock
-from neurodock_mcp_chronometric.profile import ChronometricProfile
+from neurodock_mcp_chronometric.profile import ChronometricProfile, load_profile
 from neurodock_mcp_chronometric.state import SessionState
 from neurodock_mcp_chronometric.tools.break_request import (
     ThresholdOutOfRangeError,
@@ -34,7 +34,7 @@ from neurodock_mcp_chronometric.tools.session import (
 from neurodock_mcp_chronometric.tools.time_context import get_time_context
 
 SERVER_NAME = "neurodock-mcp-chronometric"
-SERVER_VERSION = "0.0.2"
+SERVER_VERSION = "0.1.0"
 
 _LOG = logging.getLogger("neurodock_mcp_chronometric.server")
 
@@ -62,6 +62,10 @@ def build_server(
 
     effective_state = state if state is not None else SessionState()
     effective_clock: Clock = clock if clock is not None else SystemClock()
+    # Load the profile once at construction time so every tool reads a single,
+    # consistent snapshot of the chronometric thresholds and consent flag. Tests
+    # inject a deterministic profile; production callers pass nothing.
+    effective_profile = profile if profile is not None else load_profile()
 
     mcp: FastMCP[Any] = FastMCP(name=SERVER_NAME, version=SERVER_VERSION)
 
@@ -74,9 +78,9 @@ def build_server(
     )
     def _get_time_context() -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "get_time_context"})
-        return get_time_context(clock=effective_clock, state=effective_state).model_dump(
-            exclude_none=True
-        )
+        return get_time_context(
+            clock=effective_clock, state=effective_state, profile=effective_profile
+        ).model_dump(exclude_none=True)
 
     @mcp.tool(
         name="mark_session_start",
@@ -126,12 +130,16 @@ def build_server(
                 threshold_minutes=threshold_minutes,
                 clock=effective_clock,
                 state=effective_state,
+                profile=effective_profile,
             )
         except ThresholdOutOfRangeError as exc:
             raise _ToolError("THRESHOLD_OUT_OF_RANGE", str(exc)) from exc
         if result is None:
             return None
-        return result.model_dump(exclude_none=False)
+        # exclude_none drops the additive optional fields (escalation,
+        # protected_window_label) when unset; the four legacy fields are always
+        # populated so the wire shape is unchanged when no profile windows match.
+        return result.model_dump(exclude_none=True)
 
     @mcp.tool(
         name="idle_status",
@@ -142,12 +150,15 @@ def build_server(
     )
     def _idle_status() -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "idle_status"})
-        result = idle_status(clock=effective_clock, profile=profile)
-        # os_idle_seconds is required by the schema (nullable). sampled_at is
-        # optional and only included when a real sample was taken.
+        result = idle_status(clock=effective_clock, profile=effective_profile)
+        # os_idle_seconds is required by the schema (nullable), so we dump with
+        # exclude_none=False to keep it, then drop the genuinely-optional fields
+        # (sampled_at, motor_fatigue_aware) when they are unset.
         payload = result.model_dump(exclude_none=False)
         if result.sampled_at is None:
             payload.pop("sampled_at", None)
+        if result.motor_fatigue_aware is None:
+            payload.pop("motor_fatigue_aware", None)
         return payload
 
     return mcp

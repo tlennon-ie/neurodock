@@ -38,6 +38,20 @@ SuggestedAction = Literal[
 
 HyperfocusSignal = Literal["active", "switched_away", "unknown"]
 
+# Calendar/semester phase the user self-declares (profile.chronometric.calendar_phase).
+# Surfaced additively so planning skills can shift defaults across the term.
+CalendarPhase = Literal["teaching", "marking", "exam", "deadlines", "break"]
+
+# Coarse escalation rung for a break suggestion. ``nudge`` is the default rung
+# (today's behaviour); ``hard_surface`` is the firm rung, fired when the current
+# local time falls inside a profile-declared protected window (R5). The rung is
+# surfaced so skills can quote the user's own protected window back to them
+# rather than scolding them; the enum value name is NOT user-facing copy.
+BreakEscalation = Literal["nudge", "hard_surface"]
+
+# HH:MM (24h) local-time pattern, mirroring the profile schema.
+_HHMM_PATTERN = r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
+
 # ISO 8601 duration pattern, mirroring the JSON Schemas. Pydantic v2 uses Rust
 # regex which does not support look-ahead, so we validate via a Python re check
 # in a field validator rather than as a Field(pattern=...) constraint.
@@ -67,6 +81,21 @@ class TimeContextOutput(_Base):
     time_since_last_prompt: str
     current_session_length: str
     energy_zone: EnergyZone
+
+    # R5 additive optional fields. Present only when the profile declares the
+    # corresponding input; absent (None) reproduces today's wire shape.
+    effective_end_of_day_local: str | None = Field(default=None, pattern=_HHMM_PATTERN)
+    past_end_of_day: bool | None = Field(
+        default=None,
+        description=(
+            "True when the local clock has reached 'effective_end_of_day_local' "
+            "(inclusive). Reports the fact; the downstream skill decides whether "
+            "to surface anything."
+        ),
+    )
+    calendar_phase: CalendarPhase | None = None
+    deadline_cluster_awareness: bool | None = None
+    motor_fatigue_aware: bool | None = None
 
     @field_validator("time_since_last_prompt", "current_session_length")
     @classmethod
@@ -130,6 +159,22 @@ class BreakSuggestion(_Base):
     suggested_action: SuggestedAction
     threshold_minutes: int = Field(ge=1)
 
+    # R5 additive optional fields. ``escalation`` defaults to ``nudge`` (today's
+    # behaviour) and rises to ``hard_surface`` (the firm rung) inside a protected
+    # window; ``protected_window_label`` carries the matched window's optional
+    # label.
+    escalation: BreakEscalation | None = Field(
+        default=None,
+        description=(
+            "Coarse escalation rung. 'nudge' (default) when the session crossed "
+            "the threshold outside any protected window; 'hard_surface' (the firm "
+            "rung) inside a profile-declared protected window. Surfaced so skills "
+            "can quote the user's own protected window back to them rather than "
+            "scolding them."
+        ),
+    )
+    protected_window_label: str | None = None
+
     @field_validator("elapsed")
     @classmethod
     def _validate_duration(cls, value: str) -> str:
@@ -145,3 +190,10 @@ class IdleStatusOutput(_Base):
     hyperfocus_signal: HyperfocusSignal
     consent_granted: bool
     sampled_at: str | None = None
+
+    # R5 additive optional field. The chronometric server has no keystroke/click
+    # stream, so it cannot compute activity-weighted fatigue itself; it surfaces
+    # the user's declared preference so a client that DOES have an activity
+    # stream knows to weight motor fatigue. Reading motor activity remains gated
+    # by ``profile.privacy.os_idle_consent``.
+    motor_fatigue_aware: bool | None = None
