@@ -313,6 +313,38 @@
 }
 
 /*
+ * R5 line_height_hint → body line-height (WCAG 1.4.8 / 1.4.12).
+ *
+ * A single `lh-<band>` class on <html> (popup/tab) or the shadow host
+ * (in-page island) binds `--nd-body-line-height`. The popup/tab `body`
+ * rules read `line-height: var(--nd-body-line-height, var(--nd-line-height))`
+ * so:
+ *   - NO hint set → `--nd-body-line-height` is undefined → body falls
+ *     back to `--nd-line-height` (today's behaviour, including the
+ *     focus-mode 1.45 below). Backward-compatible.
+ *   - hint set    → body uses `--nd-body-line-height`, which is >= 1.5
+ *     for every band. Focus-mode only re-binds `--nd-line-height` (UI
+ *     chrome), NOT `--nd-body-line-height`, so a hinted body paragraph
+ *     can never combine with focus-mode to drop below the WCAG floor.
+ *
+ * CONFORMANCE FLOOR: body line-height MUST NOT render below 1.5 for any
+ * band. compact = 1.5 (at the floor), default = 1.6, relaxed = 1.75.
+ * Keep these in sync with BAND_LINE_HEIGHT in src/lib/line-height-hint.ts.
+ */
+:root.lh-compact,
+:host(.lh-compact) {
+  --nd-body-line-height: 1.5;
+}
+:root.lh-default,
+:host(.lh-default) {
+  --nd-body-line-height: 1.6;
+}
+:root.lh-relaxed,
+:host(.lh-relaxed) {
+  --nd-body-line-height: 1.75;
+}
+
+/*
  * Reader-font hinting (neurodivergent font switcher).
  *
  * A single `font-<value>` class on <html> (popup/tab) or the shadow host

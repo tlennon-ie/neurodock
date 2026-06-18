@@ -45,6 +45,7 @@ import {
   applyThemeModeToDocument,
   loadThemeMode,
 } from "../../src/lib/theme-mode.js";
+import { applyLineHeightHintToDocument } from "../../src/lib/line-height-hint.js";
 
 function isHistoryUpdatedMessage(msg: unknown): boolean {
   return (
@@ -160,6 +161,17 @@ export function App(): React.ReactElement {
     chrome.runtime.onMessage.addListener(handler);
     return () => chrome.runtime.onMessage.removeListener(handler);
   }, [profile.historyEnabled, refreshHistory]);
+
+  // R5 line_height_hint: keep the body line-height band class on <html>
+  // in lockstep with the profile. Runs on first resolve and on any later
+  // profile change (Settings save, sibling-window broadcast). An absent
+  // hint clears any lh-* class so the body falls back to
+  // --nd-line-height — byte-identical to the pre-R5 behaviour.
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      applyLineHeightHintToDocument(profile.lineHeightHint, document);
+    }
+  }, [profile.lineHeightHint]);
 
   // P1.1: pick up profile saves originating from other popup windows.
   // `chrome.storage.onChanged` only fires for non-popup contexts;

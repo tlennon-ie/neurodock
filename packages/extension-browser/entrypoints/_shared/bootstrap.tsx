@@ -42,6 +42,7 @@ import {
   applyReaderFontToDocument,
   loadReaderFont,
 } from "../../src/lib/reader-font.js";
+import { applyLineHeightHintToDocument } from "../../src/lib/line-height-hint.js";
 import type {
   Channel,
   ExtensionProfile,
@@ -67,6 +68,12 @@ export function bootstrapContent(options: BootstrapOptions): () => void {
         type: "profile:get",
       });
       if (res) profile = res;
+      // R5 line_height_hint: apply the body line-height band class to the
+      // island's shadow host so `:host(.lh-*)` binds --nd-body-line-height
+      // (>= 1.5). Absent hint clears any lh-* class — the island body
+      // then falls back to --nd-line-height (pre-R5 behaviour). Runs on
+      // initial load and on every storage-change-driven reload.
+      applyLineHeightHintToDocument(profile.lineHeightHint, island.shadow);
       return profile;
     } catch {
       // Background worker may be temporarily unreachable during SW restart

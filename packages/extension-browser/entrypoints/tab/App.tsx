@@ -45,6 +45,7 @@ import {
   applyThemeModeToDocument,
   loadThemeMode,
 } from "../../src/lib/theme-mode.js";
+import { applyLineHeightHintToDocument } from "../../src/lib/line-height-hint.js";
 import { NeuroDockHeader } from "../../src/components/NeuroDockHeader.js";
 
 type TabView = "home" | "history" | "settings" | "notifications";
@@ -94,6 +95,15 @@ export function TabApp(): React.ReactElement {
       }
     })();
   }, []);
+
+  // R5 line_height_hint: keep the body line-height band class on <html>
+  // in lockstep with the profile. Absent hint clears any lh-* class so
+  // the body falls back to --nd-line-height (byte-identical to pre-R5).
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      applyLineHeightHintToDocument(data.profile.lineHeightHint, document);
+    }
+  }, [data.profile.lineHeightHint]);
 
   // Keep `view` synced with the URL so back/forward and shared links
   // restore the intended section. We do not deep-link into individual

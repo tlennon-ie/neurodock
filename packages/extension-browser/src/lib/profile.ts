@@ -30,6 +30,7 @@
 import type {
   ExtensionMode,
   ExtensionProfile,
+  LineHeightHint,
   Neurotype,
   OutputFormat,
 } from "./types.js";
@@ -310,6 +311,18 @@ function isOutputFormat(x: unknown): x is OutputFormat {
   return typeof x === "string" && OUTPUT_FORMAT_ENUM.has(x as OutputFormat);
 }
 
+const LINE_HEIGHT_HINT_ENUM: ReadonlySet<LineHeightHint> = new Set([
+  "compact",
+  "default",
+  "relaxed",
+]);
+
+function isLineHeightHint(x: unknown): x is LineHeightHint {
+  return (
+    typeof x === "string" && LINE_HEIGHT_HINT_ENUM.has(x as LineHeightHint)
+  );
+}
+
 export function normaliseProfile(
   input: Partial<ExtensionProfile>,
 ): ExtensionProfile {
@@ -364,6 +377,17 @@ export function normaliseProfile(
       input.additionalNotes.length > 0
         ? input.additionalNotes
         : null,
+    // R5 UI hints. Both are OPTIONAL: a non-true / invalid value settles
+    // the key to `undefined` (not present), so a profile that never set
+    // them stays byte-identical to the pre-R5 behaviour. Using a
+    // conditional spread keeps the keys absent rather than explicitly
+    // `undefined`, which matches the "absence === default" contract.
+    ...(input.voiceInputPreferred === true
+      ? { voiceInputPreferred: true as const }
+      : {}),
+    ...(isLineHeightHint(input.lineHeightHint)
+      ? { lineHeightHint: input.lineHeightHint }
+      : {}),
     onboardingComplete: resolveOnboardingComplete(input),
   };
 }
@@ -508,6 +532,18 @@ function mapOnDiskProfileToExtension(
       ? rawChunk
       : baseline.maxChunkSize;
 
+  // R5 UI hints. Read from the on-disk `preferences` block when present;
+  // otherwise inherit the baseline (which itself defaults to absent), so
+  // an on-disk profile that never set them keeps today's behaviour.
+  const voiceInputPreferred =
+    preferences["voice_input_preferred"] === true
+      ? true
+      : baseline.voiceInputPreferred;
+
+  const lineHeightHint = isLineHeightHint(preferences["line_height_hint"])
+    ? preferences["line_height_hint"]
+    : baseline.lineHeightHint;
+
   return normaliseProfile({
     ...baseline,
     displayName,
@@ -515,6 +551,8 @@ function mapOnDiskProfileToExtension(
     outputFormat,
     maxChunkSize,
     additionalNotes,
+    ...(voiceInputPreferred === true ? { voiceInputPreferred: true } : {}),
+    ...(lineHeightHint !== undefined ? { lineHeightHint } : {}),
   });
 }
 
@@ -533,11 +571,21 @@ export function mapExtensionProfileToOnDisk(
   if (profile.additionalNotes !== null) {
     identity["additional_notes"] = profile.additionalNotes;
   }
+  const preferences: Record<string, unknown> = {
+    output_format: profile.outputFormat,
+    max_chunk_size: profile.maxChunkSize,
+  };
+  // R5 UI hints: only write a key when the user actually set it, so a
+  // profile that never touched these does not gain new keys on disk
+  // (keeps hand-edited yaml and the pre-R5 wire shape stable).
+  if (profile.voiceInputPreferred === true) {
+    preferences["voice_input_preferred"] = true;
+  }
+  if (profile.lineHeightHint !== undefined) {
+    preferences["line_height_hint"] = profile.lineHeightHint;
+  }
   return {
     identity,
-    preferences: {
-      output_format: profile.outputFormat,
-      max_chunk_size: profile.maxChunkSize,
-    },
+    preferences,
   };
 }

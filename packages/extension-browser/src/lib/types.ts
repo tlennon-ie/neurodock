@@ -91,6 +91,19 @@ export type Neurotype =
  */
 export type OutputFormat = "answer_first" | "conventional" | "bullet_first";
 
+/**
+ * R5 UI hint: preferred body line-spacing band for rendered NeuroDock
+ * output. Mirrors `preferences.line_height_hint` in the profile schema.
+ *
+ *   - compact : tightest band still at the WCAG 1.4.8 floor (~1.5).
+ *   - default : the surface default (~1.6).
+ *   - relaxed : the most generous band (≈ 1.65–1.8, currently 1.75).
+ *
+ * The mapping (see `line-height-hint.ts`) enforces a hard floor of 1.5
+ * for body paragraphs regardless of band, per WCAG 1.4.8 / 1.4.12.
+ */
+export type LineHeightHint = "compact" | "default" | "relaxed";
+
 export interface ExtensionProfile {
   readonly mode: ExtensionMode;
   /**
@@ -162,6 +175,24 @@ export interface ExtensionProfile {
    * `identity.additional_notes`.
    */
   readonly additionalNotes: string | null;
+  /**
+   * R5 UI hint: the reader dictates/voice-types and cannot cheaply
+   * hand-edit punctuation scattered across a response. When true, the
+   * prompt builder asks downstream prose to keep examples copy-pasteable
+   * as a SINGLE block (cross-cutting — applies regardless of neurotype).
+   *
+   * Optional + absence-means-off so a profile without the field behaves
+   * exactly as before. Mirrors `preferences.voice_input_preferred`.
+   */
+  readonly voiceInputPreferred?: boolean;
+  /**
+   * R5 UI hint: preferred body line-spacing band for rendered output.
+   * Maps to a body line-height that NEVER drops below the WCAG 1.4.8 /
+   * 1.4.12 conformance floor of 1.5, regardless of band. Mirrors
+   * `preferences.line_height_hint`. Optional + absence-means-default so
+   * a profile without the field renders exactly as before.
+   */
+  readonly lineHeightHint?: LineHeightHint;
   /**
    * Roadmap A1: guided onboarding wizard completion flag.
    *

@@ -70,7 +70,12 @@ html {
 
 body {
   font-family: var(--nd-font-body);
-  line-height: var(--nd-line-height);
+  /* R5 line_height_hint: body paragraphs read --nd-body-line-height
+     (bound by the lh-* band class, always >= 1.5) with a fallback to
+     --nd-line-height. No hint set → byte-identical to before, including
+     focus-mode's 1.45. Hint set → focus-mode cannot pull body below the
+     WCAG 1.5 floor because it only re-binds --nd-line-height. */
+  line-height: var(--nd-body-line-height, var(--nd-line-height));
   color: var(--nd-color-fg);
   background: var(--nd-color-bg);
   text-rendering: optimizeLegibility;

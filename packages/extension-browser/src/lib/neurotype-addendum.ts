@@ -66,7 +66,16 @@ export function buildNeurotypeAddendum(
   const hasNotes =
     profile.additionalNotes !== null && profile.additionalNotes.length > 0;
   const hasNonDefaultFormat = profile.outputFormat !== "answer_first";
-  if (effective.length === 0 && !hasNotes && !hasNonDefaultFormat) {
+  // R5 UI hint: the voice-input line is cross-cutting (it applies
+  // regardless of neurotype), so on its own it is enough to trigger the
+  // addendum — same contract as a non-default output_format.
+  const wantsVoiceInput = profile.voiceInputPreferred === true;
+  if (
+    effective.length === 0 &&
+    !hasNotes &&
+    !hasNonDefaultFormat &&
+    !wantsVoiceInput
+  ) {
     return "";
   }
 
@@ -81,6 +90,14 @@ export function buildNeurotypeAddendum(
   );
   sections.push("");
   sections.push(renderOutputFormatBlock(profile.outputFormat));
+
+  // R5 UI hint: cross-cutting voice-input shaping. Placed before the
+  // per-neurotype blocks because it is a global formatting rule, not a
+  // neurotype-specific one.
+  if (wantsVoiceInput) {
+    sections.push("");
+    sections.push(renderVoiceInputBlock());
+  }
 
   const ordered = orderByPriority(effective);
   for (const neurotype of ordered) {
@@ -134,8 +151,10 @@ function effectiveNeurotypes(
 
 /**
  * Priority ordering. Higher-priority addenda are placed LATER in the
- * prompt to exploit recency bias. Tourette is no-op so it's first;
- * `other` (user-authored notes) is always last to take precedence.
+ * prompt to exploit recency bias. Tourette is first because its wins are
+ * broad text-shaping defaults (concise, plain, low-pressure) that the
+ * more field-specific blocks below refine; `other` (user-authored notes)
+ * is always last to take precedence.
  */
 const PRIORITY: ReadonlyArray<Neurotype> = [
   "tourette",
@@ -156,6 +175,23 @@ function orderByPriority(
   );
 }
 
+/**
+ * R5 cross-cutting voice-input block.
+ *
+ * The reader dictates / voice-types. Hand-editing punctuation scattered
+ * across a response is expensive for them, so any example, snippet, or
+ * draft the model offers must stay copy-pasteable as ONE contiguous
+ * block — the reader copies it whole rather than stitching fragments
+ * together by hand. Applies regardless of neurotype.
+ */
+function renderVoiceInputBlock(): string {
+  return [
+    "Reader preferences (voice input):",
+    "- The reader dictates and cannot cheaply hand-edit fiddly punctuation.",
+    "- Keep any example, draft, or snippet as a single, copy-pasteable block — do not scatter editable fragments across the response.",
+  ].join("\n");
+}
+
 function renderOutputFormatBlock(format: OutputFormat): string {
   const descriptions: Record<OutputFormat, string> = {
     answer_first:
@@ -174,10 +210,7 @@ function renderNeurotypeBlock(
   tool: TranslationTool | undefined,
 ): string {
   if (neurotype === "tourette") {
-    // Explicit no-op so prompt logs show Tourette was considered. The
-    // motion-reduction relevant to Tourette is a UI concern handled by
-    // `preferences.motion`, not a prompt concern.
-    return "";
+    return renderTouretteBlock();
   }
 
   if (neurotype === "other") {
@@ -692,6 +725,43 @@ function renderGenericBlock(
         "- Group related items together; do not interleave asks from different topics.",
       ].join("\n");
   }
+}
+
+/**
+ * Tourette reader block (R3).
+ *
+ * Reviewed against `.claude/agents/tourette-advocate.md`. Tics themselves
+ * never change prose, and motion/startle safety is a UI concern owned by
+ * `motion: reduced` (ADR 0004) and the reduced-motion tokens — NOT a
+ * prompt concern. So this block is deliberately small. The genuine
+ * text-shaping wins from the advocate lens are:
+ *
+ *   - Concise / answer-first: every extra paragraph is extra time the
+ *     reader is held under attention while a premonitory urge builds and
+ *     suppression consumes working capacity. Short, answer-first prose
+ *     reduces that load.
+ *   - Plain and low-pressure: avoid demands and amplified urgency.
+ *
+ * Equally important is what this block MUST NOT do (advocate principles
+ * 4 + 5): never use a "relax / calm / breathe / you've got this"
+ * register, and never notice, name, or comment on the reader's
+ * behaviour, focus, fidgeting, repetition, or stillness. Those read as
+ * instructions to control the uncontrollable and carry stigma load.
+ *
+ * Kept under the 25-line cap like the other blocks. Where Tourette
+ * co-occurs with OCD or ADHD (common overlap), those blocks add their
+ * own field-level rules alongside this one — see effectiveNeurotypes()
+ * and the conflict-resolution footer.
+ */
+function renderTouretteBlock(): string {
+  return [
+    "Reader preferences (Tourette):",
+    "- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.",
+    "- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.",
+    "- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.",
+    "- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.",
+    "- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.",
+  ].join("\n");
 }
 
 function renderOtherBlock(notes: string): string {
