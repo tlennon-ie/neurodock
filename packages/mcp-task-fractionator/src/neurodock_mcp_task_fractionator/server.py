@@ -31,7 +31,9 @@ from neurodock_mcp_task_fractionator.decomposer import (
     DecompositionUnavailableError,
     GoalRequiredError,
     GoalTooLongError,
+    MaxChunkSizeInvalidError,
     TimeBudgetUnparseableError,
+    TimeBufferMultiplierInvalidError,
 )
 from neurodock_mcp_task_fractionator.sources import (
     CognitiveGraphUnavailableError,
@@ -116,14 +118,62 @@ def build_server(
                 ),
             ),
         ] = None,
+        max_chunk_size: Annotated[
+            int | None,
+            Field(
+                ge=1,
+                le=20,
+                description=(
+                    "Optional neurotype knob (ADR 0011). Caps the NUMBER of tasks "
+                    "returned, below the normal 3-12 target / hard cap of 20. When "
+                    "the goal naturally needs more steps, the server keeps the "
+                    "lowest-sequence prefix (a valid sub-DAG with no dangling "
+                    "dependencies) and notes the truncation in the rationale rather "
+                    "than silently dropping steps. Omit for default behaviour."
+                ),
+            ),
+        ] = None,
+        time_buffer_multiplier: Annotated[
+            float | None,
+            Field(
+                ge=1.0,
+                le=3.0,
+                description=(
+                    "Optional neurotype knob (ADR 0011). When greater than 1.0, the "
+                    "server attaches an additive 'padded_minutes' to each task equal "
+                    "to round(estimated_minutes * multiplier). 'estimated_minutes' "
+                    "stays RAW so the figure is never padded twice. A value of 1.0 "
+                    "(or omitting it) produces no padding."
+                ),
+            ),
+        ] = None,
+        motor_fatigue_aware: Annotated[
+            bool | None,
+            Field(
+                description=(
+                    "Optional neurotype knob (ADR 0011). When true, the server echoes "
+                    "the preference and names it in the rationale so the client can "
+                    "act on it. The server has no view of actual motor activity and "
+                    "does NOT infer fatigue."
+                ),
+            ),
+        ] = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "decompose"})
         try:
-            result = decompose(goal=goal, time_budget=time_budget)
+            result = decompose(
+                goal=goal,
+                time_budget=time_budget,
+                max_chunk_size=max_chunk_size,
+                time_buffer_multiplier=time_buffer_multiplier,
+                motor_fatigue_aware=motor_fatigue_aware,
+            )
         except GoalRequiredError as exc:
             raise _ToolError("GOAL_REQUIRED", str(exc)) from exc
         except GoalTooLongError as exc:
             raise _ToolError("GOAL_TOO_LONG", str(exc)) from exc
+        except (MaxChunkSizeInvalidError, TimeBufferMultiplierInvalidError) as exc:
+            raise _ToolError("INPUT_INVALID", str(exc)) from exc
         except TimeBudgetUnparseableError as exc:
             raise _ToolError("TIME_BUDGET_UNPARSEABLE", str(exc)) from exc
         except BudgetInfeasibleError as exc:
@@ -156,7 +206,11 @@ def build_server(
         except AcceptanceCriteriaRequiredError as exc:
             _LOG.error("acceptance_criteria_required")
             raise _ToolError("ACCEPTANCE_CRITERIA_REQUIRED", str(exc)) from exc
-        return result.model_dump(exclude_none=False)
+        # exclude_none=True so the optional, additive R2 fields (padded_minutes,
+        # time_buffer_multiplier, motor_fatigue_aware, truncated) are dropped
+        # from the wire when unset — keeping a no-hook call byte-identical to
+        # the pre-R2 contract. The required pre-R2 fields are never None.
+        return result.model_dump(exclude_none=True)
 
     # ``next_one`` reads the LOCAL cognitive graph and is NOT remote-safe
     # (ADR 0008/0009). It is registered in stdio mode only; in HTTP mode it is
@@ -188,7 +242,10 @@ def build_server(
                 ) from exc
             except CognitiveGraphUnavailableError as exc:
                 raise _ToolError("COGNITIVE_GRAPH_UNAVAILABLE", str(exc)) from exc
-            return result.model_dump(exclude_none=False)
+            # exclude_none=True drops the nested optional Task.padded_minutes
+            # (always None here — next_one does not pad), keeping next_one's
+            # wire shape byte-identical to the pre-R2 contract.
+            return result.model_dump(exclude_none=True)
 
     return mcp
 

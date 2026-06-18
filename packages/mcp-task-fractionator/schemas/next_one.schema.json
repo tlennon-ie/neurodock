@@ -62,7 +62,12 @@
               "type": "integer",
               "minimum": 5,
               "maximum": 90,
-              "description": "Estimated minutes to complete."
+              "description": "Estimated minutes to complete. Always RAW (never buffer-adjusted)."
+            },
+            "padded_minutes": {
+              "type": "integer",
+              "minimum": 5,
+              "description": "Optional, additive (ADR 0011, R2). Present only if the source task carries a buffer-padded estimate; next_one itself does not pad and omits this field. estimated_minutes stays RAW alongside it."
             },
             "acceptance_criteria": {
               "type": "array",
