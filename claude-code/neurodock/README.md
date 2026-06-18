@@ -41,9 +41,18 @@ time it runs.
 
 ### Skills (`skills/`)
 
+Twelve ND-aware skills ship with the plugin, in two groups.
+
+**Substrate skills** — each teaches Claude the exact tool contract and the
+ND-aware "voice" for surfacing one server's results:
 `translate-incoming`, `record-fact`, `decompose-task`, `check-rumination`,
-`chronometric-mark-start`, `chronometric-mark-end` — each teaches Claude the
-exact tool contract and the ND-aware "voice" for surfacing results.
+`chronometric-mark-start`, `chronometric-mark-end`.
+
+**Per-neurotype skills** — higher-level workflows tuned to a specific
+neurotype (authored in `packages/skills/` and bundled here verbatim via
+`scripts/sync-skills.mjs`, with a CI drift guard keeping the two in sync):
+`adhd-daily-planner`, `asd-meeting-translator`, `audhd-context-recovery`,
+`hyperfocus-formatter`, `ocd-decision-finalizer`, `visual-organizer`.
 
 ## Privacy
 

@@ -1,5 +1,6 @@
 packages:
   - "packages/core"
+  - "packages/repo-tooling"
   - "packages/cli"
   - "packages/extension-browser"
   - "packages/native-host"

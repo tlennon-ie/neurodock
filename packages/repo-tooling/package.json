@@ -1,0 +1,18 @@
+{
+  "name": "@neurodock/repo-tooling",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Private monorepo tooling and drift guards (not published). Hosts CI-run checks such as the skills bundling drift guard.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "build": "echo 'repo-tooling: nothing to build'",
+    "lint": "echo 'repo-tooling: lint via prettier at repo root'",
+    "test": "vitest run",
+    "typecheck": "echo 'repo-tooling: no typed source to check'",
+    "clean": "rm -rf .turbo"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.6"
+  }
+}
