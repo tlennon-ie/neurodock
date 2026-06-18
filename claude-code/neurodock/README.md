@@ -41,7 +41,7 @@ time it runs.
 
 ### Skills (`skills/`)
 
-Twelve ND-aware skills ship with the plugin, in two groups.
+Thirteen ND-aware skills ship with the plugin, in two groups.
 
 **Substrate skills** — each teaches Claude the exact tool contract and the
 ND-aware "voice" for surfacing one server's results:
@@ -52,7 +52,8 @@ ND-aware "voice" for surfacing one server's results:
 neurotype (authored in `packages/skills/` and bundled here verbatim via
 `scripts/sync-skills.mjs`, with a CI drift guard keeping the two in sync):
 `adhd-daily-planner`, `asd-meeting-translator`, `audhd-context-recovery`,
-`hyperfocus-formatter`, `ocd-decision-finalizer`, `visual-organizer`.
+`dyspraxia-task-pacer`, `hyperfocus-formatter`, `ocd-decision-finalizer`,
+`visual-organizer`.
 
 ## Privacy
 
