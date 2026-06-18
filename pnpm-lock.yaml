@@ -91,7 +91,7 @@ importers:
   packages/cli:
     dependencies:
       '@neurodock/native-host':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.2.1
         version: link:../native-host
       ajv:
         specifier: ^8.17.1
