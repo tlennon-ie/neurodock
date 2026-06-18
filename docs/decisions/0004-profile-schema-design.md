@@ -1,6 +1,6 @@
 # 0004 — Profile schema design (NeuroDock Profile v0.1.0)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder` (consumes from every server), `skill-author` (consumes from every skill), (consent fields), `governance-author` (ETHICS alignment)

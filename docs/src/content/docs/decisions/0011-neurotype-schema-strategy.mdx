@@ -1,0 +1,75 @@
+---
+title: 0011 — Neurotype schema strategy
+description: One output schema per tool. Per-neurotype tailoring rides on populated field values and optional additive hint fields — never on a forked or branched required shape.
+---
+
+:::tip[Bottom line up front]
+**Problem:** Per-neurotype tailoring is about to touch the MCP servers and the profile schema. Before any schema is edited, we must lock whether tailoring may fork the required output shape by neurotype — or must ride entirely on top of one stable shape.
+**Decision:** One output schema per MCP tool. No forking or branching the required shape by neurotype. Variation is expressed by how existing fields are populated and by new, optional, additive presentation/behaviour hint fields — never by a required field or a per-type shape.
+**Impact:** The additive-only public contract from ADR 0005 survives intact; servers stay neurotype-blind at the schema level; one conformance suite still validates one shape for all eight neurotypes.
+:::
+
+> **Source:** `docs/decisions/0011-neurotype-schema-strategy.md` is the canonical artefact. This page is a short summary; read the full ADR for the three alternatives considered, the binding rules, and the implementer's notes.
+
+- **Status:** Accepted
+- **Date:** 2026-06-18
+- **Deciders:** Thomas Lennon (maintainer), `mcp-architect`
+
+## Context
+
+NeuroDock recognises eight self-identified neurotypes (`adhd`, `asd`, `audhd`, `ocd`, `dyslexia`, `dyspraxia`, `tourette`, `other`). We are about to add per-neurotype tailoring across the MCP servers and the profile schema — task-fractionator hooks that pace differently, new profile fields for sensory and motor preferences, and a shared shaping layer that consumes them. Before any schema is edited, we must lock the policy for *how* a schema may vary by neurotype, because every downstream change depends on the answer.
+
+[ADR 0005](/decisions/0005-translation/) established the additive-only public-contract guarantee for tool schemas: within a `v0.x` line, schemas only ever gain optional fields, and existing clients keep working. [ADR 0004](/decisions/0004-profile/) established the same forward-compat rule for the profile, with `identity.neurotypes` declared as self-identification that *never gates a feature*. This ADR makes the consequence of those two rules explicit for the tailoring work, so the policy is decided once rather than re-litigated in every PR.
+
+## Decision
+
+**Keep one output schema per MCP tool. Do NOT fork or branch the required output shape by neurotype.** Per-neurotype variation is expressed by (a) how existing fields are populated, and (b) new, optional, additive presentation/behaviour hint fields — never by changing the required shape and never by adding a required field. This preserves the [ADR 0005](/decisions/0005-translation/) additive-only guarantee: existing clients keep working; schemas only ever gain optional fields.
+
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
+Alternatives rejected:
+
+- **Fork the output schema per neurotype** (a discriminated union keyed on neurotype, or one schema file per type) — breaks the additive-only guarantee structurally and makes the neurotype a schema discriminator, contradicting ADR 0004's "self-ID never gates a feature." Multiplies the conformance suite by eight.
+- **A single mega-schema with every per-type field made required** — a required field that is meaningless for most neurotypes is noise, and a required addition is a breaking change the moment it lands. Sentinel-filling pushes correctness onto every consumer.
+
+</details>
+
+## Binding rules established here
+
+1. **New per-neurotype fields MUST be optional and additive.** Never required. Never type-narrowing. A field added for one neurotype's benefit is, at the schema level, a new optional field available to every consumer — the same rule the profile and tool schemas already follow.
+2. **The neurotype enum value is NOT a branch point in output schemas.** Servers stay neurotype-blind at the schema level. No discriminated union keyed on `identity.neurotypes`, no required field that appears only for some types, no type that narrows under a given type. Tailoring rides on knob values (how fields are populated) and on optional hint fields.
+3. **The profile schema may add new OPTIONAL fields.** Candidates for the tailoring work include `line_height_hint`, `voice_input_preferred`, `time_buffer_multiplier`, `motor_fatigue_aware`, `calendar_phase`, `weekday_overrides`, `protected_windows`, and `deadline_cluster_awareness` — every one optional, additive, loader-defaulted (per ADR 0004), and never feature-gating.
+4. **Richer per-type structure, if ever truly needed, is an optional `presentation_hint` sub-object — never a per-type schema split.** Nested structure is added once to the single shape, populated when relevant and absent when not. The answer is never "a second schema for this neurotype."
+5. **One conformance suite still validates one shape for all neurotypes.** Per-neurotype *behaviour* is tested via slices (fixtures per neurotype asserting the right values and hint population), not via schema variants. The schema gate validates one shape; the behavioural gate validates correct population per type.
+
+## Where tailoring actually lives
+
+| Concern | Mechanism | Schema impact |
+| --- | --- | --- |
+| Pace, chunk size, buffers | How existing fields are populated (knob values) | None — values change, shape does not |
+| Sensory / reading preferences | New optional profile fields (e.g. `line_height_hint`) | Additive optional profile field only |
+| Motor / input preferences | New optional profile fields (e.g. `voice_input_preferred`) | Additive optional profile field only |
+| Per-output presentation advice | Optional hint field or optional `presentation_hint` sub-object | Additive optional field only |
+| Which neurotype this is | A profile input the shaping layer and hooks read | None — never a schema discriminator |
+
+## Cross-cutting alignment
+
+- **Additive-only public contract** ([ADR 0005](/decisions/0005-translation/), inheriting ADRs 0001–0003): within `v0.x`, every change is a new optional field, a new opaque-to-older-clients enum value, or a relaxed constraint. A rename, an enum-value removal, or a required-field addition is a major bump. This ADR adds no neurotype exception.
+- **Self-ID never gates a feature** ([ADR 0004](/decisions/0004-profile/)): `identity.neurotypes` is an input to populating fields and hints, not a discriminator. `audhd` stays a first-class identity, tailored on its own terms.
+- **Forward-compat parity**: new optional profile fields follow ADR 0004's loader-applied-defaults and round-trip-preservation rules. A loader that does not understand a field preserves it on round-trip and applies a neutral default when it is absent.
+
+## Open questions
+
+The full ADR carries three open questions:
+
+1. Naming of the optional hint surface — flat hint fields vs a single `presentation_hint` sub-object. (Recommended: a single sub-object once more than two hint fields exist.)
+2. Neutral defaults for the new optional profile fields. (Recommended: the least-tailored value so an untouched profile behaves exactly as today; maintainer and `accessibility-auditor` to ratify.)
+3. Whether the shaping layer is a shared library or per-server logic. (Recommended: shared in core, for the same single-source-of-truth reasons ADR 0004 centralised the profile loader.)
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0011-neurotype-schema-strategy.md).
+- [ADR 0004 — Profile schema design](/decisions/0004-profile/) for the additive-only profile rule this ADR extends.
+- [ADR 0005 — Translation tool design](/decisions/0005-translation/) for the additive-only public-contract guarantee this ADR preserves.
+- [Profile schema reference](/reference/profile-schema/) for the field surface the new optional fields land on.

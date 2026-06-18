@@ -1,6 +1,6 @@
 # 0001 — Chronometric tool design
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder`, (pre-review for consent semantics on `idle_status`)

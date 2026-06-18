@@ -1,6 +1,6 @@
 # 0005 — Translation tool design (mcp-translation v0.1.0)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-16
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder`, `extension-engineer` (parallel — owns the browser-extension scaffold that consumes the same contracts), `eval-curator` (Phase 2 corpus owner), (advisory on PII handling and consent surfaces)
