@@ -50,14 +50,29 @@ function discoverSkills() {
   let entries;
   try {
     entries = fs.readdirSync(SOURCE_DIR, { withFileTypes: true });
-  } catch {
-    return [];
+  } catch (err) {
+    // Fail loudly if the source tree is missing/mis-named, rather than
+    // reporting "0 skill(s) in sync" and exiting 0 (a false green).
+    console.error(
+      `[sync-skills] cannot read source directory ${SOURCE_DIR}: ${err.message}`,
+    );
+    process.exit(1);
   }
   return entries
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
     .filter((name) => fs.existsSync(path.join(SOURCE_DIR, name, "SKILL.md")))
     .sort();
+}
+
+/** Read a file's text, or null if absent — avoids a check-then-read race. */
+function readIfExists(filePath) {
+  try {
+    return fs.readFileSync(filePath, "utf8");
+  } catch (err) {
+    if (err.code === "ENOENT") return null;
+    throw err;
+  }
 }
 
 /** Files to bundle for a given skill (relative to the skill dir). */
@@ -93,12 +108,12 @@ function runCheck() {
       const dstPath = path.join(PLUGIN_DIR, skill, rel);
       const relReport = path.join(skill, rel).replace(/\\/g, "/");
 
-      if (!fs.existsSync(dstPath)) {
+      const dst = readIfExists(dstPath);
+      if (dst === null) {
         problems.push(`MISSING  ${relReport}`);
         continue;
       }
       const src = fs.readFileSync(srcPath, "utf8");
-      const dst = fs.readFileSync(dstPath, "utf8");
       if (src !== dst) {
         problems.push(`DIFFERS  ${relReport}`);
       }
@@ -133,9 +148,7 @@ function runSync() {
       const relReport = path.join(skill, rel).replace(/\\/g, "/");
 
       const src = fs.readFileSync(srcPath, "utf8");
-      const current = fs.existsSync(dstPath)
-        ? fs.readFileSync(dstPath, "utf8")
-        : null;
+      const current = readIfExists(dstPath);
 
       if (current === src) {
         unchanged++;
@@ -158,13 +171,6 @@ function runSync() {
 }
 
 // ---- main -------------------------------------------------------------------
-
-// Fail loudly if the source tree is missing/mis-named, rather than reporting
-// "0 skill(s) in sync" and exiting 0 (a false green for the drift guard).
-if (!fs.existsSync(SOURCE_DIR)) {
-  console.error(`[sync-skills] source directory not found: ${SOURCE_DIR}`);
-  process.exit(1);
-}
 
 if (CHECK_MODE) {
   runCheck();
