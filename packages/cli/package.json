@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/cli",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "NeuroDock installer and diagnostic CLI — wires the MCP servers, manages plugins, and validates your profile.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -49,7 +49,7 @@
     "clean": "rimraf dist .turbo"
   },
   "dependencies": {
-    "@neurodock/native-host": "workspace:^0.1.0",
+    "@neurodock/native-host": "workspace:^0.2.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "chalk": "^5.3.0",
