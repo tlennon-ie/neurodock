@@ -1,6 +1,6 @@
 # 0006 — Guardrail tool design (mcp-guardrail v0.1.0)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-16
 - **Deciders:** maintainer (TBD), , `mcp-architect`
 - **Consulted:** `mcp-server-builder`, (co-required per `.claude/agents/mcp-architect.md` "clinical-implications tool"), `skill-author` (consumer of `check_rumination` from `ocd-decision-finalizer`)

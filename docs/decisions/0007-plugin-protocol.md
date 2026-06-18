@@ -1,6 +1,6 @@
 # 0007 — Plugin protocol design (NeuroDock plugins v0.1.0)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-16
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder` (will implement plugin discovery in `packages/core`), `skill-author` (out-of-tree skills follow this manifest plus the SKILL.md convention), `design-system-keeper` (owns `theme` plugins), `governance-author` (ETHICS + license alignment), (clinical-claim prohibition in `description`), `community-triage` (contributor on-ramp)

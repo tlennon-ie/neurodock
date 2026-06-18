@@ -1,6 +1,6 @@
 # 0002 — Cognitive graph tool design (mcp-cognitive-graph v0.1.0)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder`, `skill-author` (consumer of `recall_entity` and `recall_decisions` from `audhd-context-recovery` and `adhd-daily-planner`)

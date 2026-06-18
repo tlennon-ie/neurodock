@@ -281,6 +281,11 @@ export default defineConfig({
               link: "/decisions/0007-plugin-protocol/",
               badge: devBadge,
             },
+            {
+              label: "0011 — Neurotype schema strategy",
+              link: "/decisions/0011-neurotype-schema-strategy/",
+              badge: devBadge,
+            },
           ],
         },
         {

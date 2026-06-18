@@ -1,6 +1,6 @@
 # 0003 — Task fractionator tool design (mcp-task-fractionator v0.1.0)
 
-- **Status:** proposed
+- **Status:** accepted
 - **Date:** 2026-05-15
 - **Deciders:** maintainer (TBD), `mcp-architect`
 - **Consulted:** `mcp-server-builder`, `skill-author` (for the daily-planner and `/resume` consumers)
