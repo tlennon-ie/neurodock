@@ -129,6 +129,14 @@ export function buildProgram(): Command {
       "--no-native-host",
       "skip registering the optional native-messaging host (browser extension <-> profile.yaml)",
     )
+    .option(
+      "--extension-id <id>",
+      "extra browser-extension id to allow on the native host, e.g. a " +
+        "locally-loaded unpacked build (repeatable; published store ids are " +
+        "always included)",
+      (value: string, prev: string[]) => [...prev, value],
+      [] as string[],
+    )
     .action(
       async (opts: {
         client: string;
@@ -139,6 +147,7 @@ export function buildProgram(): Command {
         dryRun: boolean;
         // Commander inverts `--no-native-host`: presence of the flag sets this to false.
         nativeHost: boolean;
+        extensionId: string[];
       }) => {
         const client = validateClient(opts.client);
         const profile = validateProfile(opts.profile);
@@ -151,6 +160,9 @@ export function buildProgram(): Command {
           yes: opts.yes === true,
           dryRun: opts.dryRun === true,
           noNativeHost: opts.nativeHost === false,
+          ...(opts.extensionId.length > 0
+            ? { extensionIds: opts.extensionId }
+            : {}),
         });
         for (const m of r.messages) print(m);
         process.exit(r.exitCode);
@@ -196,6 +208,14 @@ export function buildProgram(): Command {
         "autostart (off by default — the Claude Code hook covers the common cases)",
       false,
     )
+    .option(
+      "--extension-id <id>",
+      "extra browser-extension id to allow on the native host, e.g. a " +
+        "locally-loaded unpacked build (repeatable; published store ids are " +
+        "always included)",
+      (value: string, prev: string[]) => [...prev, value],
+      [] as string[],
+    )
     .action(
       async (opts: {
         client: string;
@@ -207,6 +227,7 @@ export function buildProgram(): Command {
         // Commander inverts `--no-native-host`: presence of the flag sets this to false.
         nativeHost: boolean;
         daemon: boolean;
+        extensionId: string[];
       }) => {
         const client = validateClient(opts.client);
         const profile = validateProfile(opts.profile);
@@ -220,6 +241,9 @@ export function buildProgram(): Command {
           dryRun: opts.dryRun === true,
           noNativeHost: opts.nativeHost === false,
           daemon: opts.daemon === true,
+          ...(opts.extensionId.length > 0
+            ? { extensionIds: opts.extensionId }
+            : {}),
         });
         for (const m of r.messages) print(m);
         process.exit(r.exitCode);

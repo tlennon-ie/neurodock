@@ -28,6 +28,12 @@ export interface InstallAllOptions {
    * command.
    */
   readonly noNativeHost: boolean;
+  /**
+   * Extra browser-extension ids to allow on the native host, on top of the
+   * published store ids. Needed for a locally-loaded unpacked build, whose
+   * id differs from the published one. Empty/omitted = published ids only.
+   */
+  readonly extensionIds?: ReadonlyArray<string>;
 }
 
 export interface NativeHostOutcome {
@@ -308,7 +314,7 @@ function installNativeHost(
     "Installing native-messaging host (browser extension <-> profile.yaml)...",
   );
   try {
-    const result = hostInstall({ extensionIds: [] });
+    const result = hostInstall({ extensionIds: options.extensionIds ?? [] });
     for (const o of result.outcomes) {
       const detail = o.detail ? ` — ${o.detail}` : "";
       messages.push(

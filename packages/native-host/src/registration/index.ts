@@ -75,4 +75,8 @@ export type {
   RegistrationOutcome,
   UnregisterOptions,
 } from "./types.js";
-export { HOST_NAME } from "./types.js";
+export {
+  HOST_NAME,
+  PUBLISHED_EXTENSION_IDS,
+  withDefaultExtensionIds,
+} from "./types.js";

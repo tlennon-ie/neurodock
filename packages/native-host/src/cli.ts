@@ -21,6 +21,7 @@ import {
   detectPlatform,
   register,
   unregister,
+  withDefaultExtensionIds,
   HOST_NAME,
 } from "./registration/index.js";
 
@@ -77,10 +78,6 @@ function parseArgs(argv: ReadonlyArray<string>): ParsedArgs {
   return { command: "help", extensionIds: [] };
 }
 
-const DEFAULT_EXTENSION_IDS: ReadonlyArray<string> = [
-  "__NEURODOCK_EXTENSION_ID__",
-];
-
 function resolveHostPath(): string {
   try {
     return realpathSync(fileURLToPath(import.meta.url));
@@ -125,10 +122,9 @@ export function main(
     return 0;
   }
   if (parsed.command === "install") {
-    const ids =
-      parsed.extensionIds.length > 0
-        ? parsed.extensionIds
-        : DEFAULT_EXTENSION_IDS;
+    // Always register the published store ids; any --extension-id values
+    // (e.g. a locally-loaded unpacked build) are added on top.
+    const ids = withDefaultExtensionIds(parsed.extensionIds);
     const platformId = detectPlatform();
     process.stdout.write(`Installing ${HOST_NAME} (platform=${platformId})\n`);
     const outcomes = register({
