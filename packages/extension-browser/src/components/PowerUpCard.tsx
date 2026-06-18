@@ -14,7 +14,13 @@ import { useFullSetupStatus } from "../lib/full-setup.js";
 // registers the native-messaging host, and installs the Claude Code
 // guardrail hooks in one go (the standalone daemon stays opt-in via
 // --daemon).
-export const FULL_SETUP_COMMAND = "npx @neurodock/cli setup";
+//
+// The `@latest` pin is deliberate: bare `npx @neurodock/cli setup`
+// reuses whatever older copy npx already cached, which can predate the
+// `setup` subcommand and fails with "unknown command 'setup'". `@latest`
+// forces npx to resolve the current published version every time, matching
+// the `npx --yes @neurodock/cli@latest …` form the docs already use.
+export const FULL_SETUP_COMMAND = "npx @neurodock/cli@latest setup";
 
 export function PowerUpCard(): React.ReactElement {
   const { status, recheck } = useFullSetupStatus();

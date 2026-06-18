@@ -13,6 +13,40 @@
  */
 export const HOST_NAME = "com.neurodock.profile";
 
+/**
+ * Extension ids NeuroDock registers by default so a store-installed
+ * extension can reach the native host with zero extra steps.
+ *
+ *   - `lcdaiekokkgniiknejddojkfkoiinopo` — the published Chrome Web Store
+ *     id (used in the Chromium manifest's `allowed_origins`).
+ *   - `neurodock-extension@neurodock.org` — the Firefox gecko id (used in
+ *     the Firefox manifest's `allowed_extensions`).
+ *
+ * Both ids are written into BOTH manifests (each builder maps the same
+ * list). The cross-store entry — e.g. a `chrome-extension://<gecko-id>/`
+ * origin in the Chrome manifest — is simply never matched by that browser,
+ * so carrying one list for both is harmless and keeps a single source of
+ * truth. This replaces the old `__NEURODOCK_EXTENSION_ID__` placeholder,
+ * which was never substituted and so matched no extension at all.
+ */
+export const PUBLISHED_EXTENSION_IDS: ReadonlyArray<string> = [
+  "lcdaiekokkgniiknejddojkfkoiinopo",
+  "neurodock-extension@neurodock.org",
+];
+
+/**
+ * Union the caller-provided extension ids (e.g. a locally-loaded unpacked
+ * build, whose id differs from the published one) with the published
+ * defaults — deduped, defaults first. Always keeping the published ids
+ * means a developer who later installs from the store still works without
+ * re-running the installer.
+ */
+export function withDefaultExtensionIds(
+  provided: ReadonlyArray<string>,
+): string[] {
+  return Array.from(new Set([...PUBLISHED_EXTENSION_IDS, ...provided]));
+}
+
 export type RegistrationAction = "create" | "skip" | "update" | "remove";
 
 export interface RegistrationOutcome {

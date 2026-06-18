@@ -47,6 +47,12 @@ export interface SetupOptions {
    * autostart. Off by default — see the module comment above.
    */
   readonly daemon: boolean;
+  /**
+   * Extra browser-extension ids to allow on the native host (e.g. a
+   * locally-loaded unpacked build). Passed through to install-all on top
+   * of the published store ids.
+   */
+  readonly extensionIds?: ReadonlyArray<string>;
 }
 
 export interface SetupDependencies {
@@ -84,6 +90,7 @@ export async function runSetup(
     yes: options.yes,
     dryRun: options.dryRun,
     noNativeHost: options.noNativeHost,
+    ...(options.extensionIds ? { extensionIds: options.extensionIds } : {}),
   });
   messages.push(...installAllResult.messages);
 

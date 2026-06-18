@@ -20,13 +20,9 @@ import {
   register,
   unregister,
   detectPlatform,
+  withDefaultExtensionIds,
 } from "@neurodock/native-host/dist/registration/index.js";
 import type { RegistrationOutcome } from "@neurodock/native-host/dist/registration/index.js";
-
-const DEFAULT_EXTENSION_IDS: ReadonlyArray<string> = [
-  // Placeholder until the Chrome Web Store ID is allocated.
-  "__NEURODOCK_EXTENSION_ID__",
-];
 
 export interface HostInstallOptions {
   readonly extensionIds: ReadonlyArray<string>;
@@ -88,8 +84,9 @@ function resolveHostBinPath(): string {
 }
 
 export function runHostInstall(opts: HostInstallOptions): HostCommandResult {
-  const ids =
-    opts.extensionIds.length > 0 ? opts.extensionIds : DEFAULT_EXTENSION_IDS;
+  // Always register the published store ids; caller-supplied ids (e.g. a
+  // locally-loaded unpacked build) are added on top.
+  const ids = withDefaultExtensionIds(opts.extensionIds);
   const platform = detectPlatform();
   const hostPath = resolveHostBinPath();
   const outcomes = register({ hostPath, allowedExtensionIds: ids });

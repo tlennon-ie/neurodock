@@ -472,6 +472,53 @@ describe("neurodock install-all", () => {
     expect(joined).toContain("What this just did:");
   });
 
+  it("forwards extensionIds through to the native-host install (unpacked-build support)", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    let capturedExtensionIds: ReadonlyArray<string> | undefined;
+    const fakeHostInstall = (opts: {
+      extensionIds: ReadonlyArray<string>;
+    }): {
+      platform: string;
+      outcomes: ReadonlyArray<{
+        browser: string;
+        manifestPath: string;
+        action: "create" | "skip" | "update" | "remove";
+        detail?: string;
+      }>;
+    } => {
+      capturedExtensionIds = opts.extensionIds;
+      return { platform: "linux", outcomes: [] };
+    };
+
+    await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: false,
+        extensionIds: ["devunpackedid"],
+      },
+      {
+        spawn,
+        runHostInstall: fakeHostInstall,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(capturedExtensionIds).toEqual(["devunpackedid"]);
+  });
+
   it("--no-native-host skips the native-host install", async () => {
     const { spawn } = makeFakeSpawn({ uvAvailable: true });
     let hostInstallCalls = 0;
