@@ -48,17 +48,14 @@
 #       to prevent grade-fatigue spirals. The accuracy of rubric
 #       application drops measurably after ~60 min of continuous marking;
 #       surfacing the nudge earlier protects both the cohort and you.
-#     - chronometric.end_of_day_local
+#     - chronometric.end_of_day_local / chronometric.weekday_overrides
 #       OFFICE HOURS: if you hold late office hours one day a week (a
-#       common pattern), bump this to "18:30" on that day only by
-#       swapping in a day-specific override profile, or accept the early
-#       nudge as a reminder to wrap. The schema does not currently model
-#       per-weekday EOD — see the candidate-fields note in
-#       profiles/README.md.
-#       WEDNESDAY-AFTERNOON-CLASS PATTERN: a Wednesday afternoon teaching
-#       block that runs past 17:00 will trigger the EOD nudge mid-class.
-#       That's working as intended — the nudge is a signal to protect
-#       Wednesday evening from spillover admin, not to leave the room.
+#       common pattern), bump that day only via `weekday_overrides`
+#       (this preset overrides Wednesday to 18:30) rather than relaxing
+#       the whole-week EOD.
+#       WEDNESDAY-AFTERNOON-CLASS PATTERN: the Wednesday override keeps
+#       the nudge from firing mid-class while still protecting Wednesday
+#       evening from spillover admin.
 #     - guardrails.rumination_threshold / rumination_window_minutes
 #       schema defaults (3 queries / 90 min). Marking and feedback work
 #       involves legitimate iteration on phrasing; raise the threshold
@@ -68,23 +65,20 @@
 #       want chronometric.idle_status to read OS idle time (useful for
 #       distinguishing "in a lecture" from "stuck on a sentence").
 #
-# Semester cadence — fields the schema does NOT yet model:
-#   This preset would benefit from explicit semester-aware fields. They
-#   are NOT in profile.schema.json v0.1.0 and are tracked as candidate
-#   schema-bump fields in profiles/README.md:
+# Semester cadence — schema fields this preset sets (since v0.1.x, ADR 0011):
 #     - chronometric.calendar_phase
-#         enum-ish: "teaching" | "marking" | "exam" | "break"
-#         lets skills shift defaults (e.g. tighter break cadence during
-#         marking, looser during break).
+#         "teaching" | "marking" | "exam" | "deadlines" | "break".
+#         Lets skills shift defaults (e.g. tighter break cadence during
+#         marking, looser during break). This preset ships "teaching" as
+#         the neutral starting point — change it as the term moves.
+#         (Consumer pending: mcp-chronometric.)
 #     - chronometric.weekday_overrides
-#         map of weekday -> { end_of_day_local, hyperfocus_break_minutes }
-#         covers the Wednesday-afternoon-class and late-office-hours
-#         patterns without forcing a profile swap.
+#         map of weekday -> { end_of_day_local, hyperfocus_break_minutes }.
+#         This preset overrides Wednesday (late office hours / afternoon
+#         class -> 18:30) so the EOD nudge does not fire mid-class.
 #     - chronometric.protected_windows
-#         list of local-time ranges where the hyperfocus monitor should
-#         hard-surface (e.g. 12:00-12:30 lunch, post-17:00 evening).
-#   Until those land in a schema bump, encode the intent in this
-#   comment block and in the user-tunable notes above.
+#         local-time ranges where the hyperfocus monitor hard-surfaces
+#         rather than nudges: a lunch window and the post-EOD evening.
 #
 # Install (as your default educator profile):
 #   cp profiles/educator-semester.yaml ~/.neurodock/profile.yaml
@@ -128,6 +122,23 @@ chronometric:
   # interruption that protects the boundary.
   end_of_day_local: "17:00"
   session_overlap_policy: "auto_close"
+  # Neutral starting point for the term. Move to "marking" / "exam"
+  # during those weeks for tighter break cadence; "break" loosens it.
+  calendar_phase: "teaching"
+  # Wednesday holds late office hours / an afternoon class — push EOD
+  # to 18:30 that day only so the nudge does not fire mid-class.
+  weekday_overrides:
+    wednesday:
+      end_of_day_local: "18:30"
+  # Hard-surface (not just nudge) in these windows: defend lunch and
+  # the post-EOD evening from spillover admin.
+  protected_windows:
+    - start: "12:00"
+      end: "12:30"
+      label: "lunch"
+    - start: "17:00"
+      end: "23:59"
+      label: "evening"
 
 guardrails:
   rumination_threshold: 3

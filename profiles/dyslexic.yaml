@@ -27,12 +27,12 @@
 #     - chronometric.hyperfocus_break_minutes = 90   the schema default;
 #       no dyslexia-specific reason to move it.
 #     - guardrails.sycophancy_check = warn   manifesto default.
-#   NOTE on line-height:
-#     v0.1.0 of the schema does not yet carry a preferred-line-height
-#     field. Clients tend to pair atkinson_hyperlegible with a generous
-#     line-height by default; an explicit profile field is a candidate
-#     for a future schema version. See the README in this directory
-#     for the running list.
+#     - preferences.line_height_hint = relaxed   atkinson_hyperlegible
+#       pairs best with generous line spacing for dyslexic readers. This
+#       categorical hint lets clients that render NeuroDock output as
+#       rich text honour it without each one re-deriving the pairing.
+#       (Schema field since v0.1.x per ADR 0011; consumed by clients
+#       rendering rich text — pending.)
 #   USER-TUNABLE:
 #     - identity.display_name       set to your preferred handle.
 #     - identity.neurotypes   add more tags if you also identify with
@@ -59,6 +59,11 @@ preferences:
   max_chunk_size: 4
   reading_font_hint: "atkinson_hyperlegible"
   motion: "reduced"
+  # Generous line spacing pairs with atkinson_hyperlegible for dyslexic
+  # readers; clients rendering rich text honour this where they can.
+  # "relaxed" anchors around 1.65; every band stays at or above the 1.5
+  # body line-height floor required by WCAG 1.4.8 / 1.4.12.
+  line_height_hint: "relaxed"
 
 chronometric:
   hyperfocus_break_minutes: 90
