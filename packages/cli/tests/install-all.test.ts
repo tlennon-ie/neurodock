@@ -14,6 +14,27 @@ import {
   type SpawnFn,
   type SpawnResult,
 } from "../src/commands/install-all.js";
+import type { InstallSkillsResult } from "../src/commands/install-skills.js";
+
+function makeFakeInstallSkills(): {
+  fn: () => Promise<InstallSkillsResult>;
+  calls: number;
+} {
+  let calls = 0;
+  return {
+    get calls() {
+      return calls;
+    },
+    fn: () => {
+      calls += 1;
+      return Promise.resolve({
+        messages: ["  ~/.claude/skills", "    [ok]   neurodock-fake-skill"],
+        installed: 6,
+        exitCode: 0 as const,
+      });
+    },
+  };
+}
 
 function makeSandbox(): { home: string; cwd: string; cleanup: () => void } {
   const root = mkdtempSync(join(tmpdir(), "neurodock-installall-"));
@@ -131,6 +152,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: true,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -183,6 +205,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -232,6 +255,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -276,6 +300,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -325,6 +350,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -358,6 +384,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -391,6 +418,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -446,6 +474,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: false,
+        noSkills: true,
       },
       {
         spawn,
@@ -499,6 +528,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: false,
+        noSkills: true,
         extensionIds: ["devunpackedid"],
       },
       {
@@ -544,6 +574,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: true,
+        noSkills: true,
       },
       {
         spawn,
@@ -569,6 +600,123 @@ describe("neurodock install-all", () => {
     expect(joined).toContain("Skipped the native-messaging host");
   });
 
+  it("happy path: install-all also installs the per-neurotype skills", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    const fakeSkills = makeFakeInstallSkills();
+    const fakeHostInstall = (): {
+      platform: string;
+      outcomes: ReadonlyArray<{
+        browser: string;
+        manifestPath: string;
+        action: "create" | "skip" | "update" | "remove";
+        detail?: string;
+      }>;
+    } => ({ platform: "linux", outcomes: [] });
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: true,
+        noSkills: false,
+      },
+      {
+        spawn,
+        runHostInstall: fakeHostInstall,
+        runInstallSkills: fakeSkills.fn,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(fakeSkills.calls).toBe(1);
+    expect(r.exitCode).toBe(0);
+    const joined = r.messages.join("\n");
+    expect(joined).toContain("Installing per-neurotype skills");
+    expect(joined).toContain("neurodock-fake-skill");
+    expect(joined).toContain("Installed the per-neurotype skills");
+  });
+
+  it("--no-skills skips the skills install", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    const fakeSkills = makeFakeInstallSkills();
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: true,
+        noSkills: true,
+      },
+      {
+        spawn,
+        runInstallSkills: fakeSkills.fn,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(fakeSkills.calls).toBe(0);
+    expect(r.exitCode).toBe(0);
+    const joined = r.messages.join("\n");
+    expect(joined).toContain("Skipping skills install");
+    expect(joined).toContain("--no-skills");
+  });
+
+  it("--dry-run mentions the skills step", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: true,
+        noNativeHost: true,
+        noSkills: false,
+      },
+      {
+        spawn,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(r.exitCode).toBe(0);
+    expect(r.messages.join("\n").toLowerCase()).toContain("skill");
+  });
+
   it("native-host failure emits a warning but does not fail the whole command", async () => {
     const { spawn } = makeFakeSpawn({ uvAvailable: true });
     const fakeHostInstall = (): {
@@ -592,6 +740,7 @@ describe("neurodock install-all", () => {
         yes: true,
         dryRun: false,
         noNativeHost: false,
+        noSkills: true,
       },
       {
         spawn,
@@ -618,5 +767,47 @@ describe("neurodock install-all", () => {
     expect(joined).toContain("native-messaging host install failed");
     expect(joined).toContain("optional");
     expect(joined).toContain("Native-messaging host install failed");
+  });
+
+  it("skills-install failure emits a warning but does not fail the whole command", async () => {
+    const { spawn } = makeFakeSpawn({ uvAvailable: true });
+    const throwingSkills = (): Promise<InstallSkillsResult> => {
+      throw new Error("permission denied writing ~/.claude/skills");
+    };
+
+    const r = await runInstallAll(
+      {
+        client: "claude-code",
+        profile: "minimal",
+        installer: "auto",
+        skipInstall: false,
+        yes: true,
+        dryRun: false,
+        noNativeHost: true,
+        noSkills: false,
+      },
+      {
+        spawn,
+        runInstallSkills: throwingSkills,
+        envOverrides: {
+          platform: "linux",
+          home: sandbox.home,
+          cwd: sandbox.cwd,
+          user: "tester",
+          env: {
+            NEURODOCK_PROFILE_PATH: join(sandbox.home, "profile.yaml"),
+          } as NodeJS.ProcessEnv,
+        },
+      },
+    );
+
+    expect(r.skills.status).toBe("failed");
+    expect(r.skills.error).toContain("permission denied");
+    // Whole command stays exit 0 — the MCP servers are wired regardless; the
+    // per-neurotype skills are an optional convenience.
+    expect(r.exitCode).toBe(0);
+    const joined = r.messages.join("\n");
+    expect(joined).toContain("[warn] skills install failed");
+    expect(joined).toContain("optional");
   });
 });

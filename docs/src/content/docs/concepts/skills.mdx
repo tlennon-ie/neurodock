@@ -23,6 +23,15 @@ A skill lives at `packages/skills/<name>/` and ships:
 
 That is the whole contract. There is no compilation step; there is no skill runtime. The client reads `SKILL.md` and follows it.
 
+## How skills reach you
+
+`packages/skills/` is the source of truth; users receive the skills through two delivery paths:
+
+- **Claude Code plugin / marketplace.** The plugin at `claude-code/neurodock/` ships each skill's `SKILL.md` in its own `skills/` directory, kept in sync by `scripts/sync-skills.mjs` and guarded against drift in CI. Installing the plugin makes the skills available automatically.
+- **`@neurodock/cli`.** Users who wire NeuroDock with the CLI run `neurodock install-skills` (also invoked automatically by `neurodock install-all`, `neurodock setup`, and `neurodock update` unless you pass `--no-skills`). It copies each skill into your client's personal skills directory — `~/.claude/skills/neurodock-<name>/SKILL.md` for Claude Code and Claude Desktop. Cursor has no skills system and is skipped.
+
+Either way the model reads the same markdown. Hosted/remote users get the skills via the marketplace plugin or `neurodock install-skills`, since the skills are content the client reads locally rather than something the remote server delivers.
+
 ## How triggers work
 
 A skill's `triggers` block in frontmatter declares the conditions under which the client activates it. Examples:

@@ -9,6 +9,10 @@ import {
   runHostInstall as defaultRunHostInstall,
   type HostCommandResult,
 } from "./host.js";
+import {
+  runInstallSkills as defaultRunInstallSkills,
+  type InstallSkillsResult,
+} from "./install-skills.js";
 import type { ClientId } from "../types.js";
 
 export type InstallerKind = "uv" | "pip";
@@ -29,11 +33,25 @@ export interface InstallAllOptions {
    */
   readonly noNativeHost: boolean;
   /**
+   * When true, skip copying the per-neurotype skills into the client's
+   * personal-skills directory. Skills are installed by default so the
+   * happy path is one command; `--no-skills` opts out (mirrors
+   * `--no-native-host`).
+   */
+  readonly noSkills: boolean;
+  /**
    * Extra browser-extension ids to allow on the native host, on top of the
    * published store ids. Needed for a locally-loaded unpacked build, whose
    * id differs from the published one. Empty/omitted = published ids only.
    */
   readonly extensionIds?: ReadonlyArray<string>;
+}
+
+export interface SkillsOutcome {
+  /** "installed" = ran, "skipped" = --no-skills or dry-run, "failed" = error/exit!=0. */
+  readonly status: "installed" | "skipped" | "failed";
+  readonly result?: InstallSkillsResult;
+  readonly error?: string;
 }
 
 export interface NativeHostOutcome {
@@ -62,6 +80,7 @@ export interface InstallAllResult {
   readonly packages: ReadonlyArray<PackageOutcome>;
   readonly initResult: InitRunResult | null;
   readonly nativeHost: NativeHostOutcome;
+  readonly skills: SkillsOutcome;
   readonly messages: ReadonlyArray<string>;
   /** 0 = ok, 1 = install/path failure, 2 = init failure */
   readonly exitCode: 0 | 1 | 2;
@@ -84,6 +103,12 @@ export interface InstallAllDependencies {
    * touch the user's registry / config dirs.
    */
   readonly runHostInstall?: typeof defaultRunHostInstall;
+  /**
+   * Override the skills install step. Defaults to the real
+   * `runInstallSkills` from ./install-skills.js. Tests inject a stub so
+   * they don't touch the user's ~/.claude/skills dir.
+   */
+  readonly runInstallSkills?: typeof defaultRunInstallSkills;
 }
 
 export type SpawnFn = (
@@ -137,6 +162,7 @@ export async function runInstallAll(
   const spawn = deps.spawn ?? defaultSpawn;
   const init = deps.runInit ?? runInit;
   const hostInstall = deps.runHostInstall ?? defaultRunHostInstall;
+  const skillsInstall = deps.runInstallSkills ?? defaultRunInstallSkills;
   const messages: string[] = [];
 
   // Phase 1: pick installer.
@@ -168,11 +194,21 @@ export async function runInstallAll(
         "Would register the optional native-messaging host (browser extension <-> profile.yaml).",
       );
     }
+    if (options.noSkills) {
+      messages.push(
+        "Would skip the per-neurotype skills install (--no-skills).",
+      );
+    } else {
+      messages.push(
+        "Would install the per-neurotype skills into ~/.claude/skills (Claude Code / Claude Desktop).",
+      );
+    }
     return {
       installer: "dry-run",
       packages: [],
       initResult: null,
       nativeHost: { status: "skipped" },
+      skills: { status: "skipped" },
       messages,
       exitCode: 0,
     };
@@ -185,6 +221,7 @@ export async function runInstallAll(
       packages: [],
       initResult: null,
       nativeHost: { status: "skipped" },
+      skills: { status: "skipped" },
       messages,
       exitCode: 1,
     };
@@ -241,6 +278,7 @@ export async function runInstallAll(
       packages: outcomes,
       initResult: null,
       nativeHost: { status: "skipped" },
+      skills: { status: "skipped" },
       messages,
       exitCode: 2,
     };
@@ -251,6 +289,11 @@ export async function runInstallAll(
   // installs the browser extension, and surfacing a warning is friendlier
   // than failing the whole "first-time install" command.
   const nativeHost = installNativeHost(options, hostInstall, messages);
+
+  // Phase 3.6: install the per-neurotype skills (opt-out). Failure is
+  // non-fatal — the MCP servers are the core; skills are an enhancement —
+  // so a write hiccup in ~/.claude/skills should not fail the command.
+  const skills = await installSkills(options, skillsInstall, deps, messages);
 
   // Phase 4: summary + suggested prompts.
   const installedCount = outcomes.filter((o) => o.installed).length;
@@ -280,6 +323,7 @@ export async function runInstallAll(
     "  - Wired your MCP-aware clients (Claude Desktop / Claude Code / Cursor)",
   );
   messages.push(`  - ${describeNativeHostBullet(nativeHost)}`);
+  messages.push(`  - ${describeSkillsBullet(skills)}`);
   messages.push("");
   messages.push("Try one of these in your MCP client:");
   for (const p of SUGGESTED_PROMPTS) {
@@ -294,9 +338,58 @@ export async function runInstallAll(
     packages: outcomes,
     initResult,
     nativeHost,
+    skills,
     messages,
     exitCode,
   };
+}
+
+async function installSkills(
+  options: InstallAllOptions,
+  skillsInstall: typeof defaultRunInstallSkills,
+  deps: InstallAllDependencies,
+  messages: string[],
+): Promise<SkillsOutcome> {
+  messages.push("");
+  if (options.noSkills) {
+    messages.push("Skipping skills install (--no-skills).");
+    return { status: "skipped" };
+  }
+
+  messages.push(
+    "Installing per-neurotype skills (Claude Code / Claude Desktop)...",
+  );
+  try {
+    const result = await skillsInstall(
+      { client: options.client, dryRun: false, yes: options.yes },
+      deps.envOverrides ? { envOverrides: deps.envOverrides } : {},
+    );
+    for (const m of result.messages) messages.push(`  ${m}`);
+    return {
+      status: result.exitCode === 0 ? "installed" : "failed",
+      result,
+      ...(result.exitCode !== 0
+        ? { error: "skills install reported a non-zero exit" }
+        : {}),
+    };
+  } catch (err: unknown) {
+    const detail = err instanceof Error ? err.message : String(err);
+    messages.push(`  [warn] skills install failed: ${truncate(detail)}`);
+    messages.push(
+      "  This is optional — the MCP servers are wired regardless. Re-run 'neurodock install-skills' later.",
+    );
+    return { status: "failed", error: detail };
+  }
+}
+
+function describeSkillsBullet(outcome: SkillsOutcome): string {
+  if (outcome.status === "installed") {
+    return "Installed the per-neurotype skills into ~/.claude/skills (Claude Code / Claude Desktop)";
+  }
+  if (outcome.status === "failed") {
+    return "Skills install failed (optional — re-run 'neurodock install-skills' later)";
+  }
+  return "Skipped the per-neurotype skills (optional — run 'neurodock install-skills' to add them)";
 }
 
 function installNativeHost(

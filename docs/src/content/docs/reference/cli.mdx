@@ -1,10 +1,10 @@
 ---
 title: CLI
-description: The neurodock command-line interface. Nineteen commands across seven groups, shipped in @neurodock/cli 0.6.2.
+description: The neurodock command-line interface. Twenty-two commands, shipped in @neurodock/cli 0.8.2.
 ---
 
 :::note[CLI status]
-`@neurodock/cli` `0.6.2` is shipped to npm. Nineteen commands across seven groups (`init`, `install-all`, `install-hooks`, `examples`, `doctor`, `validate`, `update`, `sync`, `uninstall`, `host install/uninstall`, `profile show/validate`, `plugin add/remove/list/enable/disable/validate`). The CLI is the lowest-friction onboarding path: `npx --yes @neurodock/cli@latest install-all` should take a fresh install from zero to a working substrate in under five minutes.
+`@neurodock/cli` `0.8.2` is shipped to npm. Twenty-two commands: top-level `init`, `install-all`, `setup`, `install-skills`, `examples`, `doctor`, `validate`, `update`, `sync`, `uninstall`, `install-hooks`, plus the `profile show/validate`, `guardrail status`, `host install/uninstall`, and `plugin add/remove/list/enable/disable/validate` groups. The CLI is the lowest-friction onboarding path: `npx --yes @neurodock/cli@latest install-all` should take a fresh install from zero to a working substrate in under five minutes.
 :::
 
 ## Commands
@@ -12,7 +12,9 @@ description: The neurodock command-line interface. Nineteen commands across seve
 | Command | Job |
 |---|---|
 | [`neurodock init`](#neurodock-init) | Detect installed MCP clients, scaffold the profile, register the five substrate servers. |
-| [`neurodock install-all`](#neurodock-install-all) | One-command install: detect `uv` or `pip`, install the six Python packages, then run `init`. |
+| [`neurodock install-all`](#neurodock-install-all) | One-command install: detect `uv` or `pip`, install the six Python packages, run `init`, register the native host, and install the skills. |
+| [`neurodock setup`](#neurodock-setup) | Full setup in one command: runs `install-all` then `install-hooks`. Standalone daemon is opt-in via `--daemon`. |
+| [`neurodock install-skills`](#neurodock-install-skills) | Copy the per-neurotype skills into your client's personal skills directory (`~/.claude/skills`). |
 | [`neurodock examples`](#neurodock-examples) | Print copy-pasteable prompts that exercise every wired NeuroDock MCP tool. |
 | [`neurodock doctor`](#neurodock-doctor) | Verify the install. Profile readable, all servers start, embedding backend reachable. |
 | [`neurodock validate`](#neurodock-validate) | Ajv-driven schema validation against the canonical profile schema. |
@@ -23,6 +25,7 @@ description: The neurodock command-line interface. Nineteen commands across seve
 | [`neurodock host uninstall`](#neurodock-host-uninstall) | Remove the native messaging host manifests / registry pointers. |
 | [`neurodock profile show`](#neurodock-profile-show) | Print the loaded profile with loader defaults applied. |
 | [`neurodock profile validate`](#neurodock-profile-validate) | Validate `~/.neurodock/profile.yaml` against the schema. |
+| [`neurodock guardrail status`](#neurodock-guardrail-status) | Report which proactive-guardrail pieces (hooks, daemon) are wired and which are missing. |
 | [`neurodock plugin add`](#neurodock-plugin-add) | Install a plugin from a local directory into `~/.neurodock/plugins/`. |
 | [`neurodock plugin remove`](#neurodock-plugin-remove) | Remove an installed plugin. |
 | [`neurodock plugin list`](#neurodock-plugin-list) | List installed plugins and their enabled state. |
@@ -60,7 +63,7 @@ npx neurodock init --client claude-desktop --profile minimal --dry-run
 npx neurodock install-all
 ```
 
-The one-command first-time install. Detects whether `uv` is on PATH (preferred) and falls back to `python -m pip`, installs the six Python MCP servers (`neurodock-mcp-chronometric`, `neurodock-mcp-cognitive-graph`, `neurodock-mcp-task-fractionator`, `neurodock-mcp-translation`, `neurodock-mcp-guardrail`, `neurodock-evals`), verifies each entrypoint with `<command> --help`, and then runs `neurodock init` to wire MCP clients. Collapses six `pip install` lines plus an `init` into one.
+The one-command first-time install. Detects whether `uv` is on PATH (preferred) and falls back to `python -m pip`, installs the six Python MCP servers (`neurodock-mcp-chronometric`, `neurodock-mcp-cognitive-graph`, `neurodock-mcp-task-fractionator`, `neurodock-mcp-translation`, `neurodock-mcp-guardrail`, `neurodock-evals`), verifies each entrypoint with `<command> --help`, runs `neurodock init` to wire MCP clients, registers the optional native-messaging host, and installs the per-neurotype skills into `~/.claude/skills`. Collapses six `pip install` lines plus `init`, host registration, and skill install into one.
 
 | Flag | Default | Meaning |
 |---|---|---|
@@ -70,6 +73,11 @@ The one-command first-time install. Detects whether `uv` is on PATH (preferred) 
 | `--skip-install` | `false` | Skip the Python install step; only run `init`. |
 | `--yes` | `false` | Answer yes to all prompts. |
 | `--dry-run` | `false` | Print what would happen without writing. |
+| `--no-native-host` | n/a | Skip registering the optional native-messaging host (browser extension ↔ `profile.yaml`). |
+| `--no-skills` | n/a | Skip copying the per-neurotype skills into `~/.claude/skills`. |
+| `--extension-id <id>` | — | Extra browser-extension id to allow on the native host (repeatable; published store ids are always included). |
+
+The native-host and skills steps are best-effort: a failure in either emits a warning but does not fail the command (the six MCP servers are the core).
 
 Exit codes: `0` on success; `1` if any entrypoint is missing from PATH; `2` if `init` fails.
 
@@ -78,6 +86,55 @@ Example:
 ```bash
 npx neurodock install-all --installer uv --yes
 ```
+
+### `neurodock setup`
+
+```bash
+npx neurodock setup
+```
+
+Full setup in one command. A thin orchestrator that runs two existing installers in order:
+
+1. [`neurodock install-all`](#neurodock-install-all) — install the six MCP servers, wire the clients, register the native-messaging host, and install the skills.
+2. [`neurodock install-hooks`](#neurodock-install-hooks) — wire the Claude Code proactive-guardrail hooks into `~/.claude/settings.json`.
+
+The standalone guardrail daemon stays opt-in: pass `--daemon` to also register it at user-login autostart. The hooks step runs even if `install-all` reported a problem, so a PATH hiccup with the MCP entrypoints does not leave you without proactive guardrails.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--profile <id>` | `example` | `minimal` or `example`. |
+| `--installer <id>` | `auto` | `uv`, `pip`, or `auto`. |
+| `--skip-install` | `false` | Skip the Python install step (only wire clients + hooks). |
+| `--yes` | `false` | Answer yes to all prompts. |
+| `--dry-run` | `false` | Print what would happen without writing. |
+| `--no-native-host` | n/a | Skip registering the optional native-messaging host. |
+| `--no-skills` | n/a | Skip copying the per-neurotype skills into `~/.claude/skills`. |
+| `--daemon` | `false` | Also register the standalone guardrail daemon at user-login autostart. |
+| `--extension-id <id>` | — | Extra browser-extension id to allow on the native host (repeatable; published store ids are always included). |
+
+Exit codes: `install-all`'s exit code wins when non-zero; otherwise `1` if the hooks step failed, else `0`.
+
+### `neurodock install-skills`
+
+```bash
+npx neurodock install-skills
+```
+
+Copy the per-neurotype NeuroDock skills bundled in the CLI tarball into your client's personal skills directory so Claude Code / Claude Desktop discover them. Each skill installs as `~/.claude/skills/neurodock-<name>/SKILL.md` (namespaced so it is collision-free and recognisably NeuroDock's).
+
+- Claude Code and Claude Desktop share `~/.claude/skills`; the command de-duplicates so the files are written once.
+- Cursor has no skills system today and is skipped with a notice (never an error).
+- Idempotent: re-running refreshes each `SKILL.md` in place.
+- This step also runs automatically inside `install-all`, `setup`, and `update` unless you pass `--no-skills`.
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--client <id>` | `all` | `claude-desktop`, `claude-code`, `cursor`, or `all`. |
+| `--dry-run` | `false` | Print the planned targets without writing anything. |
+| `--yes` | `false` | Answer yes to all prompts (idempotent re-runs refresh in place). |
+
+Exit codes: `0` on success; `1` if no bundled skills were found (a packaging bug).
 
 ### `neurodock examples`
 
@@ -140,7 +197,7 @@ Exit codes: `0` if valid; `1` if missing, unparseable, or invalid.
 neurodock update
 ```
 
-Upgrades NeuroDock to the latest version. Same code path as `install-all` — re-runs `pip install --upgrade` (or `uv tool install`) for every NeuroDock MCP server, re-wires the detected MCP clients, and re-registers the optional native-messaging host. This is the verb users look for when they want a version bump.
+Upgrades NeuroDock to the latest version. Same code path as `install-all` — re-runs `pip install --upgrade` (or `uv tool install`) for every NeuroDock MCP server, re-wires the detected MCP clients, re-registers the optional native-messaging host, and refreshes the per-neurotype skills in `~/.claude/skills`. This is the verb users look for when they want a version bump.
 
 | Flag | Default | Meaning |
 |---|---|---|
@@ -151,6 +208,7 @@ Upgrades NeuroDock to the latest version. Same code path as `install-all` — re
 | `--yes` | `false` | Answer yes to all prompts. |
 | `--dry-run` | `false` | Print what would happen without writing. |
 | `--no-native-host` | n/a | Skip re-registering the optional native-messaging host. |
+| `--no-skills` | n/a | Skip refreshing the per-neurotype skills in `~/.claude/skills`. |
 
 Exit codes: `0` ok; `1` an entrypoint is missing from PATH after install; `2` init failed.
 
@@ -231,6 +289,16 @@ neurodock profile validate
 Validate `~/.neurodock/profile.yaml` against the canonical schema. Returns the same checks as the top-level `validate` command but scoped to the resolved profile path with no file/strict flags.
 
 Exit codes: `0` if valid; `1` if missing or invalid.
+
+### `neurodock guardrail status`
+
+```bash
+neurodock guardrail status
+```
+
+Report which proactive-guardrail pieces are wired and which are missing — the Claude Code hooks in `~/.claude/settings.json` and the optional standalone daemon. Read-only diagnostic; writes nothing. No flags.
+
+Exit codes: `0` when the wiring is healthy; non-zero when a piece is missing.
 
 ### `neurodock plugin add`
 
@@ -315,7 +383,7 @@ Exit codes: `0` if valid; non-zero otherwise.
 
 | Flag | Meaning |
 |---|---|
-| `-v, --version` | Print the CLI version (`0.6.2`). |
+| `-v, --version` | Print the CLI version (`0.8.2`). |
 | `-h, --help` | Show help for the program or a subcommand. |
 
 ## Environment
