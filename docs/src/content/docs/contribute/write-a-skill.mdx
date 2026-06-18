@@ -86,11 +86,16 @@ pnpm --filter @neurodock/skills test:a11y -- --skill <your-skill-name>
 
 This catches: max-chunk-size violations, animation references, gradient references, and patronising voice patterns. (Per the [accessibility-auditor agent spec](https://github.com/tlennon-ie/neurodock/blob/main/.claude/agents/accessibility-auditor.md).)
 
-## 6. Open a draft PR
+## 6. Bundle into the plugin, then open a draft PR
+
+Per-neurotype skills authored in `packages/skills/` are bundled into the Claude
+Code plugin verbatim. Run the sync first and commit both copies — a CI drift
+guard fails the build if the plugin copy is missing or out of date:
 
 ```bash
 git checkout -b feat/skills/<your-skill-name>
-git add packages/skills/<your-skill-name>
+node scripts/sync-skills.mjs
+git add packages/skills/<your-skill-name> claude-code/neurodock/skills/<your-skill-name>
 git commit -m "feat: add <your-skill-name> skill"
 git push -u origin feat/skills/<your-skill-name>
 gh pr create --draft --title "feat: add <your-skill-name> skill"

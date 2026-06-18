@@ -253,6 +253,12 @@ importers:
         specifier: ^3.2.6
         version: 3.2.6(@types/debug@4.1.13)(@types/node@22.19.21)(jiti@2.7.0)(jsdom@25.0.1)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0)
 
+  packages/repo-tooling:
+    devDependencies:
+      vitest:
+        specifier: ^3.2.6
+        version: 3.2.6(@types/debug@4.1.13)(@types/node@25.9.3)(jiti@2.7.0)(jsdom@25.0.1)(lightningcss@1.32.0)(tsx@4.22.4)(yaml@2.9.0)
+
 packages:
 
   '@1natsu/wait-element@4.2.0':
