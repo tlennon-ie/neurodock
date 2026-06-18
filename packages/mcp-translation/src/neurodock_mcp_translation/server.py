@@ -101,6 +101,7 @@ def build_server() -> FastMCP[Any]:
         channel: str | None = None,
         thread_context: list[str] | None = None,
         target_language: str | None = None,
+        reader_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "translate_incoming"})
         try:
@@ -109,6 +110,7 @@ def build_server() -> FastMCP[Any]:
                 channel=channel,  # type: ignore[arg-type]
                 thread_context=thread_context,
                 target_language=target_language,
+                reader_context=reader_context,  # type: ignore[arg-type]
             )
         except ValidationError as exc:
             raise _ToolError(_validation_error_code(exc, "TEXT_REQUIRED"), str(exc)) from exc
@@ -136,6 +138,7 @@ def build_server() -> FastMCP[Any]:
         baseline_messages: list[str] | None = None,
         target_register: TargetRegister | None = None,
         channel: str | None = None,
+        reader_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "check_tone"})
         try:
@@ -144,6 +147,7 @@ def build_server() -> FastMCP[Any]:
                 baseline_messages=baseline_messages,
                 target_register=target_register,
                 channel=channel,  # type: ignore[arg-type]
+                reader_context=reader_context,  # type: ignore[arg-type]
             )
         except ValidationError as exc:
             raise _ToolError(_validation_error_code(exc, "TEXT_REQUIRED"), str(exc)) from exc
@@ -172,6 +176,7 @@ def build_server() -> FastMCP[Any]:
         preserve_terms: list[str] | None = None,
         channel: str | None = None,
         preserve_intent: bool = True,
+        reader_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "rewrite_outgoing"})
         try:
@@ -181,6 +186,7 @@ def build_server() -> FastMCP[Any]:
                 preserve_terms=preserve_terms,
                 channel=channel,  # type: ignore[arg-type]
                 preserve_intent=preserve_intent,
+                reader_context=reader_context,  # type: ignore[arg-type]
             )
         except ValidationError as exc:
             raise _ToolError(
@@ -209,6 +215,7 @@ def build_server() -> FastMCP[Any]:
         me: str,
         project: str | None = None,
         speakers: list[str] | None = None,
+        reader_context: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         _LOG.info("tool_invoked", extra={"tool": "brief_meeting"})
         try:
@@ -217,6 +224,7 @@ def build_server() -> FastMCP[Any]:
                 me=me,
                 project=project,
                 speakers=speakers,
+                reader_context=reader_context,  # type: ignore[arg-type]
             )
         except ValidationError as exc:
             raise _ToolError(_validation_error_code(exc, "TRANSCRIPT_REQUIRED"), str(exc)) from exc

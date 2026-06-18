@@ -11,9 +11,9 @@ caller's MCP client MAY execute against its configured LLM.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ---------------------------------------------------------------------------
 # Shared enums (mirror schemas)
@@ -56,6 +56,21 @@ NextActionEnum = Literal[
 ToneAxisName = Literal["directness", "warmth", "urgency"]
 
 ProvenanceMode = Literal["local", "cloud", "unknown"]
+
+# R1 (ADR 0012): self-identified neurotypes + output-format enums. Mirrors
+# @neurodock/core's profile.ts. Self-ID only; never a diagnosis.
+Neurotype = Literal[
+    "adhd",
+    "asd",
+    "audhd",
+    "ocd",
+    "dyslexia",
+    "dyspraxia",
+    "tourette",
+    "other",
+]
+
+OutputFormat = Literal["answer_first", "conventional", "bullet_first"]
 
 AmbiguousReason = Literal[
     "vague_timeline",
@@ -107,6 +122,41 @@ class PromptForLLMRefinement(_Base):
 
 
 # ---------------------------------------------------------------------------
+# reader_context (ADR 0012): optional, additive, per-neurotype prompt shaping.
+
+
+class ReaderContext(BaseModel):
+    """Optional reader preferences that shape the LLM-refinement prompt.
+
+    Additive and absence-tolerant (ADR 0012 binding rule 3). Every field is
+    optional; an absent field falls back to the ``profile.yaml`` read, and then
+    to neutral absence. ``extra="ignore"`` keeps the input forward-compatible:
+    an unknown key from a newer client is tolerated, never rejected.
+
+    This carries NO output contract — it only feeds prompt assembly. The tool
+    output shape is unchanged.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    neurotypes: list[Neurotype] | None = Field(default=None, max_length=8)
+    output_format: OutputFormat | None = None
+    max_chunk_size: int | None = Field(default=None, ge=1, le=20)
+    voice_input_preferred: bool | None = None
+    additional_notes: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("max_chunk_size", mode="before")
+    @classmethod
+    def _reject_bool_max_chunk_size(cls, value: Any) -> Any:
+        # ``bool`` is an ``int`` subclass; Pydantic would otherwise coerce
+        # ``True``/``False`` to ``1``/``0``. Reject it explicitly so the wire
+        # contract stays a true integer and matches profile.py:_parse_chunk_size.
+        if isinstance(value, bool):
+            raise ValueError("max_chunk_size must be an integer, not a boolean")
+        return value
+
+
+# ---------------------------------------------------------------------------
 # translate_incoming
 
 
@@ -115,6 +165,7 @@ class TranslateIncomingInput(_Base):
     channel: Channel | None = None
     thread_context: list[str] | None = Field(default=None, max_length=20)
     target_language: str | None = None
+    reader_context: ReaderContext | None = None
 
 
 class SubtextHypothesis(_Base):
@@ -164,6 +215,7 @@ class CheckToneInput(_Base):
     baseline_messages: list[str] | None = Field(default=None, max_length=20)
     target_register: TargetRegister | None = None
     channel: Channel | None = None
+    reader_context: ReaderContext | None = None
 
 
 class ToneAxes(_Base):
@@ -213,6 +265,7 @@ class RewriteOutgoingInput(_Base):
     preserve_terms: list[str] | None = Field(default=None, max_length=100)
     channel: Channel | None = None
     preserve_intent: bool = True
+    reader_context: ReaderContext | None = None
 
 
 class DiffSummary(_Base):
@@ -245,6 +298,7 @@ class BriefMeetingInput(_Base):
     me: str = Field(min_length=1, max_length=200)
     project: str | None = Field(default=None, min_length=1, max_length=200)
     speakers: list[str] | None = Field(default=None, max_length=30)
+    reader_context: ReaderContext | None = None
 
 
 class QuotedSpan(_Base):

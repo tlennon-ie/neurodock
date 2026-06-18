@@ -13,6 +13,7 @@ rewrite while keeping the same preservation contract.
 from __future__ import annotations
 
 from neurodock_mcp_translation.prompts import render_prompt
+from neurodock_mcp_translation.shaping import apply_shaping
 from neurodock_mcp_translation.types import (
     DiffSummary,
     ModelProvenance,
@@ -171,6 +172,10 @@ def rewrite_outgoing(payload: RewriteOutgoingInput) -> RewriteOutgoingEnvelope:
             f"unpreserved_terms = {unpreserved!r}"
         ),
     )
+
+    # ADR 0012: append the per-neurotype addendum AFTER the schema block. Absent
+    # both reader_context and a profile, this is a no-op (byte-identical content).
+    prompt_content = apply_shaping(prompt_content, "rewrite_outgoing", payload.reader_context)
 
     return RewriteOutgoingEnvelope(
         deterministic_analysis=analysis,

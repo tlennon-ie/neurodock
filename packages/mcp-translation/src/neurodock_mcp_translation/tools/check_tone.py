@@ -18,6 +18,7 @@ from neurodock_mcp_translation.heuristics.tone import (
     target_axes,
 )
 from neurodock_mcp_translation.prompts import render_prompt
+from neurodock_mcp_translation.shaping import apply_shaping
 from neurodock_mcp_translation.types import (
     BaselineDelta,
     CheckToneAnalysis,
@@ -197,6 +198,10 @@ def check_tone(payload: CheckToneInput) -> CheckToneEnvelope:
             axes_score, axes_target_score, baseline_delta, flagged_hits
         ),
     )
+
+    # ADR 0012: append the per-neurotype addendum AFTER the schema block. Absent
+    # both reader_context and a profile, this is a no-op (byte-identical content).
+    prompt_content = apply_shaping(prompt_content, "check_tone", payload.reader_context)
 
     return CheckToneEnvelope(
         deterministic_analysis=analysis,

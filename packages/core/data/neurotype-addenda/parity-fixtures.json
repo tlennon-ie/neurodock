@@ -1,0 +1,672 @@
+{
+  "description": "Cross-language parity fixtures for the neurotype-addenda assembler (ADR 0012). Inputs use language-neutral snake_case keys so the TypeScript and Python parity tests read byte-identical inputs. The expected strings are generated FROM the TypeScript assembler (the source of truth) and asserted by BOTH packages/core/src/neurotype-addenda.parity.test.ts and packages/mcp-translation/tests/test_addenda_parity.py. Regenerate with UPDATE_NEUROTYPE_PARITY_FIXTURES=1.",
+  "artifact_version": "1.0.0",
+  "cases": [
+    {
+      "name": "empty/all-default/no-tool",
+      "neurotypes": [],
+      "output_format": "answer_first",
+      "max_chunk_size": 7,
+      "additional_notes": null,
+      "expected": ""
+    },
+    {
+      "name": "empty/all-default/translate_incoming",
+      "tool": "translate_incoming",
+      "neurotypes": [],
+      "output_format": "answer_first",
+      "max_chunk_size": 7,
+      "additional_notes": null,
+      "expected": ""
+    },
+    {
+      "name": "empty/non-default-format",
+      "tool": "check_tone",
+      "neurotypes": [],
+      "output_format": "bullet_first",
+      "max_chunk_size": 7,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: bullet_first — Lead with a short bullet list before any prose.\n---\n"
+    },
+    {
+      "name": "empty/voice-only",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [],
+      "output_format": "answer_first",
+      "max_chunk_size": 7,
+      "voice_input_preferred": true,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (voice input):\n- The reader dictates and cannot cheaply hand-edit fiddly punctuation.\n- Keep any example, draft, or snippet as a single, copy-pasteable block — do not scatter editable fragments across the response.\n---\n"
+    },
+    {
+      "name": "empty/notes-only",
+      "tool": "brief_meeting",
+      "neurotypes": [],
+      "output_format": "answer_first",
+      "max_chunk_size": 7,
+      "additional_notes": "Always quote the source verbatim.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nAlways quote the source verbatim.\n---\n"
+    },
+    {
+      "name": "translate_incoming/adhd/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (ADHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb ('Send the spec by Friday' not 'The sender would like…').\n- 'likely_subtext': cap at 5 items, highest-confidence first.\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer. 'Reply with the spec link' not 'It might be worth replying'.\n- 'recommended_next_action.reason': 1 sentence. No throat-clearing.\n- 'recommended_next_action.draft_reply': if drafted, keep it to 1-2 short sentences.\n---\n"
+    },
+    {
+      "name": "translate_incoming/asd/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (autism) — translate_incoming:\n- 'likely_subtext[].text': state subtext as commitments when evidence supports it ('The sender wants X by Friday'). Use guesses ('they might want X') ONLY when the message is genuinely ambiguous.\n- Decode any idiom in the source verbatim inside 'likely_subtext' (e.g. source 'circle back' -> subtext 'They will reply later'; source 'ping you' -> 'They will send a message').\n- 'ambiguity.spans[]': when a sentence depends on tone of voice or facial expression text cannot carry, mark it ambiguous with reason 'text alone cannot disambiguate tone'.\n- 'recommended_next_action.draft_reply': no idioms ('touch base', 'circle back', 'loop in', 'hop on a call', 'reach out'). Use literal verbs.\n- 'recommended_next_action.reason': quote the source verbatim in parentheses when paraphrasing the ask.\n---\n"
+    },
+    {
+      "name": "translate_incoming/audhd-fusion/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb. No throat-clearing.\n- 'likely_subtext': cap at 5; state as commitments when text supports it, as guesses only when genuinely ambiguous.\n- Decode source idioms verbatim in 'likely_subtext' ('ping you' -> 'send you a message').\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer, no idioms.\n- 'recommended_next_action.draft_reply': 1-2 short sentences, literal verbs only.\n- 'ambiguity.spans[]': flag tone-dependent sentences with reason 'text alone cannot disambiguate tone'.\n---\n"
+    },
+    {
+      "name": "translate_incoming/audhd-direct/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "audhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb. No throat-clearing.\n- 'likely_subtext': cap at 5; state as commitments when text supports it, as guesses only when genuinely ambiguous.\n- Decode source idioms verbatim in 'likely_subtext' ('ping you' -> 'send you a message').\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer, no idioms.\n- 'recommended_next_action.draft_reply': 1-2 short sentences, literal verbs only.\n- 'ambiguity.spans[]': flag tone-dependent sentences with reason 'text alone cannot disambiguate tone'.\n---\n"
+    },
+    {
+      "name": "translate_incoming/ocd/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (OCD) — translate_incoming:\n- 'recommended_next_action.action': low-pressure phrasing. Avoid 'urgent', 'must', 'immediately', 'ASAP', 'critical'. Prefer 'when you have a minute', 'consider', 'you may want to'.\n- 'recommended_next_action.reason': do not amplify time pressure. If the source said 'soon', don't paraphrase as 'urgently'.\n- 'ambiguity.detected': only flag ambiguity that's actually in the source. Don't invent ambiguity to be thorough.\n- 'likely_subtext': if the message has no actionable issue, return an empty array and say so plainly in 'recommended_next_action.reason' ('nothing here needs an answer today').\n- 'draft_reply': never say the reader's prior draft was 'wrong'. Use 'reads as' or 'may land as'.\n---\n"
+    },
+    {
+      "name": "translate_incoming/dyslexia/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "dyslexia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — translate_incoming:\n- 'explicit_ask': max 15 words. Plain language. 'They want X' not 'The sender is requesting X'.\n- 'likely_subtext[].text': 1 sentence each, max 15 words. Cap list at 5.\n- Replace 'paraphrased' with 'said plainly', 'ambiguous' with 'unclear', 'verbatim' with 'word-for-word', 'subtext' with 'what they really mean'.\n- 'recommended_next_action.reason': 1 short sentence. No semicolons. No em-dashes inside sentences.\n- 'recommended_next_action.draft_reply': short sentences. Common words ('use' not 'utilise', 'about' not 'regarding').\n---\n"
+    },
+    {
+      "name": "translate_incoming/dyspraxia/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "dyspraxia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyspraxia) — translate_incoming:\n- Use absolute dates in 'explicit_ask' and 'draft_reply' ('Wednesday 28 May', 'by end of this week') not relative ones ('next sprint', 'soon').\n- 'likely_subtext': cap at 5; if subtext references a prior thread message, name it explicitly rather than 'the above'.\n- 'recommended_next_action.action': single-step where possible. If multi-step, number the steps inside 'draft_reply', not inside 'action'.\n- Group related subtext items together — don't interleave 'they want X' with 'they're worried about Y'.\n---\n"
+    },
+    {
+      "name": "translate_incoming/tourette/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "tourette"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n---\n"
+    },
+    {
+      "name": "translate_incoming/other/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "other"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": "Please use kelvin not celsius.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nPlease use kelvin not celsius.\n---\n"
+    },
+    {
+      "name": "translate_incoming/conflict3/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "adhd",
+        "dyslexia",
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — translate_incoming:\n- 'explicit_ask': max 15 words. Plain language. 'They want X' not 'The sender is requesting X'.\n- 'likely_subtext[].text': 1 sentence each, max 15 words. Cap list at 5.\n- Replace 'paraphrased' with 'said plainly', 'ambiguous' with 'unclear', 'verbatim' with 'word-for-word', 'subtext' with 'what they really mean'.\n- 'recommended_next_action.reason': 1 short sentence. No semicolons. No em-dashes inside sentences.\n- 'recommended_next_action.draft_reply': short sentences. Common words ('use' not 'utilise', 'about' not 'regarding').\n\nReader preferences (OCD) — translate_incoming:\n- 'recommended_next_action.action': low-pressure phrasing. Avoid 'urgent', 'must', 'immediately', 'ASAP', 'critical'. Prefer 'when you have a minute', 'consider', 'you may want to'.\n- 'recommended_next_action.reason': do not amplify time pressure. If the source said 'soon', don't paraphrase as 'urgently'.\n- 'ambiguity.detected': only flag ambiguity that's actually in the source. Don't invent ambiguity to be thorough.\n- 'likely_subtext': if the message has no actionable issue, return an empty array and say so plainly in 'recommended_next_action.reason' ('nothing here needs an answer today').\n- 'draft_reply': never say the reader's prior draft was 'wrong'. Use 'reads as' or 'may land as'.\n\nReader preferences (ADHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb ('Send the spec by Friday' not 'The sender would like…').\n- 'likely_subtext': cap at 5 items, highest-confidence first.\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer. 'Reply with the spec link' not 'It might be worth replying'.\n- 'recommended_next_action.reason': 1 sentence. No throat-clearing.\n- 'recommended_next_action.draft_reply': if drafted, keep it to 1-2 short sentences.\n\nWhen these preferences conflict (e.g. 'literal' vs 'soft'), prefer the more conservative reading: shorter, more concrete, less pressure.\n---\n"
+    },
+    {
+      "name": "translate_incoming/conflict-tourette-audhd/default",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "tourette",
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n\nReader preferences (AuDHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb. No throat-clearing.\n- 'likely_subtext': cap at 5; state as commitments when text supports it, as guesses only when genuinely ambiguous.\n- Decode source idioms verbatim in 'likely_subtext' ('ping you' -> 'send you a message').\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer, no idioms.\n- 'recommended_next_action.draft_reply': 1-2 short sentences, literal verbs only.\n- 'ambiguity.spans[]': flag tone-dependent sentences with reason 'text alone cannot disambiguate tone'.\n---\n"
+    },
+    {
+      "name": "check_tone/adhd/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (ADHD) — check_tone:\n- 'flagged_phrases': cap at 5, highest-impact first. Don't pad the list.\n- 'flagged_phrases[].reason': 1 short sentence per entry.\n- 'flagged_phrases[].suggestion': a concrete replacement, not advice. 'Replace with: \"by Friday\"' not 'Consider being more specific'.\n- 'suggested_rewrite_hint': 1-2 sentences, verb-led. 'Tighten the opener, drop the hedges' not 'You might want to consider tightening…'.\n---\n"
+    },
+    {
+      "name": "check_tone/asd/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (autism) — check_tone:\n- 'axes': state the score literally — don't soften with 'somewhat' or 'a bit'. 0.2 means 'low'; say so.\n- 'baseline_delta': when prior messages aren't available, return null rather than guessing a baseline.\n- 'flagged_phrases[].reason': explain WHY the phrase reads as it does ('reads as terse because it has no greeting and uses imperative mood'), not just 'sounds blunt'.\n- 'suggested_rewrite_hint': literal, no idioms ('touch base', 'soften the ask', 'warm up'). Use concrete edits ('add a greeting; replace \"send it\" with \"could you send it\"').\n- 'flagged_phrases[].suggestion': exact replacement string, not a description of the change.\n---\n"
+    },
+    {
+      "name": "check_tone/audhd-fusion/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — check_tone:\n- 'flagged_phrases': cap at 5, highest-impact first. Each 'suggestion' is a concrete replacement string, not advice.\n- 'flagged_phrases[].reason': 1 sentence; name the mechanism ('imperative mood, no greeting') not just the impression ('blunt').\n- 'suggested_rewrite_hint': verb-led, literal, no idioms. 'Add a greeting; soften the ask by changing \"send it\" to \"could you send it\".'\n- 'axes': state scores literally — don't hedge with 'somewhat'.\n- 'baseline_delta': null when no prior baseline; don't guess.\n---\n"
+    },
+    {
+      "name": "check_tone/audhd-direct/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "audhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — check_tone:\n- 'flagged_phrases': cap at 5, highest-impact first. Each 'suggestion' is a concrete replacement string, not advice.\n- 'flagged_phrases[].reason': 1 sentence; name the mechanism ('imperative mood, no greeting') not just the impression ('blunt').\n- 'suggested_rewrite_hint': verb-led, literal, no idioms. 'Add a greeting; soften the ask by changing \"send it\" to \"could you send it\".'\n- 'axes': state scores literally — don't hedge with 'somewhat'.\n- 'baseline_delta': null when no prior baseline; don't guess.\n---\n"
+    },
+    {
+      "name": "check_tone/ocd/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (OCD) — check_tone:\n- 'flagged_phrases[].reason': avoid 'wrong', 'mistake', 'error'. Use 'reads as' or 'may land as'.\n- 'suggested_rewrite_hint': low-pressure framing. 'You may want to add a greeting' not 'You must add a greeting'.\n- Do not flag a phrase as a problem if the only issue is that it could theoretically be misread. Flag actual tone issues, not hypothetical ones.\n- 'axes.urgency': if the source genuinely is urgent (deadline in source text), don't downgrade the score to seem 'calmer'. Report the tone the message actually has.\n---\n"
+    },
+    {
+      "name": "check_tone/dyslexia/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "dyslexia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — check_tone:\n- 'flagged_phrases': cap at 5. Each 'reason' max 15 words.\n- 'suggested_rewrite_hint': 1-2 short sentences. Plain words ('softer' not 'less assertive', 'shorter' not 'more concise').\n- One idea per sentence in every prose field. No semicolons.\n- 'flagged_phrases[].suggestion': a concrete replacement string, short.\n---\n"
+    },
+    {
+      "name": "check_tone/dyspraxia/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "dyspraxia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyspraxia) — check_tone:\n- 'flagged_phrases': 5 max, ordered as they appear in the source text (top to bottom) — not by severity.\n- 'suggested_rewrite_hint': if multi-step, write as a single continuous instruction rather than a numbered sequence.\n- Don't reference 'the above' or 'as mentioned'; name the specific phrase ('the opener \"hey\"', not 'the first issue').\n---\n"
+    },
+    {
+      "name": "check_tone/tourette/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "tourette"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n---\n"
+    },
+    {
+      "name": "check_tone/other/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "other"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": "Please use kelvin not celsius.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nPlease use kelvin not celsius.\n---\n"
+    },
+    {
+      "name": "check_tone/conflict3/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "adhd",
+        "dyslexia",
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — check_tone:\n- 'flagged_phrases': cap at 5. Each 'reason' max 15 words.\n- 'suggested_rewrite_hint': 1-2 short sentences. Plain words ('softer' not 'less assertive', 'shorter' not 'more concise').\n- One idea per sentence in every prose field. No semicolons.\n- 'flagged_phrases[].suggestion': a concrete replacement string, short.\n\nReader preferences (OCD) — check_tone:\n- 'flagged_phrases[].reason': avoid 'wrong', 'mistake', 'error'. Use 'reads as' or 'may land as'.\n- 'suggested_rewrite_hint': low-pressure framing. 'You may want to add a greeting' not 'You must add a greeting'.\n- Do not flag a phrase as a problem if the only issue is that it could theoretically be misread. Flag actual tone issues, not hypothetical ones.\n- 'axes.urgency': if the source genuinely is urgent (deadline in source text), don't downgrade the score to seem 'calmer'. Report the tone the message actually has.\n\nReader preferences (ADHD) — check_tone:\n- 'flagged_phrases': cap at 5, highest-impact first. Don't pad the list.\n- 'flagged_phrases[].reason': 1 short sentence per entry.\n- 'flagged_phrases[].suggestion': a concrete replacement, not advice. 'Replace with: \"by Friday\"' not 'Consider being more specific'.\n- 'suggested_rewrite_hint': 1-2 sentences, verb-led. 'Tighten the opener, drop the hedges' not 'You might want to consider tightening…'.\n\nWhen these preferences conflict (e.g. 'literal' vs 'soft'), prefer the more conservative reading: shorter, more concrete, less pressure.\n---\n"
+    },
+    {
+      "name": "check_tone/conflict-tourette-audhd/default",
+      "tool": "check_tone",
+      "neurotypes": [
+        "tourette",
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n\nReader preferences (AuDHD) — check_tone:\n- 'flagged_phrases': cap at 5, highest-impact first. Each 'suggestion' is a concrete replacement string, not advice.\n- 'flagged_phrases[].reason': 1 sentence; name the mechanism ('imperative mood, no greeting') not just the impression ('blunt').\n- 'suggested_rewrite_hint': verb-led, literal, no idioms. 'Add a greeting; soften the ask by changing \"send it\" to \"could you send it\".'\n- 'axes': state scores literally — don't hedge with 'somewhat'.\n- 'baseline_delta': null when no prior baseline; don't guess.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/adhd/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (ADHD) — rewrite_outgoing:\n- 'rewritten': keep length within ~20% of the source. Don't pad to sound 'professional'.\n- 'diff_summary.structural_changes': cap at 5, highest-impact first.\n- 'diff_summary.tone_shift': 1 short sentence describing the shift verb-first ('Softened the ask; kept the deadline').\n- 'diff_summary.warnings': only include warnings the reader actually needs to act on. Skip 'minor style changes'.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/asd/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (autism) — rewrite_outgoing:\n- 'rewritten': preserve the literal ask. If the source says 'send the report by Friday', the rewrite still says that explicitly — don't bury it under softening.\n- 'rewritten': no idioms introduced. Banned in the rewrite: 'touch base', 'circle back', 'loop in', 'hop on', 'reach out', 'moving forward', 'low-hanging fruit'.\n- 'preserved_terms': include any technical term, name, or quoted phrase from the source that has a precise meaning.\n- 'diff_summary.tone_shift': name the mechanism ('added a greeting; replaced imperative with question form'), not the impression ('made it warmer').\n- 'diff_summary.warnings': flag if softening could obscure the deadline or quantity in the source.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/audhd-fusion/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — rewrite_outgoing:\n- 'rewritten': keep within ~20% of source length; preserve the literal ask verbatim; no introduced idioms.\n- 'diff_summary.structural_changes': cap at 5; name mechanisms not impressions.\n- 'diff_summary.tone_shift': 1 sentence, verb-led. 'Added greeting, replaced imperative with question form.'\n- 'preserved_terms': include technical terms, names, and quoted source phrases.\n- 'diff_summary.warnings': flag if softening would obscure the deadline or quantity.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/audhd-direct/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "audhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — rewrite_outgoing:\n- 'rewritten': keep within ~20% of source length; preserve the literal ask verbatim; no introduced idioms.\n- 'diff_summary.structural_changes': cap at 5; name mechanisms not impressions.\n- 'diff_summary.tone_shift': 1 sentence, verb-led. 'Added greeting, replaced imperative with question form.'\n- 'preserved_terms': include technical terms, names, and quoted source phrases.\n- 'diff_summary.warnings': flag if softening would obscure the deadline or quantity.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/ocd/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (OCD) — rewrite_outgoing:\n- 'rewritten': avoid 'urgent', 'must', 'ASAP', 'critical', 'don't forget' unless the source uses them. Don't amplify pressure beyond the source.\n- 'diff_summary.warnings': don't warn that the source was 'wrong' or 'aggressive'. Use 'the original could land as terse' instead.\n- 'diff_summary.tone_shift': avoid 'fixed', 'corrected', 'cleaned up'. Use 'shifted toward' or 'reduced'.\n- Don't add hedging the source didn't have unless the target_register asks for it.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/dyslexia/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "dyslexia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — rewrite_outgoing:\n- 'rewritten': short sentences, max 15 words each. Common words ('use' not 'utilise', 'help' not 'facilitate').\n- 'diff_summary.structural_changes': cap at 5; each item 1 short phrase, not a sentence.\n- 'diff_summary.tone_shift': 1 short sentence. Plain words.\n- Break compound sentences into two during the rewrite. No semicolons in 'rewritten'.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/dyspraxia/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "dyspraxia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyspraxia) — rewrite_outgoing:\n- 'rewritten': use absolute dates ('Wednesday 28 May'), not relative ones ('next week'), even if the source used relative.\n- 'diff_summary.structural_changes': 5 max, ordered by where they appear in the rewrite (top to bottom).\n- If the source asks for a sequence of actions, keep the sequence in source order in the rewrite; don't reorder for 'flow'.\n- 'diff_summary.warnings': flag if the rewrite introduces a forward-reference ('as mentioned above') that the source didn't have.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/tourette/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "tourette"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/other/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "other"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": "Please use kelvin not celsius.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nPlease use kelvin not celsius.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/conflict3/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "adhd",
+        "dyslexia",
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — rewrite_outgoing:\n- 'rewritten': short sentences, max 15 words each. Common words ('use' not 'utilise', 'help' not 'facilitate').\n- 'diff_summary.structural_changes': cap at 5; each item 1 short phrase, not a sentence.\n- 'diff_summary.tone_shift': 1 short sentence. Plain words.\n- Break compound sentences into two during the rewrite. No semicolons in 'rewritten'.\n\nReader preferences (OCD) — rewrite_outgoing:\n- 'rewritten': avoid 'urgent', 'must', 'ASAP', 'critical', 'don't forget' unless the source uses them. Don't amplify pressure beyond the source.\n- 'diff_summary.warnings': don't warn that the source was 'wrong' or 'aggressive'. Use 'the original could land as terse' instead.\n- 'diff_summary.tone_shift': avoid 'fixed', 'corrected', 'cleaned up'. Use 'shifted toward' or 'reduced'.\n- Don't add hedging the source didn't have unless the target_register asks for it.\n\nReader preferences (ADHD) — rewrite_outgoing:\n- 'rewritten': keep length within ~20% of the source. Don't pad to sound 'professional'.\n- 'diff_summary.structural_changes': cap at 5, highest-impact first.\n- 'diff_summary.tone_shift': 1 short sentence describing the shift verb-first ('Softened the ask; kept the deadline').\n- 'diff_summary.warnings': only include warnings the reader actually needs to act on. Skip 'minor style changes'.\n\nWhen these preferences conflict (e.g. 'literal' vs 'soft'), prefer the more conservative reading: shorter, more concrete, less pressure.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/conflict-tourette-audhd/default",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "tourette",
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n\nReader preferences (AuDHD) — rewrite_outgoing:\n- 'rewritten': keep within ~20% of source length; preserve the literal ask verbatim; no introduced idioms.\n- 'diff_summary.structural_changes': cap at 5; name mechanisms not impressions.\n- 'diff_summary.tone_shift': 1 sentence, verb-led. 'Added greeting, replaced imperative with question form.'\n- 'preserved_terms': include technical terms, names, and quoted source phrases.\n- 'diff_summary.warnings': flag if softening would obscure the deadline or quantity.\n---\n"
+    },
+    {
+      "name": "brief_meeting/adhd/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (ADHD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: cap entries at 5; each facet verb-led and 8 words or fewer. Label each entry as 'my_asks[i]' / 'decisions[i]' so the reader can jump back to the verbatim quote.\n- 'my_asks': cap at 5, highest-priority first. Each ask is verb-led ('Send the spec to Bob') in 8 words or fewer.\n- 'others_asks': same cap and shape.\n- 'decisions[]': 1 short sentence each. State the decision, not the discussion.\n- 'ambiguous_items[]': include ONLY items the reader needs to chase. Skip 'minor topics raised'.\n---\n"
+    },
+    {
+      "name": "brief_meeting/asd/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (autism) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: each facet is a literal commitment. Decode source idioms inside facets ('circle back' → 'reply later'). Quote the source 'asker' speaker in the 'label' field.\n- 'my_asks[].text' and 'others_asks[].text': quote the original speaker verbatim in parentheses when paraphrasing ('Send the spec (\"can you ping me the spec by Fri?\")').\n- 'decisions[]': state the decision and the speaker who made it. Don't infer consensus that wasn't stated.\n- 'ambiguous_items[]': flag any item where the transcript depends on tone or shared context not in the text. Reason 'verbal agreement implied but not stated' is a legitimate ambiguity.\n- No idioms in any text field ('touch base', 'circle back', 'loop in').\n---\n"
+    },
+    {
+      "name": "brief_meeting/audhd-fusion/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: cap at 5; verb-led, literal, 8 words or fewer, no idioms. Label each entry as 'my_asks[i]' / 'decisions[i]'.\n- 'my_asks' / 'others_asks': cap at 5, verb-led, 8 words or fewer. Quote source verbatim in parentheses when paraphrasing.\n- 'decisions[]': 1 sentence each, name the speaker; don't infer unstated consensus.\n- 'ambiguous_items[]': flag tone-dependent items with reason 'verbal agreement implied but not stated'. Skip 'minor topics raised'.\n- No idioms anywhere.\n---\n"
+    },
+    {
+      "name": "brief_meeting/audhd-direct/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "audhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (AuDHD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: cap at 5; verb-led, literal, 8 words or fewer, no idioms. Label each entry as 'my_asks[i]' / 'decisions[i]'.\n- 'my_asks' / 'others_asks': cap at 5, verb-led, 8 words or fewer. Quote source verbatim in parentheses when paraphrasing.\n- 'decisions[]': 1 sentence each, name the speaker; don't infer unstated consensus.\n- 'ambiguous_items[]': flag tone-dependent items with reason 'verbal agreement implied but not stated'. Skip 'minor topics raised'.\n- No idioms anywhere.\n---\n"
+    },
+    {
+      "name": "brief_meeting/ocd/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (OCD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: in 'action' facets, avoid 'must', 'urgent', 'ASAP', 'critical' unless the source used them. Prefer 'when you have a minute'. Don't amplify pressure beyond the transcript.\n- 'my_asks[]': don't add asks that weren't actually assigned to the reader. If the transcript is ambiguous about who owns an action, put it in 'ambiguous_items[]' instead.\n- 'ambiguous_items[]': distinguish 'unclear who owns this' from 'this needs follow-up'. Reason field should name which kind of ambiguity.\n- No 'must', 'urgent', 'critical' in 'my_asks[].text' unless the speaker used those words.\n- 'decisions[]': don't flag a decision as 'final' unless the transcript explicitly closes it.\n---\n"
+    },
+    {
+      "name": "brief_meeting/dyslexia/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "dyslexia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: each facet text max 15 words, one idea per facet, common words, no semicolons. Cap entries at 5.\n- All list fields: cap at 5, each item max 15 words.\n- Plain language. 'Bob will send the spec' not 'Bob will action distribution of the specification'.\n- 'decisions[]': one decision per item. Don't combine two decisions into one sentence with 'and'.\n- 'ambiguous_items[].reason': 1 short sentence; no semicolons.\n---\n"
+    },
+    {
+      "name": "brief_meeting/dyspraxia/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "dyspraxia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyspraxia) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: order entries by transcript appearance, not priority. Absolute dates inside facets. Never 'as above' — name the prior label.\n- 'my_asks' / 'others_asks': ordered by when they appear in the transcript, not by priority. Cap at 5.\n- Use absolute dates in 'text' fields when the transcript implies a deadline ('Wednesday 28 May' rather than 'next week').\n- 'decisions[]': name the topic explicitly each time. Don't write 'as discussed above' or 'the prior point'.\n- Group related items together — don't interleave asks from different topics.\n---\n"
+    },
+    {
+      "name": "brief_meeting/tourette/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "tourette"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n---\n"
+    },
+    {
+      "name": "brief_meeting/other/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "other"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": "Please use kelvin not celsius.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nPlease use kelvin not celsius.\n---\n"
+    },
+    {
+      "name": "brief_meeting/conflict3/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "adhd",
+        "dyslexia",
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: each facet text max 15 words, one idea per facet, common words, no semicolons. Cap entries at 5.\n- All list fields: cap at 5, each item max 15 words.\n- Plain language. 'Bob will send the spec' not 'Bob will action distribution of the specification'.\n- 'decisions[]': one decision per item. Don't combine two decisions into one sentence with 'and'.\n- 'ambiguous_items[].reason': 1 short sentence; no semicolons.\n\nReader preferences (OCD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: in 'action' facets, avoid 'must', 'urgent', 'ASAP', 'critical' unless the source used them. Prefer 'when you have a minute'. Don't amplify pressure beyond the transcript.\n- 'my_asks[]': don't add asks that weren't actually assigned to the reader. If the transcript is ambiguous about who owns an action, put it in 'ambiguous_items[]' instead.\n- 'ambiguous_items[]': distinguish 'unclear who owns this' from 'this needs follow-up'. Reason field should name which kind of ambiguity.\n- No 'must', 'urgent', 'critical' in 'my_asks[].text' unless the speaker used those words.\n- 'decisions[]': don't flag a decision as 'final' unless the transcript explicitly closes it.\n\nReader preferences (ADHD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: cap entries at 5; each facet verb-led and 8 words or fewer. Label each entry as 'my_asks[i]' / 'decisions[i]' so the reader can jump back to the verbatim quote.\n- 'my_asks': cap at 5, highest-priority first. Each ask is verb-led ('Send the spec to Bob') in 8 words or fewer.\n- 'others_asks': same cap and shape.\n- 'decisions[]': 1 short sentence each. State the decision, not the discussion.\n- 'ambiguous_items[]': include ONLY items the reader needs to chase. Skip 'minor topics raised'.\n\nWhen these preferences conflict (e.g. 'literal' vs 'soft'), prefer the more conservative reading: shorter, more concrete, less pressure.\n---\n"
+    },
+    {
+      "name": "brief_meeting/conflict-tourette-audhd/default",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "tourette",
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (Tourette):\n- Be concise. Lead with the answer first; keep prose to the fewest sentences that still carry the meaning.\n- Cut throat-clearing, recap, and padding. Shorter responses hold the reader's attention for less time.\n- Plain, low-pressure phrasing. Avoid manufactured urgency the source did not have.\n- Keep a neutral register. Do not add reassurance, soothing language, or motivational pep — it is not wanted here.\n- Do not comment on, notice, or reference the reader's behaviour, composure, or movement anywhere in any field.\n\nReader preferences (AuDHD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: cap at 5; verb-led, literal, 8 words or fewer, no idioms. Label each entry as 'my_asks[i]' / 'decisions[i]'.\n- 'my_asks' / 'others_asks': cap at 5, verb-led, 8 words or fewer. Quote source verbatim in parentheses when paraphrasing.\n- 'decisions[]': 1 sentence each, name the speaker; don't infer unstated consensus.\n- 'ambiguous_items[]': flag tone-dependent items with reason 'verbal agreement implied but not stated'. Skip 'minor topics raised'.\n- No idioms anywhere.\n---\n"
+    },
+    {
+      "name": "translate_incoming/adhd/voice-on",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "voice_input_preferred": true,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (voice input):\n- The reader dictates and cannot cheaply hand-edit fiddly punctuation.\n- Keep any example, draft, or snippet as a single, copy-pasteable block — do not scatter editable fragments across the response.\n\nReader preferences (ADHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb ('Send the spec by Friday' not 'The sender would like…').\n- 'likely_subtext': cap at 5 items, highest-confidence first.\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer. 'Reply with the spec link' not 'It might be worth replying'.\n- 'recommended_next_action.reason': 1 sentence. No throat-clearing.\n- 'recommended_next_action.draft_reply': if drafted, keep it to 1-2 short sentences.\n---\n"
+    },
+    {
+      "name": "check_tone/audhd-fusion/voice-on",
+      "tool": "check_tone",
+      "neurotypes": [
+        "adhd",
+        "asd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "voice_input_preferred": true,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (voice input):\n- The reader dictates and cannot cheaply hand-edit fiddly punctuation.\n- Keep any example, draft, or snippet as a single, copy-pasteable block — do not scatter editable fragments across the response.\n\nReader preferences (AuDHD) — check_tone:\n- 'flagged_phrases': cap at 5, highest-impact first. Each 'suggestion' is a concrete replacement string, not advice.\n- 'flagged_phrases[].reason': 1 sentence; name the mechanism ('imperative mood, no greeting') not just the impression ('blunt').\n- 'suggested_rewrite_hint': verb-led, literal, no idioms. 'Add a greeting; soften the ask by changing \"send it\" to \"could you send it\".'\n- 'axes': state scores literally — don't hedge with 'somewhat'.\n- 'baseline_delta': null when no prior baseline; don't guess.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/dyslexia/chunk-3",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "dyslexia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 3,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia) — rewrite_outgoing:\n- 'rewritten': short sentences, max 15 words each. Common words ('use' not 'utilise', 'help' not 'facilitate').\n- 'diff_summary.structural_changes': cap at 3; each item 1 short phrase, not a sentence.\n- 'diff_summary.tone_shift': 1 short sentence. Plain words.\n- Break compound sentences into two during the rewrite. No semicolons in 'rewritten'.\n---\n"
+    },
+    {
+      "name": "brief_meeting/dyspraxia/chunk-12",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "dyspraxia"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 12,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyspraxia) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: order entries by transcript appearance, not priority. Absolute dates inside facets. Never 'as above' — name the prior label.\n- 'my_asks' / 'others_asks': ordered by when they appear in the transcript, not by priority. Cap at 12.\n- Use absolute dates in 'text' fields when the transcript implies a deadline ('Wednesday 28 May' rather than 'next week').\n- 'decisions[]': name the topic explicitly each time. Don't write 'as discussed above' or 'the prior point'.\n- Group related items together — don't interleave asks from different topics.\n---\n"
+    },
+    {
+      "name": "translate_incoming/adhd/notes-footer",
+      "tool": "translate_incoming",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": "Use kelvin not celsius.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (ADHD) — translate_incoming:\n- 'explicit_ask': 1 sentence, lead with the verb ('Send the spec by Friday' not 'The sender would like…').\n- 'likely_subtext': cap at 5 items, highest-confidence first.\n- 'recommended_next_action.action': imperative verb-phrase, 6 words or fewer. 'Reply with the spec link' not 'It might be worth replying'.\n- 'recommended_next_action.reason': 1 sentence. No throat-clearing.\n- 'recommended_next_action.draft_reply': if drafted, keep it to 1-2 short sentences.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nUse kelvin not celsius.\n---\n"
+    },
+    {
+      "name": "check_tone/ocd/conventional-format",
+      "tool": "check_tone",
+      "neurotypes": [
+        "ocd"
+      ],
+      "output_format": "conventional",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: conventional — Brief context first, then the verdict.\n\nReader preferences (OCD) — check_tone:\n- 'flagged_phrases[].reason': avoid 'wrong', 'mistake', 'error'. Use 'reads as' or 'may land as'.\n- 'suggested_rewrite_hint': low-pressure framing. 'You may want to add a greeting' not 'You must add a greeting'.\n- Do not flag a phrase as a problem if the only issue is that it could theoretically be misread. Flag actual tone issues, not hypothetical ones.\n- 'axes.urgency': if the source genuinely is urgent (deadline in source text), don't downgrade the score to seem 'calmer'. Report the tone the message actually has.\n---\n"
+    },
+    {
+      "name": "brief_meeting/conflict3/bullet-first-voice",
+      "tool": "brief_meeting",
+      "neurotypes": [
+        "adhd",
+        "dyslexia",
+        "ocd"
+      ],
+      "output_format": "bullet_first",
+      "max_chunk_size": 5,
+      "voice_input_preferred": true,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: bullet_first — Lead with a short bullet list before any prose.\n\nReader preferences (voice input):\n- The reader dictates and cannot cheaply hand-edit fiddly punctuation.\n- Keep any example, draft, or snippet as a single, copy-pasteable block — do not scatter editable fragments across the response.\n\nReader preferences (dyslexia) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: each facet text max 15 words, one idea per facet, common words, no semicolons. Cap entries at 5.\n- All list fields: cap at 5, each item max 15 words.\n- Plain language. 'Bob will send the spec' not 'Bob will action distribution of the specification'.\n- 'decisions[]': one decision per item. Don't combine two decisions into one sentence with 'and'.\n- 'ambiguous_items[].reason': 1 short sentence; no semicolons.\n\nReader preferences (OCD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: in 'action' facets, avoid 'must', 'urgent', 'ASAP', 'critical' unless the source used them. Prefer 'when you have a minute'. Don't amplify pressure beyond the transcript.\n- 'my_asks[]': don't add asks that weren't actually assigned to the reader. If the transcript is ambiguous about who owns an action, put it in 'ambiguous_items[]' instead.\n- 'ambiguous_items[]': distinguish 'unclear who owns this' from 'this needs follow-up'. Reason field should name which kind of ambiguity.\n- No 'must', 'urgent', 'critical' in 'my_asks[].text' unless the speaker used those words.\n- 'decisions[]': don't flag a decision as 'final' unless the transcript explicitly closes it.\n\nReader preferences (ADHD) — brief_meeting:\n- INVARIANT: Always populate `content_translation` with one entry per ask, decision, or actionable ambiguous item in the transcript. Use null ONLY if the meeting is chat-only and all four legacy sections (my_asks/others_asks/decisions/ambiguous_items) are empty.\n- `content_translation`: cap entries at 5; each facet verb-led and 8 words or fewer. Label each entry as 'my_asks[i]' / 'decisions[i]' so the reader can jump back to the verbatim quote.\n- 'my_asks': cap at 5, highest-priority first. Each ask is verb-led ('Send the spec to Bob') in 8 words or fewer.\n- 'others_asks': same cap and shape.\n- 'decisions[]': 1 short sentence each. State the decision, not the discussion.\n- 'ambiguous_items[]': include ONLY items the reader needs to chase. Skip 'minor topics raised'.\n\nWhen these preferences conflict (e.g. 'literal' vs 'soft'), prefer the more conservative reading: shorter, more concrete, less pressure.\n---\n"
+    },
+    {
+      "name": "rewrite_outgoing/asd+other/notes",
+      "tool": "rewrite_outgoing",
+      "neurotypes": [
+        "asd",
+        "other"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": "Prefer British spelling.",
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (autism) — rewrite_outgoing:\n- 'rewritten': preserve the literal ask. If the source says 'send the report by Friday', the rewrite still says that explicitly — don't bury it under softening.\n- 'rewritten': no idioms introduced. Banned in the rewrite: 'touch base', 'circle back', 'loop in', 'hop on', 'reach out', 'moving forward', 'low-hanging fruit'.\n- 'preserved_terms': include any technical term, name, or quoted phrase from the source that has a precise meaning.\n- 'diff_summary.tone_shift': name the mechanism ('added a greeting; replaced imperative with question form'), not the impression ('made it warmer').\n- 'diff_summary.warnings': flag if softening could obscure the deadline or quantity in the source.\n\nReader preferences (self-described):\n- Treat the notes below as a literal instruction set from the reader. Honour any 'please do' / 'please don't' requests.\n\nReader's own notes:\nPrefer British spelling.\n---\n"
+    },
+    {
+      "name": "no-tool/adhd/generic",
+      "neurotypes": [
+        "adhd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (ADHD):\n- Lead with the verdict in the first phrase of any free-text field. No throat-clearing.\n- Keep prose fields to 1-2 short sentences. Cut qualifiers ('perhaps', 'it seems that', 'arguably').\n- Cap any list you return at 5 items even if more would fit the schema. Rank by importance and stop.\n- No nested clauses. One idea per sentence.\n- If you would say 'however' or 'that said', just start a new sentence.\n- Concrete verbs over abstract nouns. 'Send the spec' not 'completion of the spec distribution'.\n---\n"
+    },
+    {
+      "name": "no-tool/conflict3/generic",
+      "neurotypes": [
+        "adhd",
+        "dyslexia",
+        "ocd"
+      ],
+      "output_format": "answer_first",
+      "max_chunk_size": 5,
+      "additional_notes": null,
+      "expected": "\n\n---\n## Reader-specific overrides (apply LAST, after the schema)\n\nThe reader has these preferences. Honor them inside the schema-shaped JSON you're about to write. If a preference conflicts with the schema, the schema wins — but apply every preference that's compatible.\n\nOutput shape: answer_first — Lead every prose field with the headline conclusion. Reasoning afterwards if at all.\n\nReader preferences (dyslexia):\n- Short sentences. Maximum 15 words per sentence. Break compound sentences into two.\n- Plain words. Replace 'paraphrased' with 'said plainly', 'ambiguous' with 'unclear', 'verbatim' with 'word-for-word', 'register' with 'tone', 'subtext' with 'what they really mean'.\n- One idea per sentence. No semicolons. No em-dashes inside sentences.\n- Cap any list at 5 items.\n- Free-text prose fields: 1 sentence where the schema permits 2-3.\n- Common words over rare ones. 'Use' not 'utilise'. 'Help' not 'facilitate'. 'About' not 'regarding'.\n\nReader preferences (OCD):\n- Low-pressure phrasing in any 'what to do' field. Avoid: 'urgent', 'must', 'immediately', 'right away', 'ASAP', 'critical', 'before it's too late', 'don't forget', 'make sure'.\n- Prefer: 'when you have a minute', 'no rush — when ready', 'consider', 'you may want to'.\n- Do not invent ambiguity or risk that is not in the source. If the message has no actionable issue, say so plainly ('nothing here needs an answer today').\n- When ranking items, prefer the lowest-pressure framing first.\n- Do not amplify time pressure. If the sender said 'soon', do not paraphrase as 'urgently'.\n- Never use the word 'wrong' about the user's draft. Use 'reads as' or 'may land as'.\n\nReader preferences (ADHD):\n- Lead with the verdict in the first phrase of any free-text field. No throat-clearing.\n- Keep prose fields to 1-2 short sentences. Cut qualifiers ('perhaps', 'it seems that', 'arguably').\n- Cap any list you return at 5 items even if more would fit the schema. Rank by importance and stop.\n- No nested clauses. One idea per sentence.\n- If you would say 'however' or 'that said', just start a new sentence.\n- Concrete verbs over abstract nouns. 'Send the spec' not 'completion of the spec distribution'.\n\nWhen these preferences conflict (e.g. 'literal' vs 'soft'), prefer the more conservative reading: shorter, more concrete, less pressure.\n---\n"
+    }
+  ]
+}

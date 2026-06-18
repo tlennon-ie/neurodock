@@ -10,3 +10,7 @@ __pycache__/
 pnpm-lock.yaml
 uv.lock
 .changeset/
+
+# Generated artifact: written by neurotype-addenda.parity.test.ts in
+# UPDATE_NEUROTYPE_PARITY_FIXTURES mode (JSON.stringify-formatted, not prettier).
+packages/core/data/neurotype-addenda/parity-fixtures.json

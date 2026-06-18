@@ -45,6 +45,10 @@
             "maxLength": 200
           },
           "examples": [["Priya", "Thomas", "Roberto"]]
+        },
+        "reader_context": {
+          "$ref": "#/$defs/ReaderContext",
+          "description": "Optional per-neurotype prompt-shaping context (ADR 0012). When present, the server appends a per-(tool x neurotype) addendum to prompt_for_llm_refinement.content AFTER the schema block; when absent, the server falls back to ~/.neurodock/profile.yaml, and when both are absent the prompt is byte-identical to the un-shaped baseline. Shapes ONLY the prompt text — the output shape is unchanged. The server makes no LLM call (ADR 0005)."
         }
       }
     },
@@ -251,6 +255,51 @@
     "privacy": "local-only-by-default. The server itself does not call any provider. Meeting transcripts are highly sensitive (third-party speakers, internal strategy); cloud-mode for brief_meeting SHOULD surface a stronger consent prompt than other tools — that is the extension's responsibility, not this server's."
   },
   "$defs": {
+    "ReaderContext": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional, additive per-neurotype prompt-shaping context (ADR 0012). Every field is optional; an absent field falls back to ~/.neurodock/profile.yaml, then to neutral absence. additionalProperties is true so a newer client may send extra keys without rejection. This input shapes prompt text only; it adds no field to the output and is never logged or stored.",
+      "properties": {
+        "neurotypes": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "string",
+            "enum": [
+              "adhd",
+              "asd",
+              "audhd",
+              "ocd",
+              "dyslexia",
+              "dyspraxia",
+              "tourette",
+              "other"
+            ]
+          },
+          "description": "Self-identified neurotypes. Self-ID is sufficient; never a diagnosis. adhd+asd (or explicit audhd) fuses to the AuDHD block."
+        },
+        "output_format": {
+          "type": "string",
+          "enum": ["answer_first", "conventional", "bullet_first"],
+          "description": "How the reader wants prose structured. Mirrors preferences.output_format."
+        },
+        "max_chunk_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Per-list item cap interpolated into the shaping blocks. Mirrors preferences.max_chunk_size."
+        },
+        "voice_input_preferred": {
+          "type": "boolean",
+          "description": "True when the reader predominantly dictates input; emits the cross-cutting voice-input block. Mirrors preferences.voice_input_preferred."
+        },
+        "additional_notes": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Free-form reader notes, surfaced verbatim in the self-described block. Mirrors identity.additional_notes."
+        }
+      }
+    },
     "TranslatedEntry": {
       "type": "object",
       "additionalProperties": false,
