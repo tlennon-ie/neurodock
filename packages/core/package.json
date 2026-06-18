@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": false,
   "description": "Shared types, profile schema, and plugin protocol for NeuroDock.",
   "license": "AGPL-3.0-or-later",
@@ -15,6 +15,7 @@
   },
   "files": [
     "dist",
+    "data",
     "schemas",
     "README.md"
   ],

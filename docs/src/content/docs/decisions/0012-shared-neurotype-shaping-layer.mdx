@@ -1,0 +1,92 @@
+---
+title: 0012 — Shared neurotype-shaping layer
+description: One language-neutral artifact in core is the single source of truth for per-neurotype prompt shaping. Both the TypeScript assembler (extension) and a Python assembler (mcp-translation) read it; the server injects the addendum so every MCP client gets tailoring.
+---
+
+:::tip[Bottom line up front]
+**Problem:** Per-neurotype tailoring only reaches the browser extension today. R1 must extend it to every MCP client (Claude Desktop, Cursor, generic clients) — but the extension assembles client-side and POSTs to the user's provider, while every other client reaches the model through the server. The content has to exist once and assemble identically in two runtimes.
+**Decision:** One language-neutral `neurotype-addenda` artifact in `@neurodock/core` is the single source of truth. A thin assembler in each runtime reads it (TypeScript for the extension, Python for `mcp-translation`), and the server injects the assembled addendum into its existing `prompt_for_llm_refinement.content`.
+**Impact:** Every MCP client gets per-neurotype tailoring; the content exists once; drift between the two assembly paths is a CI failure. Vendor-neutrality (ADR 0005) and the single output shape (ADR 0011) both survive. Resolves ADR 0011 open question 3.
+:::
+
+> **Source:** `docs/decisions/0012-shared-neurotype-shaping-layer.md` is the canonical artefact. This page is a short summary; read the full ADR for the three alternatives considered, the binding rules, the phasing, and the implementer's notes.
+
+- **Status:** Accepted
+- **Date:** 2026-06-18
+- **Deciders:** Thomas Lennon (maintainer), `mcp-architect`
+- **Resolves:** [ADR 0011](/decisions/0011-neurotype-schema-strategy/) open question 3
+
+## Context
+
+[ADR 0011](/decisions/0011-neurotype-schema-strategy/) fixed the *schema policy* for per-neurotype tailoring and left the *implementation locus* of the shaping layer as its open question 3, recommending a single shared source of truth in core. R1 now builds that: making per-neurotype prompt tailoring reach **every** MCP client, not just the browser extension. Today the tailoring content is hard-coded inside the extension's TypeScript, so a user on Claude Desktop, Cursor, or any other client gets the generic, untailored prompt.
+
+The decision is load-bearing because the extension does not call `mcp-translation` — it assembles the addendum client-side and POSTs to the user's own provider — while every other client reaches the model *through* the server. So the content has to be available to **two runtimes** (TypeScript and Python) and assembled **identically** in both, or the same user gets different tailoring depending on which surface they came through.
+
+## Decision
+
+**A language-neutral `neurotype-addenda` artifact in `@neurodock/core` is the single source of truth for per-neurotype prompt shaping. Both the TypeScript assembler (browser extension) and a Python assembler (`mcp-translation`, a follow-up PR) read it. `mcp-translation` assembles the addendum from an optional `reader_context` input (or a `profile.yaml` fallback) and injects it into its existing `prompt_for_llm_refinement.content`, so every MCP client receives per-neurotype tailoring.** The boundary is HYBRID: language-neutral data artifact + a thin assembler in each runtime + server-side injection.
+
+<details>
+<summary>View alternative approaches and technical debates</summary>
+
+Alternatives rejected:
+
+- **The server re-implements the tailoring content in Python** — guarantees content drift. The blocks are curated lived-experience prose; two independently edited copies diverge invisibly until a user notices their Desktop output differs from their extension output. This is exactly the failure mode R1 is meant to prevent.
+- **A TypeScript-only shared library** — cannot reach the Python servers. `mcp-translation` is Python; Desktop and Cursor reach the model through the server path. A TS-only library leaves every non-extension client untailored, which fails R1's reason for existing. Shelling out to Node from the server (or the hosted Worker) is a deployment and latency liability.
+
+</details>
+
+## The artifact
+
+- **Location:** `packages/core/data/neurotype-addenda/v1.json`, validated by `packages/core/schemas/neurotype-addenda.schema.json`.
+- **Versioning:** an `artifact_version` semver field; additive-only within a major (a new tool, a new neurotype, or a new optional top-level key is non-breaking; a breaking re-shape forks to a new `vN.json` with a new schema `$id`).
+- **Contents:** the per-(tool × neurotype) blocks; the AuDHD fusion rule; the priority order; the conflict footer (at three-or-more effective neurotypes); the cross-cutting `voice_input` block; the `tourette` and `other` specials; the generic fallback; and the `output_format` guidance. The only interpolation tokens are `{max_chunk_size}` and `{notes}`.
+
+## Binding rules established here
+
+1. **The artifact is the single source of truth; assemblers are thin and pure.** Neither runtime hard-codes content. Each has one pure assembler that reproduces the same order: fusion → priority → per-tool block (with generic fallback) → `tourette`/`other` specials → `voice_input` → conflict footer → token interpolation.
+2. **The two assembly paths must be provably identical.** Because the extension assembles client-side and the server assembles server-side, the standing risk is **content drift between two assembly paths**. Mitigated by (i) the one artifact, (ii) a cross-language parity test (TypeScript ≡ Python), and (iii) a byte-identical golden snapshot captured at the extension cutover (already implemented: 9,720 cases).
+3. **The server gains exactly one optional, additive input.** `reader_context` carries `neurotypes`, `output_format`, `max_chunk_size`, `voice_input_preferred`, and `additional_notes`, with a `profile.yaml` fallback. When both are absent, the assembled prompt is byte-identical to today's generic prompt. The output shape is unchanged.
+4. **No model call, no LLM SDK on the server.** The server assembles prompt *text* and injects it into the prompt it already returns — preserving [ADR 0005](/decisions/0005-translation/)'s vendor-neutrality doctrine.
+5. **Scope is the four server tools** (`translate_incoming`, `check_tone`, `rewrite_outgoing`, `brief_meeting`). `describe_image` is extension-only (no server tool) and out of R1 server scope.
+
+## Where the moving parts live
+
+| Concern | Mechanism | Boundary impact |
+| --- | --- | --- |
+| Tailoring content | One language-neutral JSON artifact in `@neurodock/core` | Single source of truth; no per-runtime copy |
+| Extension assembly | TS assembler reads the artifact; POSTs to the user's provider | No call to `mcp-translation` |
+| Server assembly | Python assembler reads the same artifact | No call out to Node; no model call |
+| Reaching non-extension clients | Server injects into `prompt_for_llm_refinement.content` | Output shape unchanged |
+| Reader preferences on the server | Optional `reader_context` + `profile.yaml` fallback | Absent ⇒ byte-identical generic prompt |
+| Keeping the two paths identical | Parity test (TS ≡ Python) + golden snapshot | Drift is a CI failure, not a user report |
+
+## ADR 0011 compliance
+
+- **Enum-keyed *content* is not an enum-keyed *schema*.** The artifact is keyed by tool and neurotype but carries prose, not field constraints. No discriminated union, no per-neurotype required field, no type narrowing. The single output shape is unchanged.
+- **The new server input is optional and additive.** `reader_context` is optional, defaulted by the profile fallback and then by neutral absence, exactly as [ADR 0004](/decisions/0004-profile/) requires.
+- **One conformance suite still validates one shape.** Per-neurotype correctness is a behavioural slice (the parity test plus eval slices), not a schema variant.
+
+This **resolves [ADR 0011](/decisions/0011-neurotype-schema-strategy/) open question 3** — the shaping layer is shared in `@neurodock/core`, not re-implemented per server.
+
+## Phasing
+
+- **PR-A (done):** the artifact + schema, the TypeScript assembler, and the extension cutover — proven byte-identical (golden snapshot, 9,720 cases).
+- **PR-B:** the Python assembler, the `profile.yaml` read, the `reader_context` wiring in `mcp-translation`, and the cross-language parity test.
+- **PR-C:** per-neurotype translation eval slices.
+
+## Open questions
+
+The full ADR carries three open questions:
+
+1. The merge granularity when both `reader_context` and `profile.yaml` are present. (Recommended: field-by-field override.)
+2. Where the cross-language parity test runs in CI. (Constraint: a divergence must fail the build before merge.)
+3. Hosted-remote artifact loading — the Worker must bundle the artifact at build time, not read the filesystem at request time.
+
+## What's next
+
+- Read the [full ADR](https://github.com/tlennon-ie/neurodock/blob/main/docs/decisions/0012-shared-neurotype-shaping-layer.md).
+- [ADR 0011 — Neurotype schema strategy](/decisions/0011-neurotype-schema-strategy/) — the schema policy this layer implements (and whose open question 3 it resolves).
+- [ADR 0005 — Translation tool design](/decisions/0005-translation/) — the vendor-neutrality doctrine the server-side injection preserves.
+- [ADR 0004 — Profile schema design](/decisions/0004-profile/) — the additive-only input rule `reader_context` follows.
+- [Translation server reference](/reference/mcp-servers/translation/) — the `mcp-translation` tool surface the addendum is injected into.

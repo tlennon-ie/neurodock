@@ -286,6 +286,11 @@ export default defineConfig({
               link: "/decisions/0011-neurotype-schema-strategy/",
               badge: devBadge,
             },
+            {
+              label: "0012 — Shared neurotype-shaping layer",
+              link: "/decisions/0012-shared-neurotype-shaping-layer/",
+              badge: devBadge,
+            },
           ],
         },
         {

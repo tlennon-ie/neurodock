@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright (c) 2026 NeuroDock contributors.
  */
-export const version = "0.0.1";
+export const version = "0.1.0";
 
 export type {
   Profile,
@@ -25,3 +25,18 @@ export type {
   Telemetry,
   Weekday,
 } from "./profile.js";
+
+export {
+  assembleNeurotypeAddendum,
+  neurotypeAddendaV1,
+} from "./neurotype-addenda.js";
+
+export type {
+  NeurotypeAddendaArtifact,
+  AddendumBlock,
+  AddendumFusion,
+  AddendumFraming,
+  AddendumOutputFormat,
+  AddendumSingleBlock,
+  AssembleNeurotypeAddendumOptions,
+} from "./neurotype-addenda.js";
