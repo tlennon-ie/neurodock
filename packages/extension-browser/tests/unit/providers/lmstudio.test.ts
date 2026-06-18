@@ -134,15 +134,17 @@ describe("lmstudio provider", () => {
     expect(body.model).toBe("qwen2.5-7b-instruct");
     expect(body.stream).toBe(true);
     expect(body.messages).toEqual([{ role: "user", content: "ping" }]);
-    // Regression pin for 0.0.6 fix. LM Studio's OpenAI-compat API rejects
-    // `response_format: { type: "json_object" }` with HTTP 400
-    // (`'response_format.type' must be 'json_schema' or 'text'`).
-    // The body MUST send `text`. Without this assertion the fix could
-    // silently regress to `json_object` and break every LM Studio user.
-    expect(body.response_format).toEqual({ type: "text" });
+    // Contract pin (0.0.38): LM Studio MUST request grammar-constrained
+    // structured output via `response_format.type === "json_schema"`.
+    // Plain `text` mode left weak local models (gemma-4-e4b) free to emit
+    // prose, so `extractJson` found no object and every call failed with
+    // LLM_OUTPUT_VALIDATION_FAILED. `json_object` is NOT usable — LM Studio
+    // 400s on it ("must be 'json_schema' or 'text'"); json_schema is the
+    // mode its own error message points to.
+    expect(body.response_format?.type).toBe("json_schema");
   });
 
-  it("uses response_format=text on the non-streaming fallback too (regression: 0.0.6 LM Studio HTTP 400)", async () => {
+  it("uses response_format=json_schema on the non-streaming path too", async () => {
     const captured: CapturedRequest[] = [];
     const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
       captured.push({ url, init });
@@ -166,7 +168,143 @@ describe("lmstudio provider", () => {
       response_format?: { type: string };
     };
     expect(body.stream).toBe(false);
-    expect(body.response_format).toEqual({ type: "text" });
+    expect(body.response_format?.type).toBe("json_schema");
+  });
+
+  it("sends the tool's model-facing output schema (with content fields, without server-owned fields) (0.0.38: fixes gemma-4-e4b prose responses)", async () => {
+    const captured: CapturedRequest[] = [];
+    const fakeFetch = vi.fn(async (url: string, init?: RequestInit) => {
+      captured.push({ url, init });
+      return buildSseResponse(['{"ok":true}']);
+    }) as unknown as typeof fetch;
+
+    const provider = createLMStudioProvider({
+      baseUrl: LMSTUDIO_DEFAULT_BASE_URL,
+      fetchImpl: fakeFetch,
+    });
+    await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "gemma-4-e4b",
+    });
+
+    const body = JSON.parse(captured[0]!.init?.body as string) as {
+      response_format?: {
+        type: string;
+        json_schema?: {
+          name: string;
+          strict: boolean;
+          schema: { properties?: Record<string, unknown> };
+        };
+      };
+    };
+    expect(body.response_format?.type).toBe("json_schema");
+    expect(body.response_format?.json_schema?.name).toBe("translate_incoming");
+    expect(body.response_format?.json_schema?.strict).toBe(true);
+    const props = body.response_format?.json_schema?.schema.properties ?? {};
+    expect(Object.keys(props)).toContain("explicit_ask");
+    // The server owns provenance (ADR 0005); a strict grammar must not
+    // force the model to invent it.
+    expect(Object.keys(props)).not.toContain("model_provenance");
+    expect(Object.keys(props)).not.toContain("eval_corpus_slice");
+  });
+
+  it("retries in text mode when LM Studio rejects structured output with a 400 (streaming)", async () => {
+    const bodies: string[] = [];
+    let call = 0;
+    const fakeFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      bodies.push(init?.body as string);
+      call += 1;
+      if (call === 1) {
+        return buildJsonResponse(400, {
+          error: {
+            message: "this model does not support json_schema response_format",
+          },
+        });
+      }
+      return buildSseResponse(['{"ok":true}']);
+    }) as unknown as typeof fetch;
+
+    const provider = createLMStudioProvider({
+      baseUrl: LMSTUDIO_DEFAULT_BASE_URL,
+      fetchImpl: fakeFetch,
+    });
+    const result = await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "gemma-4-e4b",
+    });
+
+    expect(result.text).toBe('{"ok":true}');
+    expect(fakeFetch).toHaveBeenCalledTimes(2);
+    const first = JSON.parse(bodies[0]!) as {
+      response_format?: { type: string };
+    };
+    const second = JSON.parse(bodies[1]!) as {
+      response_format?: { type: string };
+    };
+    expect(first.response_format?.type).toBe("json_schema");
+    expect(second.response_format).toEqual({ type: "text" });
+  });
+
+  it("retries in text mode on the non-streaming path too when structured output is rejected", async () => {
+    const bodies: string[] = [];
+    let call = 0;
+    const fakeFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      bodies.push(init?.body as string);
+      call += 1;
+      if (call === 1) {
+        return buildJsonResponse(400, {
+          error: { message: "Invalid response_format for this model" },
+        });
+      }
+      return buildJsonResponse(200, {
+        choices: [{ message: { content: '{"ok":true}' } }],
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = createLMStudioProvider({
+      baseUrl: LMSTUDIO_DEFAULT_BASE_URL,
+      fetchImpl: fakeFetch,
+      disableStreaming: true,
+    });
+    const result = await provider.complete({
+      tool: "translate_incoming",
+      prompt: "ping",
+      model: "gemma-4-e4b",
+    });
+
+    expect(result.text).toBe('{"ok":true}');
+    expect(fakeFetch).toHaveBeenCalledTimes(2);
+    const second = JSON.parse(bodies[1]!) as {
+      response_format?: { type: string };
+    };
+    expect(second.response_format).toEqual({ type: "text" });
+  });
+
+  it("does NOT retry on a 400 unrelated to response_format (e.g. context length)", async () => {
+    const fakeFetch = vi.fn(async () =>
+      buildJsonResponse(400, {
+        error: { message: "context length exceeded" },
+      }),
+    ) as unknown as typeof fetch;
+
+    const provider = createLMStudioProvider({
+      baseUrl: LMSTUDIO_DEFAULT_BASE_URL,
+      fetchImpl: fakeFetch,
+    });
+    let err: unknown;
+    try {
+      await provider.complete({
+        tool: "translate_incoming",
+        prompt: "ping",
+        model: "gemma-4-e4b",
+      });
+    } catch (e) {
+      err = e;
+    }
+    expect((err as Error).message).toMatch(/LMSTUDIO_HTTP_400/);
+    expect(fakeFetch).toHaveBeenCalledTimes(1);
   });
 
   it("attaches Bearer auth when an apiKey is provided", async () => {

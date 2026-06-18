@@ -128,6 +128,17 @@ export function compileSchemas(): { written: string } {
   const ajv = new Ajv2020({
     allErrors: true,
     strict: false,
+    // 0.0.38: drop stray properties at ANY nesting level instead of
+    // rejecting. LM Studio's grammar-constrained structured output (GBNF
+    // via llama.cpp) does NOT enforce `additionalProperties: false` on
+    // nested objects, so small local models (gemma-4-e4b) add a stray key
+    // to e.g. a `content_translation[].facets[]` entry and otherwise-valid
+    // output was rejected with "must NOT have additional properties". This
+    // is the recursive, schema-aware version of the explicit top-level
+    // `stripUnknownTopLevelKeys` in validation.ts — same "drop, don't fail"
+    // philosophy we already apply to provider chatter. Required fields and
+    // value constraints (types, enums) are still enforced.
+    removeAdditional: "all",
     code: { source: true, esm: true },
   });
   const refs: Record<string, string> = {};
