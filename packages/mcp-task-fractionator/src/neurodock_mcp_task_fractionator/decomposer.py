@@ -46,6 +46,26 @@ class GoalTooLongError(ValueError):
     """Raised when the goal exceeds 500 characters."""
 
 
+class MaxChunkSizeInvalidError(ValueError):
+    """Raised when ``max_chunk_size`` is supplied but is out of range.
+
+    R2 neurotype hook (ADR 0011): the cap is an optional knob in 1..20. A
+    non-integer, non-positive, or above-20 value is a caller bug — surfaced,
+    never silently ignored. The pure decomposer enforces the same 1..20 band as
+    the server's ``Field(ge=1, le=20)`` so direct/library callers cannot bypass
+    the contract.
+    """
+
+
+class TimeBufferMultiplierInvalidError(ValueError):
+    """Raised when ``time_buffer_multiplier`` is outside the supported band.
+
+    R2 neurotype hook (ADR 0011): the buffer is an optional knob in roughly
+    [1.0, 3.0]. Values below 1.0 (which would *shrink* an estimate) or above
+    3.0 are rejected rather than silently clamped.
+    """
+
+
 class BudgetInfeasibleError(RuntimeError):
     """Raised when no task list can fit inside ``time_budget``.
 
@@ -169,10 +189,19 @@ class _Skeleton:
 
 @dataclass(frozen=True)
 class _DecomposePlan:
-    """A candidate, pre-sort decomposition. Used to test budget feasibility."""
+    """A candidate, pre-sort decomposition. Used to test budget feasibility.
+
+    The rationale is held as two parts so the formatter can swap *only* the
+    opening count sentence under truncation while leaving the budget/time-marker
+    tail untouched. ``rationale_opening`` is the "Carved the goal into N task(s)"
+    sentence; ``rationale_extra`` is the optional budget/time-marker sentences
+    that follow it. Concatenated with a single space they reproduce the
+    pre-R2 seed byte-for-byte.
+    """
 
     skeletons: tuple[_Skeleton, ...]
-    rationale_seed: str
+    rationale_opening: str
+    rationale_extra: str
 
     @property
     def total_minutes(self) -> int:
@@ -236,11 +265,33 @@ def decompose(
     *,
     goal: str,
     time_budget: str | None = None,
+    max_chunk_size: int | None = None,
+    time_buffer_multiplier: float | None = None,
+    motor_fatigue_aware: bool | None = None,
     uuid_factory: UuidFactory | None = None,
 ) -> DecomposeOutput:
     """Local-heuristic decomposition of ``goal``.
 
     Pure function: no I/O, no logging of the goal text.
+
+    The three optional R2 neurotype hooks (ADR 0011) all default to today's
+    behaviour when absent, so a call with none of them is byte-identical to the
+    pre-R2 contract:
+
+    - ``max_chunk_size`` — lower the ceiling on the number of returned tasks.
+      The existing 3..12 target / hard-cap-20 logic still applies above this.
+      When the natural plan is longer than the cap we keep the lowest-sequence
+      prefix (a valid sub-DAG by construction — the chain only points
+      backward), drop any now-dangling dependency references, and record the
+      truncation in the rationale rather than silently dropping steps.
+    - ``time_buffer_multiplier`` — when > 1.0, attach an additive
+      ``padded_minutes`` (= round(estimated_minutes * multiplier)) to each
+      task; ``estimated_minutes`` stays RAW so a presentation layer never
+      double-pads. Echoed in the output and named in the rationale. A value of
+      exactly 1.0 is a no-op.
+    - ``motor_fatigue_aware`` — a declared preference the server echoes. The
+      server has no keystroke/click stream, so it surfaces the flag and says so
+      in the rationale rather than fabricating activity data.
     """
 
     if not isinstance(goal, str):
@@ -250,6 +301,24 @@ def decompose(
         raise GoalRequiredError("goal must be at least 5 non-whitespace characters")
     if len(trimmed) > 500:
         raise GoalTooLongError("goal exceeds 500 characters")
+
+    if max_chunk_size is not None:
+        if not isinstance(max_chunk_size, int) or isinstance(max_chunk_size, bool):
+            raise MaxChunkSizeInvalidError("max_chunk_size must be an integer")
+        if max_chunk_size < 1:
+            raise MaxChunkSizeInvalidError("max_chunk_size must be a positive integer")
+        if max_chunk_size > 20:
+            raise MaxChunkSizeInvalidError("max_chunk_size must be 20 or fewer")
+
+    if time_buffer_multiplier is not None:
+        if not isinstance(time_buffer_multiplier, int | float) or isinstance(
+            time_buffer_multiplier, bool
+        ):
+            raise TimeBufferMultiplierInvalidError("time_buffer_multiplier must be a number")
+        if time_buffer_multiplier < 1.0 or time_buffer_multiplier > 3.0:
+            raise TimeBufferMultiplierInvalidError(
+                "time_buffer_multiplier must be between 1.0 and 3.0"
+            )
 
     parsed_budget: ParsedTimeBudget | None = None
     if time_budget is not None:
@@ -309,18 +378,34 @@ def decompose(
         # Re-raise — server boundary translates to DEPENDENCY_CYCLE.
         raise
 
+    # R2: apply the max_chunk_size cap. We keep the lowest-sequence prefix of
+    # the total order. Because every dependency in this engine points strictly
+    # backward along the chain, the prefix is a valid sub-DAG; we still filter
+    # dangling dependency references defensively so a future non-linear plan
+    # can never produce an invalid topo order.
+    natural_count = len(ordered_ids)
+    truncated = max_chunk_size is not None and max_chunk_size < natural_count
+    if max_chunk_size is not None:
+        kept_ids = ordered_ids[:max_chunk_size]
+    else:
+        kept_ids = ordered_ids
+    kept_id_set = set(kept_ids)
+
     by_id = {s.task_id: s for s in plan.skeletons}
     tasks: list[Task] = []
-    for index, task_id in enumerate(ordered_ids, start=1):
+    for index, task_id in enumerate(kept_ids, start=1):
         skeleton = by_id[task_id]
+        kept_dependencies = [dep for dep in skeleton.dependencies if dep in kept_id_set]
+        padded_minutes = _padded_minutes(skeleton.estimated_minutes, time_buffer_multiplier)
         tasks.append(
             Task(
                 id=skeleton.task_id,
                 title=skeleton.title,
                 description=skeleton.description,
                 estimated_minutes=skeleton.estimated_minutes,
+                padded_minutes=padded_minutes,
                 acceptance_criteria=list(skeleton.acceptance_criteria),
-                dependencies=list(skeleton.dependencies),
+                dependencies=kept_dependencies,
                 sequence=index,
                 tags=list(skeleton.tags),
             )
@@ -331,8 +416,44 @@ def decompose(
         plan=plan,
         budget=parsed_budget,
         time_markers=detected_time_markers,
+        truncated=truncated,
+        natural_count=natural_count,
+        time_buffer_multiplier=time_buffer_multiplier,
+        motor_fatigue_aware=motor_fatigue_aware,
     )
-    return DecomposeOutput(tasks=tasks, rationale=rationale)
+
+    # Only echo a hook when it is actively in effect, so an unused hook leaves
+    # the wire shape byte-identical to pre-R2 (server dumps exclude_none=True).
+    echoed_multiplier = (
+        time_buffer_multiplier
+        if time_buffer_multiplier is not None and time_buffer_multiplier > 1.0
+        else None
+    )
+    # `False` is intentionally equivalent to absent here: there is no distinct
+    # "explicit denial" wire state. Both an unset flag and `motor_fatigue_aware=False`
+    # collapse to None and are dropped by exclude_none=True, keeping the wire
+    # byte-identical to pre-R2. This is a documented design choice, not an oversight.
+    echoed_motor = True if motor_fatigue_aware else None
+    return DecomposeOutput(
+        tasks=tasks,
+        rationale=rationale,
+        time_buffer_multiplier=echoed_multiplier,
+        motor_fatigue_aware=echoed_motor,
+        truncated=True if truncated else None,
+    )
+
+
+def _padded_minutes(estimated_minutes: int, multiplier: float | None) -> int | None:
+    """Return round(estimated * multiplier) when padding is active, else None.
+
+    A multiplier of exactly 1.0 (or absent) is a no-op: returns ``None`` so the
+    additive field is dropped from the wire. ``estimated_minutes`` is never
+    mutated — the caller stores this alongside the raw value.
+    """
+
+    if multiplier is None or multiplier <= 1.0:
+        return None
+    return round(estimated_minutes * multiplier)
 
 
 # Internal helpers -----------------------------------------------------------
@@ -496,16 +617,24 @@ def _build_plan(
             )
         )
 
-    rationale_seed = f"Carved the goal into {len(skeletons)} task(s) around '{goal_summary_hint}'."
+    rationale_opening = (
+        f"Carved the goal into {len(skeletons)} task(s) around '{goal_summary_hint}'."
+    )
+    extra_pieces: list[str] = []
     if budget is not None:
-        rationale_seed += (
-            f" Budget ceiling {budget.minutes_ceiling} min; "
+        extra_pieces.append(
+            f"Budget ceiling {budget.minutes_ceiling} min; "
             f"plan totals {sum(s.estimated_minutes for s in skeletons)} min."
         )
     if time_markers:
-        rationale_seed += " Detected a time marker; the plan is sequenced linearly."
+        extra_pieces.append("Detected a time marker; the plan is sequenced linearly.")
+    rationale_extra = " ".join(extra_pieces)
 
-    return _DecomposePlan(skeletons=tuple(skeletons), rationale_seed=rationale_seed)
+    return _DecomposePlan(
+        skeletons=tuple(skeletons),
+        rationale_opening=rationale_opening,
+        rationale_extra=rationale_extra,
+    )
 
 
 def _format_rationale(
@@ -514,11 +643,38 @@ def _format_rationale(
     plan: _DecomposePlan,
     budget: ParsedTimeBudget | None,
     time_markers: list[str],
+    truncated: bool = False,
+    natural_count: int | None = None,
+    time_buffer_multiplier: float | None = None,
+    motor_fatigue_aware: bool | None = None,
 ) -> str:
-    """Build the one-paragraph rationale. NEVER includes goal text."""
+    """Build the one-paragraph rationale. NEVER includes goal text.
 
-    pieces = [plan.rationale_seed]
+    The non-truncated rationale is byte-identical to the pre-R2 contract: the
+    opening sentence is the natural "Carved the goal into N task(s)…" seed and
+    the count agrees with the delivered task list (no truncation, so they are
+    the same number). Under truncation the *opening* is rebuilt so the delivered
+    count and the opening never contradict each other, and the closing note uses
+    existence framing ("still in the plan") rather than obligation framing
+    ("still need doing") — this string is effectively user-facing and must meet
+    the no-shame bar on its own.
+    """
+
     total = sum(t.estimated_minutes for t in tasks)
+
+    if truncated and natural_count is not None:
+        # Lead with the relationship between the natural plan and what we are
+        # returning, so the opening count and the delivered count agree.
+        opening = (
+            f"Planned {natural_count} tasks; returning the first {len(tasks)} "
+            f"at your max_chunk_size."
+        )
+    else:
+        opening = plan.rationale_opening
+    # Reconstruct the pre-R2 seed: opening + optional budget/time-marker tail.
+    seed = f"{opening} {plan.rationale_extra}".rstrip() if plan.rationale_extra else opening
+
+    pieces = [seed]
     pieces.append(f"Estimated total: {total} minutes across {len(tasks)} tasks.")
     if budget is not None:
         headroom = budget.minutes_ceiling - total
@@ -528,6 +684,26 @@ def _format_rationale(
         "Sequence is a total order; tasks at the same topological depth are "
         "tie-broken by estimated_minutes then id."
     )
+    # R2 hook rationale lines. Each appears only when its hook is in effect, so
+    # the default rationale is unchanged from pre-R2.
+    if truncated and natural_count is not None:
+        dropped = natural_count - len(tasks)
+        pieces.append(
+            f"The other {dropped} are still in the plan — re-run without "
+            f"the cap (or raise it) to see them."
+        )
+    if time_buffer_multiplier is not None and time_buffer_multiplier > 1.0:
+        pieces.append(
+            f"padded_minutes is each raw estimate multiplied by your "
+            f"time_buffer_multiplier of {time_buffer_multiplier:g}; estimated_minutes "
+            f"stays raw so nothing is padded twice."
+        )
+    if motor_fatigue_aware:
+        pieces.append(
+            "motor_fatigue_aware is on: this server has no view of your actual "
+            "motor activity, so it only flags the preference for the client to act on "
+            "and does not infer fatigue."
+        )
     rationale = " ".join(pieces)
     # Defensive cap at the schema's 1000-character limit.
     if len(rationale) > 1000:
@@ -542,6 +718,8 @@ __all__ = [
     "DecompositionUnavailableError",
     "GoalRequiredError",
     "GoalTooLongError",
+    "MaxChunkSizeInvalidError",
     "TimeBudgetUnparseableError",
+    "TimeBufferMultiplierInvalidError",
     "decompose",
 ]

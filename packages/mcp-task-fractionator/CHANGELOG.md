@@ -4,6 +4,47 @@ All notable changes to this package will be documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/);
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-06-18
+
+### Added — optional neurotype hooks on `decompose` (R2; ADR 0011)
+
+`decompose` gained three OPTIONAL, ADDITIVE inputs. Each defaults to today's
+behaviour when absent, so a call with none of them returns the exact pre-R2
+wire shape (covered by a backward-compat test). The server stays neurotype-
+**blind** in the ADR-0011 sense: these are call-time KNOBS, not a neurotype
+enum, and the engine never branches on a neurotype.
+
+- `max_chunk_size` (integer `1–20`) — caps the _number_ of tasks returned,
+  below the normal 3–12 target / hard cap of 20. When the goal naturally needs
+  more steps, the server keeps the lowest-`sequence` prefix (a valid sub-DAG
+  with dangling dependency references filtered out), sets the new optional
+  `truncated: true` output flag, and names the truncation in the rationale —
+  it never silently drops steps or returns an invalid topological order.
+- `time_buffer_multiplier` (number `1.0–3.0`) — when greater than 1.0, each
+  task gains an additive `padded_minutes` = `round(estimated_minutes ×
+multiplier)`. **`estimated_minutes` stays raw** so a presentation layer
+  (e.g. the `dyspraxia-task-pacer` skill) never double-pads. The multiplier is
+  echoed at top level and named in the rationale. A value of `1.0` (or omitting
+  the field) produces no padding and no echo.
+- `motor_fatigue_aware` (boolean) — when true, the server echoes the
+  preference and names it in the rationale so the client/skill can pace breaks.
+  The server has no view of keystroke/click activity and does **not** infer
+  fatigue (honest scoping, mirroring `mcp-chronometric` #103).
+
+New optional output fields (all omitted from the wire when their knob is
+inactive, via `model_dump(exclude_none=True)`): per-task `padded_minutes`, and
+top-level `time_buffer_multiplier`, `motor_fatigue_aware`, `truncated`.
+
+New error code `INPUT_INVALID` — an out-of-range knob (`max_chunk_size` not a
+positive integer 1–20, or `time_buffer_multiplier` outside `[1.0, 3.0]`) is
+rejected rather than silently clamped.
+
+JSON schemas under `schemas/` and the Pydantic models in `types.py` were
+updated together; the protocol-conformance test validates both tools'
+responses against the schemas. `next_one` now also dumps with
+`exclude_none=True` so the shared `Task.padded_minutes` field (always unset
+there) stays off `next_one`'s wire — its shape is unchanged.
+
 ## [0.0.5] - 2026-06-11
 
 ### Changed

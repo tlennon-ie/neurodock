@@ -27,6 +27,25 @@
           "pattern": "^P(?!$)(\\d+Y)?(\\d+M)?(\\d+W)?(\\d+D)?(T(\\d+H)?(\\d+M)?(\\d+(\\.\\d+)?S)?)?$",
           "description": "Optional ISO 8601 duration capping total estimated_minutes across the returned tasks. MUST be ISO 8601 format — natural language like '3 hours' is rejected with TIME_BUDGET_UNPARSEABLE. Common values: 'PT30M' = 30 minutes, 'PT3H' = 3 hours, 'PT1H30M' = 1 hour 30 minutes, 'PT4H' = 4 hours, 'P1D' = 1 day, 'P3D' = 3 days. When absent the server returns the smallest credible set of atomic tasks that fully covers the goal — 'unbounded' does NOT mean 'maximally decomposed'. When present, total estimated_minutes across returned tasks MUST fit within the budget; if the server cannot construct such a list it returns BUDGET_INFEASIBLE rather than silently truncating.",
           "examples": ["PT30M", "PT3H", "PT1H30M", "PT4H", "P1D", "P3D"]
+        },
+        "max_chunk_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Optional neurotype knob (ADR 0011, additive). Caps the NUMBER of tasks returned, below the normal 3-12 target and hard cap of 20. When the goal naturally needs more steps than the cap, the server keeps the lowest-sequence prefix — a valid sub-DAG with no dangling dependency references — and records the truncation in the rationale and via the optional output flag 'truncated'; it never silently drops steps or returns an invalid topological order. Knob only: the server never branches on a neurotype enum. When absent the task count is the server's normal choice.",
+          "examples": [3, 4, 5]
+        },
+        "time_buffer_multiplier": {
+          "type": "number",
+          "minimum": 1.0,
+          "maximum": 3.0,
+          "description": "Optional neurotype knob (ADR 0011, additive). When greater than 1.0, the server attaches an additive per-task 'padded_minutes' equal to round(estimated_minutes * multiplier) and echoes the multiplier in the output. 'estimated_minutes' stays RAW so a presentation layer never double-pads. A value of exactly 1.0 (or omitting the field) produces no padding and leaves the wire shape unchanged. Values below 1.0 (which would shrink an estimate) or above 3.0 are rejected with INPUT_INVALID.",
+          "examples": [1.25, 1.5, 2.0]
+        },
+        "motor_fatigue_aware": {
+          "type": "boolean",
+          "description": "Optional neurotype knob (ADR 0011, additive). When true, the server echoes 'motor_fatigue_aware: true' in the output and names it in the rationale so the client/skill can pace breaks. The server has NO view of actual keystroke/click activity and does NOT infer fatigue — it only surfaces the declared preference. When absent or false the wire shape is unchanged.",
+          "examples": [true]
         }
       }
     },
@@ -77,7 +96,12 @@
                 "type": "integer",
                 "minimum": 5,
                 "maximum": 90,
-                "description": "Estimated minutes to complete. Floor of 5 prevents trivial-shred decomposition; ceiling of 90 enforces atomicity — anything longer is a goal, not a task. Server SHOULD round to multiples of 5 for legibility."
+                "description": "Estimated minutes to complete. Floor of 5 prevents trivial-shred decomposition; ceiling of 90 enforces atomicity — anything longer is a goal, not a task. Server SHOULD round to multiples of 5 for legibility. This figure is always RAW — it is never adjusted by time_buffer_multiplier (see padded_minutes)."
+              },
+              "padded_minutes": {
+                "type": "integer",
+                "minimum": 5,
+                "description": "Optional, additive (ADR 0011, R2). Present only when the request supplied a time_buffer_multiplier greater than 1.0. Equals round(estimated_minutes * time_buffer_multiplier). estimated_minutes stays RAW alongside it, so a presentation layer that shows the padded figure does not pad a second time. Omitted entirely when no buffer is in effect."
               },
               "acceptance_criteria": {
                 "type": "array",
@@ -122,7 +146,21 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 1000,
-          "description": "One paragraph the user can read in 5 seconds explaining how the goal was carved. Surfaces assumptions ('I assumed Friday meant end-of-business Friday in your local timezone') so the user can correct them on the next call. NOT a marketing summary."
+          "description": "One paragraph the user can read in 5 seconds explaining how the goal was carved. Surfaces assumptions ('I assumed Friday meant end-of-business Friday in your local timezone') so the user can correct them on the next call. NOT a marketing summary. When an R2 knob is active it also names the padding multiplier, any truncation, and the motor-fatigue-aware preference."
+        },
+        "time_buffer_multiplier": {
+          "type": "number",
+          "minimum": 1.0,
+          "maximum": 3.0,
+          "description": "Optional, additive (ADR 0011, R2). Echoes the request's time_buffer_multiplier when it was greater than 1.0 (so a presentation layer knows what padded_minutes was computed with). Omitted when no buffer was applied."
+        },
+        "motor_fatigue_aware": {
+          "type": "boolean",
+          "description": "Optional, additive (ADR 0011, R2). Echoes the request's motor_fatigue_aware preference when it was true. The server does not infer fatigue. Omitted when the preference was absent or false."
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "Optional, additive (ADR 0011, R2). Present and true only when max_chunk_size was lower than the number of tasks the goal would naturally produce, so the returned list is a prefix and further steps remain. Omitted when no truncation occurred."
         }
       }
     }
@@ -139,6 +177,9 @@
       },
       "TIME_BUDGET_UNPARSEABLE": {
         "description": "time_budget did not match the ISO 8601 duration regex. The server does NOT silently fall back to unbounded — that would mask the caller's bug."
+      },
+      "INPUT_INVALID": {
+        "description": "An R2 neurotype knob was supplied with an out-of-range value: max_chunk_size was not a positive integer (1-20), or time_buffer_multiplier was outside [1.0, 3.0]. The server rejects rather than silently clamping, so the caller's bug is not masked."
       },
       "BUDGET_INFEASIBLE": {
         "description": "The server could not construct any task list with total estimated_minutes <= time_budget that also covers the goal. Caller SHOULD retry with a larger budget or a smaller goal. Error payload MAY include a 'minimum_feasible_minutes' integer to guide the retry."

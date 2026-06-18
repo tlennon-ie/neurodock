@@ -23,12 +23,21 @@ class _Base(BaseModel):
 
 
 class Task(_Base):
-    """A single atomic task. Shape is shared by ``decompose`` and ``next_one``."""
+    """A single atomic task. Shape is shared by ``decompose`` and ``next_one``.
+
+    ``padded_minutes`` is an OPTIONAL, ADDITIVE field (ADR 0011 / R2). It is
+    populated only when ``decompose`` is called with a
+    ``time_buffer_multiplier`` greater than 1.0; ``estimated_minutes`` always
+    stays RAW so a presentation layer never double-pads. When absent it is
+    ``None`` and is dropped from the wire (server dumps with
+    ``exclude_none=True``).
+    """
 
     id: str = Field(pattern=UUID4_PATTERN)
     title: str = Field(min_length=1, max_length=120)
     description: str = Field(min_length=1, max_length=1000)
     estimated_minutes: int = Field(ge=5, le=90)
+    padded_minutes: int | None = Field(default=None, ge=5)
     acceptance_criteria: list[str] = Field(min_length=1, max_length=8)
     dependencies: list[str] = Field(default_factory=list)
     sequence: int = Field(ge=1)
@@ -36,17 +45,34 @@ class Task(_Base):
 
 
 class DecomposeInput(_Base):
-    """Input arguments for ``decompose``. Validated at the server boundary."""
+    """Input arguments for ``decompose``. Validated at the server boundary.
+
+    The three R2 neurotype-hook inputs are OPTIONAL knobs (ADR 0011): they
+    default to today's behaviour when absent and never branch on a neurotype
+    enum. They are call-time parameters, exactly like the guardrail server's
+    thresholds.
+    """
 
     goal: str = Field(min_length=5, max_length=500)
     time_budget: str | None = None
+    max_chunk_size: int | None = Field(default=None, ge=1, le=20)
+    time_buffer_multiplier: float | None = Field(default=None, ge=1.0, le=3.0)
+    motor_fatigue_aware: bool | None = None
 
 
 class DecomposeOutput(_Base):
-    """Successful response from ``decompose``."""
+    """Successful response from ``decompose``.
+
+    ``time_buffer_multiplier``, ``motor_fatigue_aware`` and ``truncated`` are
+    OPTIONAL, ADDITIVE echoes (ADR 0011 / R2). Each is ``None`` (and dropped
+    from the wire) unless the corresponding hook was supplied and active.
+    """
 
     tasks: list[Task] = Field(min_length=1, max_length=20)
     rationale: str = Field(min_length=1, max_length=1000)
+    time_buffer_multiplier: float | None = Field(default=None, ge=1.0, le=3.0)
+    motor_fatigue_aware: bool | None = None
+    truncated: bool | None = None
 
 
 class NextOneInput(_Base):

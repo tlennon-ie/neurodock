@@ -38,7 +38,7 @@ The rationale paragraph that ships with the response surfaces every assumption (
 
 | Tool | Input | Output |
 |---|---|---|
-| `decompose` | `{ goal: string, time_budget?: string }` | `{ tasks: Task[], rationale: string }` |
+| `decompose` | `{ goal: string, time_budget?: string, max_chunk_size?: integer, time_buffer_multiplier?: number, motor_fatigue_aware?: boolean }` | `{ tasks: Task[], rationale: string, time_buffer_multiplier?, motor_fatigue_aware?, truncated? }` |
 | `next_one` | `{ project: string }` | `{ task: Task, reasoning: string, confidence: number }` |
 
 ### `decompose`
@@ -48,17 +48,25 @@ Input:
 - `goal` — plain-language goal, 5–500 characters. Treated as private user data; never logged.
 - `time_budget` — optional ISO 8601 duration (`PT4H`, `P3D`, `PT30M`). The total `estimated_minutes` across returned tasks fits within the budget; otherwise the server returns `BUDGET_INFEASIBLE` rather than silently truncating.
 
+Optional neurotype knobs (ADR 0011 — additive, default to today's behaviour when absent; the server never branches on a neurotype enum):
+
+- `max_chunk_size` — integer `1–20`. Caps the *number* of tasks returned, below the normal 3–12 target. When the goal naturally needs more steps, the server keeps the lowest-`sequence` prefix (a valid sub-DAG with no dangling dependencies), sets `truncated: true`, and says so in the rationale. It never silently drops steps or returns an invalid order.
+- `time_buffer_multiplier` — number `1.0–3.0`. When greater than 1.0, each task gains an additive `padded_minutes` equal to `round(estimated_minutes × multiplier)`; `estimated_minutes` stays **raw** so a presentation layer never double-pads. A value of `1.0` (or omitting the field) produces no padding. Out-of-range values are rejected with `INPUT_INVALID`.
+- `motor_fatigue_aware` — boolean. When true, the server echoes the preference and names it in the rationale so the client/skill can pace breaks. The server has no view of keystroke/click activity and does **not** infer fatigue.
+
 Output:
 
 - `tasks` — array of 1–20 tasks (target 3–12, per ADR 0003). Each task has:
   - `id` — UUIDv4, server-generated.
   - `title`, `description` — verb-led, concrete.
-  - `estimated_minutes` — integer in `[5, 90]`. Floor prevents trivial-shred; ceiling enforces atomicity.
+  - `estimated_minutes` — integer in `[5, 90]`. Floor prevents trivial-shred; ceiling enforces atomicity. Always **raw** — never buffer-adjusted.
+  - `padded_minutes` — *optional, additive.* Present only when `time_buffer_multiplier` greater than 1.0 was supplied; equals `round(estimated_minutes × multiplier)`. Omitted otherwise.
   - `acceptance_criteria` — non-empty array. Required. An empty array is rejected as `ACCEPTANCE_CRITERIA_REQUIRED`.
   - `dependencies` — UUIDv4 references to siblings in the same response. Cycles are rejected.
   - `sequence` — 1-indexed total order. Distinct for every task; `next_one` is "sequence = 1 of the unfinished subset".
   - `tags` — free-form labels for filtering.
-- `rationale` — one paragraph the user can read in 5 seconds. Surfaces assumptions ("I assumed Friday meant end-of-business Friday in your local timezone"). Not a marketing summary.
+- `rationale` — one paragraph the user can read in 5 seconds. Surfaces assumptions ("I assumed Friday meant end-of-business Friday in your local timezone"). Not a marketing summary. Names any active knob (the padding multiplier, truncation, motor-fatigue-aware preference).
+- `time_buffer_multiplier`, `motor_fatigue_aware`, `truncated` — *optional, additive echoes.* Each is present only when the corresponding knob was active; omitted otherwise so a no-knob call is byte-identical to the pre-R2 wire shape.
 
 ### `next_one`
 
@@ -73,6 +81,7 @@ The fractionator owns the *decomposition algorithm*; the graph owns the *state*.
 | `GOAL_REQUIRED` | Goal missing or shorter than 5 characters after trimming. |
 | `GOAL_TOO_LONG` | Goal exceeded 500 characters. Split the goal itself. |
 | `TIME_BUDGET_UNPARSEABLE` | Budget did not match the ISO 8601 duration regex. No silent fallback. |
+| `INPUT_INVALID` | An R2 neurotype knob was out of range: `max_chunk_size` not a positive integer 1–20, or `time_buffer_multiplier` outside `[1.0, 3.0]`. Rejected, never clamped. |
 | `BUDGET_INFEASIBLE` | No task list fits the budget while still covering the goal. May include `minimum_feasible_minutes`. |
 | `DEPENDENCY_CYCLE` | Candidate decomposition produced a cycle. Server bug, surfaced explicitly. |
 | `ACCEPTANCE_CRITERIA_REQUIRED` | Internal invariant — a candidate task had zero acceptance criteria. |

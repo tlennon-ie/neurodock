@@ -4,7 +4,7 @@ A motor-aware pacing skill. It takes a goal, decomposes it into atomic steps, an
 
 ## Why padding
 
-Motor execution of a task routinely runs 30–50% longer than the raw cognitive estimate predicts. The task-fractionator returns the raw estimate; this skill applies your `chronometric.time_buffer_multiplier` (1.3 in the `dyspraxia.yaml` preset, ≈+30%) so the day is planned against a figure that holds. The raw figures are still shown once, in the closing block, so nothing is hidden.
+Motor-heavy work routinely runs 30–50% longer than the raw cognitive estimate predicts — the world under-budgets that work, it is not a measure of you. The task-fractionator server applies your `chronometric.time_buffer_multiplier` (1.3 in the `dyspraxia.yaml` preset, ≈+30%) and returns a `padded_minutes` figure alongside the raw one; this skill passes the buffer to the server and displays that padded figure, so the day is planned against a number that holds. The server is the single source of truth for the padding, so a figure is never multiplied twice. The raw figures are still shown once, in the closing block, so nothing is hidden. (If you run an older server that does not return `padded_minutes`, the skill falls back to padding the raw estimate itself — still exactly once.)
 
 ## When it fires
 
@@ -13,8 +13,8 @@ Motor execution of a task routinely runs 30–50% longer than the raw cognitive 
 
 ## How it reads your profile
 
-- `chronometric.time_buffer_multiplier` — the padding factor. If it is unset, nothing is padded and no padding claim is made; you see the raw estimate.
-- `preferences.max_chunk_size` — how many steps are shown (4 in the preset). Extra steps are counted, not listed.
+- `chronometric.time_buffer_multiplier` — the padding factor, passed to the task-fractionator so the server pads. If it is unset, nothing is padded and no padding claim is made; you see the raw estimate.
+- `preferences.max_chunk_size` — how many steps are returned (4 in the preset), passed to the task-fractionator so the server caps the list. When the goal needs more steps, the server flags it and the skill says how many were left off — it never silently drops them.
 - `preferences.voice_input_preferred` — when true, any command is emitted as a single copy-pasteable block, value already in place, nothing to hand-edit.
 - `chronometric.motor_fatigue_aware` — when set, the closing break line factors the _kind of work_ in the list (typing, clicking) into the pacing, not just the clock. It never reads a movement as a signal.
 
