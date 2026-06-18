@@ -1,0 +1,118 @@
+# NeuroDock Profile preset — Tourette
+#
+# Who it's for:
+#   People who self-identify with Tourette syndrome or a tic condition and
+#   want NeuroDock tuned so the surface never assumes tics can be
+#   suppressed on demand, never adds sudden motion that can act as a
+#   startle or tic trigger, and accounts for the fatigue that suppressing
+#   tics quietly accumulates. Pick this if sudden animation, autoplay, or
+#   flashing is unpleasant or a trigger, and if "holding it together"
+#   through a long session leaves you more drained than the task alone
+#   would explain. Diagnosis is never required.
+#
+# What this preset assumes vs. what's user-tunable:
+#   ASSUMED (opinionated):
+#     - identity.neurotypes = ["tourette"]   "tourette" is a first-class
+#       enum value in the schema. No skill in v0.1.0 gates on this tag
+#       yet, but generic neurotype-aware skills (e.g. visual-organizer)
+#       will still activate.
+#     - preferences.output_format = answer_first   the headline-first
+#       shape keeps responses short and scannable, so less time is spent
+#       holding attention on a long block while an urge builds.
+#     - preferences.max_chunk_size = 5   the manifesto-tuned ADHD value
+#       (vs. the schema default of 7). A premonitory urge and any
+#       suppression effort tax working memory; five atomic items is a
+#       practical ceiling. Not as tight as the dyspraxia value of 4,
+#       because the constraint here is attention, not per-item motor cost.
+#     - preferences.reading_font_hint = atkinson_hyperlegible   project
+#       default; chosen for legibility under fatigue.
+#     - preferences.motion = reduced   NOT OPTIONAL for this preset.
+#       Sudden motion, autoplay, parallax, auto-scroll, and flashing can
+#       act as startle and tic triggers. This preset hard-pins "reduced"
+#       rather than deferring to the OS prefers-reduced-motion setting
+#       because the cost of getting it wrong is bodily, not aesthetic —
+#       the same reasoning the dyspraxia preset applies for vestibular
+#       sensitivity.
+#     - chronometric.hyperfocus_break_minutes = 75   tighter than the
+#       schema default of 90 and inside the 60-75 "gentle"-to-"nudge"
+#       band. Suppressing tics through a long focused stretch compounds
+#       fatigue on top of the task itself; surfacing the structured nudge
+#       a little earlier than default gives the user the option to break
+#       before that compounded fatigue locks in. Not as early as the
+#       dyspraxia value of 60, which is anchored to per-action motor cost.
+#     - chronometric.motor_fatigue_aware = true   tic suppression and the
+#       motor load of tics themselves accumulate fatigue distinct from
+#       cognitive load — a Tourette user can be cognitively sharp and
+#       physically worn at once. When true the hyperfocus monitor is
+#       allowed to weight motor signal into the fatigue picture rather
+#       than relying on continuous-session length alone. IMPORTANT: a tic
+#       is not an activity, fatigue, or engagement signal and must never
+#       be read as one; reading any motor activity is gated by
+#       privacy.os_idle_consent and the relevant OS-input consents.
+#       (Consumer pending: mcp-chronometric.)
+#     - guardrails.sycophancy_check = warn   manifesto default.
+#
+#   USER-TUNABLE (edit freely after copying):
+#     - identity.display_name       set to your preferred handle.
+#     - identity.neurotypes   OCD and ADHD overlap is common with
+#       Tourette; add "ocd" and/or "adhd" if you also identify with them
+#       and the matching skills (and the stricter OCD guardrail tuning)
+#       will compose. This preset does NOT assume the overlap on your
+#       behalf.
+#     - preferences.max_chunk_size   raise toward 7 on low-urge days, or
+#       lower toward 3 when attention is scarce.
+#     - chronometric.hyperfocus_break_minutes   raise toward 90 on days
+#       where the work is light and suppression isn't a factor.
+#     - chronometric.end_of_day_local   commented out by default; set it
+#       if you want the after-hours nudge.
+#     - guardrails.rumination_threshold / rumination_window_minutes
+#       schema defaults (3 queries / 90 min). If you also identify with
+#       OCD, consider tightening these and switching sycophancy_check to
+#       "refuse" (see the ocd.yaml preset).
+#     - privacy.os_idle_consent   off by default; enable only if you want
+#       chronometric.idle_status to read OS idle time.
+#
+# Install:
+#   cp profiles/tourette.yaml ~/.neurodock/profile.yaml
+#
+# This is an opinionated default, not a prescription. You are the
+# authority on what works for you — change anything below at any time.
+
+schema_version: "0.1.0"
+
+identity:
+  display_name: "T"
+  neurotypes:
+    - "tourette"
+
+preferences:
+  output_format: "answer_first"
+  max_chunk_size: 5
+  reading_font_hint: "atkinson_hyperlegible"
+  # Hard-pinned, not deferred to OS. See header comment — sudden motion,
+  # autoplay, and flashing can act as startle and tic triggers, so this
+  # is a bodily-safety setting, not a preference.
+  motion: "reduced"
+
+chronometric:
+  # 75-minute nudge: inside the 60-75 gentle-to-nudge band. Suppressing
+  # tics through a long focused stretch compounds fatigue; surface the
+  # structured nudge a little earlier than the schema default of 90.
+  hyperfocus_break_minutes: 75
+  # end_of_day_local: "18:30"   # uncomment to enable the after-hours nudge
+  session_overlap_policy: "auto_close"
+  # Tic suppression and tic motor load accumulate fatigue distinct from
+  # cognitive load; allow the monitor to weight motor signal. A tic is
+  # never read as an activity/fatigue/engagement signal, and reading any
+  # motor activity still requires privacy.os_idle_consent.
+  motor_fatigue_aware: true
+
+guardrails:
+  rumination_threshold: 3
+  rumination_window_minutes: 90
+  sycophancy_check: "warn"
+
+privacy:
+  embeddings: "local"
+  telemetry: "off"
+  os_idle_consent: false
