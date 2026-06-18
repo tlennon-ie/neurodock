@@ -31,6 +31,7 @@ const EXPECTED_SKILLS = [
   "adhd-daily-planner",
   "asd-meeting-translator",
   "audhd-context-recovery",
+  "dyspraxia-task-pacer",
   "hyperfocus-formatter",
   "ocd-decision-finalizer",
   "visual-organizer",

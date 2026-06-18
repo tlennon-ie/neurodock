@@ -40,6 +40,19 @@ neurodock install-skills --dry-run  # print the planned targets, write nothing
 - `ocd-decision-finalizer` — Surfaces prior decision evidence on repeat-validation requests; declines re-analysis without new information.
 - `hyperfocus-formatter` — "Answer First" output structure on long sessions and design-critique surfaces.
 - `visual-organizer` — Mermaid generation for overwhelm states.
+- `dyspraxia-task-pacer` — Decomposes a goal and presents each estimate padded by the profile's motor time-buffer, naming why.
+
+## Neurotypes served without a dedicated skill
+
+Some neurotypes are served well by profile presets, the reduced-motion default, and the prompt addendum — not by a prose-shaping skill. Forcing a token skill where one is not warranted would dilute the library, so we document the decision instead.
+
+- **Tourette** — no dedicated `tourette-` skill ships; the neurotype is served through the profile preset and the prompt addendum instead.
+
+  What serves it: `profiles/tourette.yaml` (hard-pinned `motion: reduced` for startle/tic-trigger safety, `max_chunk_size`, `chronometric.motor_fatigue_aware`), the per-neurotype prompt addendum, and the browser-extension motion handling. The one workflow a Tourette skill might own — a suppression-fatigue-aware session/break helper that respects "outwardly-still ≠ rested" — is already provided neurotype-blind by `hyperfocus-formatter`, which surfaces session data without editorialising, never comments on the body, and consumes the `motor_fatigue_aware` signal at the chronometric layer.
+
+  What a skill would have to avoid: the Tourette lens forbids the only content a dedicated skill would add — commenting on movement, instructing stillness, a "calm/relax" register, or focus scorecards — so a `tourette-` skill would be an empty shell or a duplicate of `hyperfocus-formatter`.
+
+  The `tourette-advocate` keeps the gap flagged, so the decision is revisited if a genuinely Tourette-specific, non-duplicative workflow emerges.
 
 ## Authoring a new skill
 
