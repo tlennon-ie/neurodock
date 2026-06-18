@@ -67,6 +67,29 @@
             "night_owl_caution",
             "unknown"
           ]
+        },
+        "effective_end_of_day_local": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "Optional (added v0.1.x per ADR 0011). Today's effective end-of-day cutoff, 'HH:MM' (24h) local. Resolved from profile.chronometric.end_of_day_local with the current weekday's profile.chronometric.weekday_overrides entry applied on top. Present only when the profile declares an end-of-day for today; absent otherwise.",
+          "examples": ["16:00", "18:30"]
+        },
+        "past_end_of_day": {
+          "type": "boolean",
+          "description": "Optional (added v0.1.x per ADR 0011). True when the local clock has reached 'effective_end_of_day_local' (inclusive). Present only when an effective end-of-day exists for today. Reports the fact; the downstream skill decides whether to surface anything."
+        },
+        "calendar_phase": {
+          "type": "string",
+          "enum": ["teaching", "marking", "exam", "deadlines", "break"],
+          "description": "Optional (added v0.1.x per ADR 0011). Echo of the user's self-declared profile.chronometric.calendar_phase so planning skills can shift defaults across the term. Surfaced verbatim; the chronometric server applies no phase-specific heuristic in this release. Absent when the profile does not declare it."
+        },
+        "deadline_cluster_awareness": {
+          "type": "boolean",
+          "description": "Optional (added v0.1.x per ADR 0011). Echo of profile.chronometric.deadline_cluster_awareness; present (true) only when the user opted in, so planning skills know to weight deadline proximity. Absent otherwise."
+        },
+        "motor_fatigue_aware": {
+          "type": "boolean",
+          "description": "Optional (added v0.1.x per ADR 0011). Echo of profile.chronometric.motor_fatigue_aware; present (true) only when the user opted in. The chronometric server has no keystroke/click stream so it cannot weight motor fatigue itself; this flag tells an activity-aware client to do so. Absent otherwise."
         }
       }
     }

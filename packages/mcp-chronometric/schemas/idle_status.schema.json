@@ -36,6 +36,10 @@
           "type": "string",
           "format": "date-time",
           "description": "ISO 8601 timestamp at which the idle reading was taken. Optional; included when a real OS sample was performed."
+        },
+        "motor_fatigue_aware": {
+          "type": "boolean",
+          "description": "Optional (added v0.1.x per ADR 0011). Echo of profile.chronometric.motor_fatigue_aware; present (true) only when the user opted in. A declared preference, NOT OS data, so it is surfaced regardless of consent. The chronometric server has no keystroke/click stream, so it cannot compute activity-weighted fatigue itself; this flag tells a client that DOES have an activity stream to weight motor fatigue alongside continuous-session length. Reading actual motor activity remains gated by privacy.os_idle_consent. Absent otherwise."
         }
       }
     }
