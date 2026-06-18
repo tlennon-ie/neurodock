@@ -18,7 +18,28 @@
 
 import { describe, it, expect } from "vitest";
 import { buildPrompt } from "../../src/lib/prompt-builder.js";
-import type { TranslationTool } from "../../src/lib/types.js";
+import type { ExtensionProfile, TranslationTool } from "../../src/lib/types.js";
+
+function profile(overrides: Partial<ExtensionProfile> = {}): ExtensionProfile {
+  return {
+    mode: "local",
+    localProvider: "ollama",
+    localEndpoint: "http://localhost:11434",
+    localModel: "llama3.2:3b",
+    localApiKey: null,
+    cloudProvider: null,
+    cloudModel: null,
+    cloudApiKey: null,
+    cloudApiKeys: {},
+    historyEnabled: false,
+    displayName: "you",
+    neurotypes: [],
+    outputFormat: "answer_first",
+    maxChunkSize: 5,
+    additionalNotes: null,
+    ...overrides,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Minimal valid inputs per tool (all template placeholders populated so we
@@ -386,6 +407,43 @@ describe("buildPrompt — schema suffix", () => {
       expect((parsed as Record<string, unknown>).type).toBeDefined();
     },
   );
+});
+
+// ---------------------------------------------------------------------------
+// 6b. R5 UI hints flow end-to-end through buildPrompt via the profile
+// ---------------------------------------------------------------------------
+
+describe("buildPrompt — R5 voice_input_preferred addendum", () => {
+  it("appends the single-block instruction when the profile flag is true", () => {
+    const result = buildPrompt({
+      tool: "translate_incoming",
+      input: TRANSLATE_INCOMING_INPUT,
+      profile: profile({ voiceInputPreferred: true }),
+    });
+    expect(result).toContain("single, copy-pasteable block");
+  });
+
+  it("omits the instruction when the flag is unset (back-compat)", () => {
+    const result = buildPrompt({
+      tool: "translate_incoming",
+      input: TRANSLATE_INCOMING_INPUT,
+      profile: profile(),
+    });
+    expect(result).not.toContain("copy-pasteable block");
+  });
+
+  it("produces the byte-identical pre-R5 prompt for an all-default profile", () => {
+    const withDefaultProfile = buildPrompt({
+      tool: "check_tone",
+      input: CHECK_TONE_INPUT,
+      profile: profile(),
+    });
+    const withoutProfile = buildPrompt({
+      tool: "check_tone",
+      input: CHECK_TONE_INPUT,
+    });
+    expect(withDefaultProfile).toBe(withoutProfile);
+  });
 });
 
 // ---------------------------------------------------------------------------

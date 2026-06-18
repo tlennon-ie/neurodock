@@ -215,13 +215,30 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
         --nd-color-accent-high: oklch(100% 0 0);
       }
     }
-    /* RFC A3 — focus mode. Tighter line-height + hide the cloud-mode
-       banner inside the island. */
-    :host(.nd-focus-mode) .neurodock-panel {
-      line-height: 1.45;
-    }
+    /* RFC A3 — focus mode. Hide the cloud-mode banner inside the island.
+       NOTE: focus mode no longer tightens the panel body line-height. The
+       island body text (.neurodock-panel) is governed by
+       --nd-body-line-height (see the R5 lh-* bindings below), which has a
+       1.5 fallback. Pinning the panel to 1.45 under focus mode would drop
+       a hinted body paragraph below the WCAG 1.4.8 / 1.4.12 floor of 1.5
+       — see line-height-hint.ts. The banner hide is unaffected. */
     :host(.nd-focus-mode) .neurodock-banner {
       display: none;
+    }
+    /* R5 line_height_hint — body line-spacing band for the in-page island.
+       A single lh-<band> class on the shadow host binds
+       --nd-body-line-height, which .neurodock-panel reads (with a 1.5
+       fallback). Every band is >= 1.5 so the WCAG floor holds regardless
+       of focus mode. Keep values in sync with BAND_LINE_HEIGHT in
+       src/lib/line-height-hint.ts and the :root.lh-* rules in tokens.css. */
+    :host(.lh-compact) {
+      --nd-body-line-height: 1.5;
+    }
+    :host(.lh-default) {
+      --nd-body-line-height: 1.6;
+    }
+    :host(.lh-relaxed) {
+      --nd-body-line-height: 1.75;
     }
     /* A6 — reader-font switcher. Re-bind font stacks per selected font.
        Mirrors src/styles/tokens.css :host(.font-*) blocks exactly. */
@@ -266,7 +283,10 @@ export function mountIsland(hostId: string, doc: Document = document): Island {
       pointer-events: auto;
       font-family: var(--nd-font-body);
       font-size: calc(14px * var(--nd-island-font-scale, 1));
-      line-height: 1.5;
+      /* R5 line_height_hint: body paragraphs read --nd-body-line-height
+         (bound by the lh-* band class on the host, always >= 1.5) with a
+         1.5 fallback. Focus mode no longer pins this below the WCAG floor. */
+      line-height: var(--nd-body-line-height, 1.5);
       width: 420px;
       max-width: 92vw;
       max-height: 80vh;

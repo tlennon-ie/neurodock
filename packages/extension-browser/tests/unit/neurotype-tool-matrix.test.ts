@@ -272,13 +272,19 @@ describe("neurotype-tool matrix — tool overload falls back gracefully", () => 
     expect(withoutTool).toContain("(ADHD)");
   });
 
-  it("Tourette stays no-op even with a tool argument", () => {
-    const out = buildNeurotypeAddendum(
+  it("Tourette renders the same tool-independent block with or without a tool (R3)", () => {
+    // R3: the Tourette wins are cross-tool text-shaping (concise /
+    // answer-first / plain / low-pressure), so the block is intentionally
+    // NOT per-tool — it is byte-identical whether or not a tool is passed.
+    const withTool = buildNeurotypeAddendum(
       profile({ neurotypes: ["tourette"] }),
       "describe_image",
     );
-    expect(out).not.toContain("(Tourette)");
-    expect(out).not.toContain("(tourette)");
+    const withoutTool = buildNeurotypeAddendum(
+      profile({ neurotypes: ["tourette"] }),
+    );
+    expect(withTool).toContain("Reader preferences (Tourette)");
+    expect(withTool).toBe(withoutTool);
   });
 
   it("`other` notes still pass through inline with a tool argument", () => {
