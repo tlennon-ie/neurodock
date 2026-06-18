@@ -43,6 +43,12 @@ export interface SetupOptions {
   readonly dryRun: boolean;
   readonly noNativeHost: boolean;
   /**
+   * Opt-out: skip copying the per-neurotype skills into the client's
+   * personal-skills directory. Off (skills installed) by default — see
+   * `install-all`'s `--no-skills`.
+   */
+  readonly noSkills: boolean;
+  /**
    * Opt-in: also register the standalone guardrail daemon at user-login
    * autostart. Off by default — see the module comment above.
    */
@@ -90,6 +96,7 @@ export async function runSetup(
     yes: options.yes,
     dryRun: options.dryRun,
     noNativeHost: options.noNativeHost,
+    noSkills: options.noSkills,
     ...(options.extensionIds ? { extensionIds: options.extensionIds } : {}),
   });
   messages.push(...installAllResult.messages);

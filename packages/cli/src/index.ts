@@ -19,6 +19,7 @@ import { runHostInstall, runHostUninstall } from "./commands/host.js";
 import { runInstallHooks } from "./commands/install-hooks.js";
 import { runGuardrailStatus } from "./commands/guardrail.js";
 import { runInstallAll, type InstallerChoice } from "./commands/install-all.js";
+import { runInstallSkills } from "./commands/install-skills.js";
 import { runSetup } from "./commands/setup.js";
 import { runExamples } from "./commands/examples.js";
 import {
@@ -130,6 +131,10 @@ export function buildProgram(): Command {
       "skip registering the optional native-messaging host (browser extension <-> profile.yaml)",
     )
     .option(
+      "--no-skills",
+      "skip copying the per-neurotype skills into ~/.claude/skills (Claude Code / Claude Desktop)",
+    )
+    .option(
       "--extension-id <id>",
       "extra browser-extension id to allow on the native host, e.g. a " +
         "locally-loaded unpacked build (repeatable; published store ids are " +
@@ -147,6 +152,8 @@ export function buildProgram(): Command {
         dryRun: boolean;
         // Commander inverts `--no-native-host`: presence of the flag sets this to false.
         nativeHost: boolean;
+        // Commander inverts `--no-skills`: presence of the flag sets this to false.
+        skills: boolean;
         extensionId: string[];
       }) => {
         const client = validateClient(opts.client);
@@ -160,6 +167,7 @@ export function buildProgram(): Command {
           yes: opts.yes === true,
           dryRun: opts.dryRun === true,
           noNativeHost: opts.nativeHost === false,
+          noSkills: opts.skills === false,
           ...(opts.extensionId.length > 0
             ? { extensionIds: opts.extensionId }
             : {}),
@@ -203,6 +211,10 @@ export function buildProgram(): Command {
       "skip registering the optional native-messaging host (browser extension <-> profile.yaml)",
     )
     .option(
+      "--no-skills",
+      "skip copying the per-neurotype skills into ~/.claude/skills (Claude Code / Claude Desktop)",
+    )
+    .option(
       "--daemon",
       "also register the optional standalone guardrail daemon at user-login " +
         "autostart (off by default — the Claude Code hook covers the common cases)",
@@ -226,6 +238,8 @@ export function buildProgram(): Command {
         dryRun: boolean;
         // Commander inverts `--no-native-host`: presence of the flag sets this to false.
         nativeHost: boolean;
+        // Commander inverts `--no-skills`: presence of the flag sets this to false.
+        skills: boolean;
         daemon: boolean;
         extensionId: string[];
       }) => {
@@ -240,6 +254,7 @@ export function buildProgram(): Command {
           yes: opts.yes === true,
           dryRun: opts.dryRun === true,
           noNativeHost: opts.nativeHost === false,
+          noSkills: opts.skills === false,
           daemon: opts.daemon === true,
           ...(opts.extensionId.length > 0
             ? { extensionIds: opts.extensionId }
@@ -249,6 +264,38 @@ export function buildProgram(): Command {
         process.exit(r.exitCode);
       },
     );
+
+  program
+    .command("install-skills")
+    .description(
+      "copy the per-neurotype NeuroDock skills into your client's personal " +
+        "skills directory (~/.claude/skills for Claude Code / Claude Desktop)",
+    )
+    .option(
+      "--client <id>",
+      "claude-desktop | claude-code | cursor | all",
+      "all",
+    )
+    .option(
+      "--dry-run",
+      "print what would be installed without writing anything",
+      false,
+    )
+    .option(
+      "--yes",
+      "answer yes to all prompts (idempotent re-runs refresh in place)",
+      false,
+    )
+    .action(async (opts: { client: string; dryRun: boolean; yes: boolean }) => {
+      const client = validateClient(opts.client);
+      const r = await runInstallSkills({
+        client,
+        dryRun: opts.dryRun === true,
+        yes: opts.yes === true,
+      });
+      for (const m of r.messages) print(m);
+      process.exit(r.exitCode);
+    });
 
   program
     .command("examples")
@@ -388,6 +435,10 @@ export function buildProgram(): Command {
       "--no-native-host",
       "skip re-registering the optional native-messaging host",
     )
+    .option(
+      "--no-skills",
+      "skip refreshing the per-neurotype skills in ~/.claude/skills (Claude Code / Claude Desktop)",
+    )
     .action(
       async (opts: {
         client: string;
@@ -397,6 +448,8 @@ export function buildProgram(): Command {
         yes: boolean;
         dryRun: boolean;
         nativeHost: boolean;
+        // Commander inverts `--no-skills`: presence of the flag sets this to false.
+        skills: boolean;
       }) => {
         const client = validateClient(opts.client);
         const profile = validateProfile(opts.profile);
@@ -409,6 +462,7 @@ export function buildProgram(): Command {
           yes: opts.yes === true,
           dryRun: opts.dryRun === true,
           noNativeHost: opts.nativeHost === false,
+          noSkills: opts.skills === false,
         });
         for (const m of r.messages) print(m);
         process.exit(r.exitCode);

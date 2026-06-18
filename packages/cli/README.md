@@ -2,7 +2,7 @@
 
 The `neurodock` installer and diagnostic CLI for [NeuroDock](https://neurodock.org/) — a local-first cognitive substrate for neurodivergent professionals.
 
-Status: **v0.6.2**.
+Status: **v0.8.2**.
 
 ## Quickstart
 
@@ -34,8 +34,9 @@ install, `install-all` runs the `pip install` step automatically.
 
 | Command                      | What it does                                                                                                                                                    |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `neurodock install-all`      | One-command first-time install: pip-install the six servers, wire every detected client, copy the starter profile.                                              |
+| `neurodock install-all`      | One-command first-time install: pip-install the six servers, wire every detected client, copy the starter profile, install the per-neurotype skills.            |
 | `neurodock init`             | Install MCP servers into Claude Desktop / Claude Code / Cursor (the wiring half of `install-all`).                                                              |
+| `neurodock install-skills`   | Copy the per-neurotype skills into your client's personal skills directory (`~/.claude/skills` for Claude Code / Claude Desktop). Cursor is skipped.            |
 | `neurodock doctor`           | Diagnose your install — profile validity, client wiring, tool availability.                                                                                     |
 | `neurodock validate`         | Schema-validate a profile file (`~/.neurodock/profile.yaml` by default).                                                                                        |
 | `neurodock update`           | Upgrade NeuroDock to the latest version — re-installs the six MCP servers via pip/uv and re-wires client configs.                                               |
@@ -60,16 +61,47 @@ install, `install-all` runs the `pip install` step automatically.
 neurodock install-all [--client=claude-desktop|claude-code|cursor|all] \
                       [--profile=minimal|example] \
                       [--installer=uv|pip|auto] \
-                      [--skip-install] [--yes] [--dry-run]
+                      [--skip-install] [--yes] [--dry-run] \
+                      [--no-native-host] [--no-skills]
 ```
 
 Single-command first-time install. Prefers `uv` if it is on PATH; falls
 back to `python -m pip`. After install, verifies each server entrypoint
-is on PATH with `<command> --help`, then delegates to `init` to wire
-clients.
+is on PATH with `<command> --help`, delegates to `init` to wire clients,
+registers the optional native-messaging host, and installs the
+per-neurotype skills into `~/.claude/skills`.
 
-Exit codes: `0` ok, `1` an entrypoint is missing from PATH after
-install, `2` init failed.
+- `--no-native-host` skips registering the native-messaging host.
+- `--no-skills` skips copying the per-neurotype skills.
+
+Both steps are best-effort: a failure in either emits a warning but does
+not fail the command (the six MCP servers are the core). Exit codes:
+`0` ok, `1` an entrypoint is missing from PATH after install, `2` init
+failed.
+
+### `neurodock install-skills`
+
+```
+neurodock install-skills [--client=claude-desktop|claude-code|cursor|all] \
+                         [--dry-run] [--yes]
+```
+
+Copies the six per-neurotype skills bundled in the CLI tarball into the
+client's personal skills directory so Claude Code / Claude Desktop
+discover them. Each skill installs as
+`~/.claude/skills/neurodock-<name>/SKILL.md` (namespaced so it is
+collision-free and recognisably NeuroDock's).
+
+- Claude Code and Claude Desktop share `~/.claude/skills`; the command
+  de-duplicates so the files are written once.
+- Cursor has no skills system today and is skipped with a notice (never
+  an error).
+- `--dry-run` prints the planned targets and exits 0 without writing.
+- Idempotent: re-running refreshes each `SKILL.md` in place.
+
+This is also run automatically by `install-all` / `setup` / `update`
+unless you pass `--no-skills`. Exit codes: `0` ok, `1` no bundled skills
+were found (a packaging bug).
 
 ### `neurodock init`
 
@@ -100,14 +132,16 @@ key are skipped unless `--yes` is supplied.
 neurodock update [--client=claude-desktop|claude-code|cursor|all] \
                  [--profile=minimal|example] \
                  [--installer=uv|pip|auto] \
-                 [--skip-install] [--yes] [--dry-run] [--no-native-host]
+                 [--skip-install] [--yes] [--dry-run] \
+                 [--no-native-host] [--no-skills]
 ```
 
 One-command upgrade. Same code path as `install-all` — re-runs
 `pip install --upgrade` (or `uv tool install`) for every NeuroDock MCP
-server, re-wires the detected MCP clients, and re-registers the
-optional native-messaging host. Exit codes match `install-all`:
-`0` ok, `1` an entrypoint is missing from PATH, `2` init failed.
+server, re-wires the detected MCP clients, re-registers the optional
+native-messaging host, and refreshes the per-neurotype skills (skip with
+`--no-skills`). Exit codes match `install-all`: `0` ok, `1` an
+entrypoint is missing from PATH, `2` init failed.
 
 ### `neurodock sync`
 

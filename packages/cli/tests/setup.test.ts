@@ -17,6 +17,7 @@ function makeInstallAllResult(
     packages: [],
     initResult: null,
     nativeHost: { status: "installed" },
+    skills: { status: "installed" },
     messages: ["[install-all] fake message"],
     exitCode: 0,
     ...overrides,
@@ -78,6 +79,7 @@ function makeOptions(overrides: Partial<SetupOptions> = {}): SetupOptions {
     yes: false,
     dryRun: false,
     noNativeHost: false,
+    noSkills: false,
     daemon: false,
     ...overrides,
   };
@@ -106,6 +108,7 @@ describe("neurodock setup", () => {
         skipInstall: true,
         yes: true,
         noNativeHost: true,
+        noSkills: true,
       }),
       stubs.deps,
     );
@@ -118,7 +121,18 @@ describe("neurodock setup", () => {
       yes: true,
       dryRun: false,
       noNativeHost: true,
+      noSkills: true,
     });
+  });
+
+  it("threads noSkills through to install-all (default installs skills)", async () => {
+    const on = makeStubs();
+    await runSetup(makeOptions(), on.deps);
+    expect(on.installAllCalls[0]?.noSkills).toBe(false);
+
+    const off = makeStubs();
+    await runSetup(makeOptions({ noSkills: true }), off.deps);
+    expect(off.installAllCalls[0]?.noSkills).toBe(true);
   });
 
   it("--dry-run propagates to both underlying runners", async () => {

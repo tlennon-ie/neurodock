@@ -57,6 +57,16 @@ enforced in code and pinned by tests against `REMOTE_TOOL_NAMES`.
 > PyPI (the local install path via `@neurodock/cli` is unchanged). Local-only
 > tools remain available exactly as before through the stdio servers.
 
+### Skills delivery (hosted/remote users)
+
+The remote server exposes **tools**, not skills. Skills are markdown the
+client reads locally, so the remote endpoint never delivers them. Hosted/remote
+users get the per-neurotype skills the same way local users do: install the
+**Claude Code marketplace plugin** (which bundles them) or run
+`neurodock install-skills` from `@neurodock/cli`, which copies each skill into
+`~/.claude/skills/neurodock-<name>/SKILL.md` for Claude Code / Claude Desktop.
+See [packages/skills/README.md](../skills/README.md) for the delivery paths.
+
 ## Run locally
 
 ```bash

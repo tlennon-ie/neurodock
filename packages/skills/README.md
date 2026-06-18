@@ -19,9 +19,18 @@ The sync copies every `packages/skills/<name>/` that contains a `SKILL.md`, **ex
 
 A **drift guard** in `@neurodock/repo-tooling` (`packages/repo-tooling/tests/skills-bundle-drift.test.ts`) runs in the CI `TypeScript (lint, typecheck, test, build)` job. It fails the build if any source skill is missing from the plugin or differs from its bundled copy, so the bundle can never silently fall out of sync. The same invariant is enforced locally by `scripts/sync-skills.mjs --check`.
 
-### CLI install (coming in a follow-up)
+### CLI install (implemented)
 
-A `@neurodock/cli` install path that bundles these skills into the local substrate is planned as a separate change. Until it lands, the Claude Code plugin is the user-facing delivery path.
+Users who install via `@neurodock/cli` (rather than the marketplace plugin) get the skills too. Each source skill's `SKILL.md` is bundled into the published CLI tarball (generated at build time into `dist/assets/skills/<name>/SKILL.md` by `packages/cli/scripts/copy-assets.mjs` — the destination is under `dist/`, which is gitignored, so there is no committed third copy to drift). The command that delivers them:
+
+```bash
+neurodock install-skills            # copy skills into ~/.claude/skills/neurodock-<name>/
+neurodock install-skills --dry-run  # print the planned targets, write nothing
+```
+
+`install-skills` copies each skill into the client's personal skills directory — `~/.claude/skills/` for both Claude Code and Claude Desktop — namespaced as `neurodock-<name>/SKILL.md`. Cursor has no skills system and is skipped with a notice. It is idempotent (re-running refreshes in place) and runs automatically as part of `neurodock install-all` / `neurodock setup` / `neurodock update` unless you pass `--no-skills`.
+
+`packages/skills/` remains the single source of truth: the plugin copy is produced by `scripts/sync-skills.mjs` (with its drift guard), and the CLI tarball copy is produced by the CLI build step — both copy `SKILL.md` only and exclude `tests/`, `README.md`, and `CHANGELOG.md`.
 
 ## Launch skills
 
