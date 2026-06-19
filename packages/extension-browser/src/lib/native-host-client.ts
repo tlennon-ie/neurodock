@@ -69,6 +69,76 @@ function getRuntime(): NativeRuntime | null {
   return null;
 }
 
+interface NativePermissions {
+  contains(
+    perms: { permissions: string[] },
+    cb: (granted: boolean) => void,
+  ): void;
+  request(
+    perms: { permissions: string[] },
+    cb: (granted: boolean) => void,
+  ): void;
+}
+
+const NATIVE_MESSAGING_PERMISSION = { permissions: ["nativeMessaging"] };
+
+function getPermissions(): NativePermissions | null {
+  const g = globalThis as unknown as {
+    chrome?: { permissions?: NativePermissions };
+  };
+  return g.chrome?.permissions ?? null;
+}
+
+function hasNativeMessagingPermission(): Promise<boolean> {
+  const perms = getPermissions();
+  if (!perms) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    try {
+      perms.contains(NATIVE_MESSAGING_PERMISSION, (granted) =>
+        resolve(Boolean(granted)),
+      );
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+function requestNativeMessagingPermission(): Promise<boolean> {
+  const perms = getPermissions();
+  if (!perms) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    try {
+      perms.request(NATIVE_MESSAGING_PERMISSION, (granted) =>
+        resolve(Boolean(granted)),
+      );
+    } catch {
+      resolve(false);
+    }
+  });
+}
+
+/**
+ * Ensure the optional `nativeMessaging` permission before opening a port.
+ *
+ * `nativeMessaging` is an OPTIONAL permission (declared in
+ * `optional_permissions`, not `permissions`), so `chrome.runtime.connectNative`
+ * is only exposed once the user grants it. The grant persists across restarts.
+ *
+ * - interactive (a user gesture — the "Check again" / "Turn on full NeuroDock"
+ *   button): call `request()` DIRECTLY. Firefox invalidates the user gesture
+ *   across an awaited `contains()`, and `request()` resolves true without a
+ *   prompt when the permission is already held.
+ * - non-interactive (auto-poll, background profile sync): only consult
+ *   `contains()` — never prompt.
+ */
+function ensureNativeMessagingPermission(
+  interactive: boolean,
+): Promise<boolean> {
+  return interactive
+    ? requestNativeMessagingPermission()
+    : hasNativeMessagingPermission();
+}
+
 interface PendingRequest {
   resolve: (value: NativeHostResponse) => void;
   reject: (err: Error) => void;
@@ -171,10 +241,35 @@ function openSession(): NativeHostSession | null {
   }
 }
 
+export interface ProbeOptions {
+  /**
+   * When true, request the optional `nativeMessaging` permission if it is not
+   * already granted. MUST originate from a user gesture (e.g. a button click)
+   * or the browser rejects the prompt. Defaults to false — auto-poll and
+   * background profile sync never prompt.
+   */
+  readonly interactive?: boolean;
+}
+
 /**
  * Probe the native host. Returns active/absent/error and never throws.
+ *
+ * Gated on the optional `nativeMessaging` permission: without it,
+ * `chrome.runtime.connectNative` is undefined and no host could ever be
+ * reached, so we report `absent` up front rather than silently failing later.
  */
-export async function probeNativeHost(): Promise<NativeHostHello> {
+export async function probeNativeHost(
+  opts: ProbeOptions = {},
+): Promise<NativeHostHello> {
+  const granted = await ensureNativeMessagingPermission(
+    opts.interactive ?? false,
+  );
+  if (!granted) {
+    return {
+      status: "absent",
+      detail: "nativeMessaging permission not granted",
+    };
+  }
   const session = openSession();
   if (!session) {
     return {

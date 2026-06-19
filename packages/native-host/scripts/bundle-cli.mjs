@@ -20,9 +20,18 @@
 import { build } from "esbuild";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(here, "..");
+
+// Bake the package version into the bundle. The staged copy Chrome launches
+// has no real package.json to read at runtime (staging drops only a
+// `{"type":"module"}` shim), so protocol.ts reads this define instead. See
+// resolveHostVersion() in src/protocol.ts.
+const { version } = JSON.parse(
+  readFileSync(resolve(packageRoot, "package.json"), "utf8"),
+);
 
 await build({
   entryPoints: [resolve(packageRoot, "src", "cli.ts")],
@@ -49,6 +58,9 @@ await build({
       'import { createRequire as __nd_createRequire } from "node:module";',
       "const require = __nd_createRequire(import.meta.url);",
     ].join("\n"),
+  },
+  define: {
+    __NEURODOCK_HOST_VERSION__: JSON.stringify(version),
   },
   logLevel: "info",
 });

@@ -26,6 +26,7 @@ import {
   type StagingPlatform,
 } from "./registration/index.js";
 import { verifyLiveLaunch } from "./doctor.js";
+import { HOST_VERSION } from "./protocol.js";
 
 const USAGE = `neurodock-native-host <command> [options]
 
@@ -140,7 +141,7 @@ export async function main(
     return 0;
   }
   if (parsed.command === "version") {
-    process.stdout.write("0.1.0\n");
+    process.stdout.write(`${HOST_VERSION}\n`);
     return 0;
   }
   if (parsed.command === "run") {

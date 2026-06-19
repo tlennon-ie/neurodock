@@ -102,6 +102,15 @@ export default defineConfig({
       "scripting",
       "notifications",
     ],
+    // "Full NeuroDock" reaches the on-disk profile.yaml through the
+    // com.neurodock.profile native messaging host. nativeMessaging is OPTIONAL
+    // (not in `permissions`) on purpose: a plain install must not show a
+    // "Communicate with cooperating native applications" warning. It is
+    // requested at runtime on the "Turn on full NeuroDock" gesture via
+    // chrome.permissions.request — the same consent-first pattern used for
+    // optional_host_permissions. Without this entry chrome.runtime.connectNative
+    // is undefined and the host can never connect.
+    optional_permissions: ["nativeMessaging"],
     host_permissions: [
       "https://mail.google.com/*",
       "https://app.slack.com/*",

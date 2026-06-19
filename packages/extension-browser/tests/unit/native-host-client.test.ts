@@ -121,6 +121,12 @@ function installFakeRuntime(
       },
       lastError: undefined as { message?: string } | undefined,
     },
+    // probeNativeHost is gated on the optional `nativeMessaging` permission.
+    // These existing tests exercise the post-permission path, so grant it.
+    permissions: {
+      contains: (_p: unknown, cb: (granted: boolean) => void) => cb(true),
+      request: (_p: unknown, cb: (granted: boolean) => void) => cb(true),
+    },
   };
   (globalThis as unknown as { chrome?: unknown }).chrome = fakeChrome;
   return () => {
