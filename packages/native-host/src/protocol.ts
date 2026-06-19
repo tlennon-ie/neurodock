@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright (c) 2026 NeuroDock contributors.
  */
+import { createRequire } from "node:module";
+
 /**
  * Chrome Native Messaging protocol primitives.
  *
@@ -32,7 +34,37 @@ export interface HostResponse<T = unknown> {
   readonly version: string;
 }
 
-export const HOST_VERSION = "0.1.0";
+/**
+ * The host version, sourced from package.json — never a hardcoded literal.
+ *
+ * Two runtime shapes resolve it:
+ *   - The bundled host (`dist/cli.js`, what Chrome launches): esbuild replaces
+ *     `__NEURODOCK_HOST_VERSION__` with the package version at build time (see
+ *     `scripts/bundle-cli.mjs`). The bundle is STAGED into a per-user dir whose
+ *     only package.json is a `{"type":"module"}` shim, so the version must be
+ *     baked in at build time — a runtime read would find no version there.
+ *   - dev / tests (tsc / vitest): the define is absent, so read package.json
+ *     next to the package root via createRequire.
+ */
+declare const __NEURODOCK_HOST_VERSION__: string | undefined;
+
+function resolveHostVersion(): string {
+  if (typeof __NEURODOCK_HOST_VERSION__ === "string") {
+    return __NEURODOCK_HOST_VERSION__;
+  }
+  try {
+    const nodeRequire = createRequire(import.meta.url);
+    const pkg = nodeRequire("../package.json") as { version?: string };
+    if (typeof pkg.version === "string" && pkg.version.length > 0) {
+      return pkg.version;
+    }
+  } catch {
+    /* fall through to the dev sentinel below */
+  }
+  return "0.0.0-dev";
+}
+
+export const HOST_VERSION: string = resolveHostVersion();
 
 /**
  * Capability flags reported by the `ping` op — the "fully set up"

@@ -22,24 +22,29 @@ export function useFullSetupStatus(pollMs = 4000): {
   const [status, setStatus] = useState<FullSetupStatus>("checking");
   const mounted = useRef(true);
 
-  const probe = useCallback(async () => {
-    const hello = await probeNativeHost();
+  // `nativeMessaging` is an optional permission, so the auto-probe must stay
+  // NON-interactive (no prompt without a user gesture). The "Check again"
+  // button is the gesture that may request it — see `recheck`.
+  const probe = useCallback(async (interactive: boolean) => {
+    const hello = await probeNativeHost({ interactive });
     if (mounted.current) setStatus(hello.status);
   }, []);
 
   useEffect(() => {
     mounted.current = true;
-    void probe();
-    const id = pollMs > 0 ? setInterval(() => void probe(), pollMs) : undefined;
+    void probe(false);
+    const id =
+      pollMs > 0 ? setInterval(() => void probe(false), pollMs) : undefined;
     return () => {
       mounted.current = false;
       if (id) clearInterval(id);
     };
   }, [probe, pollMs]);
 
+  // User gesture: allowed to request the optional nativeMessaging permission.
   const recheck = useCallback(() => {
     setStatus("checking");
-    void probe();
+    void probe(true);
   }, [probe]);
 
   return { status, recheck };
