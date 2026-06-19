@@ -616,6 +616,15 @@ export function buildProgram(): Command {
           }${detail}`,
         );
       }
+      if (result.ignoredExtensionIds && result.ignoredExtensionIds.length > 0) {
+        print(
+          `  [warn] ignored ${
+            result.ignoredExtensionIds.length
+          } extension id(s) that are neither a Chrome id ([a-p]{32}) nor a Firefox id (name@domain / {uuid}): ${result.ignoredExtensionIds.join(
+            ", ",
+          )}`,
+        );
+      }
       print("Verify a live launch with: neurodock doctor");
       process.exit(0);
     });

@@ -36,6 +36,7 @@ import {
   realpathSync,
   existsSync,
   rmSync,
+  statSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -252,6 +253,13 @@ export function findInvalidChromiumOrigins(
 ): string[] {
   const manifestPath = chromiumManifestPath(platform, home, env);
   if (!existsSync(manifestPath)) return [];
+  // The manifest is tens of bytes in normal operation. Bail before reading if
+  // something pathologically large sits at that path, so we never load it.
+  try {
+    if (statSync(manifestPath).size > 65536) return [];
+  } catch {
+    return [];
+  }
   let parsed: { allowed_origins?: unknown };
   try {
     parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as {
@@ -264,9 +272,11 @@ export function findInvalidChromiumOrigins(
     ? parsed.allowed_origins
     : [];
   const VALID_ORIGIN = /^chrome-extension:\/\/[a-p]{32}\/$/;
-  return origins.filter(
-    (o): o is string => typeof o === "string" && !VALID_ORIGIN.test(o),
-  );
+  // A non-string entry, or a string that is not a well-formed chrome-extension
+  // origin, both make Chrome reject the whole manifest — report either.
+  return origins
+    .filter((o) => typeof o !== "string" || !VALID_ORIGIN.test(o))
+    .map((o) => (typeof o === "string" ? o : JSON.stringify(o)));
 }
 
 /** Launcher file name per OS: a `.bat` on Windows, a `.sh` elsewhere. */

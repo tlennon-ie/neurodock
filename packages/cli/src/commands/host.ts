@@ -30,6 +30,8 @@ import {
   resolveSourceDistDir,
   resolveInstalledLauncher,
   findInvalidChromiumOrigins,
+  isChromiumExtensionId,
+  isFirefoxExtensionId,
   type StagingPlatform,
 } from "@neurodock/native-host/dist/registration/index.js";
 import {
@@ -61,6 +63,13 @@ export interface HostCommandResult {
   readonly outcomes: ReadonlyArray<RegistrationOutcome>;
   /** The launcher the manifests now point at (absent on uninstall). */
   readonly launcherPath?: string;
+  /**
+   * Caller-supplied `--extension-id` values that matched neither a Chromium id
+   * (`[a-p]{32}`) nor a Firefox gecko id, so they were left out of BOTH
+   * manifests (an invalid origin would make Chrome reject the whole manifest).
+   * The CLI warns about these so a typo'd id is not silently ignored.
+   */
+  readonly ignoredExtensionIds?: ReadonlyArray<string>;
 }
 
 /**
@@ -106,6 +115,11 @@ export function runHostInstall(
   // Always register the published store ids; caller-supplied ids (e.g. a
   // locally-loaded unpacked build) are added on top.
   const ids = withDefaultExtensionIds(opts.extensionIds);
+  // Caller-supplied ids that fit neither browser's format are dropped from both
+  // manifests; surface them so a typo'd --extension-id is not silent.
+  const ignoredExtensionIds = opts.extensionIds.filter(
+    (id) => !isChromiumExtensionId(id) && !isFirefoxExtensionId(id),
+  );
   const sourceDistDir = deps.sourceDistDir ?? resolveHostDistDir();
   const result = registerWithStaging({
     allowedExtensionIds: ids,
@@ -119,6 +133,7 @@ export function runHostInstall(
     platform: result.platform,
     outcomes: result.outcomes,
     launcherPath: result.launcherPath,
+    ignoredExtensionIds,
   };
 }
 
