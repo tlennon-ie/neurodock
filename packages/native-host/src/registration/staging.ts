@@ -36,7 +36,6 @@ import {
   realpathSync,
   existsSync,
   rmSync,
-  statSync,
 } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -252,19 +251,20 @@ export function findInvalidChromiumOrigins(
   env: NodeJS.ProcessEnv,
 ): string[] {
   const manifestPath = chromiumManifestPath(platform, home, env);
-  if (!existsSync(manifestPath)) return [];
-  // The manifest is tens of bytes in normal operation. Bail before reading if
-  // something pathologically large sits at that path, so we never load it.
+  // Read-and-catch rather than existsSync/statSync-then-read: a missing or
+  // unreadable manifest yields [] (the launcher check reports absence). This
+  // avoids a check-then-read TOCTOU (CodeQL js/file-system-race).
+  let raw: string;
   try {
-    if (statSync(manifestPath).size > 65536) return [];
+    raw = readFileSync(manifestPath, "utf8");
   } catch {
     return [];
   }
+  // Sanity bail on an implausibly large file (the manifest is tens of bytes).
+  if (raw.length > 65536) return [];
   let parsed: { allowed_origins?: unknown };
   try {
-    parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as {
-      allowed_origins?: unknown;
-    };
+    parsed = JSON.parse(raw) as { allowed_origins?: unknown };
   } catch {
     return [];
   }
