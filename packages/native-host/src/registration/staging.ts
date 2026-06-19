@@ -236,6 +236,49 @@ export function resolveInstalledLauncher(
   return { ok: true, launcherPath, manifestPath };
 }
 
+/**
+ * Read the installed Chromium manifest's `allowed_origins` and return any
+ * entries Chrome would reject — i.e. not of the exact form
+ * `chrome-extension://<32 chars a-p>/`. Chrome refuses the ENTIRE manifest if a
+ * single entry is malformed (reporting "Specified native messaging host not
+ * found"), so `neurodock doctor` surfaces these instead of giving a false PASS
+ * from a successful direct launcher spawn. Returns [] when the manifest is
+ * absent or unreadable (the launcher check reports those separately).
+ */
+export function findInvalidChromiumOrigins(
+  platform: StagingPlatform,
+  home: string,
+  env: NodeJS.ProcessEnv,
+): string[] {
+  const manifestPath = chromiumManifestPath(platform, home, env);
+  // Read-and-catch rather than existsSync/statSync-then-read: a missing or
+  // unreadable manifest yields [] (the launcher check reports absence). This
+  // avoids a check-then-read TOCTOU (CodeQL js/file-system-race).
+  let raw: string;
+  try {
+    raw = readFileSync(manifestPath, "utf8");
+  } catch {
+    return [];
+  }
+  // Sanity bail on an implausibly large file (the manifest is tens of bytes).
+  if (raw.length > 65536) return [];
+  let parsed: { allowed_origins?: unknown };
+  try {
+    parsed = JSON.parse(raw) as { allowed_origins?: unknown };
+  } catch {
+    return [];
+  }
+  const origins = Array.isArray(parsed.allowed_origins)
+    ? parsed.allowed_origins
+    : [];
+  const VALID_ORIGIN = /^chrome-extension:\/\/[a-p]{32}\/$/;
+  // A non-string entry, or a string that is not a well-formed chrome-extension
+  // origin, both make Chrome reject the whole manifest — report either.
+  return origins
+    .filter((o) => typeof o !== "string" || !VALID_ORIGIN.test(o))
+    .map((o) => (typeof o === "string" ? o : JSON.stringify(o)));
+}
+
 /** Launcher file name per OS: a `.bat` on Windows, a `.sh` elsewhere. */
 export function launcherFileName(platform: StagingPlatform): string {
   return platform === "win32" ? `${HOST_NAME}.bat` : `${HOST_NAME}.sh`;

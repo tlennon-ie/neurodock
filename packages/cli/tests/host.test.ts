@@ -46,7 +46,7 @@ describe("runHostInstall (CLI wiring)", () => {
       };
 
       const result = runHostInstall(
-        { extensionIds: ["mydev"] },
+        { extensionIds: ["jjcjkmljfdebbefdemkcgknjplgkicen"] },
         {
           platform: "linux",
           home,
@@ -74,10 +74,54 @@ describe("runHostInstall (CLI wiring)", () => {
       };
       expect(manifest.path).toBe(result.launcherPath);
       expect(manifest.path).not.toMatch(/cli\.js$/);
-      // Published + caller ids both present (behaviour unchanged).
-      expect(manifest.allowed_origins).toContain("chrome-extension://mydev/");
+      // Published + caller ids both present as valid chrome-extension origins.
+      expect(manifest.allowed_origins).toContain(
+        "chrome-extension://jjcjkmljfdebbefdemkcgknjplgkicen/",
+      );
       expect(manifest.allowed_origins).toContain(
         "chrome-extension://lcdaiekokkgniiknejddojkfkoiinopo/",
+      );
+    } finally {
+      s.cleanup();
+    }
+  });
+
+  it("reports caller ids that match neither browser format as ignored", () => {
+    const s = sandbox();
+    try {
+      const sourceDist = join(s.root, "src-dist");
+      mkdirSync(sourceDist, { recursive: true });
+      writeFileSync(join(sourceDist, "cli.js"), "// cli\n");
+      const home = join(s.root, "home");
+      const env = {
+        XDG_DATA_HOME: join(s.root, "data"),
+        XDG_CONFIG_HOME: join(s.root, "config"),
+      };
+      const result = runHostInstall(
+        // one valid Chrome id, one malformed (too short) id
+        { extensionIds: ["jjcjkmljfdebbefdemkcgknjplgkicen", "typoid"] },
+        {
+          platform: "linux",
+          home,
+          env,
+          sourceDistDir: sourceDist,
+          nodePath: "/usr/bin/node",
+        },
+      );
+      expect(result.ignoredExtensionIds).toEqual(["typoid"]);
+      const manifest = JSON.parse(
+        readFileSync(
+          join(
+            env.XDG_CONFIG_HOME,
+            "google-chrome",
+            "NativeMessagingHosts",
+            "com.neurodock.profile.json",
+          ),
+          "utf8",
+        ),
+      ) as { allowed_origins: string[] };
+      expect(manifest.allowed_origins).not.toContain(
+        "chrome-extension://typoid/",
       );
     } finally {
       s.cleanup();

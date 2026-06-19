@@ -22,17 +22,45 @@ export const HOST_NAME = "com.neurodock.profile";
  *   - `neurodock-extension@neurodock.org` — the Firefox gecko id (used in
  *     the Firefox manifest's `allowed_extensions`).
  *
- * Both ids are written into BOTH manifests (each builder maps the same
- * list). The cross-store entry — e.g. a `chrome-extension://<gecko-id>/`
- * origin in the Chrome manifest — is simply never matched by that browser,
- * so carrying one list for both is harmless and keeps a single source of
- * truth. This replaces the old `__NEURODOCK_EXTENSION_ID__` placeholder,
- * which was never substituted and so matched no extension at all.
+ * One list is carried for both stores, but each builder emits ONLY the ids
+ * that are valid for its browser — see `isChromiumExtensionId` /
+ * `isFirefoxExtensionId`. This is NOT cosmetic: Chrome validates every
+ * `allowed_origins` entry against `chrome-extension://[a-p]{32}/` and rejects
+ * the ENTIRE manifest if any entry is malformed (e.g. a gecko id wedged into a
+ * `chrome-extension://` origin), reporting the host as "not found". A previous
+ * version mapped the whole list into both manifests, so every Chromium browser
+ * got the Firefox gecko id as an invalid origin and refused to load the host.
+ * This replaces the old `__NEURODOCK_EXTENSION_ID__` placeholder, which was
+ * never substituted and so matched no extension at all.
  */
 export const PUBLISHED_EXTENSION_IDS: ReadonlyArray<string> = [
   "lcdaiekokkgniiknejddojkfkoiinopo",
   "neurodock-extension@neurodock.org",
 ];
+
+/**
+ * Chrome / Chromium / Edge / Brave / Vivaldi extension id: exactly 32 chars
+ * from a–p (the alphabet Chromium derives ids in). Only these are valid inside
+ * a `chrome-extension://<id>/` origin; anything else makes Chrome reject the
+ * whole native-messaging manifest.
+ */
+export function isChromiumExtensionId(id: string): boolean {
+  return /^[a-p]{32}$/.test(id);
+}
+
+/**
+ * Firefox (gecko) add-on id: either an email-like `name@domain` or a UUID in
+ * braces, e.g. `{d3b0…-…-…-…-…}`. These are the only forms valid in a Firefox
+ * manifest's `allowed_extensions`.
+ */
+export function isFirefoxExtensionId(id: string): boolean {
+  return (
+    /^[^@\s/]+@[^@\s/]+$/.test(id) ||
+    /^\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}$/.test(
+      id,
+    )
+  );
+}
 
 /**
  * Union the caller-provided extension ids (e.g. a locally-loaded unpacked
@@ -83,9 +111,11 @@ export function buildManifest(
       "NeuroDock native messaging host. Exposes ~/.neurodock/profile.yaml to the browser extension.",
     path: opts.hostPath,
     type: "stdio",
-    allowed_origins: opts.allowedExtensionIds.map(
-      (id) => `chrome-extension://${id}/`,
-    ),
+    // Only valid Chromium ids — a single malformed origin makes Chrome reject
+    // the entire manifest ("Specified native messaging host not found").
+    allowed_origins: opts.allowedExtensionIds
+      .filter(isChromiumExtensionId)
+      .map((id) => `chrome-extension://${id}/`),
   };
 }
 
@@ -98,6 +128,7 @@ export function buildFirefoxManifest(
       "NeuroDock native messaging host. Exposes ~/.neurodock/profile.yaml to the browser extension.",
     path: opts.hostPath,
     type: "stdio",
-    allowed_extensions: [...opts.allowedExtensionIds],
+    // Only valid gecko ids belong in a Firefox manifest's allowed_extensions.
+    allowed_extensions: opts.allowedExtensionIds.filter(isFirefoxExtensionId),
   };
 }
