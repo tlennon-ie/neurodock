@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/cli",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "description": "NeuroDock installer and diagnostic CLI — wires the MCP servers, manages plugins, and validates your profile.",
   "license": "AGPL-3.0-or-later",
   "type": "module",

@@ -2,7 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright (c) 2026 NeuroDock contributors.
  */
-export const version = "0.1.0";
+export const version = "0.2.0";
 
 export type {
   Profile,

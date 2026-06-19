@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/extension-browser",
-  "version": "0.0.38",
+  "version": "0.1.0",
   "private": true,
   "description": "NeuroDock browser extension (Chrome, Firefox, Edge). MV3, WXT-built. Area 2 communication translation surface.",
   "license": "AGPL-3.0-or-later",
@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
-    "@neurodock/core": "workspace:^0.1.0",
+    "@neurodock/core": "workspace:^0.2.0",
     "@wxt-dev/module-react": "^1.2.2",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
