@@ -23,7 +23,7 @@ import { useFullSetupStatus } from "../lib/full-setup.js";
 export const FULL_SETUP_COMMAND = "npx @neurodock/cli@latest setup";
 
 export function PowerUpCard(): React.ReactElement {
-  const { status, recheck } = useFullSetupStatus();
+  const { status, detail, recheck } = useFullSetupStatus();
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -83,11 +83,26 @@ export function PowerUpCard(): React.ReactElement {
         </button>
       </div>
       <p data-testid="power-up-status" className="nd-muted">
-        Not connected yet.{" "}
-        <button type="button" className="nd-linkbtn" onClick={recheck}>
-          Check again
-        </button>
+        {status === "checking" ? (
+          "Checking…"
+        ) : (
+          <>
+            Not connected yet.{" "}
+            <button type="button" className="nd-linkbtn" onClick={recheck}>
+              Check again
+            </button>
+          </>
+        )}
       </p>
+      {status !== "checking" && detail ? (
+        <p
+          data-testid="power-up-detail"
+          className="nd-muted nd-powerup-detail"
+          title={detail}
+        >
+          {detail}
+        </p>
+      ) : null}
     </section>
   );
 }

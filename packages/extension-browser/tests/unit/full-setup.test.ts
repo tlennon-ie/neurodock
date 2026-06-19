@@ -29,6 +29,28 @@ describe("useFullSetupStatus", () => {
     await waitFor(() => expect(result.current.status).toBe("absent"));
   });
 
+  it("surfaces the probe detail when not connected (diagnosable, not a black box)", async () => {
+    vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
+      status: "absent",
+      detail: "native host: request nd-1 timed out after 5000ms",
+    });
+    const { result } = renderHook(() => useFullSetupStatus(0));
+    await waitFor(() => expect(result.current.status).toBe("absent"));
+    expect(result.current.detail).toBe(
+      "native host: request nd-1 timed out after 5000ms",
+    );
+  });
+
+  it("clears the detail once connected", async () => {
+    vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
+      status: "active",
+      version: "0.3.1",
+    });
+    const { result } = renderHook(() => useFullSetupStatus(0));
+    await waitFor(() => expect(result.current.status).toBe("active"));
+    expect(result.current.detail).toBeUndefined();
+  });
+
   it("recheck re-probes on demand", async () => {
     const spy = vi
       .spyOn(nativeHost, "probeNativeHost")

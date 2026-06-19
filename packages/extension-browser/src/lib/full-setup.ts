@@ -17,17 +17,37 @@ export type FullSetupStatus = NativeHostStatus | "checking";
 
 export function useFullSetupStatus(pollMs = 4000): {
   status: FullSetupStatus;
+  /**
+   * When not connected, the reason from the last probe (timeout, host-not-found,
+   * permission-not-granted, …). Surfaced so the card is diagnosable rather than
+   * a silent "Not connected yet". Undefined when active.
+   */
+  detail?: string;
   recheck: () => void;
 } {
   const [status, setStatus] = useState<FullSetupStatus>("checking");
+  const [detail, setDetail] = useState<string | undefined>(undefined);
   const mounted = useRef(true);
+  // A probe spawns a fresh host process; with the generous cold-start timeout a
+  // probe can outlast the poll interval. Skip overlapping AUTO-polls, but never
+  // block the user's "Check again" gesture (it may need to prompt).
+  const inFlight = useRef(false);
 
   // `nativeMessaging` is an optional permission, so the auto-probe must stay
   // NON-interactive (no prompt without a user gesture). The "Check again"
   // button is the gesture that may request it — see `recheck`.
   const probe = useCallback(async (interactive: boolean) => {
-    const hello = await probeNativeHost({ interactive });
-    if (mounted.current) setStatus(hello.status);
+    if (inFlight.current && !interactive) return;
+    inFlight.current = true;
+    try {
+      const hello = await probeNativeHost({ interactive });
+      if (mounted.current) {
+        setStatus(hello.status);
+        setDetail(hello.status === "active" ? undefined : hello.detail);
+      }
+    } finally {
+      inFlight.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -44,8 +64,9 @@ export function useFullSetupStatus(pollMs = 4000): {
   // User gesture: allowed to request the optional nativeMessaging permission.
   const recheck = useCallback(() => {
     setStatus("checking");
+    setDetail(undefined);
     void probe(true);
   }, [probe]);
 
-  return { status, recheck };
+  return { status, detail, recheck };
 }

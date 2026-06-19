@@ -28,6 +28,19 @@ describe("PowerUpCard", () => {
     );
   });
 
+  it("shows the failure reason when the host probe fails (not a black box)", async () => {
+    vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
+      status: "absent",
+      detail: "native host: request nd-1 timed out after 5000ms",
+    });
+    render(<PowerUpCard />);
+    await waitFor(() =>
+      expect(screen.getByTestId("power-up-detail")).toHaveTextContent(
+        /timed out/i,
+      ),
+    );
+  });
+
   it("shows Connected when the host is active", async () => {
     vi.spyOn(nativeHost, "probeNativeHost").mockResolvedValue({
       status: "active",

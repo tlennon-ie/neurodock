@@ -60,7 +60,13 @@ interface NativeRuntime {
 }
 
 const HOST_NAME = "com.neurodock.profile";
-const DEFAULT_TIMEOUT_MS = 1500;
+// Chrome spawns a FRESH host process for every connectNative() — so every probe
+// is a cold start: cmd.exe → node → the ~600 KB bundle, frequently with Windows
+// Defender real-time scanning the spawn. That legitimately takes 1–3 s on the
+// first hit. The old 1 s ping cap timed out before a healthy host could pong,
+// so the extension reported "Not connected" while `neurodock doctor` (8 s cap)
+// passed. Match the host's real cold-start latency. See verifyLiveLaunch (8 s).
+const DEFAULT_TIMEOUT_MS = 5000;
 
 function getRuntime(): NativeRuntime | null {
   const g = globalThis as unknown as { chrome?: { runtime?: NativeRuntime } };
@@ -237,7 +243,7 @@ export async function probeNativeHost(
     };
   }
   try {
-    const r = await session.request("ping", undefined, undefined, 1000);
+    const r = await session.request("ping");
     session.close();
     if (!r.ok) {
       return { status: "error", detail: r.error ?? "ping failed" };
