@@ -152,7 +152,7 @@ importers:
         specifier: ^0.104.1
         version: 0.104.1(zod@4.4.3)
       '@neurodock/core':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.2.0
         version: link:../core
       '@wxt-dev/module-react':
         specifier: ^1.2.2
