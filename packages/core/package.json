@@ -15,7 +15,7 @@
   },
   "files": [
     "dist",
-    "data",
+    "data/neurotype-addenda/v1.json",
     "schemas",
     "README.md"
   ],

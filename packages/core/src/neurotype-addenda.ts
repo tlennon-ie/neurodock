@@ -25,7 +25,7 @@
  * caller's per-list item cap) and `{notes}` (replaced with the reader's
  * free-form notes inside the self-described block).
  */
-import artifactV1 from "../data/neurotype-addenda/v1.json" assert { type: "json" };
+import artifactV1 from "../data/neurotype-addenda/v1.json" with { type: "json" };
 
 /** A prose block: ordered lines joined with the framing line separator. */
 export type AddendumBlock = readonly string[];

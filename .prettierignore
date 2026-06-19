@@ -14,3 +14,9 @@ uv.lock
 # Generated artifact: written by neurotype-addenda.parity.test.ts in
 # UPDATE_NEUROTYPE_PARITY_FIXTURES mode (JSON.stringify-formatted, not prettier).
 packages/core/data/neurotype-addenda/parity-fixtures.json
+
+# Uses the `with { type: "json" }` import attribute, required for the published
+# dist to load on Node >=22 (and accepted by tsc + Vite/esbuild), but the older
+# pre-commit prettier mirror cannot parse it. The repo's own prettier 3.8.4
+# accepts it; this entry only spares the mirror.
+packages/core/src/neurotype-addenda.ts
