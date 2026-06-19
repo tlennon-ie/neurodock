@@ -1,6 +1,6 @@
 {
   "name": "@neurodock/native-host",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Chrome Native Messaging host that exposes ~/.neurodock/profile.yaml to the NeuroDock browser extension.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
