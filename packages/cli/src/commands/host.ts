@@ -29,6 +29,7 @@ import {
   withDefaultExtensionIds,
   resolveSourceDistDir,
   resolveInstalledLauncher,
+  findInvalidChromiumOrigins,
   type StagingPlatform,
 } from "@neurodock/native-host/dist/registration/index.js";
 import {
@@ -149,6 +150,14 @@ export interface HostVerifyResult {
   readonly launcherPath: string;
   readonly version: string | null;
   readonly detail?: string;
+  /**
+   * allowed_origins entries in the installed Chromium manifest that Chrome
+   * would reject (a single malformed entry makes Chrome refuse the whole
+   * manifest). Empty when the manifest is valid, absent, or unreadable. doctor
+   * surfaces these so a passing direct launcher spawn does not mask a manifest
+   * Chrome cannot load.
+   */
+  readonly invalidOrigins: ReadonlyArray<string>;
 }
 
 /**
@@ -189,6 +198,7 @@ export async function runHostVerify(
       ok: false,
       launcherPath: "",
       version: null,
+      invalidOrigins: [],
       detail: "native messaging host is not supported on this platform",
     };
   }
@@ -202,9 +212,15 @@ export async function runHostVerify(
       ok: false,
       launcherPath: installed.launcherPath,
       version: null,
+      invalidOrigins: [],
       ...(installed.detail ? { detail: installed.detail } : {}),
     };
   }
+
+  // Validate the manifest the way Chrome does: a single malformed allowed_origin
+  // makes Chrome refuse the host ("not found"), even though the launcher itself
+  // spawns and pongs fine. Surface it so doctor stops giving a false PASS.
+  const invalidOrigins = findInvalidChromiumOrigins(platform, home, env);
 
   const verify = deps.verify ?? verifyLiveLaunch;
   const result = await verify(installed.launcherPath);
@@ -212,6 +228,7 @@ export async function runHostVerify(
     ok: result.ok,
     launcherPath: installed.launcherPath,
     version: result.version,
+    invalidOrigins,
     ...(result.detail ? { detail: result.detail } : {}),
   };
 }

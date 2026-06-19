@@ -236,6 +236,39 @@ export function resolveInstalledLauncher(
   return { ok: true, launcherPath, manifestPath };
 }
 
+/**
+ * Read the installed Chromium manifest's `allowed_origins` and return any
+ * entries Chrome would reject — i.e. not of the exact form
+ * `chrome-extension://<32 chars a-p>/`. Chrome refuses the ENTIRE manifest if a
+ * single entry is malformed (reporting "Specified native messaging host not
+ * found"), so `neurodock doctor` surfaces these instead of giving a false PASS
+ * from a successful direct launcher spawn. Returns [] when the manifest is
+ * absent or unreadable (the launcher check reports those separately).
+ */
+export function findInvalidChromiumOrigins(
+  platform: StagingPlatform,
+  home: string,
+  env: NodeJS.ProcessEnv,
+): string[] {
+  const manifestPath = chromiumManifestPath(platform, home, env);
+  if (!existsSync(manifestPath)) return [];
+  let parsed: { allowed_origins?: unknown };
+  try {
+    parsed = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+      allowed_origins?: unknown;
+    };
+  } catch {
+    return [];
+  }
+  const origins = Array.isArray(parsed.allowed_origins)
+    ? parsed.allowed_origins
+    : [];
+  const VALID_ORIGIN = /^chrome-extension:\/\/[a-p]{32}\/$/;
+  return origins.filter(
+    (o): o is string => typeof o === "string" && !VALID_ORIGIN.test(o),
+  );
+}
+
 /** Launcher file name per OS: a `.bat` on Windows, a `.sh` elsewhere. */
 export function launcherFileName(platform: StagingPlatform): string {
   return platform === "win32" ? `${HOST_NAME}.bat` : `${HOST_NAME}.sh`;

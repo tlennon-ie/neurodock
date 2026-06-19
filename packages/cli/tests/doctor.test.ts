@@ -101,6 +101,7 @@ describe("neurodock doctor", () => {
           ok: true,
           launcherPath: "/stable/runtime/com.neurodock.profile.sh",
           version: "0.1.0",
+          invalidOrigins: [],
         }),
       });
       const host = r.checks.find((c) => c.name === "Native host live launch");
@@ -185,6 +186,41 @@ describe("neurodock doctor", () => {
     }
   });
 
+  it("FAILS doctor when the launcher pongs but the manifest has an origin Chrome rejects", async () => {
+    // The regression this guards: a direct launcher spawn pongs fine (PASS),
+    // yet Chrome refuses the host because allowed_origins carries a malformed
+    // entry (e.g. a Firefox gecko id). doctor must surface that, not green-light.
+    const s = sandbox();
+    try {
+      writeFileSync(
+        s.profile,
+        "identity:\n  display_name: tester\n  neurotypes:\n    - adhd\n",
+      );
+      process.env["NEURODOCK_PROFILE_PATH"] = s.profile;
+      const r = await runDoctor({
+        verifyNativeHost: async () => ({
+          ok: true,
+          launcherPath: "/stable/runtime/com.neurodock.profile.bat",
+          version: "0.3.2",
+          invalidOrigins: [
+            "chrome-extension://neurodock-extension@neurodock.org/",
+          ],
+        }),
+      });
+      const live = r.checks.find((c) => c.name === "Native host live launch");
+      expect(live?.status).toBe("PASS");
+      const manifest = r.checks.find(
+        (c) => c.name === "Native host manifest valid for Chrome",
+      );
+      expect(manifest?.status).toBe("FAIL");
+      expect(manifest?.detail).toContain("neurodock-extension@neurodock.org");
+      expect(r.ok).toBe(false);
+    } finally {
+      delete process.env["NEURODOCK_PROFILE_PATH"];
+      s.cleanup();
+    }
+  });
+
   it("fails doctor when the live native-host launch does not respond", async () => {
     const s = sandbox();
     try {
@@ -199,6 +235,7 @@ describe("neurodock doctor", () => {
           launcherPath: "/stable/runtime/com.neurodock.profile.sh",
           version: null,
           detail: "Host exited (code 1) without a valid response.",
+          invalidOrigins: [],
         }),
       });
       const host = r.checks.find((c) => c.name === "Native host live launch");

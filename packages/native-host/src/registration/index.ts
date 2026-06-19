@@ -232,6 +232,8 @@ export {
   stableRuntimeDir,
   chromiumManifestPath,
   resolveInstalledLauncher,
+  findInvalidChromiumOrigins,
   type InstalledLauncher,
   type StagingPlatform,
 } from "./staging.js";
+export { isChromiumExtensionId, isFirefoxExtensionId } from "./types.js";

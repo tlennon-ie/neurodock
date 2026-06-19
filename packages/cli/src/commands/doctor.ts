@@ -116,9 +116,10 @@ export async function runDoctor(
     }
   }
 
-  // Native messaging host: actually LAUNCH it and exchange a ping/pong. This
-  // is the real connectivity check the browser extension depends on.
-  checks.push(await checkNativeHost(deps.verifyNativeHost));
+  // Native messaging host: actually LAUNCH it and exchange a ping/pong, AND
+  // validate the manifest the way Chrome does. Both are the real connectivity
+  // checks the browser extension depends on.
+  checks.push(...(await checkNativeHost(deps.verifyNativeHost)));
 
   const ok = checks.every((c) => c.status !== "FAIL");
   return { checks, ok };
@@ -126,34 +127,58 @@ export async function runDoctor(
 
 async function checkNativeHost(
   verify: (() => Promise<HostVerifyResult>) | undefined,
-): Promise<CheckResult> {
+): Promise<CheckResult[]> {
   const name = "Native host live launch";
   const run = verify ?? defaultRunHostVerify;
+  let result: HostVerifyResult;
   try {
-    const result = await run();
-    if (result.ok) {
-      return {
+    result = await run();
+  } catch (err: unknown) {
+    return [
+      {
         name,
-        status: "PASS",
-        detail: `host responded to ping (version ${
-          result.version ?? "?"
-        }) via ${result.launcherPath}`,
-      };
-    }
-    return {
-      name,
+        status: "FAIL",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+    ];
+  }
+
+  const out: CheckResult[] = [];
+  out.push(
+    result.ok
+      ? {
+          name,
+          status: "PASS",
+          detail: `host responded to ping (version ${
+            result.version ?? "?"
+          }) via ${result.launcherPath}`,
+        }
+      : {
+          name,
+          status: "FAIL",
+          detail:
+            result.detail ??
+            "native host did not respond to a ping over the stdio protocol",
+        },
+  );
+
+  // A direct launcher spawn can pong fine while Chrome still refuses the host
+  // because the manifest's allowed_origins contains an entry Chrome rejects
+  // (e.g. a Firefox gecko id wedged into a chrome-extension:// origin). Surface
+  // that so the diagnostic reflects Chrome's reality, not just the spawn.
+  if (result.invalidOrigins.length > 0) {
+    out.push({
+      name: "Native host manifest valid for Chrome",
       status: "FAIL",
       detail:
-        result.detail ??
-        "native host did not respond to a ping over the stdio protocol",
-    };
-  } catch (err: unknown) {
-    return {
-      name,
-      status: "FAIL",
-      detail: err instanceof Error ? err.message : String(err),
-    };
+        `manifest allowed_origins has ${result.invalidOrigins.length} entr${
+          result.invalidOrigins.length === 1 ? "y" : "ies"
+        } Chrome will reject (${result.invalidOrigins.join(", ")}); Chrome ` +
+        "refuses the whole manifest. Update @neurodock/native-host (>= 0.3.2) " +
+        "and re-run 'neurodock host install'.",
+    });
   }
+  return out;
 }
 
 function checkNodeVersion(): CheckResult {

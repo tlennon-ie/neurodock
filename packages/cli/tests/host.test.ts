@@ -46,7 +46,7 @@ describe("runHostInstall (CLI wiring)", () => {
       };
 
       const result = runHostInstall(
-        { extensionIds: ["mydev"] },
+        { extensionIds: ["jjcjkmljfdebbefdemkcgknjplgkicen"] },
         {
           platform: "linux",
           home,
@@ -74,8 +74,10 @@ describe("runHostInstall (CLI wiring)", () => {
       };
       expect(manifest.path).toBe(result.launcherPath);
       expect(manifest.path).not.toMatch(/cli\.js$/);
-      // Published + caller ids both present (behaviour unchanged).
-      expect(manifest.allowed_origins).toContain("chrome-extension://mydev/");
+      // Published + caller ids both present as valid chrome-extension origins.
+      expect(manifest.allowed_origins).toContain(
+        "chrome-extension://jjcjkmljfdebbefdemkcgknjplgkicen/",
+      );
       expect(manifest.allowed_origins).toContain(
         "chrome-extension://lcdaiekokkgniiknejddojkfkoiinopo/",
       );

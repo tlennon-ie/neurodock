@@ -51,7 +51,7 @@ describe("registerWithStaging (Linux)", () => {
         env,
         sourceDistDir: sourceDist,
         nodePath: "/usr/bin/node",
-        allowedExtensionIds: ["abc"],
+        allowedExtensionIds: ["lcdaiekokkgniiknejddojkfkoiinopo"],
       });
 
       // Launcher staged.
@@ -72,8 +72,10 @@ describe("registerWithStaging (Linux)", () => {
       };
       expect(manifest.path).toBe(result.launcherPath);
       expect(manifest.path).not.toMatch(/cli\.js$/);
-      // allowed_origins behaviour unchanged.
-      expect(manifest.allowed_origins).toContain("chrome-extension://abc/");
+      // allowed_origins carries the valid chrome id as a chrome-extension origin.
+      expect(manifest.allowed_origins).toContain(
+        "chrome-extension://lcdaiekokkgniiknejddojkfkoiinopo/",
+      );
 
       // Firefox manifest also points at the launcher.
       const firefoxManifestPath = join(
