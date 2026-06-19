@@ -32,6 +32,11 @@ const packageRoot = resolve(here, "..");
 const { version } = JSON.parse(
   readFileSync(resolve(packageRoot, "package.json"), "utf8"),
 );
+if (typeof version !== "string" || version.length === 0) {
+  throw new Error(
+    "native-host: package.json has no usable version to bake into the bundle",
+  );
+}
 
 await build({
   entryPoints: [resolve(packageRoot, "src", "cli.ts")],

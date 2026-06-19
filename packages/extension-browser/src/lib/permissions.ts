@@ -83,14 +83,19 @@ function isAlwaysGranted(origin: string): boolean {
   }
 }
 
-interface PermissionsApi {
+export interface PermissionsApi {
   readonly request: (perm: chrome.permissions.Permissions) => Promise<boolean>;
   readonly contains: (perm: chrome.permissions.Permissions) => Promise<boolean>;
   readonly remove: (perm: chrome.permissions.Permissions) => Promise<boolean>;
   readonly getAll: () => Promise<chrome.permissions.Permissions>;
 }
 
-function getPermissionsApi(): PermissionsApi | null {
+/**
+ * Promise-wrapped `chrome.permissions` surface, or null when the API is
+ * unavailable. Shared by the host-permission helpers below and by the native
+ * messaging client (native-host-client.ts) so both speak one wrapper.
+ */
+export function getPermissionsApi(): PermissionsApi | null {
   const c = (globalThis as { chrome?: typeof chrome }).chrome;
   if (!c?.permissions) return null;
   return {

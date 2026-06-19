@@ -18,7 +18,11 @@
  *     granted.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { probeNativeHost } from "../../src/lib/native-host-client.js";
+import {
+  probeNativeHost,
+  nativeHostGetProfile,
+  nativeHostSetProfile,
+} from "../../src/lib/native-host-client.js";
 
 interface FakePort {
   postMessage(value: unknown): void;
@@ -144,6 +148,33 @@ describe("probeNativeHost permission gating", () => {
     const { requestSpy } = stubChrome({ contains: false, request: true });
     const hello = await probeNativeHost();
     expect(hello.status).toBe("absent");
+    expect(requestSpy).not.toHaveBeenCalled();
+  });
+
+  // The profile read/write helpers share the same gate (non-interactive,
+  // never prompt) so a future caller cannot reach connectNative without the
+  // permission — consistency the reviewers flagged.
+  it("nativeHostGetProfile returns null and never connects without the permission", async () => {
+    const { connectNativeSpy, requestSpy } = stubChrome({
+      contains: false,
+      request: true,
+    });
+    const result = await nativeHostGetProfile();
+    expect(result).toBeNull();
+    expect(connectNativeSpy).not.toHaveBeenCalled();
+    expect(requestSpy).not.toHaveBeenCalled();
+  });
+
+  it("nativeHostSetProfile reports not-available and never connects without the permission", async () => {
+    const { connectNativeSpy, requestSpy } = stubChrome({
+      contains: false,
+      request: true,
+    });
+    const outcome = await nativeHostSetProfile({
+      identity: { display_name: "T", neurotypes: [] },
+    });
+    expect(outcome.ok).toBe(false);
+    expect(connectNativeSpy).not.toHaveBeenCalled();
     expect(requestSpy).not.toHaveBeenCalled();
   });
 });

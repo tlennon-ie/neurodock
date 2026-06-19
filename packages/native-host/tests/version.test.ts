@@ -44,6 +44,8 @@ describe("neurodock-native-host --version", () => {
     } finally {
       spy.mockRestore();
     }
+    // Self-documenting failure if the spy never intercepted a write.
+    expect(writes.length).toBeGreaterThan(0);
     expect(writes.join("").trim()).toBe(pkg.version);
   });
 });

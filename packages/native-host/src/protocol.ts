@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  * Copyright (c) 2026 NeuroDock contributors.
  */
+import { createRequire } from "node:module";
+
 /**
  * Chrome Native Messaging protocol primitives.
  *
@@ -31,8 +33,6 @@ export interface HostResponse<T = unknown> {
   readonly error: string | null;
   readonly version: string;
 }
-
-import { createRequire } from "node:module";
 
 /**
  * The host version, sourced from package.json — never a hardcoded literal.

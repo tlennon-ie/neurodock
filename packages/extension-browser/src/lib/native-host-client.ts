@@ -15,6 +15,7 @@
  * rather than thrown. The caller (profile.ts) then falls back to the
  * extension-local store. The native host is OPTIONAL.
  */
+import { getPermissionsApi } from "./permissions.js";
 
 export type NativeHostStatus = "active" | "absent" | "error";
 
@@ -69,53 +70,9 @@ function getRuntime(): NativeRuntime | null {
   return null;
 }
 
-interface NativePermissions {
-  contains(
-    perms: { permissions: string[] },
-    cb: (granted: boolean) => void,
-  ): void;
-  request(
-    perms: { permissions: string[] },
-    cb: (granted: boolean) => void,
-  ): void;
-}
-
-const NATIVE_MESSAGING_PERMISSION = { permissions: ["nativeMessaging"] };
-
-function getPermissions(): NativePermissions | null {
-  const g = globalThis as unknown as {
-    chrome?: { permissions?: NativePermissions };
-  };
-  return g.chrome?.permissions ?? null;
-}
-
-function hasNativeMessagingPermission(): Promise<boolean> {
-  const perms = getPermissions();
-  if (!perms) return Promise.resolve(false);
-  return new Promise((resolve) => {
-    try {
-      perms.contains(NATIVE_MESSAGING_PERMISSION, (granted) =>
-        resolve(Boolean(granted)),
-      );
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
-function requestNativeMessagingPermission(): Promise<boolean> {
-  const perms = getPermissions();
-  if (!perms) return Promise.resolve(false);
-  return new Promise((resolve) => {
-    try {
-      perms.request(NATIVE_MESSAGING_PERMISSION, (granted) =>
-        resolve(Boolean(granted)),
-      );
-    } catch {
-      resolve(false);
-    }
-  });
-}
+const NATIVE_MESSAGING_PERMISSION: chrome.permissions.Permissions = {
+  permissions: ["nativeMessaging"],
+};
 
 /**
  * Ensure the optional `nativeMessaging` permission before opening a port.
@@ -134,9 +91,11 @@ function requestNativeMessagingPermission(): Promise<boolean> {
 function ensureNativeMessagingPermission(
   interactive: boolean,
 ): Promise<boolean> {
+  const perms = getPermissionsApi();
+  if (!perms) return Promise.resolve(false);
   return interactive
-    ? requestNativeMessagingPermission()
-    : hasNativeMessagingPermission();
+    ? perms.request(NATIVE_MESSAGING_PERMISSION)
+    : perms.contains(NATIVE_MESSAGING_PERMISSION);
 }
 
 interface PendingRequest {
@@ -295,6 +254,10 @@ export async function probeNativeHost(
 }
 
 export async function nativeHostGetProfile(): Promise<NativeHostGetResult | null> {
+  // Same gate as probeNativeHost (non-interactive — this is a background read,
+  // never a user gesture): without the permission connectNative is undefined,
+  // so report unavailable up front rather than silently failing in openSession.
+  if (!(await ensureNativeMessagingPermission(false))) return null;
   const session = openSession();
   if (!session) return null;
   try {
@@ -323,6 +286,17 @@ export async function nativeHostSetProfile(
   profile: Record<string, unknown>,
   opts: NativeHostSetOptions = {},
 ): Promise<NativeHostSetOutcome> {
+  // Same non-interactive gate as nativeHostGetProfile — a profile write is
+  // never a user gesture, so it must not prompt; without the permission the
+  // host is simply unreachable.
+  if (!(await ensureNativeMessagingPermission(false))) {
+    return {
+      ok: false,
+      confirmRequired: false,
+      error: "native host not available",
+      result: null,
+    };
+  }
   const session = openSession();
   if (!session) {
     return {
