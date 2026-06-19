@@ -605,6 +605,9 @@ export function buildProgram(): Command {
     .action((opts: { extensionId: string[] }) => {
       const result = runHostInstall({ extensionIds: opts.extensionId });
       print(`Installing com.neurodock.profile (platform=${result.platform})`);
+      if (result.launcherPath) {
+        print(`  launcher: ${result.launcherPath}`);
+      }
       for (const o of result.outcomes) {
         const detail = o.detail ? ` — ${o.detail}` : "";
         print(
@@ -613,6 +616,7 @@ export function buildProgram(): Command {
           }${detail}`,
         );
       }
+      print("Verify a live launch with: neurodock doctor");
       process.exit(0);
     });
 

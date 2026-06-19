@@ -10,13 +10,30 @@ import { profilePath, detectClients } from "../lib/paths.js";
 import { loadProfileFromFile } from "../profile/loader.js";
 import { validateProfile } from "../profile/validator.js";
 import { parseJsonSafely } from "../lib/json-patch.js";
+import {
+  runHostVerify as defaultRunHostVerify,
+  type HostVerifyResult,
+} from "./host.js";
 
 export interface DoctorResult {
   readonly checks: ReadonlyArray<CheckResult>;
   readonly ok: boolean;
 }
 
-export async function runDoctor(): Promise<DoctorResult> {
+export interface DoctorDependencies {
+  /**
+   * Live-launch verifier for the native messaging host. Defaults to the real
+   * spawn-and-ping path; tests inject a stub so they stay hermetic. This is
+   * the check that exercises a real host launch — the original doctor only
+   * verified that manifests/registry keys existed, so it stayed green while
+   * no Chrome connection ever worked.
+   */
+  readonly verifyNativeHost?: () => Promise<HostVerifyResult>;
+}
+
+export async function runDoctor(
+  deps: DoctorDependencies = {},
+): Promise<DoctorResult> {
   const env = readEnv();
   const checks: CheckResult[] = [];
 
@@ -99,8 +116,44 @@ export async function runDoctor(): Promise<DoctorResult> {
     }
   }
 
+  // Native messaging host: actually LAUNCH it and exchange a ping/pong. This
+  // is the real connectivity check the browser extension depends on.
+  checks.push(await checkNativeHost(deps.verifyNativeHost));
+
   const ok = checks.every((c) => c.status !== "FAIL");
   return { checks, ok };
+}
+
+async function checkNativeHost(
+  verify: (() => Promise<HostVerifyResult>) | undefined,
+): Promise<CheckResult> {
+  const name = "Native host live launch";
+  const run = verify ?? defaultRunHostVerify;
+  try {
+    const result = await run();
+    if (result.ok) {
+      return {
+        name,
+        status: "PASS",
+        detail: `host responded to ping (version ${
+          result.version ?? "?"
+        }) via ${result.launcherPath}`,
+      };
+    }
+    return {
+      name,
+      status: "FAIL",
+      detail:
+        result.detail ??
+        "native host did not respond to a ping over the stdio protocol",
+    };
+  } catch (err: unknown) {
+    return {
+      name,
+      status: "FAIL",
+      detail: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 function checkNodeVersion(): CheckResult {

@@ -14,16 +14,18 @@
  * The bin defaults to `run` so the script can be wired directly into a
  * native-messaging manifest without a wrapper.
  */
-import { fileURLToPath } from "node:url";
-import { realpathSync } from "node:fs";
+import { homedir } from "node:os";
 import { runHost } from "./index.js";
 import {
   detectPlatform,
-  register,
-  unregister,
+  registerWithStaging,
+  unregisterWithStaging,
+  resolveInstalledLauncher,
   withDefaultExtensionIds,
   HOST_NAME,
+  type StagingPlatform,
 } from "./registration/index.js";
+import { verifyLiveLaunch } from "./doctor.js";
 
 const USAGE = `neurodock-native-host <command> [options]
 
@@ -33,6 +35,7 @@ Commands:
                  --extension-id <id>    Repeatable. Defaults to the published
                                         NeuroDock extension ID for each store.
   uninstall    Remove all NeuroDock host manifests / registry entries.
+  doctor       Spawn the registered launcher and verify a live ping/pong.
   run          Behave as the stdio native messaging host (default).
   --help       Print this help.
   --version    Print the host version.
@@ -40,14 +43,31 @@ Commands:
 Examples:
   neurodock-native-host install --extension-id abcdefghijklmnopqrstuvwxyzabcdef
   neurodock-native-host uninstall
+  neurodock-native-host doctor
 `;
 
 interface ParsedArgs {
-  readonly command: "install" | "uninstall" | "run" | "help" | "version";
+  readonly command:
+    | "install"
+    | "uninstall"
+    | "doctor"
+    | "run"
+    | "help"
+    | "version";
   readonly extensionIds: ReadonlyArray<string>;
 }
 
-function parseArgs(argv: ReadonlyArray<string>): ParsedArgs {
+/**
+ * Parse the bin's argv.
+ *
+ * Critically, Chrome launches the host with the calling extension's ORIGIN as
+ * the first arg (e.g. `chrome-extension://<id>/`; on Windows also a
+ * `--parent-window=` arg). Any first arg that is NOT a known subcommand must
+ * route to `run`, NOT to help — otherwise the host greets Chrome with usage
+ * text and the port disconnects. Only the explicit management subcommands and
+ * the help/version flags are recognised; everything else is `run`.
+ */
+export function parseArgs(argv: ReadonlyArray<string>): ParsedArgs {
   if (argv.length === 0) {
     return { command: "run", extensionIds: [] };
   }
@@ -60,6 +80,9 @@ function parseArgs(argv: ReadonlyArray<string>): ParsedArgs {
   }
   if (first === "run") {
     return { command: "run", extensionIds: [] };
+  }
+  if (first === "doctor") {
+    return { command: "doctor", extensionIds: [] };
   }
   if (first === "install" || first === "uninstall") {
     const ids: string[] = [];
@@ -75,15 +98,11 @@ function parseArgs(argv: ReadonlyArray<string>): ParsedArgs {
     }
     return { command: first, extensionIds: ids };
   }
-  return { command: "help", extensionIds: [] };
-}
-
-function resolveHostPath(): string {
-  try {
-    return realpathSync(fileURLToPath(import.meta.url));
-  } catch {
-    return fileURLToPath(import.meta.url);
-  }
+  // Unrecognised first arg (a Chrome-supplied origin / --parent-window=, or
+  // anything else): behave as the stdio host. This is belt-and-suspenders for
+  // the launcher, which already forces `run`, and keeps an older
+  // direct-cli.js manifest working.
+  return { command: "run", extensionIds: [] };
 }
 
 interface PrintableOutcome {
@@ -104,9 +123,16 @@ function printOutcomes(outcomes: ReadonlyArray<PrintableOutcome>): void {
   }
 }
 
-export function main(
+/**
+ * Run the bin. Returns an exit code for terminal subcommands, or `null` for
+ * `run` — the stdio host owns the process lifecycle and exits only when
+ * stdin closes, so the caller must NOT `process.exit` after a `run`. (The
+ * original code did, killing the host before it could read a single frame —
+ * the deepest layer of defect #3.)
+ */
+export async function main(
   argv: ReadonlyArray<string> = process.argv.slice(2),
-): number {
+): Promise<number | null> {
   const parsed = parseArgs(argv);
 
   if (parsed.command === "help") {
@@ -119,7 +145,7 @@ export function main(
   }
   if (parsed.command === "run") {
     runHost();
-    return 0;
+    return null;
   }
   if (parsed.command === "install") {
     // Always register the published store ids; any --extension-id values
@@ -127,17 +153,53 @@ export function main(
     const ids = withDefaultExtensionIds(parsed.extensionIds);
     const platformId = detectPlatform();
     process.stdout.write(`Installing ${HOST_NAME} (platform=${platformId})\n`);
-    const outcomes = register({
-      hostPath: resolveHostPath(),
-      allowedExtensionIds: ids,
-    });
-    printOutcomes(outcomes);
+    // Stage the runtime into a stable per-user dir and register manifests
+    // whose `path` is the launcher (never this npx-cache cli.js).
+    const result = registerWithStaging({ allowedExtensionIds: ids });
+    process.stdout.write(`  launcher: ${result.launcherPath}\n`);
+    printOutcomes(result.outcomes);
     return 0;
+  }
+  if (parsed.command === "doctor") {
+    process.stdout.write(`Verifying ${HOST_NAME} live launch...\n`);
+    const platform = detectPlatform();
+    if (platform === "unsupported") {
+      process.stdout.write(
+        "  [fail] native messaging host is not supported on this platform\n",
+      );
+      return 1;
+    }
+    // READ the installed launcher from the on-disk manifest — verify the
+    // user's REAL install, never re-stage (which would mask a broken install).
+    const installed = resolveInstalledLauncher(
+      platform as StagingPlatform,
+      homedir(),
+      process.env,
+    );
+    if (!installed.ok) {
+      process.stdout.write(
+        `  [fail] ${installed.detail ?? "native host not installed"}\n`,
+      );
+      return 1;
+    }
+    process.stdout.write(`  launcher: ${installed.launcherPath}\n`);
+    const verify = await verifyLiveLaunch(installed.launcherPath);
+    if (verify.ok) {
+      process.stdout.write(
+        `  [ok] host responded to ping (version ${verify.version ?? "?"})\n`,
+      );
+      return 0;
+    }
+    process.stdout.write(
+      `  [fail] ${verify.detail ?? "host did not respond"}\n`,
+    );
+    return 1;
   }
   if (parsed.command === "uninstall") {
     const platformId = detectPlatform();
     process.stdout.write(`Removing ${HOST_NAME} (platform=${platformId})\n`);
-    const outcomes = unregister();
+    // Symmetric uninstall: manifests/registry AND the staged runtime tree.
+    const outcomes = unregisterWithStaging();
     printOutcomes(outcomes);
     return 0;
   }
@@ -151,5 +213,11 @@ const invokedFromCli =
     process.argv[1].endsWith("neurodock-native-host"));
 
 if (invokedFromCli) {
-  process.exit(main());
+  void main().then((code) => {
+    // `run` returns null: the host keeps the process alive until stdin
+    // closes, so do not exit here. Terminal subcommands return a number.
+    if (code !== null) {
+      process.exit(code);
+    }
+  });
 }

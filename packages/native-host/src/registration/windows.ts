@@ -108,7 +108,8 @@ export function registerWindows(
   opts: RegistrationOptions,
 ): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
-  const dir = manifestDir(home, process.env);
+  const env = opts.env ?? process.env;
+  const dir = manifestDir(home, env);
   mkdirSync(dir, { recursive: true });
 
   const chromiumManifestPath = join(dir, `${HOST_NAME}.json`);
@@ -146,7 +147,8 @@ export function unregisterWindows(
   opts: UnregisterOptions = {},
 ): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
-  const dir = manifestDir(home, process.env);
+  const env = opts.env ?? process.env;
+  const dir = manifestDir(home, env);
   const chromiumManifestPath = join(dir, `${HOST_NAME}.json`);
   const firefoxManifestPath = join(dir, `${HOST_NAME}.firefox.json`);
 
