@@ -62,8 +62,9 @@ export function registerLinux(
   opts: RegistrationOptions,
 ): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
+  const env = opts.env ?? process.env;
   const out: RegistrationOutcome[] = [];
-  for (const t of targets(home, process.env)) {
+  for (const t of targets(home, env)) {
     const manifestPath = join(t.dir, `${HOST_NAME}.json`);
     try {
       mkdirSync(t.dir, { recursive: true });
@@ -91,8 +92,9 @@ export function unregisterLinux(
   opts: UnregisterOptions = {},
 ): ReadonlyArray<RegistrationOutcome> {
   const home = opts.home ?? homedir();
+  const env = opts.env ?? process.env;
   const out: RegistrationOutcome[] = [];
-  for (const t of targets(home, process.env)) {
+  for (const t of targets(home, env)) {
     const manifestPath = join(t.dir, `${HOST_NAME}.json`);
     if (!existsSync(manifestPath)) {
       out.push({

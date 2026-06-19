@@ -104,6 +104,8 @@ export { detectCapabilities } from "./capabilities.js";
 export type { CapabilityProbeDeps } from "./capabilities.js";
 export { encodeMessage, tryDecodeMessage, HOST_VERSION } from "./protocol.js";
 export { resolveProfilePath, readProfile, writeProfile } from "./profile-io.js";
+export { verifyLiveLaunch } from "./doctor.js";
+export type { VerifyOptions, VerifyResult } from "./doctor.js";
 export type {
   HostRequest,
   HostResponse,

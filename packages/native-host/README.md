@@ -69,7 +69,51 @@ Per-platform manifest locations:
 | Windows  | Manifest JSON under `%APPDATA%\NeuroDock\native-host\`; registry pointer under `HKCU\Software\<browser>\NativeMessagingHosts\com.neurodock.profile` (via `reg.exe`) |
 
 Uninstall removes every manifest and registry pointer the install step
-created.
+created, plus the staged runtime directory below — no orphans.
+
+### Staging and the launcher (how Chrome actually launches the host)
+
+Install does NOT point the manifest at the package's `dist/cli.js`. That
+path is unstable: run via `npx`/`pnpx`, it lives in npm's `_npx` cache,
+which npm prunes and rotates, so the manifest would eventually point at a
+deleted file. A bare `.js` is also not launchable by Chrome on Windows.
+
+Instead, install **stages** a self-contained copy of the runtime into a
+stable per-user directory and points the manifest at a **launcher** there:
+
+| Platform | Staged runtime dir                                                              | Launcher                    |
+| -------- | ------------------------------------------------------------------------------- | --------------------------- |
+| macOS    | `~/Library/Application Support/NeuroDock/native-host/runtime/`                  | `com.neurodock.profile.sh`  |
+| Linux    | `$XDG_DATA_HOME/neurodock/native-host/runtime/` (fallback `~/.local/share/...`) | `com.neurodock.profile.sh`  |
+| Windows  | `%APPDATA%\NeuroDock\native-host\runtime\`                                      | `com.neurodock.profile.bat` |
+
+The launcher embeds the absolute `node` binary that ran the installer and
+forces the `run` subcommand before forwarding Chrome's args (Chrome passes
+the calling extension's origin, e.g. `chrome-extension://<id>/`, as the
+first arg). `dist/cli.js` is a single bundled file with `ajv` / `yaml`
+inlined, so the relocated copy resolves zero bare imports and survives the
+`_npx` cache being pruned.
+
+### Verifying a live launch
+
+`doctor` verifies the **already-installed** host. It reads the on-disk
+Chromium manifest, resolves the `path` Chrome would launch, and spawns
+exactly that launcher, exchanging a `ping`/pong over the length-prefixed
+protocol:
+
+```bash
+neurodock-native-host doctor   # or `neurodock doctor` from the CLI
+```
+
+This exercises a real launch (file present, launchable, speaks the
+protocol) rather than merely asserting that manifests/registry keys exist.
+Crucially, `doctor` does **not** re-stage or re-register — it reflects the
+user's real install. If the host is not installed, or the manifest points at
+a launcher that no longer exists (e.g. an old `_npx` cache file that npm
+pruned), `doctor` reports a clear failure telling you to run
+`neurodock host install`; it never silently repairs the install. On
+macOS/Linux the launcher is a `0755` `#!/bin/sh` script spawned directly
+(`shell: false`); only the Windows `.bat` goes through the shell.
 
 ## Profile path precedence
 

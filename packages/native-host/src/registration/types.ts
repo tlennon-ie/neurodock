@@ -60,10 +60,18 @@ export interface RegistrationOptions {
   readonly hostPath: string;
   readonly allowedExtensionIds: ReadonlyArray<string>;
   readonly home?: string;
+  /**
+   * Override the process environment used to resolve config roots
+   * (`APPDATA`, `XDG_CONFIG_HOME`). Defaults to `process.env`. Tests inject
+   * a sandbox env so the per-OS layout is exercisable without writing to the
+   * real user directories.
+   */
+  readonly env?: NodeJS.ProcessEnv;
 }
 
 export interface UnregisterOptions {
   readonly home?: string;
+  readonly env?: NodeJS.ProcessEnv;
 }
 
 export function buildManifest(
