@@ -42,11 +42,10 @@ overrides:
   # ws >=8.0.0 <8.21.0 can be driven to memory-exhaustion DoS from tiny
   # fragments/data chunks (high, dependabot #48). Transitive. Force the fix.
   "ws": ">=8.21.0"
-  # dompurify <3.4.9 carries a cluster of sanitizer-bypass advisories
-  # (dependabot #54-#60). Transitive. Force the latest patched line.
-  # Note: #57 (IN_PLACE attacker-controlled nodeName) has no upstream fix
-  # yet and is low-risk for our usage; this raises everything else to 3.4.9.
-  "dompurify": ">=3.4.9"
+  # dompurify carries a cluster of sanitizer-bypass advisories. The latest,
+  # GHSA-cmwh-pvxp-8882 (vulnerable <=3.4.10), is fixed in 3.4.11 — so the
+  # prior >=3.4.9 floor no longer covered it. Transitive. Force the patched line.
+  "dompurify": ">=3.4.11"
   # @babel/core <=7.29.0 -> 7.29.6: arbitrary file read via sourceMappingURL
   # comment (low, dependabot #49). Transitive, build-time only. Caret-pinned
   # to the 7.x line (a bare >=7.29.6 resolves to the 8.0.0 major).
