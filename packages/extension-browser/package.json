@@ -25,13 +25,13 @@
     "clean": "rimraf .output .wxt .turbo coverage src/lib/prompts src/lib/schemas public/schemas src/lib/schemas/compiled-validators.js src/lib/schemas/compiled-validators.d.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.104.1",
+    "@anthropic-ai/sdk": "^0.105.0",
     "@neurodock/core": "workspace:^0.2.0",
     "@wxt-dev/module-react": "^1.2.2",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "idb": "^8.0.0",
-    "openai": "^6.42.0",
+    "openai": "^6.44.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "yaml": "^2.6.1",
@@ -40,8 +40,8 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
-    "@types/chrome": "^0.1.43",
-    "@types/node": "^22.19.21",
+    "@types/chrome": "^0.2.0",
+    "@types/node": "^22.20.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
