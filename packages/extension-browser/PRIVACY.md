@@ -1,7 +1,7 @@
 # Privacy policy — NeuroDock browser extension
 
-**Last reviewed:** 2026-05-20
-**Applies to:** `@neurodock/extension-browser` v0.0.2 and later, on Chrome,
+**Last reviewed:** 2026-06-20
+**Applies to:** `@neurodock/extension-browser` v0.1.2 and later, on Chrome,
 Microsoft Edge, and Mozilla Firefox.
 **Source of truth for this policy:** this file, in the NeuroDock monorepo at
 [`packages/extension-browser/PRIVACY.md`](./PRIVACY.md). If a store listing
@@ -27,6 +27,29 @@ opaque consent prose every day and we will not add to that pile.
   middle and never sees that traffic.
 - There is no NeuroDock account. There is no sign-in. There is no "user".
   There is just your browser and the providers you authorise.
+
+---
+
+## Data collection, handling, storage & sharing (at a glance)
+
+For store reviewers and anyone who wants the four required answers in one place.
+None of these four sections is omitted; each is expanded in §3 below.
+
+- **Collection.** The extension collects **no personal data for NeuroDock**. It
+  reads only the specific text you select or type when you trigger a translation,
+  plus which supported site you are on. There is no account, no identifier, no
+  analytics, and no telemetry.
+- **Handling.** That text is used solely to produce the translation you asked
+  for, at the moment you ask for it. It is processed by the model endpoint **you**
+  configure — mock by default, a local server, or a cloud provider with your own
+  API key — and is used for nothing else.
+- **Storage.** Your profile, preferences, optional API key, and optional local
+  history are stored **only on your device** (`chrome.storage.local` plus an
+  extension-scoped IndexedDB). NeuroDock operates no server and stores nothing.
+- **Sharing.** Nothing is shared with NeuroDock or any third party by the
+  extension. In cloud mode your request goes directly from your browser to the
+  provider you chose, governed by that provider's policy. Nothing is sold or
+  shared — there is no collected data to sell or share.
 
 ---
 
