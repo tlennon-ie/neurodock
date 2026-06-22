@@ -22,7 +22,7 @@ jobs:
     name: Publish TypeScript packages (npm)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -98,7 +98,7 @@ jobs:
     name: Publish Python packages (PyPI)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.2.0
@@ -177,7 +177,7 @@ jobs:
       id-token: write # OIDC auth to the MCP Registry for io.github.tlennon-ie/*
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install mcp-publisher
         run: |
@@ -231,7 +231,7 @@ jobs:
     permissions:
       contents: write # create the GitHub Release for the v* tag + upload assets
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node
         uses: actions/setup-node@v6
