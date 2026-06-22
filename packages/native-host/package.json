@@ -39,7 +39,7 @@
     "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "@types/node": "^22.19.21",
+    "@types/node": "^22.20.0",
     "esbuild": ">=0.28.1",
     "rimraf": "^6.0.1",
     "tsx": "^4.22.4",
